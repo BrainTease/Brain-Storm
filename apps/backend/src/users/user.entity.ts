@@ -34,7 +34,6 @@ export class User {
 
   @Column({ nullable: true })
   deletedAt: Date;
-  isVerified: boolean;
 
   @Column({ nullable: true, type: 'varchar' })
   verificationToken: string | null;

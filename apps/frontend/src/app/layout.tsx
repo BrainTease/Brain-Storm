@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import NetworkStatus from '@/components/ui/NetworkStatus';
 
 export const metadata: Metadata = {
   title: 'Brain-Storm - Blockchain Education on Stellar',
@@ -10,7 +11,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body className="antialiased">
+        {children}
+        <NetworkStatus />
+      </body>
     </html>
   );
 }
