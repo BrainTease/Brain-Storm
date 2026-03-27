@@ -1,10 +1,10 @@
-import { Controller, Get, Post, Patch, Delete, Param, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Body, Query, UseGuards } from '@nestjs/common';
 import { CoursesService } from './courses.service';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+import { CourseQueryDto } from './dto/course-query.dto';
 
 @ApiTags('courses')
 @Controller('courses')
@@ -13,9 +13,13 @@ export class CoursesController {
 
   @Get()
   @ApiOperation({ summary: 'Get all published courses' })
-  @ApiResponse({ status: 200, description: 'Returns all published courses', schema: { example: { data: [], statusCode: 200, timestamp: '2024-01-01T00:00:00.000Z' } } })
-  findAll() {
-    return this.coursesService.findAll();
+  @ApiQuery({ name: 'search', required: false, description: 'Search by title or description (ILIKE)' })
+  @ApiQuery({ name: 'level', required: false, enum: ['beginner', 'intermediate', 'advanced'], description: 'Filter by level' })
+  @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number (default: 1)' })
+  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Results per page (default: 20)' })
+  @ApiResponse({ status: 200, description: 'Returns paginated published courses', schema: { example: { data: [], total: 0, page: 1, limit: 20 } } })
+  findAll(@Query() query: CourseQueryDto) {
+    return this.coursesService.findAll(query);
   }
 
   @Get(':id')

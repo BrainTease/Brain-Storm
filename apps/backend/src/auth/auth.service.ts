@@ -61,7 +61,7 @@ export class AuthService {
     if (!user.isVerified) {
       throw new ForbiddenException('Please verify your email before logging in');
     }
-    return this.issueTokenPair(user.id, user.email);
+    return this.issueTokenPair(user.id, user.email, user.role);
   }
 
   async refresh(rawRefreshToken: string) {
@@ -82,7 +82,7 @@ export class AuthService {
     const user = await this.usersService.findById(stored.userId);
     if (!user) throw new UnauthorizedException('User not found');
 
-    return this.issueTokenPair(user.id, user.email);
+    return this.issueTokenPair(user.id, user.email, user.role);
   }
 
   async logout(rawRefreshToken: string) {
@@ -101,7 +101,7 @@ export class AuthService {
     const user = await this.usersService.findByVerificationToken(hash);
 
     if (!user) throw new BadRequestException('Invalid or expired verification token');
-    if (user.verificationTokenExpiresAt < new Date()) {
+    if (user.verificationTokenExpiresAt && user.verificationTokenExpiresAt < new Date()) {
       throw new BadRequestException('Verification token has expired');
     }
 
@@ -173,9 +173,9 @@ export class AuthService {
 
   // ── Helpers ──────────────────────────────────────────────────────────────
 
-  private async issueTokenPair(userId: string, email: string) {
+  private async issueTokenPair(userId: string, email: string, role: string = 'student') {
     const access_token = this.jwtService.sign(
-      { sub: userId, email },
+      { sub: userId, email, role },
       { expiresIn: '15m' },
     );
 

@@ -39,7 +39,7 @@ export class User {
   @Column({ nullable: true, type: 'varchar' })
   verificationToken: string | null;
 
-  @Column({ nullable: true, type: 'timestamp' })
+  @Column({ nullable: true, type: 'datetime' })
   verificationTokenExpiresAt: Date | null;
 
   @CreateDateColumn()

@@ -147,6 +147,42 @@ rustup target add wasm32-unknown-unknown
 ./scripts/build.sh
 ```
 
+## Docker Setup
+
+Containerized development and production environment for backend + PostgreSQL + Redis.
+
+### Quick Start with Docker
+
+```bash
+# 1. Copy environment template
+cp .env.example .env
+
+# 2. Edit .env (JWT_SECRET, STELLAR_SECRET_KEY, etc.)
+#    Note: DATABASE_HOST=postgres, DATABASE_USERNAME=brain-storm, etc. are auto-set
+
+# 3. Start services (production mode)
+docker compose up -d --build backend postgres redis
+
+# Production API: http://localhost:3000/api
+# Swagger docs: http://localhost:3000/api/docs
+
+# Development (with hot reload):
+# docker compose up -d --build  # Uses docker-compose.override.yml automatically
+
+# Logs:
+docker compose logs -f backend
+
+# Stop & clean volumes:
+docker compose down -v
+```
+
+**Key Notes:**
+- **Default DB**: `brain-storm` db/user/pass (override in `.env`)
+- **Dev Mode**: Auto hot-reload via src/ mount + `nest start --watch`
+- **Persistence**: `postgres_data` / `redis_data` volumes
+- **Healthchecks**: Backend waits for DB ready
+- Frontend/contracts run separately (npm/yarn)
+
 ---
 
 ## Smart Contract Deployment

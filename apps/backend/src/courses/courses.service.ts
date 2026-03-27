@@ -7,6 +7,7 @@ import { Inject } from '@nestjs/common';
 import { Course } from './course.entity';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { UpdateCourseDto } from './dto/update-course.dto';
+import { CourseQueryDto } from './dto/course-query.dto';
 
 @Injectable()
 export class CoursesService {
@@ -18,14 +19,30 @@ export class CoursesService {
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
-  async findAll() {
-    const cached = await this.cacheManager.get<Course[]>(this.CACHE_KEY);
-    if (cached) {
-      return cached;
+  async findAll(query: CourseQueryDto = {}) {
+    const { search, level, page = 1, limit = 20 } = query;
+
+    const qb = this.repo.createQueryBuilder('course')
+      .where('course.isPublished = :isPublished', { isPublished: true })
+      .andWhere('course.isDeleted = :isDeleted', { isDeleted: false });
+
+    if (search) {
+      qb.andWhere(
+        '(course.title ILIKE :search OR course.description ILIKE :search)',
+        { search: `%${search}%` },
+      );
     }
-    const courses = await this.repo.find({ where: { isPublished: true } });
-    await this.cacheManager.set(this.CACHE_KEY, courses, this.CACHE_TTL);
-    return courses;
+
+    if (level) {
+      qb.andWhere('course.level = :level', { level });
+    }
+
+    const offset = (page - 1) * limit;
+    qb.skip(offset).take(limit).orderBy('course.createdAt', 'DESC');
+
+    const [data, total] = await qb.getManyAndCount();
+
+    return { data, total, page, limit };
   }
 
   async findOne(id: string): Promise<Course> {
@@ -58,17 +75,5 @@ export class CoursesService {
 
   private async invalidateCache() {
     await this.cacheManager.del(this.CACHE_KEY);
-  }
-
-  async update(id: string, data: Partial<Course>) {
-    const course = await this.findOne(id);
-    if (!course) throw new NotFoundException('Course not found');
-    return this.repo.save({ ...course, ...data });
-  }
-
-  async delete(id: string) {
-    const course = await this.findOne(id);
-    if (!course) throw new NotFoundException('Course not found');
-    return this.repo.remove(course);
   }
 }
