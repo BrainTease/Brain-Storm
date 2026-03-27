@@ -1,0 +1,47 @@
+{
+  "nav": {
+    "brand": "Brain-Storm",
+    "courses": "Cursos",
+    "profile": "Perfil",
+    "switchLight": "Cambiar a modo claro",
+    "switchDark": "Cambiar a modo oscuro",
+    "language": "Idioma"
+  },
+  "home": {
+    "title": "Brain-Storm",
+    "description": "Plataforma de educación blockchain construida sobre la red Stellar. Gana credenciales verificables en cadena mientras aprendes.",
+    "browseCourses": "Ver Cursos",
+    "getStarted": "Comenzar"
+  },
+  "courses": {
+    "title": "Cursos",
+    "viewCourse": "Ver Curso →",
+    "levels": {
+      "Beginner": "Principiante",
+      "Intermediate": "Intermedio",
+      "Advanced": "Avanzado"
+    }
+  },
+  "profile": {
+    "loading": "Cargando…",
+    "joined": "Unido el {date}",
+    "editProfile": "Editar Perfil",
+    "username": "Nombre de usuario",
+    "bio": "Biografía",
+    "avatarUrl": "URL del avatar",
+    "saving": "Guardando…",
+    "saved": "Guardado ✓",
+    "saveChanges": "Guardar Cambios"
+  },
+  "wallet": {
+    "title": "Cartera Stellar",
+    "linkedKey": "Clave pública vinculada",
+    "bstBalance": "Saldo BST: {balance} BST",
+    "unlinkWallet": "Desvincular Cartera",
+    "description": "Vincula tu cartera Freighter para recibir credenciales y tokens BST.",
+    "freighterMissing": "Freighter no detectado.",
+    "installFreighter": "Instalar Freighter",
+    "connecting": "Conectando…",
+    "linkWallet": "Vincular Cartera"
+  }
+}

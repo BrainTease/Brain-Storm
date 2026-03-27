@@ -1,16 +1,5 @@
-import type { Metadata } from 'next';
-import './globals.css';
-
-export const metadata: Metadata = {
-  title: 'Brain-Storm - Blockchain Education on Stellar',
-  description:
-    'Learn blockchain development with verifiable on-chain credentials powered by the Stellar network.',
-};
-
+// Root layout — locale-specific layout lives in app/[locale]/layout.tsx
+// This file is required by Next.js but the [locale] segment handles rendering.
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <html lang="en">
-      <body>{children}</body>
-    </html>
-  );
+  return children;
 }
