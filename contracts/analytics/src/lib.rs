@@ -35,30 +35,6 @@ pub struct ProgressRecord {
 // =============================================================================
 // Contract
 // =============================================================================
-#[contracttype]
-pub enum DataKey {
-    Admin,
-    Progress(Address, Symbol),
-    Locked, // reentrancy guard
-}
-
-// ── Reentrancy guard ─────────────────────────────────────────────────────────
-
-fn acquire_lock(env: &Env) {
-    let locked: bool = env
-        .storage()
-        .instance()
-        .get(&DataKey::Locked)
-        .unwrap_or(false);
-    assert!(!locked, "reentrant call");
-    env.storage().instance().set(&DataKey::Locked, &true);
-}
-
-fn release_lock(env: &Env) {
-    env.storage().instance().set(&DataKey::Locked, &false);
-}
-
-// ── Contract ─────────────────────────────────────────────────────────────────
 
 #[contract]
 pub struct AnalyticsContract;
@@ -228,21 +204,21 @@ impl AnalyticsContract {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use soroban_sdk::testutils::{Address as _, Events, Ledger, LedgerInfo};
-    use soroban_sdk::{symbol_short, Env, FromVal, Symbol};
+    use soroban_sdk::testutils::{Address as _, Ledger, LedgerInfo};
+    use soroban_sdk::{FromVal, Symbol};
 
-    fn setup() -> (Env, AnalyticsContractClient<'static>, Address, Address) {
-        let env = Env::default();
+    fn setup() -> (soroban_sdk::Env, AnalyticsContractClient<'static>, Address, Address) {
+        let env = soroban_sdk::Env::default();
         env.mock_all_auths();
-        let id = env.register_contract(None, AnalyticsContract);
-        let client = AnalyticsContractClient::new(&env, &id);
+        let contract_id = env.register_contract(None, AnalyticsContract);
+        let client = AnalyticsContractClient::new(&env, &contract_id);
         let admin = Address::generate(&env);
         let student = Address::generate(&env);
         client.initialize(&admin);
         (env, client, admin, student)
     }
 
-    fn set_ledger(env: &Env, sequence: u32) {
+    fn set_ledger(env: &soroban_sdk::Env, sequence: u32) {
         env.ledger().set(LedgerInfo {
             sequence_number: sequence,
             timestamp: sequence as u64 * 5,
@@ -255,7 +231,7 @@ mod tests {
         });
     }
 
-    fn has_event(env: &Env, topic1: &str, topic2: &str) -> bool {
+    fn has_event(env: &soroban_sdk::Env, topic1: &str, topic2: &str) -> bool {
         let t1 = Symbol::new(env, topic1);
         let t2 = Symbol::new(env, topic2);
         env.events().all().iter().any(|e| {
@@ -269,7 +245,9 @@ mod tests {
         })
     }
 
-    // ---- initialize / admin -------------------------------------------------
+    // ============================================================================
+    // Initialize & Admin Tests
+    // ============================================================================
 
     #[test]
     fn test_initialize_sets_admin() {
@@ -293,36 +271,43 @@ mod tests {
         assert_ne!(client.get_admin(), old_admin);
     }
 
-    // ---- record_progress ----------------------------------------------------
+    // ============================================================================
+    // Record Progress Tests (Happy Path)
+    // ============================================================================
 
     #[test]
-    fn test_student_can_record_own_progress() {
+    fn test_record_progress_0_percent() {
         let (_, client, _, student) = setup();
         let course = symbol_short!("RUST101");
-        client.record_progress(&student, &student, &course, &75);
+        client.record_progress(&student, &student, &course, &0);
         let rec = client.get_progress(&student, &course).unwrap();
-        assert_eq!(rec.progress_pct, 75);
+        assert_eq!(rec.progress_pct, 0);
         assert!(!rec.completed);
     }
 
     #[test]
-    fn test_admin_can_record_student_progress() {
-        let (_, client, admin, student) = setup();
+    fn test_record_progress_50_percent() {
+        let (_, client, _, student) = setup();
         let course = symbol_short!("RUST101");
-        client.record_progress(&admin, &student, &course, &100);
+        client.record_progress(&student, &student, &course, &50);
+        let rec = client.get_progress(&student, &course).unwrap();
+        assert_eq!(rec.progress_pct, 50);
+        assert!(!rec.completed);
+    }
+
+    #[test]
+    fn test_record_progress_100_percent() {
+        let (_, client, _, student) = setup();
+        let course = symbol_short!("RUST101");
+        client.record_progress(&student, &student, &course, &100);
         let rec = client.get_progress(&student, &course).unwrap();
         assert_eq!(rec.progress_pct, 100);
         assert!(rec.completed);
     }
 
-    #[test]
-    #[should_panic(expected = "Unauthorized: must be student or admin")]
-    fn test_third_party_cannot_record_progress() {
-        let (env, client, _, student) = setup();
-        let rando = Address::generate(&env);
-        let course = symbol_short!("RUST101");
-        client.record_progress(&rando, &student, &course, &50);
-    }
+    // ============================================================================
+    // Progress Validation Tests
+    // ============================================================================
 
     #[test]
     #[should_panic(expected = "Progress must be 0-100")]
@@ -332,7 +317,125 @@ mod tests {
         client.record_progress(&student, &student, &course, &101);
     }
 
-    // ---- persistent storage / TTL -------------------------------------------
+    #[test]
+    #[should_panic(expected = "Progress must be 0-100")]
+    fn test_progress_way_over_100_panics() {
+        let (_, client, _, student) = setup();
+        let course = symbol_short!("RUST101");
+        client.record_progress(&student, &student, &course, &200);
+    }
+
+    // ============================================================================
+    // Get Progress Tests
+    // ============================================================================
+
+    #[test]
+    fn test_get_progress_returns_none_for_unknown_student() {
+        let (env, client, _, _) = setup();
+        let unknown = Address::generate(&env);
+        let course = symbol_short!("RUST101");
+        assert!(client.get_progress(&unknown, &course).is_none());
+    }
+
+    #[test]
+    fn test_get_progress_returns_none_for_unknown_course() {
+        let (_, client, _, student) = setup();
+        let course = symbol_short!("UNKNOWN");
+        assert!(client.get_progress(&student, &course).is_none());
+    }
+
+    #[test]
+    fn test_get_progress_returns_recorded_data() {
+        let (_, client, _, student) = setup();
+        let course = symbol_short!("RUST101");
+        client.record_progress(&student, &student, &course, &75);
+        let rec = client.get_progress(&student, &course).unwrap();
+        assert_eq!(rec.student, student);
+        assert_eq!(rec.course_id, course);
+        assert_eq!(rec.progress_pct, 75);
+    }
+
+    // ============================================================================
+    // Completion Event Tests
+    // ============================================================================
+
+    #[test]
+    fn test_completion_event_emitted_at_100() {
+        let (env, client, _, student) = setup();
+        let course = symbol_short!("RUST101");
+        client.record_progress(&student, &student, &course, &100);
+        assert!(has_event(&env, "analytics", "completed"));
+    }
+
+    #[test]
+    fn test_completion_event_not_emitted_below_100() {
+        let (env, client, _, student) = setup();
+        let course = symbol_short!("RUST101");
+        client.record_progress(&student, &student, &course, &99);
+        assert!(!has_event(&env, "analytics", "completed"));
+    }
+
+    #[test]
+    fn test_progress_updated_event_always_emitted() {
+        let (env, client, _, student) = setup();
+        let course = symbol_short!("RUST101");
+        client.record_progress(&student, &student, &course, &50);
+        assert!(has_event(&env, "analytics", "prog_upd"));
+    }
+
+    #[test]
+    fn test_both_events_emitted_at_100() {
+        let (env, client, _, student) = setup();
+        let course = symbol_short!("RUST101");
+        client.record_progress(&student, &student, &course, &100);
+        assert!(has_event(&env, "analytics", "prog_upd"));
+        assert!(has_event(&env, "analytics", "completed"));
+    }
+
+    // ============================================================================
+    // Authorization Tests
+    // ============================================================================
+
+    #[test]
+    fn test_student_can_record_own_progress() {
+        let (_, client, _, student) = setup();
+        let course = symbol_short!("RUST101");
+        client.record_progress(&student, &student, &course, &75);
+        let rec = client.get_progress(&student, &course).unwrap();
+        assert_eq!(rec.progress_pct, 75);
+    }
+
+    #[test]
+    fn test_admin_can_record_student_progress() {
+        let (_, client, admin, student) = setup();
+        let course = symbol_short!("RUST101");
+        client.record_progress(&admin, &student, &course, &100);
+        let rec = client.get_progress(&student, &course).unwrap();
+        assert_eq!(rec.progress_pct, 100);
+    }
+
+    #[test]
+    #[should_panic(expected = "Unauthorized: must be student or admin")]
+    fn test_unauthorized_caller_rejected() {
+        let (env, client, _, student) = setup();
+        let rando = Address::generate(&env);
+        let course = symbol_short!("RUST101");
+        client.record_progress(&rando, &student, &course, &50);
+    }
+
+    #[test]
+    #[should_panic(expected = "Unauthorized: must be student or admin")]
+    fn test_third_party_cannot_record_for_other_student() {
+        let (env, client, _, student) = setup();
+        let other_student = Address::generate(&env);
+        let rando = Address::generate(&env);
+        let course = symbol_short!("RUST101");
+        client.record_progress(&rando, &other_student, &course, &50);
+    }
+
+    // ============================================================================
+    // Persistent Storage & TTL Tests
+    // ============================================================================
 
     #[test]
     fn test_record_survives_ledger_advance() {
@@ -340,13 +443,14 @@ mod tests {
         let course = symbol_short!("RUST101");
         set_ledger(&env, 1);
         client.record_progress(&student, &student, &course, &60);
-        // Advance well within TTL_EXTEND_TO (500 ledgers)
         set_ledger(&env, 400);
         let rec = client.get_progress(&student, &course).unwrap();
         assert_eq!(rec.progress_pct, 60);
     }
 
-    // ---- get_all_progress / secondary index ---------------------------------
+    // ============================================================================
+    // Secondary Index Tests (get_all_progress)
+    // ============================================================================
 
     #[test]
     fn test_get_all_progress_empty() {
@@ -382,7 +486,6 @@ mod tests {
     fn test_get_all_progress_no_duplicates_on_update() {
         let (_, client, _, student) = setup();
         let course = symbol_short!("RUST101");
-        // Record twice — secondary index should not duplicate
         client.record_progress(&student, &student, &course, &50);
         client.record_progress(&student, &student, &course, &75);
         let all = client.get_all_progress(&student);
@@ -396,12 +499,13 @@ mod tests {
         let other = Address::generate(&env);
         let course = symbol_short!("RUST101");
         client.record_progress(&student, &student, &course, &100);
-        // other student has no records
         let all = client.get_all_progress(&other);
         assert_eq!(all.len(), 0);
     }
 
-    // ---- reset_progress -----------------------------------------------------
+    // ============================================================================
+    // Reset Progress Tests
+    // ============================================================================
 
     #[test]
     fn test_admin_can_reset_progress() {
@@ -433,210 +537,5 @@ mod tests {
         let course = symbol_short!("RUST101");
         client.record_progress(&student, &student, &course, &80);
         client.reset_progress(&rando, &student, &course);
-    }
-
-    // ---- events -------------------------------------------------------------
-
-    #[test]
-    fn test_progress_updated_event_emitted() {
-        let (env, client, _, student) = setup();
-        let course = symbol_short!("RUST101");
-        client.record_progress(&student, &student, &course, &50);
-        assert!(has_event(&env, "analytics", "prog_upd"));
-    }
-
-    #[test]
-    fn test_completed_event_emitted_at_100() {
-        let (env, client, _, student) = setup();
-        let course = symbol_short!("RUST101");
-        client.record_progress(&student, &student, &course, &100);
-        assert!(has_event(&env, "analytics", "completed"));
-    }
-
-    #[test]
-    fn test_completed_event_not_emitted_below_100() {
-        let (env, client, _, student) = setup();
-        let course = symbol_short!("RUST101");
-        client.record_progress(&student, &student, &course, &99);
-        assert!(!has_event(&env, "analytics", "completed"));
-    }
-}
-
-// =============================================================================
-// Tests
-// =============================================================================
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use soroban_sdk::testutils::{Address as _, Events};
-    use soroban_sdk::{symbol_short, Env, FromVal, Symbol};
-
-    fn setup() -> (Env, AnalyticsContractClient<'static>, Address, Address) {
-        let env = Env::default();
-        env.mock_all_auths();
-        let id = env.register_contract(None, AnalyticsContract);
-        let client = AnalyticsContractClient::new(&env, &id);
-        let admin = Address::generate(&env);
-        let student = Address::generate(&env);
-        client.initialize(&admin);
-        (env, client, admin, student)
-    }
-
-    // ---- initialize ---------------------------------------------------------
-
-    #[test]
-    fn test_initialize_sets_admin() {
-        let (_, client, admin, _) = setup();
-        assert_eq!(client.get_admin(), admin);
-    }
-
-    #[test]
-    #[should_panic(expected = "Already initialized")]
-    fn test_double_initialize_panics() {
-        let (_, client, admin, _) = setup();
-        client.initialize(&admin);
-    }
-
-    // ---- set_admin ----------------------------------------------------------
-
-    #[test]
-    fn test_set_admin() {
-        let (env, client, old_admin, _) = setup();
-        let new_admin = Address::generate(&env);
-        client.set_admin(&new_admin);
-        assert_eq!(client.get_admin(), new_admin);
-        assert_ne!(client.get_admin(), old_admin);
-    }
-
-    #[test]
-    #[should_panic(expected = "Unauthorized: must be student or admin")]
-    fn test_set_admin_by_non_admin_panics() {
-        // Verify the logic guard: a rando who is neither student nor admin
-        // cannot record progress on behalf of a student.
-        let (env, client, _, student) = setup();
-        let rando = Address::generate(&env);
-        let course = symbol_short!("X");
-        client.record_progress(&rando, &student, &course, &10);
-    }
-
-    #[test]
-    #[should_panic(expected = "Unauthorized: must be student or admin")]
-    fn test_set_admin_caller_must_be_current_admin() {
-        // After transferring admin to new_admin, the old admin can no longer
-        // record progress on behalf of a third-party student.
-        let (env, client, old_admin, student) = setup();
-        let new_admin = Address::generate(&env);
-        client.set_admin(&new_admin); // old_admin → new_admin
-        let course = symbol_short!("X");
-        // old_admin is now just a rando — not admin, not student
-        client.record_progress(&old_admin, &student, &course, &10);
-    }
-
-    // ---- record_progress: student auth --------------------------------------
-
-    #[test]
-    fn test_student_can_record_own_progress() {
-        let (_, client, _, student) = setup();
-        let course = symbol_short!("RUST101");
-        client.record_progress(&student, &student, &course, &75);
-        let rec = client.get_progress(&student, &course).unwrap();
-        assert_eq!(rec.progress_pct, 75);
-        assert!(!rec.completed);
-    }
-
-    #[test]
-    fn test_admin_can_record_student_progress() {
-        let (_, client, admin, student) = setup();
-        let course = symbol_short!("RUST101");
-        client.record_progress(&admin, &student, &course, &100);
-        let rec = client.get_progress(&student, &course).unwrap();
-        assert_eq!(rec.progress_pct, 100);
-        assert!(rec.completed);
-    }
-
-    #[test]
-    #[should_panic(expected = "Unauthorized: must be student or admin")]
-    fn test_third_party_cannot_record_progress() {
-        let (env, client, _, student) = setup();
-        let rando = Address::generate(&env);
-        let course = symbol_short!("RUST101");
-        // rando is neither student nor admin
-        client.record_progress(&rando, &student, &course, &50);
-    }
-
-    // ---- progress validation ------------------------------------------------
-
-    #[test]
-    #[should_panic(expected = "Progress must be 0-100")]
-    fn test_progress_over_100_panics() {
-        let (_, client, _, student) = setup();
-        let course = symbol_short!("RUST101");
-        client.record_progress(&student, &student, &course, &101);
-    }
-
-    #[test]
-    fn test_completion_flag_set_at_100() {
-        let (_, client, _, student) = setup();
-        let course = symbol_short!("RUST101");
-        client.record_progress(&student, &student, &course, &100);
-        let rec = client.get_progress(&student, &course).unwrap();
-        assert!(rec.completed);
-    }
-
-    #[test]
-    fn test_get_progress_returns_none_for_unknown() {
-        let (_, client, _, student) = setup();
-        let course = symbol_short!("UNKNOWN");
-        assert!(client.get_progress(&student, &course).is_none());
-    }
-
-    // ---- events -------------------------------------------------------------
-
-    fn has_event(env: &Env, topic1: &str, topic2: &str) -> bool {
-        let t1 = Symbol::new(env, topic1);
-        let t2 = Symbol::new(env, topic2);
-        env.events().all().iter().any(|e| {
-            let topics = e.1;
-            if topics.len() < 2 {
-                return false;
-            }
-            let s0 = Symbol::from_val(env, &topics.get(0).unwrap());
-            let s1 = Symbol::from_val(env, &topics.get(1).unwrap());
-            s0 == t1 && s1 == t2
-        })
-    }
-
-    #[test]
-    fn test_progress_updated_event_emitted() {
-        let (env, client, _, student) = setup();
-        let course = symbol_short!("RUST101");
-        client.record_progress(&student, &student, &course, &50);
-        assert!(has_event(&env, "analytics", "prog_upd"), "progress_updated event not found");
-    }
-
-    #[test]
-    fn test_completed_event_emitted_at_100() {
-        let (env, client, _, student) = setup();
-        let course = symbol_short!("RUST101");
-        client.record_progress(&student, &student, &course, &100);
-        assert!(has_event(&env, "analytics", "completed"), "completed event not found");
-    }
-
-    #[test]
-    fn test_completed_event_not_emitted_below_100() {
-        let (env, client, _, student) = setup();
-        let course = symbol_short!("RUST101");
-        client.record_progress(&student, &student, &course, &99);
-        assert!(!has_event(&env, "analytics", "completed"), "completed event should not fire below 100");
-    }
-
-    #[test]
-    fn test_both_events_emitted_at_100() {
-        let (env, client, _, student) = setup();
-        let course = symbol_short!("RUST101");
-        client.record_progress(&student, &student, &course, &100);
-        assert!(has_event(&env, "analytics", "prog_upd"), "progress_updated event missing");
-        assert!(has_event(&env, "analytics", "completed"), "completed event missing");
     }
 }
