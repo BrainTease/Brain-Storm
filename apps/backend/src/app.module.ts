@@ -15,6 +15,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { LoggerModule } from './common/logger';
 import { HealthModule } from './health/health.module';
 import { MetricsModule } from './metrics/metrics.module';
+import { LeaderboardModule } from './leaderboard/leaderboard.module';
 import * as redisStore from 'cache-manager-redis-store';
 import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
 import configuration from './config/configuration';
@@ -74,6 +75,7 @@ import { validationSchema } from './config/validation.schema';
     StellarModule,
     ProgressModule,
     CredentialsModule,
+    LeaderboardModule,
     NotificationsModule,
     HealthModule,
     MetricsModule,
