@@ -26,11 +26,7 @@ async function getCourse(id: string): Promise<Course | null> {
 
 // ── generateMetadata ──────────────────────────────────────────────────────────
 
-export async function generateMetadata({
-  params,
-}: {
-  params: { id: string };
-}): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   const course = await getCourse(params.id);
 
   if (!course) {
@@ -41,7 +37,8 @@ export async function generateMetadata({
   }
 
   const title = `${course.title} | Brain-Storm`;
-  const description = course.description?.slice(0, 160) || 'Learn blockchain development on Stellar.';
+  const description =
+    course.description?.slice(0, 160) || 'Learn blockchain development on Stellar.';
   const canonical = `${SITE_URL}/courses/${course.id}`;
 
   return {

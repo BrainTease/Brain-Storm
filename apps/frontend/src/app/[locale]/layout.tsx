@@ -4,7 +4,8 @@ import { getMessages } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { routing } from '@/i18n/routing';
 import { ThemeProvider } from '@/components/ThemeProvider';
-import { Navbar } from '@/components/Navbar';
+import { Navbar } from '@/components/layout/Navbar';
+import { Footer } from '@/components/layout/Footer';
 import '../globals.css';
 
 export const metadata: Metadata = {
@@ -30,19 +31,17 @@ export default async function LocaleLayout({
 
   return (
     <html lang={locale} suppressHydrationWarning>
-      <body className="bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 transition-colors">
+      <body className="bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 transition-colors flex flex-col min-h-screen">
         <NextIntlClientProvider messages={messages}>
           <ThemeProvider>
-            {/* Skip-to-content — first focusable element on every page */}
             <a href="#main-content" className="skip-link">
               Skip to main content
             </a>
             <Navbar />
-            <div id="main-content" tabIndex={-1}>
+            <div id="main-content" tabIndex={-1} className="flex-1">
               {children}
             </div>
-            <Navbar />
-            {children}
+            <Footer />
           </ThemeProvider>
         </NextIntlClientProvider>
       </body>

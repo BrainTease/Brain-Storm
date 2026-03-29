@@ -20,9 +20,12 @@ export default function WalletSection({ userId, stellarPublicKey, onLinked, onUn
 
   useEffect(() => {
     if (stellarPublicKey) {
-      api.get(`/stellar/balance/${stellarPublicKey}`)
+      api
+        .get(`/stellar/balance/${stellarPublicKey}`)
         .then((r) => {
-          const bst = r.data.balances?.find((b: { asset_code: string; balance: string }) => b.asset_code === 'BST');
+          const bst = r.data.balances?.find(
+            (b: { asset_code: string; balance: string }) => b.asset_code === 'BST'
+          );
           setBstBalance(bst?.balance ?? '0');
         })
         .catch(() => setBstBalance('0'));
@@ -34,7 +37,11 @@ export default function WalletSection({ userId, stellarPublicKey, onLinked, onUn
     setFreighterMissing(false);
     try {
       const { isConnected } = await import('@stellar/freighter-api').then((m) => m.isConnected());
-      if (!isConnected) { setFreighterMissing(true); setLoading(false); return; }
+      if (!isConnected) {
+        setFreighterMissing(true);
+        setLoading(false);
+        return;
+      }
       const { publicKey } = await import('@stellar/freighter-api').then((m) => m.getPublicKey());
       await api.patch(`/users/${userId}`, { stellarPublicKey: publicKey });
       onLinked(publicKey);
@@ -59,8 +66,6 @@ export default function WalletSection({ userId, stellarPublicKey, onLinked, onUn
       <h2 id="wallet-heading" className="text-lg font-semibold text-gray-900 dark:text-white">
         {t('title')}
       </h2>
-    <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 space-y-4 bg-white dark:bg-gray-900">
-      <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{t('title')}</h2>
 
       {stellarPublicKey ? (
         <div className="space-y-3">
@@ -72,15 +77,15 @@ export default function WalletSection({ userId, stellarPublicKey, onLinked, onUn
             >
               {stellarPublicKey}
             </code>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">{t('linkedKey')}</p>
-            <code className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-2 py-1 rounded break-all">{stellarPublicKey}</code>
           </div>
           {bstBalance !== null && (
             <p className="text-sm text-gray-700 dark:text-gray-300">
               {t('bstBalance', { balance: Number(bstBalance).toLocaleString() })}
             </p>
           )}
-          <Button variant="outline" onClick={unlinkWallet}>{t('unlinkWallet')}</Button>
+          <Button variant="outline" onClick={unlinkWallet}>
+            {t('unlinkWallet')}
+          </Button>
         </div>
       ) : (
         <div className="space-y-3">
@@ -94,11 +99,6 @@ export default function WalletSection({ userId, stellarPublicKey, onLinked, onUn
                 rel="noreferrer"
                 className="underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
               >
-          <p className="text-sm text-gray-600 dark:text-gray-400">{t('description')}</p>
-          {freighterMissing && (
-            <p className="text-sm text-amber-600 dark:text-amber-400">
-              {t('freighterMissing')}{' '}
-              <a href="https://www.freighter.app/" target="_blank" rel="noreferrer" className="underline">
                 {t('installFreighter')}
               </a>
             </p>
@@ -109,6 +109,5 @@ export default function WalletSection({ userId, stellarPublicKey, onLinked, onUn
         </div>
       )}
     </section>
-    </div>
   );
 }
