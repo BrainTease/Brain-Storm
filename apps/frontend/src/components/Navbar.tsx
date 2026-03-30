@@ -23,6 +23,13 @@ export function Navbar() {
         </Link>
         <div className="flex items-center gap-4">
           <Link
+            href="/dashboard"
+            aria-current={isActive('/dashboard') ? 'page' : undefined}
+            className="text-sm text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+          >
+            Dashboard
+          </Link>
+          <Link
             href="/courses"
             aria-current={isActive('/courses') ? 'page' : undefined}
             className="text-sm text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
