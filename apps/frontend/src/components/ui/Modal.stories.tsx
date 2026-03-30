@@ -18,7 +18,10 @@ function ModalWrapper() {
   const [isOpen, setIsOpen] = useState(true);
   return (
     <>
-      <button onClick={() => setIsOpen(true)} className="px-4 py-2 bg-blue-600 text-white rounded-lg">
+      <button
+        onClick={() => setIsOpen(true)}
+        className="px-4 py-2 bg-blue-600 text-white rounded-lg"
+      >
         Open Modal
       </button>
       <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} title="Confirmation">

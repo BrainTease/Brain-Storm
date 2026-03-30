@@ -12,7 +12,9 @@ export function Badge({ children, variant = 'default', className = '' }: BadgePr
     error: 'bg-red-200 text-red-800 dark:bg-red-900 dark:text-red-100',
   };
   return (
-    <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${styles[variant]} ${className}`}>
+    <span
+      className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${styles[variant]} ${className}`}
+    >
       {children}
     </span>
   );

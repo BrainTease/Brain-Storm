@@ -11,13 +11,13 @@ describe('Button', () => {
 
   it('applies primary variant styles by default', () => {
     render(<Button>Primary</Button>);
-    expect(screen.getByRole('button')).toHaveClass('bg-blue');
+    expect(screen.getByRole('button')).toHaveClass('bg-blue-700');
   });
 
   it('applies outline variant styles', () => {
     render(<Button variant="outline">Outline</Button>);
     const btn = screen.getByRole('button');
-    expect(btn).toHaveClass('border');
+    expect(btn).toHaveClass('border-2');
   });
 
   it('calls onClick when clicked', async () => {
@@ -31,7 +31,11 @@ describe('Button', () => {
   it('is disabled when disabled prop is set', async () => {
     const user = userEvent.setup();
     const onClick = vi.fn();
-    render(<Button disabled onClick={onClick}>Disabled</Button>);
+    render(
+      <Button disabled onClick={onClick}>
+        Disabled
+      </Button>
+    );
     const btn = screen.getByRole('button');
     expect(btn).toBeDisabled();
     await user.click(btn);

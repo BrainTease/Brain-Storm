@@ -30,14 +30,16 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
         ? existing.map((l) =>
             l.lessonId === lessonId
               ? { ...l, completed, completedAt: completed ? new Date().toISOString() : undefined }
-              : l,
+              : l
           )
-        : [...existing, { lessonId, completed, completedAt: completed ? new Date().toISOString() : undefined }];
+        : [
+            ...existing,
+            { lessonId, completed, completedAt: completed ? new Date().toISOString() : undefined },
+          ];
       return { progress: { ...s.progress, [courseId]: updated } };
     }),
 
-  getCompleted: (courseId) =>
-    (get().progress[courseId] ?? []).filter((l) => l.completed).length,
+  getCompleted: (courseId) => (get().progress[courseId] ?? []).filter((l) => l.completed).length,
 
   reset: () => set({ progress: {} }),
 }));

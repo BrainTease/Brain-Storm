@@ -33,6 +33,19 @@ export class CredentialsService {
     return this.repo.find({ where: { userId }, order: { issuedAt: 'DESC' } });
   }
 
+  async findOne(id: string) {
+    const credential = await this.repo.findOne({
+      where: { id },
+      relations: ['user', 'course'],
+    });
+
+    if (!credential) {
+      throw new NotFoundException('Credential not found');
+    }
+
+    return credential;
+  }
+
   async verify(txHash: string) {
     const credential = await this.repo.findOne({ where: { txHash } });
     const onChain = await this.stellarService.verifyCredential(txHash);

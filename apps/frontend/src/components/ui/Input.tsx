@@ -3,9 +3,10 @@ import React from 'react';
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
+  helperText?: string;
 }
 
-export function Input({ label, error, id, className = '', ...props }: InputProps) {
+export function Input({ label, error, helperText, id, className = '', ...props }: InputProps) {
   const inputId = id ?? label?.toLowerCase().replace(/\s+/g, '-');
   return (
     <div className="flex flex-col gap-1">
@@ -17,7 +18,7 @@ export function Input({ label, error, id, className = '', ...props }: InputProps
       <input
         id={inputId}
         aria-invalid={!!error}
-        aria-describedby={error ? `${inputId}-error` : undefined}
+        aria-describedby={error ? `${inputId}-error` : helperText ? `${inputId}-helper` : undefined}
         className={`w-full border rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500
           disabled:opacity-50 disabled:cursor-not-allowed
@@ -28,6 +29,11 @@ export function Input({ label, error, id, className = '', ...props }: InputProps
       {error && (
         <p id={`${inputId}-error`} role="alert" className="text-xs text-red-600">
           {error}
+        </p>
+      )}
+      {!error && helperText && (
+        <p id={`${inputId}-helper`} className="text-xs text-gray-500 dark:text-gray-400">
+          {helperText}
         </p>
       )}
     </div>
