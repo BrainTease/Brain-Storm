@@ -52,11 +52,17 @@ function SortableModule({
   onUpdate: (id: string, title: string) => void;
   onRemove: (id: string) => void;
   onAddLesson: (moduleId: string) => void;
-  onUpdateLesson: (moduleId: string, lessonId: string, field: keyof LessonDraft, value: string | number) => void;
+  onUpdateLesson: (
+    moduleId: string,
+    lessonId: string,
+    field: keyof LessonDraft,
+    value: string | number
+  ) => void;
   onRemoveLesson: (moduleId: string, lessonId: string) => void;
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
-    useSortable({ id: mod.id });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: mod.id,
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -133,7 +139,9 @@ function SortableModule({
                 className="w-28 border rounded px-2 py-1 text-sm"
                 placeholder="Duration (min)"
                 value={lesson.durationMinutes || ''}
-                onChange={(e) => onUpdateLesson(mod.id, lesson.id, 'durationMinutes', Number(e.target.value))}
+                onChange={(e) =>
+                  onUpdateLesson(mod.id, lesson.id, 'durationMinutes', Number(e.target.value))
+                }
               />
             </div>
           </div>
@@ -171,16 +179,12 @@ export default function NewCoursePage() {
   // ── Module helpers ──────────────────────────────────────────────────────────
 
   const addModule = () =>
-    setModules((prev) => [
-      ...prev,
-      { id: crypto.randomUUID(), title: '', lessons: [] },
-    ]);
+    setModules((prev) => [...prev, { id: crypto.randomUUID(), title: '', lessons: [] }]);
 
   const updateModule = (id: string, title: string) =>
     setModules((prev) => prev.map((m) => (m.id === id ? { ...m, title } : m)));
 
-  const removeModule = (id: string) =>
-    setModules((prev) => prev.filter((m) => m.id !== id));
+  const removeModule = (id: string) => setModules((prev) => prev.filter((m) => m.id !== id));
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -203,32 +207,41 @@ export default function NewCoursePage() {
               ...m,
               lessons: [
                 ...m.lessons,
-                { id: crypto.randomUUID(), title: '', content: '', videoUrl: '', durationMinutes: 0 },
+                {
+                  id: crypto.randomUUID(),
+                  title: '',
+                  content: '',
+                  videoUrl: '',
+                  durationMinutes: 0,
+                },
               ],
             }
-          : m,
-      ),
+          : m
+      )
     );
 
   const updateLesson = (
     moduleId: string,
     lessonId: string,
     field: keyof LessonDraft,
-    value: string | number,
+    value: string | number
   ) =>
     setModules((prev) =>
       prev.map((m) =>
         m.id === moduleId
-          ? { ...m, lessons: m.lessons.map((l) => (l.id === lessonId ? { ...l, [field]: value } : l)) }
-          : m,
-      ),
+          ? {
+              ...m,
+              lessons: m.lessons.map((l) => (l.id === lessonId ? { ...l, [field]: value } : l)),
+            }
+          : m
+      )
     );
 
   const removeLesson = (moduleId: string, lessonId: string) =>
     setModules((prev) =>
       prev.map((m) =>
-        m.id === moduleId ? { ...m, lessons: m.lessons.filter((l) => l.id !== lessonId) } : m,
-      ),
+        m.id === moduleId ? { ...m, lessons: m.lessons.filter((l) => l.id !== lessonId) } : m
+      )
     );
 
   // ── Submit ──────────────────────────────────────────────────────────────────
@@ -289,7 +302,9 @@ export default function NewCoursePage() {
     <main className="max-w-3xl mx-auto p-8 space-y-8">
       <div>
         <h1 className="text-3xl font-bold">Create New Course</h1>
-        <p className="text-gray-500 mt-1 text-sm">Fill in the details, then build your modules and lessons.</p>
+        <p className="text-gray-500 mt-1 text-sm">
+          Fill in the details, then build your modules and lessons.
+        </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-8">
@@ -351,8 +366,15 @@ export default function NewCoursePage() {
           <h2 className="text-lg font-semibold border-b pb-2">Modules &amp; Lessons</h2>
           <p className="text-sm text-gray-500">Drag modules to reorder them.</p>
 
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-            <SortableContext items={modules.map((m) => m.id)} strategy={verticalListSortingStrategy}>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={modules.map((m) => m.id)}
+              strategy={verticalListSortingStrategy}
+            >
               <div className="space-y-4">
                 {modules.map((mod, i) => (
                   <SortableModule

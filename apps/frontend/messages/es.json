@@ -2,12 +2,18 @@
   "nav": {
     "brand": "Brain-Storm",
     "courses": "Cursos",
+    "dashboard": "Panel",
+    "credentials": "Credenciales",
     "profile": "Perfil",
+    "login": "Iniciar sesión",
+    "logout": "Cerrar sesión",
+    "openMenu": "Abrir menú",
+    "closeMenu": "Cerrar menú",
+    "userMenu": "Menú de usuario",
     "switchLight": "Cambiar a modo claro",
     "switchDark": "Cambiar a modo oscuro",
     "language": "Idioma",
     "siteNav": "Navegación del sitio"
-    "language": "Idioma"
   },
   "home": {
     "title": "Brain-Storm",
@@ -24,6 +30,17 @@
       "Intermediate": "Intermedio",
       "Advanced": "Avanzado"
     }
+  },
+  "credentials": {
+    "title": "Mis Credenciales",
+    "subtitle": "Certificados verificables en cadena obtenidos al completar cursos.",
+    "loading": "Cargando credenciales…",
+    "empty": "Aún no tienes credenciales. ¡Completa un curso para ganar tu primer certificado!",
+    "issued": "Emitido: {date}",
+    "tx": "Tx: {hash}",
+    "verify": "Verificar en Stellar ↗",
+    "share": "Compartir 🔗",
+    "completed": "Completado"
   },
   "profile": {
     "loading": "Cargando…",

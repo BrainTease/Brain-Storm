@@ -43,10 +43,14 @@ const NetworkStatus: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'healthy': return 'bg-green-500';
-      case 'unstable': return 'bg-yellow-500';
-      case 'down': return 'bg-red-500';
-      default: return 'bg-gray-500';
+      case 'healthy':
+        return 'bg-green-500';
+      case 'unstable':
+        return 'bg-yellow-500';
+      case 'down':
+        return 'bg-red-500';
+      default:
+        return 'bg-gray-500';
     }
   };
 
@@ -54,9 +58,11 @@ const NetworkStatus: React.FC = () => {
     <div className="fixed bottom-4 right-4 z-50 p-3 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 shadow-xl text-xs font-medium text-white flex flex-col gap-2">
       <div className="flex items-center justify-between gap-4">
         <span className="opacity-80 uppercase tracking-wider">Stellar {data.network}</span>
-        <div className={`w-2 h-2 rounded-full animate-pulse ${getStatusColor(data.horizon.status)}`} />
+        <div
+          className={`w-2 h-2 rounded-full animate-pulse ${getStatusColor(data.horizon.status)}`}
+        />
       </div>
-      
+
       <div className="flex flex-col gap-1">
         <div className="flex justify-between gap-8">
           <span className="opacity-60">Horizon</span>

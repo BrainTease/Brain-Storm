@@ -1,15 +1,22 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { server } from '../mocks/server';
 
 // Mock next/navigation and next-intl so the component renders in jsdom
-vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }), usePathname: () => '/' }));
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: vi.fn() }),
+  usePathname: () => '/',
+}));
 vi.mock('next-intl', () => ({
   useTranslations: () => (key: string) => key,
   useLocale: () => 'en',
 }));
 vi.mock('next/link', () => ({
-  default: ({ href, children, ...props }: any) => <a href={href} {...props}>{children}</a>,
+  default: ({ href, children, ...props }: any) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  ),
 }));
 
 // Use the non-locale courses page (pure component, no async server component)
@@ -41,7 +48,9 @@ describe('CoursesPage', () => {
 
   it('links point to correct course detail URLs', () => {
     render(<CoursesPage />);
-    const links = screen.getAllByRole('link').filter((l) => l.getAttribute('href')?.startsWith('/courses/'));
+    const links = screen
+      .getAllByRole('link')
+      .filter((l) => l.getAttribute('href')?.startsWith('/courses/'));
     expect(links[0]).toHaveAttribute('href', '/courses/1');
     expect(links[1]).toHaveAttribute('href', '/courses/2');
   });
