@@ -143,4 +143,30 @@ export class AuthController {
   revokeApiKey(@Body('id') id: string) {
     return this.authService.revokeApiKey(id);
   }
+
+  @Post('stellar-challenge')
+  @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @ApiOperation({ summary: 'Generate a challenge for Stellar wallet signing' })
+  @ApiResponse({ status: 200, description: 'Challenge generated successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  generateStellarChallenge(@Body('publicKey') publicKey: string) {
+    return this.authService.generateStellarChallenge(publicKey);
+  }
+
+  @Post('stellar-verify')
+  @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @ApiOperation({ summary: 'Verify Stellar wallet signature and link to account' })
+  @ApiResponse({ status: 200, description: 'Wallet linked successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid signature or challenge' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  verifyStellarSignature(
+    @Request() req,
+    @Body('publicKey') publicKey: string,
+    @Body('signature') signature: string,
+    @Body('challenge') challenge: string,
+  ) {
+    return this.authService.verifyStellarSignature(req.user.id, publicKey, signature, challenge);
+  }
 }

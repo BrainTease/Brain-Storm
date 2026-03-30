@@ -6,6 +6,7 @@ import { CredentialsController } from './credentials.controller';
 import { StellarModule } from '../stellar/stellar.module';
 import { KycModule } from '../kyc/kyc.module';
 import { CoursesModule } from '../courses/courses.module';
+import { CertificatePdfService } from './certificate-pdf.service';
 
 @Module({
   imports: [

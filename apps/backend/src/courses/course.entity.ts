@@ -4,6 +4,7 @@ import {
 } from 'typeorm';
 import { CourseModule } from './course-module.entity';
 import { User } from '../users/user.entity';
+import { Review } from './review.entity';
 
 @Entity('courses')
 export class Course {
@@ -40,6 +41,11 @@ export class Course {
 
   @OneToMany(() => CourseModule, (m) => m.course)
   modules: CourseModule[];
+
+  @OneToMany(() => Review, (review) => review.course)
+  reviews: Review[];
+
+  averageRating?: number | null;
 
   @CreateDateColumn()
   createdAt: Date;
