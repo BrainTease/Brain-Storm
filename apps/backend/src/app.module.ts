@@ -5,6 +5,7 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { SentryModule } from '@sentry/nestjs/setup';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { AuthModule } from './auth/auth.module';
 import { CoursesModule } from './courses/courses.module';
 import { UsersModule } from './users/users.module';
@@ -18,6 +19,10 @@ import { MetricsModule } from './metrics/metrics.module';
 import { KycModule } from './kyc/kyc.module';
 import { LeaderboardModule } from './leaderboard/leaderboard.module';
 import { ForumsModule } from './forums/forums.module';
+import { RecommendationsModule } from './recommendations/recommendations.module';
+import { EmailModule } from './email/email.module';
+import { AnalyticsModule } from './analytics/analytics.module';
+import { WebhooksModule } from './webhooks/webhooks.module';
 import * as redisStore from 'cache-manager-redis-store';
 import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
 import configuration from './config/configuration';
@@ -26,6 +31,7 @@ import { validationSchema } from './config/validation.schema';
 @Module({
   imports: [
     SentryModule.forRoot(),
+    EventEmitterModule.forRoot(),
     ConfigModule.forRoot({
       isGlobal: true,
       load: [configuration],
@@ -85,6 +91,10 @@ import { validationSchema } from './config/validation.schema';
     HealthModule,
     MetricsModule,
     KycModule,
+    RecommendationsModule,
+    EmailModule,
+    AnalyticsModule,
+    WebhooksModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
