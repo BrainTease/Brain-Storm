@@ -15,15 +15,7 @@ import { RefreshToken } from './refresh-token.entity';
 import { ApiKey } from './api-key.entity';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
-import { TOTP, generateSecret } from 'otplib';
-
-const authenticator = {
-  generateSecret: () => generateSecret(),
-  keyuri: (account: string, issuer: string, secret: string) =>
-    new TOTP().toURI({ label: account, issuer, secret } as any),
-  verify: ({ token, secret }: { token: string; secret: string }) =>
-    (new TOTP().verify as any)(token, { secret }) as boolean,
-};
+import { generateSecret, generateSync, verifySync, generateURI } from 'otplib';
 import * as qrcode from 'qrcode';
 import { EncryptionService } from '../common/encryption.service';
 
@@ -76,7 +68,6 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    // Check if user is banned
     if (user.isBanned) {
       throw new UnauthorizedException('Account is banned');
     }
@@ -85,14 +76,25 @@ export class AuthService {
       throw new ForbiddenException('Please verify your email before logging in');
     }
 
+    // Enforce 2FA for admin accounts
+    if (user.role === 'admin' && !user.mfaEnabled) {
+      throw new ForbiddenException('Admin accounts must enable 2FA before logging in');
+    }
+
     if (user.mfaEnabled) {
       if (!mfaToken) {
         return { mfa_required: true };
       }
+
+      // Try TOTP first, then backup codes
       const secret = this.encryptionService.decrypt(user.mfaSecret || '');
-      const isValid = authenticator.verify({ token: mfaToken, secret });
-      if (!isValid) {
-        throw new UnauthorizedException('Invalid MFA token');
+      const totpResult = verifySync({ token: mfaToken, secret });
+      const totpValid = totpResult && totpResult.valid;
+
+      if (!totpValid) {
+        // Try backup code
+        const used = await this.useBackupCode(user.id, mfaToken);
+        if (!used) throw new UnauthorizedException('Invalid MFA token');
       }
     }
 
@@ -210,8 +212,8 @@ export class AuthService {
     const user = await this.usersService.findById(userId);
     if (!user) throw new NotFoundException('User not found');
 
-    const secret = authenticator.generateSecret();
-    const otpauthUrl = authenticator.keyuri(user.email, 'Brain-Storm', secret);
+    const secret = generateSecret();
+    const otpauthUrl = generateURI({ label: user.email, issuer: 'Brain-Storm', secret });
     const qrCodeDataUrl = await qrcode.toDataURL(otpauthUrl);
 
     await this.usersService.update(userId, {
@@ -227,12 +229,16 @@ export class AuthService {
     if (!user || !user.mfaSecret) throw new BadRequestException('MFA setup not initiated');
 
     const secret = this.encryptionService.decrypt(user.mfaSecret);
-    const isValid = authenticator.verify({ token: code, secret });
+    const result = verifySync({ token: code, secret });
+    if (!result?.valid) throw new BadRequestException('Invalid MFA code');
 
-    if (!isValid) throw new BadRequestException('Invalid MFA code');
+    const backupCodes = this.generateBackupCodes();
+    await this.usersService.update(userId, {
+      mfaEnabled: true,
+      mfaBackupCodes: backupCodes.map((c) => crypto.createHash('sha256').update(c).digest('hex')),
+    });
 
-    await this.usersService.update(userId, { mfaEnabled: true });
-    return { message: 'MFA enabled successfully' };
+    return { message: 'MFA enabled successfully', backupCodes };
   }
 
   async disableMfa(userId: string, code: string) {
@@ -242,12 +248,27 @@ export class AuthService {
     }
 
     const secret = this.encryptionService.decrypt(user.mfaSecret);
-    const isValid = authenticator.verify({ token: code, secret });
+    const result = verifySync({ token: code, secret });
+    if (!result?.valid) throw new BadRequestException('Invalid MFA code');
 
-    if (!isValid) throw new BadRequestException('Invalid MFA code');
-
-    await this.usersService.update(userId, { mfaEnabled: false, mfaSecret: null });
+    await this.usersService.update(userId, { mfaEnabled: false, mfaSecret: null, mfaBackupCodes: [] });
     return { message: 'MFA disabled successfully' };
+  }
+
+  async regenerateBackupCodes(userId: string, totpCode: string) {
+    const user = await this.usersService.findById(userId);
+    if (!user || !user.mfaEnabled || !user.mfaSecret) {
+      throw new BadRequestException('MFA is not enabled');
+    }
+    const secret = this.encryptionService.decrypt(user.mfaSecret);
+    const result = verifySync({ token: totpCode, secret });
+    if (!result?.valid) throw new BadRequestException('Invalid MFA code');
+
+    const backupCodes = this.generateBackupCodes();
+    await this.usersService.update(userId, {
+      mfaBackupCodes: backupCodes.map((c) => crypto.createHash('sha256').update(c).digest('hex')),
+    });
+    return { backupCodes };
   }
 
   async generateApiKey(userId: string, name: string) {
@@ -353,5 +374,23 @@ export class AuthService {
 
   private hashToken(token: string) {
     return crypto.createHash('sha256').update(token).digest('hex');
+  }
+
+  private generateBackupCodes(count = 8): string[] {
+    return Array.from({ length: count }, () => crypto.randomBytes(5).toString('hex').toUpperCase());
+  }
+
+  private async useBackupCode(userId: string, code: string): Promise<boolean> {
+    const user = await this.usersService.findById(userId);
+    if (!user?.mfaBackupCodes?.length) return false;
+
+    const hash = crypto.createHash('sha256').update(code).digest('hex');
+    const idx = user.mfaBackupCodes.indexOf(hash);
+    if (idx === -1) return false;
+
+    const updated = [...user.mfaBackupCodes];
+    updated.splice(idx, 1);
+    await this.usersService.update(userId, { mfaBackupCodes: updated });
+    return true;
   }
 }

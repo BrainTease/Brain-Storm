@@ -169,6 +169,13 @@ export class AuthController {
     return this.authService.disableMfa(req.user.id, code);
   }
 
+  @Post('mfa/backup-codes/regenerate')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Regenerate backup codes (requires valid TOTP)' })
+  regenerateBackupCodes(@Req() req, @Body('code') code: string) {
+    return this.authService.regenerateBackupCodes(req.user.id, code);
+  }
+
   @Post('admin/api-keys')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')

@@ -47,6 +47,9 @@ export class User {
   @Column({ nullable: true })
   mfaSecret: string | null;
 
+  @Column({ type: 'simple-array', nullable: true, default: null })
+  mfaBackupCodes: string[] | null;
+
   @Column({ unique: true, nullable: true })
   referralCode: string;
 
