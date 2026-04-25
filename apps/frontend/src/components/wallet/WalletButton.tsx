@@ -44,6 +44,7 @@ export function WalletButton() {
     return (
       <div className="relative">
         <button
+          data-tour="wallet-button"
           className="flex items-center gap-2 border rounded-lg px-3 py-1.5 text-sm hover:bg-gray-50 transition-colors"
           onClick={() => setShowMenu((v) => !v)}
           aria-expanded={showMenu}
