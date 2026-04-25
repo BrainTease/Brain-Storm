@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import useSWR from 'swr';
+import useSWRInfinite from 'swr/infinite';
 import Link from 'next/link';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { useBookmarksStore } from '@/store/bookmarks.store';
@@ -112,12 +112,67 @@ function CompareCheckbox({ course }: { course: Course }) {
   );
 }
 
+function BackToTopButton() {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const toggleVisibility = () => {
+      if (window.pageYOffset > 300) {
+        setVisible(true);
+      } else {
+        setVisible(false);
+      }
+    };
+
+    window.addEventListener('scroll', toggleVisibility);
+    return () => window.removeEventListener('scroll', toggleVisibility);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    });
+  };
+
+  if (!visible) return null;
+
+  return (
+    <button
+      onClick={scrollToTop}
+      className="fixed bottom-8 right-8 bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-lg transition-colors z-50"
+      aria-label="Back to top"
+    >
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+      </svg>
+    </button>
+  );
+}
+
 export default function CoursesPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { fetchBookmarks } = useBookmarksStore();
+  const observerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { fetchBookmarks(); }, [fetchBookmarks]);
+
+  // Scroll position preservation
+  useEffect(() => {
+    const scrollPos = sessionStorage.getItem('courses-scroll-pos');
+    if (scrollPos) {
+      window.scrollTo(0, parseInt(scrollPos, 10));
+      sessionStorage.removeItem('courses-scroll-pos');
+    }
+
+    const handleBeforeUnload = () => {
+      sessionStorage.setItem('courses-scroll-pos', window.pageYOffset.toString());
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, []);
 
   // Read initial state from URL
   const [query, setQuery] = useState(() => searchParams.get('search') ?? '');
@@ -125,7 +180,6 @@ export default function CoursesPage() {
   const [category, setCategory] = useState(() => searchParams.get('category') ?? '');
   const [duration, setDuration] = useState(() => searchParams.get('duration') ?? '');
   const [sort, setSort] = useState<SortOption>(() => (searchParams.get('sort') as SortOption) ?? 'newest');
-  const [page, setPage] = useState(() => Number(searchParams.get('page') ?? '1') || 1);
 
   const debouncedQuery = useDebounce(query);
 
@@ -138,13 +192,11 @@ export default function CoursesPage() {
       const c = overrides.category ?? category;
       const d = overrides.duration ?? duration;
       const s = overrides.sort ?? sort;
-      const pg = overrides.page ?? '1';
       if (q.trim()) p.set('search', q.trim());
       if (l) p.set('level', l);
       if (c) p.set('category', c);
       if (d) p.set('duration', d);
       if (s !== 'newest') p.set('sort', s);
-      if (pg !== '1') p.set('page', pg);
       router.push(`/courses?${p.toString()}`, { scroll: false });
     },
     [debouncedQuery, level, category, duration, sort, router]
@@ -154,40 +206,62 @@ export default function CoursesPage() {
   const isFirstRender = useRef(true);
   useEffect(() => {
     if (isFirstRender.current) { isFirstRender.current = false; return; }
-    setPage(1);
-    pushUrl({ search: debouncedQuery, page: '1' });
+    pushUrl({ search: debouncedQuery });
   }, [debouncedQuery]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const apiParams = useMemo(() => {
+  const filterKey = `${debouncedQuery}-${level}-${category}-${duration}-${sort}`;
+
+  const getKey = (pageIndex: number, previousPageData: CoursesResponse | null) => {
+    if (previousPageData && previousPageData.data.length === 0) return null; // reached the end
     const p = new URLSearchParams();
     if (debouncedQuery.trim()) p.set('search', debouncedQuery.trim());
     if (level) p.set('level', level);
     if (category) p.set('category', category);
     if (duration) { const [min, max] = duration.split('-'); p.set('durationMin', min); p.set('durationMax', max); }
     p.set('sort', sort);
-    p.set('page', String(page));
+    p.set('page', String(pageIndex + 1));
     p.set('limit', '9');
-    return p;
-  }, [debouncedQuery, level, category, duration, sort, page]);
+    return `/courses?${p.toString()}`;
+  };
 
-  const { data, error, isLoading } = useSWR<CoursesResponse>(
-    `/courses?${apiParams.toString()}`,
+  const { data, error, isLoading, isValidating, size, setSize } = useSWRInfinite<CoursesResponse>(
+    getKey,
     fetcher,
-    { revalidateOnFocus: false }
+    { revalidateOnFocus: false, revalidateFirstPage: false }
   );
 
-  const courses = data?.data ?? [];
-  const total = data?.total ?? 0;
-  const limit = data?.limit ?? 9;
-  const totalPages = Math.max(1, Math.ceil(total / limit));
+  // Reset size when filters change
+  useEffect(() => {
+    setSize(1);
+  }, [filterKey, setSize]);
+
+  const courses = data ? data.flatMap(page => page.data) : [];
+  const isLoadingMore = isValidating && size > 1;
+  const hasMore = data && data[data.length - 1]?.data.length === 9; // assuming limit is 9
+
+  // Intersection observer for loading more
+  useEffect(() => {
+    if (!observerRef.current || !hasMore) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !isLoadingMore) {
+          setSize(size + 1);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    observer.observe(observerRef.current);
+    return () => observer.disconnect();
+  }, [hasMore, isLoadingMore, size, setSize]);
 
   function applyFilter(key: string, value: string) {
-    const updates: Record<string, string> = { [key]: value, page: '1' };
+    const updates: Record<string, string> = { [key]: value };
     if (key === 'level') setLevel(value);
     if (key === 'category') setCategory(value);
     if (key === 'duration') setDuration(value);
     if (key === 'sort') setSort(value as SortOption);
-    setPage(1);
     pushUrl(updates);
   }
 
@@ -200,7 +274,7 @@ export default function CoursesPage() {
   ];
 
   const clearAll = () => {
-    setLevel(''); setCategory(''); setDuration(''); setSort('newest'); setPage(1);
+    setLevel(''); setCategory(''); setDuration(''); setSort('newest');
     router.push('/courses', { scroll: false });
   };
 
@@ -216,8 +290,9 @@ export default function CoursesPage() {
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search courses…"
             className="w-full rounded-lg border border-gray-300 dark:border-gray-700 pl-10 pr-4 py-2.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            aria-label="Search courses"
           />
-          <svg className="absolute left-3 top-3 h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="absolute left-3 top-3 h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
           </svg>
         </div>
@@ -225,25 +300,29 @@ export default function CoursesPage() {
         {/* Filters Row */}
         <div className="flex flex-wrap gap-3">
           <select value={level} onChange={(e) => applyFilter('level', e.target.value)}
-            className="rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100">
+            className="rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100"
+            aria-label="Filter by level">
             <option value="">All Levels</option>
             {LEVELS.map((l) => <option key={l} value={l}>{l.charAt(0).toUpperCase() + l.slice(1)}</option>)}
           </select>
 
           <select value={category} onChange={(e) => applyFilter('category', e.target.value)}
-            className="rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100">
+            className="rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100"
+            aria-label="Filter by category">
             <option value="">All Categories</option>
             {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
 
           <select value={duration} onChange={(e) => applyFilter('duration', e.target.value)}
-            className="rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100">
+            className="rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100"
+            aria-label="Filter by duration">
             <option value="">Any Duration</option>
             {DURATIONS.map((d) => <option key={d.value} value={d.value}>{d.label}</option>)}
           </select>
 
           <select value={sort} onChange={(e) => applyFilter('sort', e.target.value)}
-            className="rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100">
+            className="rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100"
+            aria-label="Sort courses">
             {SORT_OPTIONS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
           </select>
         </div>
@@ -261,19 +340,24 @@ export default function CoursesPage() {
         )}
 
         {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700 dark:border-red-700 dark:bg-red-900/20">
+          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700 dark:border-red-700 dark:bg-red-900/20" role="alert">
             Error: {error.message}
           </div>
         )}
 
         {/* Results */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3" role="grid" aria-label="Courses list">
           {isLoading
             ? Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)
             : courses.length === 0
             ? <p className="col-span-3 text-gray-500 dark:text-gray-400">No courses match those filters.</p>
-            : courses.map((course) => (
-                <div key={course.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-5 bg-white dark:bg-gray-900 flex flex-col gap-2">
+            : courses.map((course, index) => (
+                <div
+                  key={course.id}
+                  className="border border-gray-200 dark:border-gray-700 rounded-lg p-5 bg-white dark:bg-gray-900 flex flex-col gap-2"
+                  ref={index === courses.length - 1 ? observerRef : null}
+                  role="gridcell"
+                >
                   <div className="flex items-start justify-between gap-2">
                     <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 leading-snug">{course.title}</h2>
                     <BookmarkButton course={course} />
@@ -302,22 +386,25 @@ export default function CoursesPage() {
               ))}
         </div>
 
-        {/* Pagination */}
-        <div className="flex items-center justify-between">
-          <button onClick={() => { setPage((p) => p - 1); pushUrl({ page: String(page - 1) }); }}
-            disabled={page <= 1 || isLoading}
-            className="rounded-lg border border-gray-300 dark:border-gray-700 px-4 py-2 text-sm disabled:opacity-50">
-            Previous
-          </button>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Page {page} of {totalPages} · {total} courses</p>
-          <button onClick={() => { setPage((p) => p + 1); pushUrl({ page: String(page + 1) }); }}
-            disabled={page >= totalPages || isLoading}
-            className="rounded-lg border border-gray-300 dark:border-gray-700 px-4 py-2 text-sm disabled:opacity-50">
-            Next
-          </button>
-        </div>
+        {/* Loading indicator */}
+        {isLoadingMore && (
+          <div className="flex justify-center py-8" aria-live="polite">
+            <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+              Loading more courses...
+            </div>
+          </div>
+        )}
+
+        {/* No more courses indicator */}
+        {!isLoading && !hasMore && courses.length > 0 && (
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+            You've reached the end of the list.
+          </div>
+        )}
       </main>
       <CompareBar />
+      <BackToTopButton />
     </ProtectedRoute>
   );
 }
