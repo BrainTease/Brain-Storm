@@ -5,6 +5,9 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import useSWR from 'swr';
 import Link from 'next/link';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
+import { useBookmarksStore } from '@/store/bookmarks.store';
+import { useCompareStore } from '@/store/compare.store';
+import { CompareBar } from '@/components/courses/CompareBar';
 
 const fetcher = (url: string) =>
   fetch(url).then((res) => {
@@ -70,9 +73,51 @@ function FilterChip({ label, onRemove }: { label: string; onRemove: () => void }
   );
 }
 
+function BookmarkButton({ course }: { course: Course }) {
+  const { isBookmarked, addBookmark, removeBookmark } = useBookmarksStore();
+  const bookmarked = isBookmarked(course.id);
+  return (
+    <button
+      onClick={(e) => {
+        e.preventDefault();
+        bookmarked ? removeBookmark(course.id) : addBookmark(course);
+      }}
+      aria-label={bookmarked ? 'Remove bookmark' : 'Bookmark course'}
+      aria-pressed={bookmarked}
+      className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+    >
+      <svg className={`w-4 h-4 ${bookmarked ? 'fill-blue-500 text-blue-500' : 'fill-none text-gray-400'}`} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+      </svg>
+    </button>
+  );
+}
+
+function CompareCheckbox({ course }: { course: Course }) {
+  const { isSelected, toggle, isFull } = useCompareStore();
+  const selected = isSelected(course.id);
+  const full = isFull();
+  return (
+    <label className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 cursor-pointer select-none">
+      <input
+        type="checkbox"
+        checked={selected}
+        disabled={!selected && full}
+        onChange={() => toggle(course)}
+        className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
+        aria-label={`Compare ${course.title}`}
+      />
+      Compare
+    </label>
+  );
+}
+
 export default function CoursesPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { fetchBookmarks } = useBookmarksStore();
+
+  useEffect(() => { fetchBookmarks(); }, [fetchBookmarks]);
 
   // Read initial state from URL
   const [query, setQuery] = useState(() => searchParams.get('search') ?? '');
@@ -229,7 +274,10 @@ export default function CoursesPage() {
             ? <p className="col-span-3 text-gray-500 dark:text-gray-400">No courses match those filters.</p>
             : courses.map((course) => (
                 <div key={course.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-5 bg-white dark:bg-gray-900 flex flex-col gap-2">
-                  <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 leading-snug">{course.title}</h2>
+                  <div className="flex items-start justify-between gap-2">
+                    <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 leading-snug">{course.title}</h2>
+                    <BookmarkButton course={course} />
+                  </div>
                   <div className="flex flex-wrap gap-1.5 text-xs text-gray-500 dark:text-gray-400">
                     <span className="capitalize">{course.level}</span>
                     {course.category && <><span>·</span><span>{course.category}</span></>}
@@ -240,6 +288,7 @@ export default function CoursesPage() {
                     <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">{course.description}</p>
                   )}
                   <div className="flex items-center justify-between mt-auto pt-2">
+                    <CompareCheckbox course={course} />
                     {course.price != null && (
                       <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                         {course.price === 0 ? 'Free' : `$${course.price}`}
@@ -268,6 +317,7 @@ export default function CoursesPage() {
           </button>
         </div>
       </main>
+      <CompareBar />
     </ProtectedRoute>
   );
 }

@@ -7,6 +7,7 @@ import { ClientProviders } from '@/components/ClientProviders';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
+import { GlobalShortcuts } from '@/components/GlobalShortcuts';
 import '../globals.css';
 
 export const metadata: Metadata = {
@@ -24,14 +25,15 @@ export default async function LocaleLayout({
 }) {
   const { locale } = await params;
 
-  if (!routing.locales.includes(locale as 'en' | 'es')) {
+  if (!routing.locales.includes(locale as (typeof routing.locales)[number])) {
     notFound();
   }
 
   const messages = await getMessages();
+  const dir = locale === 'ar' ? 'rtl' : 'ltr';
 
   return (
-    <html lang={locale} suppressHydrationWarning>
+    <html lang={locale} dir={dir} suppressHydrationWarning>
       <body className="bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 transition-colors duration-200 flex flex-col min-h-screen">
         <NextIntlClientProvider messages={messages}>
           <ThemeProvider>
@@ -40,6 +42,7 @@ export default async function LocaleLayout({
                 Skip to main content
               </a>
               <Navbar />
+              <GlobalShortcuts />
               <div id="main-content" tabIndex={-1} className="flex-1">
                 {children}
               </div>

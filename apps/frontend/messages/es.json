@@ -65,5 +65,20 @@
     "installFreighter": "Instalar Freighter",
     "connecting": "Conectando…",
     "linkWallet": "Vincular Cartera"
+  },
+  "bookmarks": {
+    "title": "Mis Favoritos",
+    "empty": "Aún no hay favoritos.",
+    "browseCourses": "Ver cursos →"
+  },
+  "shortcuts": {
+    "title": "Atajos de teclado",
+    "navigation": "Navegación",
+    "search": "Buscar",
+    "closeModal": "Cerrar ventana",
+    "showHelp": "Mostrar ayuda",
+    "playPause": "Reproducir / Pausar",
+    "seekBack": "Retroceder 10s",
+    "seekForward": "Avanzar 10s"
   }
 }

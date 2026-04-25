@@ -65,5 +65,20 @@
     "installFreighter": "Install Freighter",
     "connecting": "Connecting…",
     "linkWallet": "Link Wallet"
+  },
+  "bookmarks": {
+    "title": "My Bookmarks",
+    "empty": "No bookmarks yet.",
+    "browseCourses": "Browse courses →"
+  },
+  "shortcuts": {
+    "title": "Keyboard Shortcuts",
+    "navigation": "Navigation",
+    "search": "Search",
+    "closeModal": "Close modal",
+    "showHelp": "Show help",
+    "playPause": "Play / Pause",
+    "seekBack": "Seek back 10s",
+    "seekForward": "Seek forward 10s"
   }
 }

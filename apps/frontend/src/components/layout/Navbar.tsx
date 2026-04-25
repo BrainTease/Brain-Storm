@@ -124,6 +124,14 @@ export function Navbar() {
                       Profile
                     </Link>
                     <Link
+                      href="/bookmarks"
+                      role="menuitem"
+                      className="block px-4 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      onClick={() => setDropdownOpen(false)}
+                    >
+                      Bookmarks
+                    </Link>
+                    <Link
                       href="/credentials"
                       role="menuitem"
                       className="block px-4 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -212,6 +220,13 @@ export function Navbar() {
                 onClick={() => setMenuOpen(false)}
               >
                 Profile
+              </Link>
+              <Link
+                href="/bookmarks"
+                className="text-sm text-gray-700 dark:text-gray-200"
+                onClick={() => setMenuOpen(false)}
+              >
+                Bookmarks
               </Link>
               <Link
                 href="/credentials"

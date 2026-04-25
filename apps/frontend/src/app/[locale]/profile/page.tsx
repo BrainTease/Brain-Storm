@@ -2,12 +2,14 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useTranslations, useLocale } from 'next-intl';
 import api from '@/lib/api';
 import { Button } from '@/components/ui/Button';
 import WalletSection from './WalletSection';
 import ReferralSection from './ReferralSection';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
+import { useBookmarksStore } from '@/store/bookmarks.store';
 
 interface User {
   id: string;
@@ -37,6 +39,9 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const savedTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const { bookmarks, fetchBookmarks } = useBookmarksStore();
+
+  useEffect(() => { fetchBookmarks(); }, [fetchBookmarks]);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -189,6 +194,17 @@ export default function ProfilePage() {
             <p className="text-gray-500 dark:text-gray-400 text-sm">
               {user.email} · {user.role} · {t('joined', { date: joinedDate })}
             </p>
+            <div className="mt-2">
+              <Link
+                href="/bookmarks"
+                className="inline-flex items-center gap-1.5 text-sm text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                <svg className="w-4 h-4 fill-blue-500" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                </svg>
+                {bookmarks.length} Bookmarked Course{bookmarks.length !== 1 ? 's' : ''}
+              </Link>
+            </div>
           </div>
         </div>
 
