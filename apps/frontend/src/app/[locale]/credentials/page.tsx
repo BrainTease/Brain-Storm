@@ -7,6 +7,7 @@ import api from '@/lib/api';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Spinner } from '@/components/ui/Spinner';
+import { CertificateViewer } from '@/components/courses/CertificateViewer';
 
 interface Credential {
   id: string;
@@ -14,6 +15,7 @@ interface Credential {
   courseName: string;
   issuedAt: string;
   txHash: string;
+  studentName?: string;
 }
 
 export default function CredentialsPage() {
@@ -21,6 +23,7 @@ export default function CredentialsPage() {
   const router = useRouter();
   const [credentials, setCredentials] = useState<Credential[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedCert, setSelectedCert] = useState<Credential | null>(null);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -70,31 +73,35 @@ export default function CredentialsPage() {
                 Tx: {cred.txHash}
               </p>
               <div className="flex gap-3 mt-auto pt-2 flex-wrap">
+                <button
+                  onClick={() => setSelectedCert({ ...cred, studentName: user?.name || 'Student' })}
+                  className="text-sm text-blue-600 dark:text-blue-400 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
+                >
+                  View Certificate
+                </button>
                 <a
                   href={`https://stellar.expert/explorer/testnet/tx/${cred.txHash}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm text-blue-600 dark:text-blue-400 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
-                >
-                  Verify on Stellar ↗
-                </a>
-                <a
-                  href={`${window.location.origin}/credentials/${cred.id}`}
                   className="text-sm text-gray-500 dark:text-gray-400 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    navigator.clipboard.writeText(
-                      `${window.location.origin}/credentials/${cred.id}`
-                    );
-                  }}
-                  title="Copy shareable link"
                 >
-                  Share 🔗
+                  Verify ↗
                 </a>
               </div>
             </Card>
           ))}
         </div>
+      )}
+
+      {selectedCert && (
+        <CertificateViewer
+          certificate={{
+            ...selectedCert,
+            studentName: selectedCert.studentName || user?.name || 'Student',
+          }}
+          isOpen={!!selectedCert}
+          onClose={() => setSelectedCert(null)}
+        />
       )}
     </main>
   );
