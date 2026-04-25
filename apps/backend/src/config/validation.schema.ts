@@ -51,4 +51,12 @@ export const validationSchema = Joi.object({
 
   // KYC
   KYC_PROVIDER_API_KEY: Joi.string().allow('').default(''),
+
+  // AWS
+  AWS_REGION: Joi.string().default('us-east-1'),
+  AWS_ACCESS_KEY_ID: Joi.string().allow('').default(''),
+  AWS_SECRET_ACCESS_KEY: Joi.string().allow('').default(''),
+
+  // Moderation
+  MODERATION_TOXICITY_THRESHOLD: Joi.number().min(0).max(1).default(0.7),
 });

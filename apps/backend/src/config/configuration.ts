@@ -57,4 +57,14 @@ export default () => ({
   kyc: {
     providerApiKey: process.env.KYC_PROVIDER_API_KEY || '',
   },
+
+  aws: {
+    region: process.env.AWS_REGION || 'us-east-1',
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
+  },
+
+  moderation: {
+    toxicityThreshold: parseFloat(process.env.MODERATION_TOXICITY_THRESHOLD || '0.7'),
+  },
 });

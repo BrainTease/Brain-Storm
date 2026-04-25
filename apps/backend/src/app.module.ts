@@ -23,6 +23,7 @@ import { RecommendationsModule } from './recommendations/recommendations.module'
 import { EmailModule } from './email/email.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
+import { ModerationModule } from './moderation/moderation.module';
 import * as redisStore from 'cache-manager-redis-store';
 import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
 import configuration from './config/configuration';
@@ -95,6 +96,7 @@ import { validationSchema } from './config/validation.schema';
     EmailModule,
     AnalyticsModule,
     WebhooksModule,
+    ModerationModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

@@ -6,6 +6,8 @@ import { CreatePostDto } from './dto/create-post.dto';
 import { CreateReplyDto } from './dto/create-reply.dto';
 import { Post } from './post.entity';
 import { Reply } from './reply.entity';
+import { ModerationService } from '../moderation/moderation.service';
+import { ContentType } from '../moderation/moderation.enums';
 
 @Injectable()
 export class ForumsService {
@@ -15,7 +17,8 @@ export class ForumsService {
     @InjectRepository(Reply)
     private readonly replyRepo: Repository<Reply>,
     @InjectRepository(Course)
-    private readonly courseRepo: Repository<Course>
+    private readonly courseRepo: Repository<Course>,
+    private readonly moderationService: ModerationService
   ) {}
 
   async findPostsByCourse(courseId: string) {
@@ -43,7 +46,14 @@ export class ForumsService {
       isPinned: Boolean(dto.isPinned && this.canModerate(role)),
     });
 
-    return this.postRepo.save(post);
+    const saved = await this.postRepo.save(post);
+    await this.moderationService.analyzeContent(
+      ContentType.POST,
+      saved.id,
+      `${saved.title} ${saved.content}`,
+      userId
+    );
+    return saved;
   }
 
   async createReply(postId: string, userId: string, role: string, dto: CreateReplyDto) {
@@ -74,6 +84,12 @@ export class ForumsService {
       await this.postRepo.save(post);
     }
 
+    await this.moderationService.analyzeContent(
+      ContentType.REPLY,
+      savedReply.id,
+      savedReply.content,
+      userId
+    );
     return savedReply;
   }
 
