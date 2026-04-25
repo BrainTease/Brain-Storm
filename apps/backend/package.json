@@ -39,6 +39,7 @@
     "@sentry/profiling-node": "^8.55.1",
     "@stellar/stellar-sdk": "^12.0.0",
     "@willsoto/nestjs-prometheus": "^6.0.0",
+    "adm-zip": "^0.5.16",
     "bcrypt": "^5.1.0",
     "cache-manager": "^7.2.8",
     "cache-manager-redis-store": "^3.0.1",
@@ -59,7 +60,8 @@
     "sanitize-html": "^2.13.0",
     "socket.io": "^4.8.3",
     "typeorm": "^0.3.0",
-    "winston": "^3.11.0"
+    "winston": "^3.11.0",
+    "xml2js": "^0.6.2"
   },
   "devDependencies": {
     "@eslint/js": "^8.56.0",
@@ -67,10 +69,13 @@
     "@nestjs/testing": "^10.4.22",
     "@pact-foundation/pact": "^16.3.0",
     "@testcontainers/postgresql": "^10.0.0",
+    "@types/adm-zip": "^0.5.7",
     "@types/jest": "^29.0.0",
+    "@types/multer": "^1.4.12",
     "@types/node": "^20.0.0",
     "@types/nodemailer": "^6.4.0",
     "@types/sanitize-html": "^2.13.0",
+    "@types/xml2js": "^0.4.14",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
     "eslint": "^8.56.0",
