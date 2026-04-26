@@ -22,6 +22,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { CourseQueryDto } from './dto/course-query.dto';
+import { ScheduleCourseDto } from './dto/schedule-course.dto';
 
 @ApiTags('courses')
 @Controller('courses')
@@ -133,4 +134,67 @@ export class CoursesController {
   delete(@Param('id') id: string) {
     return this.coursesService.delete(id);
   }
+
+  @Post(':id/schedule')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin', 'instructor')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Schedule a course for future publication' })
+  @ApiBody({ type: ScheduleCourseDto })
+  @ApiResponse({ status: 200, description: 'Course scheduled' })
+  @ApiResponse({ status: 400, description: 'scheduledAt must be in the future' })
+  schedule(@Param('id') id: string, @Body() dto: ScheduleCourseDto) {
+    const scheduledAt = resolveScheduledAt(dto.scheduledAt, dto.timezone);
+    return this.coursesService.scheduleCourse(id, scheduledAt);
+  }
+
+  @Post(':id/publish')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin', 'instructor')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Immediately publish a course' })
+  @ApiResponse({ status: 200, description: 'Course published' })
+  publishNow(@Param('id') id: string) {
+    return this.coursesService.publishNow(id);
+  }
+}
+
+/**
+ * Converts an ISO datetime string to a UTC Date, optionally interpreting it
+ * in the given IANA timezone (e.g. "America/New_York").
+ *
+ * If the input already carries a UTC offset (e.g. "2026-05-01T10:00:00-05:00")
+ * the timezone parameter is ignored — the offset in the string takes precedence.
+ */
+function resolveScheduledAt(isoString: string, timezone?: string): Date {
+  // If the string already has an explicit offset, parse it directly.
+  if (/[+-]\d{2}:\d{2}$|Z$/.test(isoString)) {
+    return new Date(isoString);
+  }
+
+  if (!timezone) {
+    return new Date(isoString);
+  }
+
+  // Use Intl to find the UTC offset for the given timezone at the requested moment.
+  const naive = new Date(isoString);
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: timezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  });
+
+  // Re-parse the formatted local time back to UTC via the offset trick.
+  const parts = formatter.formatToParts(naive);
+  const get = (type: string) => Number(parts.find((p) => p.type === type)?.value ?? 0);
+  const localDate = new Date(
+    Date.UTC(get('year'), get('month') - 1, get('day'), get('hour'), get('minute'), get('second')),
+  );
+  const offsetMs = localDate.getTime() - naive.getTime();
+  return new Date(naive.getTime() - offsetMs);
 }

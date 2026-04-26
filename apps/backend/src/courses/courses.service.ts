@@ -1,10 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Cache } from 'cache-manager';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Inject } from '@nestjs/common';
-import { Course } from './course.entity';
+import { Course, CourseStatus } from './course.entity';
 import { CourseQueryDto } from './dto/course-query.dto';
 import { SearchService } from '../search/search.service';
 
@@ -94,5 +94,30 @@ export class CoursesService {
 
   private async invalidateCache() {
     await this.cacheManager.del(this.CACHE_KEY);
+  }
+
+  async scheduleCourse(id: string, scheduledAt: Date): Promise<Course> {
+    if (scheduledAt <= new Date()) {
+      throw new BadRequestException('scheduledAt must be in the future');
+    }
+    const course = await this.findOne(id);
+    return this.repo.save({
+      ...course,
+      status: CourseStatus.SCHEDULED,
+      scheduledAt,
+      isPublished: false,
+    });
+  }
+
+  async publishNow(id: string): Promise<Course> {
+    const course = await this.findOne(id);
+    const now = new Date();
+    return this.repo.save({
+      ...course,
+      status: CourseStatus.PUBLISHED,
+      isPublished: true,
+      publishedAt: now,
+      scheduledAt: course.scheduledAt ?? null,
+    });
   }
 }
