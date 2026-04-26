@@ -55,4 +55,23 @@ export class MailService {
              <a href="${verifyUrl}">${verifyUrl}</a>`,
     });
   }
+
+  async sendReminderEmail(to: string, username: string, courseTitle: string) {
+    const frontendUrl = this.configService.get<string>('frontend.url');
+
+    if (!this.configService.get<boolean>('mail.enabled')) {
+      this.logger.log(`[DEV] Reminder email for ${to} about course ${courseTitle}`);
+      return;
+    }
+
+    await this.transporter.sendMail({
+      from: this.configService.get<string>('mail.from'),
+      to,
+      subject: `Continue learning: ${courseTitle}`,
+      html: `<p>Hi ${username},</p>
+             <p>We noticed you haven't made progress in <strong>${courseTitle}</strong> recently.</p>
+             <p>Continue your learning journey and earn rewards!</p>
+             <a href="${frontendUrl}/courses">View Courses</a>`,
+    });
+  }
 }
