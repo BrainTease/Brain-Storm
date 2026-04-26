@@ -29,7 +29,10 @@ import { SearchModule } from './search/search.module';
 import { BatchModule } from './batch/batch.module';
 import { ApiUsageModule } from './api-usage/api-usage.module';
 import { ApiUsageInterceptor } from './api-usage/api-usage.interceptor';
-import { SurveysModule } from './surveys/surveys.module';
+import { QuizzesModule } from './quizzes/quizzes.module';
+import { CohortsModule } from './cohorts/cohorts.module';
+import { CdnModule } from './cdn/cdn.module';
+import { AccessControlModule } from './access-control/access-control.module';
 import * as redisStore from 'cache-manager-redis-store';
 import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
 import configuration from './config/configuration';
@@ -107,7 +110,10 @@ import { validationSchema } from './config/validation.schema';
     SearchModule,
     BatchModule,
     ApiUsageModule,
-    SurveysModule,
+    QuizzesModule,
+    CohortsModule,
+    CdnModule,
+    AccessControlModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },
