@@ -1,6 +1,8 @@
 #![no_std]
 use soroban_sdk::{contract, contractimpl, contracttype, symbol_short, Address, BytesN, Env};
 
+pub mod pausable;
+
 #[contracttype]
 #[derive(Clone, PartialEq)]
 pub enum Role {
@@ -99,6 +101,32 @@ impl SharedContract {
 
         env.deployer()
             .update_current_contract_wasm(new_wasm_hash);
+    }
+
+    // -------------------------------------------------------------------------
+    // Emergency Pause
+    // -------------------------------------------------------------------------
+
+    pub fn pause_contract(env: Env, admin: Address, auto_unpause_ledgers: u32) {
+        admin.require_auth();
+        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
+        assert!(admin == stored_admin, "Only admin can pause");
+        pausable::pause(&env, &admin, auto_unpause_ledgers);
+    }
+
+    pub fn unpause_contract(env: Env, admin: Address) {
+        admin.require_auth();
+        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
+        assert!(admin == stored_admin, "Only admin can unpause");
+        pausable::unpause(&env, &admin);
+    }
+
+    pub fn is_contract_paused(env: Env) -> bool {
+        pausable::is_paused(&env)
+    }
+
+    pub fn get_pause_state(env: Env) -> pausable::PauseState {
+        pausable::get_pause_state(&env)
     }
 }
 

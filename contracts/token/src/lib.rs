@@ -4,6 +4,7 @@ use soroban_sdk::{
 };
 
 pub mod staking;
+pub mod airdrop;
 
 // =============================================================================
 // Storage keys
@@ -565,6 +566,47 @@ impl TokenContract {
             .persistent()
             .get(&DataKey::VestingScheduleCount(beneficiary))
             .unwrap_or(0)
+    }
+
+    // -------------------------------------------------------------------------
+    // Airdrop
+    // -------------------------------------------------------------------------
+
+    pub fn create_airdrop(
+        env: Env,
+        admin: Address,
+        total_amount: i128,
+        expiry_ledger: u32,
+        merkle_root: [u8; 32],
+    ) -> u32 {
+        airdrop::create_airdrop(&env, &admin, total_amount, expiry_ledger, merkle_root)
+    }
+
+    pub fn claim_airdrop(
+        env: Env,
+        campaign_id: u32,
+        recipient: Address,
+        amount: i128,
+        proof: soroban_sdk::Vec<[u8; 32]>,
+    ) -> bool {
+        let claimed = airdrop::claim_airdrop(&env, campaign_id, &recipient, amount, proof);
+        if claimed {
+            Self::add_balance(&env, &recipient, amount);
+            Self::add_supply(&env, amount);
+        }
+        claimed
+    }
+
+    pub fn recover_unclaimed_airdrop(env: Env, admin: Address, campaign_id: u32) -> i128 {
+        airdrop::recover_unclaimed(&env, &admin, campaign_id)
+    }
+
+    pub fn get_airdrop_campaign(env: Env, campaign_id: u32) -> Option<airdrop::AirdropCampaign> {
+        airdrop::get_airdrop_campaign(&env, campaign_id)
+    }
+
+    pub fn has_claimed_airdrop(env: Env, campaign_id: u32, recipient: Address) -> bool {
+        airdrop::has_claimed(&env, campaign_id, &recipient)
     }
 
     // -------------------------------------------------------------------------
