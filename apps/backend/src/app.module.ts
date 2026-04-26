@@ -30,6 +30,7 @@ import { BatchModule } from './batch/batch.module';
 import { ApiUsageModule } from './api-usage/api-usage.module';
 import { ApiUsageInterceptor } from './api-usage/api-usage.interceptor';
 import { QuizzesModule } from './quizzes/quizzes.module';
+import { CohortsModule } from './cohorts/cohorts.module';
 import * as redisStore from 'cache-manager-redis-store';
 import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
 import configuration from './config/configuration';
@@ -108,6 +109,7 @@ import { validationSchema } from './config/validation.schema';
     BatchModule,
     ApiUsageModule,
     QuizzesModule,
+    CohortsModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },
