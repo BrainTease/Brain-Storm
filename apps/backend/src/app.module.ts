@@ -3,7 +3,9 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CacheModule } from '@nestjs/cache-manager';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { SentryModule } from '@sentry/nestjs/setup';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { AuthModule } from './auth/auth.module';
 import { CoursesModule } from './courses/courses.module';
 import { UsersModule } from './users/users.module';
@@ -11,12 +13,22 @@ import { StellarModule } from './stellar/stellar.module';
 import { ProgressModule } from './progress/progress.module';
 import { CredentialsModule } from './credentials/credentials.module';
 import { NotificationsModule } from './notifications/notifications.module';
-import { LoggerModule } from './common/logger';
+import { LoggerModule } from './common/logger'; // eslint-disable-line @typescript-eslint/no-unused-vars
 import { HealthModule } from './health/health.module';
 import { MetricsModule } from './metrics/metrics.module';
-import { RemindersModule } from './reminders/reminders.module';
-import { CertificatesModule } from './certificates/certificates.module';
-import { PayoutsModule } from './payouts/payouts.module';
+import { KycModule } from './kyc/kyc.module';
+import { LeaderboardModule } from './leaderboard/leaderboard.module';
+import { ForumsModule } from './forums/forums.module';
+import { RecommendationsModule } from './recommendations/recommendations.module';
+import { EmailModule } from './email/email.module';
+import { AnalyticsModule } from './analytics/analytics.module';
+import { WebhooksModule } from './webhooks/webhooks.module';
+import { ModerationModule } from './moderation/moderation.module';
+import { ImportExportModule } from './import-export/import-export.module';
+import { SearchModule } from './search/search.module';
+import { BatchModule } from './batch/batch.module';
+import { ApiUsageModule } from './api-usage/api-usage.module';
+import { ApiUsageInterceptor } from './api-usage/api-usage.interceptor';
 import * as redisStore from 'cache-manager-redis-store';
 import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
 import configuration from './config/configuration';
@@ -24,6 +36,8 @@ import { validationSchema } from './config/validation.schema';
 
 @Module({
   imports: [
+    SentryModule.forRoot(),
+    EventEmitterModule.forRoot(),
     ConfigModule.forRoot({
       isGlobal: true,
       load: [configuration],
@@ -66,7 +80,9 @@ import { validationSchema } from './config/validation.schema';
             limit: config.get<number>('throttle.limit') || 100,
           },
         ],
-        storage: new ThrottlerStorageRedisService(config.get<string>('redis.url') || 'redis://localhost:6379'),
+        storage: new ThrottlerStorageRedisService(
+          config.get<string>('redis.url') || 'redis://localhost:6379'
+        ),
       }),
     }),
     AuthModule,
@@ -75,13 +91,28 @@ import { validationSchema } from './config/validation.schema';
     StellarModule,
     ProgressModule,
     CredentialsModule,
+    LeaderboardModule,
+    ForumsModule,
     NotificationsModule,
     RemindersModule,
     CertificatesModule,
     PayoutsModule,
     HealthModule,
     MetricsModule,
+    KycModule,
+    RecommendationsModule,
+    EmailModule,
+    AnalyticsModule,
+    WebhooksModule,
+    ModerationModule,
+    ImportExportModule,
+    SearchModule,
+    BatchModule,
+    ApiUsageModule,
   ],
-  providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
+  providers: [
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
+    { provide: APP_INTERCEPTOR, useClass: ApiUsageInterceptor },
+  ],
 })
 export class AppModule {}

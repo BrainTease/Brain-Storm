@@ -10,6 +10,12 @@ Brain-Storm is a full-stack, monorepo education platform that leverages the Stel
 
 The platform combines a modern web frontend, a scalable REST API backend, and a suite of Soroban smart contracts — all living in a single monorepo for streamlined development and deployment.
 
+## Architecture
+
+![Brain-Storm System Architecture](./docs/architecture.svg)
+
+> Full diagram with data-flow annotations: [`docs/architecture.md`](./docs/architecture.md)
+
 ---
 
 ## Monorepo Structure
@@ -25,6 +31,10 @@ brain-storm/
 │   └── shared/            # RBAC & shared utilities (Rust/Soroban)
 ├── scripts/               # Build and deploy scripts
 ├── docs/                  # Extended documentation
+│   ├── api-rate-limiting.md
+│   ├── community-moderation.md
+│   ├── catastrophic-recovery.md
+│   └── kyc-verification.md
 ├── .github/workflows/     # CI/CD pipelines
 ├── Cargo.toml             # Rust workspace
 ├── package.json           # Node.js workspace root
@@ -229,17 +239,19 @@ All API endpoints are prefixed with `/v1` for versioning.
 
 **Interactive API Documentation:**
 - Local: `http://localhost:3000/api/docs`
-- Production: [https://nonso-eze.github.io/Brain-Storm/](https://nonso-eze.github.io/Brain-Storm/) (to be deployed)
+- Production: [https://nonso-eze.github.io/Brain-Storm/](https://nonso-eze.github.io/Brain-Storm/)
 
 ---
 
 ## CI/CD
 
-GitHub Actions workflows in `.github/workflows/ci.yml` run on every push and PR:
+GitHub Actions workflows in `.github/workflows/` run on every push and PR:
 
-- **Backend**: install → build → test
-- **Frontend**: install → build
+- **Backend**: install → build → test → lint
+- **Frontend**: install → build → lint
 - **Contracts**: `cargo test` → `cargo fmt --check` → `cargo clippy`
+- **API Docs**: auto-deploy Swagger UI to GitHub Pages on push to `main`
+- **Release**: semantic versioning via release-please, auto-generated `CHANGELOG.md`
 
 ---
 

@@ -1,38 +1,36 @@
 ---
 name: Bug Report
 about: Create a report to help us improve Brain-Storm
-title: 'fix: [Brief Description]'
+title: 'fix: '
 labels: 'bug'
 assignees: ''
-
 ---
 
-## Describe the bug
+## Describe the Bug
+
 A clear and concise description of what the bug is.
 
-## To Reproduce
-Steps to reproduce the behavior:
+## Steps to Reproduce
+
 1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
+2. Call endpoint / click '...'
+3. See error
 
-## Expected behavior
-A clear and concise description of what you expected to happen.
+## Expected Behaviour
 
-## Screenshots
-If applicable, add screenshots to help explain your problem.
+What you expected to happen.
 
-## Desktop (please complete the following information):
- - OS: [e.g. iOS]
- - Browser: [e.g. chrome, safari]
- - Version: [e.g. 22]
+## Actual Behaviour
 
-## Smartphone (please complete the following information):
- - Device: [e.g. iPhone6]
- - OS: [e.g. iOS8.1]
- - Browser: [e.g. stock browser, safari]
- - Version: [e.g. 8]
+What actually happened. Include error messages, stack traces, or screenshots.
 
-## Additional context
-Add any other context about the problem here.
+## Environment
+
+- **Component**: `backend` / `frontend` / `contracts`
+- **OS**: e.g. Ubuntu 22.04
+- **Node.js version**: e.g. 18.19.0
+- **Browser** (frontend only): e.g. Chrome 123
+
+## Additional Context
+
+Any other context, logs, or related issues.

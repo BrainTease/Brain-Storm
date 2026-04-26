@@ -6,6 +6,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UsersModule } from '../users/users.module';
 import { MailModule } from '../mail/mail.module';
 import { AuthService } from './auth.service';
+import { StellarAuthService } from './stellar-auth.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './jwt.strategy';
 import { JwtAuthGuard } from './jwt-auth.guard';
@@ -32,7 +33,16 @@ import { ApiKeyAuthGuard } from './api-key-auth.guard';
       }),
     }),
   ],
-  providers: [AuthService, JwtStrategy, JwtAuthGuard, RolesGuard, EncryptionService, ApiKeyStrategy, ApiKeyAuthGuard],
+  providers: [
+    AuthService,
+    StellarAuthService,
+    JwtStrategy,
+    JwtAuthGuard,
+    RolesGuard,
+    EncryptionService,
+    ApiKeyStrategy,
+    ApiKeyAuthGuard,
+  ],
   controllers: [AuthController],
   exports: [JwtAuthGuard, RolesGuard, ApiKeyAuthGuard],
 })

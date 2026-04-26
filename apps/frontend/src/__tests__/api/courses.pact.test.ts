@@ -23,15 +23,14 @@ describe('GET /courses', () => {
       .uponReceiving('a request for all courses')
       .withRequest('GET', '/courses')
       .willRespondWith(200, (builder) => {
-        builder
-          .jsonBody([
-            {
-              id: expect.any(String),
-              title: expect.any(String),
-              description: expect.any(String),
-              instructor: expect.any(String),
-            },
-          ]);
+        builder.jsonBody([
+          {
+            id: expect.any(String),
+            title: expect.any(String),
+            description: expect.any(String),
+            instructor: expect.any(String),
+          },
+        ]);
       });
 
     const response = await axios.get(`${pact.mockService.baseUrl}/courses`);

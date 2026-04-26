@@ -41,8 +41,7 @@ export const useCoursesStore = create<CoursesState>((set) => ({
   loading: false,
   setCourses: (courses, total) => set({ courses, total }),
   setSelectedCourse: (course) => set({ selectedCourse: course }),
-  setFilters: (filters) =>
-    set((s) => ({ filters: { ...s.filters, ...filters, page: 1 } })),
+  setFilters: (filters) => set((s) => ({ filters: { ...s.filters, ...filters, page: 1 } })),
   setLoading: (loading) => set({ loading }),
   reset: () => set({ courses: [], total: 0, selectedCourse: null, filters: defaultFilters }),
 }));

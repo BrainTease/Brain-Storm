@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import * as Sentry from '@sentry/nextjs';
 import { Button } from '@/components/ui/Button';
 
 export default function GlobalError({
@@ -11,8 +12,16 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error(error);
+    Sentry.captureException(error);
   }, [error]);
+
+  const reportIssue = () => {
+    const subject = encodeURIComponent('Error Report from Brain Storm App');
+    const body = encodeURIComponent(
+      `Error Details:\n${error?.message || 'Unknown error'}\n\nStack Trace:\n${error?.stack || 'No stack trace'}\n\nPlease describe what you were doing when this error occurred:`
+    );
+    window.location.href = `mailto:support@brainstorm.com?subject=${subject}&body=${body}`;
+  };
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-center p-8 text-center">
@@ -26,10 +35,13 @@ export default function GlobalError({
           {error.message}
         </p>
       )}
-      <div className="flex gap-3">
+      <div className="flex gap-3 flex-wrap justify-center">
         <Button onClick={reset}>Try Again</Button>
         <Button variant="outline" onClick={() => (window.location.href = '/')}>
           Go Home
+        </Button>
+        <Button variant="secondary" onClick={reportIssue}>
+          Report Issue
         </Button>
       </div>
     </main>

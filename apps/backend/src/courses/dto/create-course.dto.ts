@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsInt, IsIn, Min, MinLength } from 'class-validator';
+import { IsString, IsOptional, IsInt, IsIn, Min, MinLength, IsBoolean } from 'class-validator';
 import { Trim, Sanitize } from 'class-sanitizer';
 import { StripHtmlSanitizer } from '../../common/sanitizers/strip-html.sanitizer';
 
@@ -21,4 +21,6 @@ export class CreateCourseDto {
   level?: string;
 
   @IsOptional() @IsInt() @Min(0) durationHours?: number;
+
+  @IsOptional() @IsBoolean() requiresKyc?: boolean;
 }

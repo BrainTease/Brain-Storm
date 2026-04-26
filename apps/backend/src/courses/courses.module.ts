@@ -8,11 +8,25 @@ import { ModulesService } from './modules.service';
 import { LessonsService } from './lessons.service';
 import { CoursesController } from './courses.controller';
 import { ModulesController } from './modules.controller';
+import { Review } from './review.entity';
+import { Enrollment } from '../enrollments/enrollment.entity';
+import { ReviewsService } from './reviews.service';
+import { ReviewsController } from './reviews.controller';
+import { SearchModule } from '../search/search.module';
+import { CourseVersion } from './course-version.entity';
+import { CourseVersioningService } from './course-versioning.service';
+import { CourseVersioningController } from './course-versioning.controller';
+import { CoursePrerequisite } from './course-prerequisite.entity';
+import { PrerequisitesService } from './prerequisites.service';
+import { PrerequisitesController } from './prerequisites.controller';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Course, CourseModule, Lesson])],
-  providers: [CoursesService, ModulesService, LessonsService],
-  controllers: [CoursesController, ModulesController],
-  exports: [CoursesService],
+  imports: [
+    TypeOrmModule.forFeature([Course, CourseModule, Lesson, Review, Enrollment, CourseVersion, CoursePrerequisite]),
+    SearchModule,
+  ],
+  providers: [CoursesService, ModulesService, LessonsService, ReviewsService, CourseVersioningService, PrerequisitesService],
+  controllers: [CoursesController, ModulesController, ReviewsController, CourseVersioningController, PrerequisitesController],
+  exports: [CoursesService, PrerequisitesService],
 })
 export class CoursesModule {}

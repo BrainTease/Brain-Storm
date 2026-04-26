@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Param, Body, UseGuards } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
 import { StellarService } from './stellar.service';
 import { NetworkMonitorService } from './network-monitor.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -12,7 +12,7 @@ import { Roles } from '../auth/roles.decorator';
 export class StellarController {
   constructor(
     private stellarService: StellarService,
-    private networkMonitorService: NetworkMonitorService,
+    private networkMonitorService: NetworkMonitorService
   ) {}
 
   @Get('network-status')
@@ -29,13 +29,28 @@ export class StellarController {
     return this.stellarService.getAccountBalance(publicKey);
   }
 
+  @Post('fund-testnet')
+  @ApiOperation({ summary: 'Fund a testnet account via Friendbot (testnet only)' })
+  @ApiResponse({ status: 201, description: 'Account funded successfully' })
+  @ApiResponse({ status: 400, description: 'Not available on mainnet or Friendbot error' })
+  async fundTestnet(@Body() body: { publicKey: string }) {
+    return this.stellarService.fundTestnetAccount(body.publicKey);
+  }
+
   @Post('mint')
   @Throttle({ default: { limit: 3, ttl: 60000 } })
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Mint a credential NFT' })
-  @ApiResponse({ status: 201, description: 'Credential minted successfully', schema: { example: { data: 'transaction_hash', statusCode: 201, timestamp: '2024-01-01T00:00:00.000Z' } } })
+  @ApiBody({ schema: { example: { recipientPublicKey: 'GABC...', courseId: 'uuid' } } })
+  @ApiResponse({
+    status: 201,
+    description: 'Credential minted successfully',
+    schema: {
+      example: { data: 'transaction_hash', statusCode: 201, timestamp: '2024-01-01T00:00:00.000Z' },
+    },
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - admin role required' })
   mintCredential(@Body() body: { recipientPublicKey: string; courseId: string }) {
@@ -54,7 +69,14 @@ export class CredentialsController {
   @Throttle({ default: { limit: 3, ttl: 60000 } })
   @Roles('admin')
   @ApiOperation({ summary: 'Issue a credential for course completion' })
-  @ApiResponse({ status: 201, description: 'Credential issued successfully', schema: { example: { data: 'transaction_hash', statusCode: 201, timestamp: '2024-01-01T00:00:00.000Z' } } })
+  @ApiBody({ schema: { example: { recipientPublicKey: 'GABC...', courseId: 'uuid' } } })
+  @ApiResponse({
+    status: 201,
+    description: 'Credential issued successfully',
+    schema: {
+      example: { data: 'transaction_hash', statusCode: 201, timestamp: '2024-01-01T00:00:00.000Z' },
+    },
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - admin role required' })
   issueCredential(@Body() body: { recipientPublicKey: string; courseId: string }) {

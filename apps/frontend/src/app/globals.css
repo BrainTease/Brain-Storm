@@ -2,6 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer utilities {
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  .animate-shimmer {
+    animation: shimmer 2s infinite linear;
+  }
+}
+
 /* Skip-to-content link — visually hidden until focused */
 .skip-link {
   position: absolute;
@@ -23,4 +38,13 @@
 :focus-visible {
   outline: 2px solid #2563eb;
   outline-offset: 2px;
+}
+
+/* Smooth theme transitions */
+*,
+*::before,
+*::after {
+  transition-property: background-color, border-color, color;
+  transition-duration: 200ms;
+  transition-timing-function: ease;
 }

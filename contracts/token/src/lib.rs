@@ -14,7 +14,7 @@ pub enum DataKey {
     Allowance(Address, Address), // (owner, spender)
     TotalSupply,
     Vesting(Address),
-    Locked,                       // reentrancy guard
+    Locked, // reentrancy guard
 }
 
 // =============================================================================
@@ -88,9 +88,7 @@ fn get_total_supply(env: &Env) -> i128 {
 }
 
 fn set_total_supply(env: &Env, amount: i128) {
-    env.storage()
-        .instance()
-        .set(&DataKey::TotalSupply, &amount);
+    env.storage().instance().set(&DataKey::TotalSupply, &amount);
 }
 
 fn get_allowance(env: &Env, owner: &Address, spender: &Address) -> i128 {
@@ -192,6 +190,29 @@ impl TokenContract {
             .publish((BURN, symbol_short!("from"), from), amount);
     }
 
+    pub fn burn_from(env: Env, spender: Address, from: Address, amount: i128) {
+        assert!(amount > 0, "Amount must be positive");
+        spender.require_auth();
+
+        let allowed = Self::allowance(env.clone(), from.clone(), spender.clone());
+        assert!(allowed >= amount, "Insufficient allowance");
+
+        let bal = Self::balance(env.clone(), from.clone());
+        assert!(bal >= amount, "Insufficient balance");
+
+        // Deduct allowance
+        env.storage().persistent().set(
+            &DataKey::Allowance(from.clone(), spender.clone()),
+            &(allowed.checked_sub(amount).expect("arithmetic overflow")),
+        );
+
+        Self::sub_balance(&env, &from, amount);
+        Self::sub_supply(&env, amount);
+
+        env.events()
+            .publish((BURN, symbol_short!("from"), from), amount);
+    }
+
     // -------------------------------------------------------------------------
     // SEP-0041: transfer
     // -------------------------------------------------------------------------
@@ -206,8 +227,10 @@ impl TokenContract {
         Self::sub_balance(&env, &from, amount);
         Self::add_balance(&env, &to, amount);
 
-        env.events()
-            .publish((TRANSFER, symbol_short!("from"), from.clone()), (to, amount));
+        env.events().publish(
+            (TRANSFER, symbol_short!("from"), from.clone()),
+            (to, amount),
+        );
     }
 
     // -------------------------------------------------------------------------
@@ -222,10 +245,8 @@ impl TokenContract {
             .persistent()
             .set(&DataKey::Allowance(owner.clone(), spender.clone()), &amount);
 
-        env.events().publish(
-            (APPROVE, symbol_short!("owner"), owner),
-            (spender, amount),
-        );
+        env.events()
+            .publish((APPROVE, symbol_short!("owner"), owner), (spender, amount));
     }
 
     pub fn allowance(env: Env, owner: Address, spender: Address) -> i128 {
@@ -298,14 +319,21 @@ impl TokenContract {
         beneficiary.require_auth();
 
         let key = DataKey::Vesting(beneficiary.clone());
-        let mut schedule: VestingSchedule =
-            env.storage().persistent().get(&key).expect("No vesting schedule found");
+        let mut schedule: VestingSchedule = env
+            .storage()
+            .persistent()
+            .get(&key)
+            .expect("No vesting schedule found");
 
-        let claimable =
-            Self::vested_amount(&schedule, env.ledger().sequence()).checked_sub(schedule.claimed).expect("arithmetic overflow");
+        let claimable = Self::vested_amount(&schedule, env.ledger().sequence())
+            .checked_sub(schedule.claimed)
+            .expect("arithmetic overflow");
         assert!(claimable > 0, "Nothing to claim yet");
 
-        schedule.claimed = schedule.claimed.checked_add(claimable).expect("arithmetic overflow");
+        schedule.claimed = schedule
+            .claimed
+            .checked_add(claimable)
+            .expect("arithmetic overflow");
         env.storage().persistent().set(&key, &schedule);
 
         Self::add_balance(&env, &beneficiary, claimable);
@@ -384,12 +412,20 @@ impl TokenContract {
         if current_ledger >= schedule.end_ledger {
             return schedule.total_amount;
         }
-        let elapsed = (current_ledger.checked_sub(schedule.start_ledger).expect("arithmetic overflow")) as i128;
-        let duration = (schedule.end_ledger.checked_sub(schedule.start_ledger).expect("arithmetic overflow")) as i128;
-        
-        schedule.total_amount
-            .checked_mul(elapsed).expect("arithmetic overflow")
-            .checked_div(duration).expect("arithmetic overflow")
+        let elapsed = (current_ledger
+            .checked_sub(schedule.start_ledger)
+            .expect("arithmetic overflow")) as i128;
+        let duration = (schedule
+            .end_ledger
+            .checked_sub(schedule.start_ledger)
+            .expect("arithmetic overflow")) as i128;
+
+        schedule
+            .total_amount
+            .checked_mul(elapsed)
+            .expect("arithmetic overflow")
+            .checked_div(duration)
+            .expect("arithmetic overflow")
     }
 }
 
@@ -631,15 +667,19 @@ mod tests {
     #[test]
     #[should_panic(expected = "arithmetic overflow")]
     fn test_overflow_protection() {
-        let (_, client, _) = setup();
-        let user = Address::generate(&client.env);
-        // Mint max i128 to user (if possible, but constrained by MAX_SUPPLY)
-        // Actually, we can just test if checked_add works.
-        // Since add_balance uses checked_add, we can try to add to a balance that would overflow if it wasn't for MAX_SUPPLY.
-        // But MAX_SUPPLY is smaller than i128::MAX.
-        // Let's test a case where we try to subtract more than balance (already tested by insufficient balance usually, but now it uses checked_sub)
-        client.mint(&user, &100);
-        client.burn(&user, &101);
+        let (env, client, admin) = setup();
+        let user = Address::generate(&env);
+        // Test that checked_sub in sub_balance panics with "arithmetic overflow"
+        // when trying to subtract more than balance
+        // We need to bypass the balance check by directly calling sub_balance
+        // Since we can't call private functions directly, we'll test a different scenario
+        // where overflow would occur in vesting calculations
+        set_ledger(&env, 10);
+        // Create a vesting with very large numbers that could overflow in calculation
+        client.create_vesting(&admin, &user, &i128::MAX, &10, &20);
+        set_ledger(&env, 15);
+        // This should trigger overflow in vested_amount calculation
+        client.claim_vesting(&user);
     }
 
     // ---- Double-init guard --------------------------------------------------
@@ -649,5 +689,184 @@ mod tests {
     fn test_double_initialize_panics() {
         let (_, client, admin) = setup();
         client.initialize(&admin);
+    }
+
+    // ---- Overflow Protection Tests -------------------------------------------
+
+    #[test]
+    fn test_mint_exactly_max_supply() {
+        let (_, client, _) = setup();
+        let user = Address::generate(&client.env);
+        client.mint(&user, &MAX_SUPPLY);
+        assert_eq!(client.balance(&user), MAX_SUPPLY);
+        assert_eq!(client.total_supply(), MAX_SUPPLY);
+    }
+
+    #[test]
+    #[should_panic(expected = "Max supply exceeded")]
+    fn test_mint_one_above_max_supply_panics() {
+        let (_, client, _) = setup();
+        let user = Address::generate(&client.env);
+        client.mint(&user, &MAX_SUPPLY);
+        client.mint(&user, &1);
+    }
+
+    #[test]
+    #[should_panic(expected = "Max supply exceeded")]
+    fn test_mint_large_amount_exceeds_max_supply_panics() {
+        let (_, client, _) = setup();
+        let user = Address::generate(&client.env);
+        let large_amount = MAX_SUPPLY.checked_div(2).unwrap().checked_add(1).unwrap();
+        client.mint(&user, &large_amount);
+        client.mint(&user, &large_amount);
+    }
+
+    #[test]
+    fn test_transfer_does_not_overflow() {
+        let (_, client, _) = setup();
+        let alice = Address::generate(&client.env);
+        let bob = Address::generate(&client.env);
+        client.mint(&alice, &1000);
+        client.mint(&bob, &1000);
+        client.transfer(&alice, &bob, &500);
+        assert_eq!(client.balance(&alice), 500);
+        assert_eq!(client.balance(&bob), 1500);
+    }
+
+    #[test]
+    #[should_panic(expected = "Insufficient balance")]
+    fn test_transfer_more_than_balance_panics() {
+        let (_, client, _) = setup();
+        let alice = Address::generate(&client.env);
+        let bob = Address::generate(&client.env);
+        client.mint(&alice, &100);
+        client.transfer(&alice, &bob, &200);
+    }
+
+    #[test]
+    fn test_burn_from_with_allowance() {
+        let (_, client, _) = setup();
+        let owner = Address::generate(&client.env);
+        let spender = Address::generate(&client.env);
+        client.mint(&owner, &200);
+        client.approve(&owner, &spender, &150);
+        client.burn_from(&spender, &owner, &100);
+        assert_eq!(client.balance(&owner), 100);
+        assert_eq!(client.allowance(&owner, &spender), 50);
+        assert_eq!(client.total_supply(), 100);
+    }
+
+    #[test]
+    #[should_panic(expected = "Insufficient allowance")]
+    fn test_burn_from_exceeds_allowance_panics() {
+        let (_, client, _) = setup();
+        let owner = Address::generate(&client.env);
+        let spender = Address::generate(&client.env);
+        client.mint(&owner, &200);
+        client.approve(&owner, &spender, &50);
+        client.burn_from(&spender, &owner, &100);
+    }
+
+    #[test]
+    #[should_panic(expected = "Insufficient balance")]
+    fn test_burn_from_exceeds_balance_panics() {
+        let (_, client, _) = setup();
+        let owner = Address::generate(&client.env);
+        let spender = Address::generate(&client.env);
+        client.mint(&owner, &50);
+        client.approve(&owner, &spender, &100);
+        client.burn_from(&spender, &owner, &100);
+    }
+
+    #[test]
+    fn test_transfer_from_does_not_overflow() {
+        let (_, client, _) = setup();
+        let alice = Address::generate(&client.env);
+        let bob = Address::generate(&client.env);
+        let spender = Address::generate(&client.env);
+        client.mint(&alice, &1000);
+        client.approve(&alice, &spender, &500);
+        client.transfer_from(&spender, &alice, &bob, &300);
+        assert_eq!(client.balance(&alice), 700);
+        assert_eq!(client.balance(&bob), 300);
+        assert_eq!(client.allowance(&alice, &spender), 200);
+    }
+
+    #[test]
+    #[should_panic(expected = "Insufficient balance")]
+    fn test_transfer_from_exceeds_balance_panics() {
+        let (_, client, _) = setup();
+        let alice = Address::generate(&client.env);
+        let bob = Address::generate(&client.env);
+        let spender = Address::generate(&client.env);
+        client.mint(&alice, &100);
+        client.approve(&alice, &spender, &200);
+        client.transfer_from(&spender, &alice, &bob, &200);
+    }
+
+    // ---- Vesting Overflow Tests ----------------------------------------------
+
+    #[test]
+    fn test_vesting_claim_does_not_overflow() {
+        let (env, client, admin) = setup();
+        let instructor = Address::generate(&env);
+        set_ledger(&env, 10);
+        client.create_vesting(&admin, &instructor, &1000, &10, &30);
+        set_ledger(&env, 20);
+        client.claim_vesting(&instructor);
+        assert_eq!(client.balance(&instructor), 500);
+        assert_eq!(client.total_supply(), 500);
+    }
+
+    #[test]
+    fn test_vesting_full_claim_does_not_overflow() {
+        let (env, client, admin) = setup();
+        let instructor = Address::generate(&env);
+        set_ledger(&env, 10);
+        client.create_vesting(&admin, &instructor, &1000, &10, &30);
+        set_ledger(&env, 30);
+        client.claim_vesting(&instructor);
+        assert_eq!(client.balance(&instructor), 1000);
+        assert_eq!(client.total_supply(), 1000);
+    }
+
+    #[test]
+    fn test_multiple_vesting_claims_within_max_supply() {
+        let (env, client, admin) = setup();
+        let instructor1 = Address::generate(&env);
+        let instructor2 = Address::generate(&env);
+        set_ledger(&env, 10);
+
+        // Create two vesting schedules that together stay within MAX_SUPPLY
+        let half_supply = MAX_SUPPLY.checked_div(2).unwrap();
+        client.create_vesting(&admin, &instructor1, &half_supply, &10, &30);
+        client.create_vesting(&admin, &instructor2, &half_supply, &10, &30);
+
+        set_ledger(&env, 30);
+        client.claim_vesting(&instructor1);
+        client.claim_vesting(&instructor2);
+
+        assert_eq!(client.balance(&instructor1), half_supply);
+        assert_eq!(client.balance(&instructor2), half_supply);
+        assert_eq!(client.total_supply(), MAX_SUPPLY);
+    }
+
+    #[test]
+    #[should_panic(expected = "Max supply exceeded")]
+    fn test_multiple_vesting_claims_exceed_max_supply_panics() {
+        let (env, client, admin) = setup();
+        let instructor1 = Address::generate(&env);
+        let instructor2 = Address::generate(&env);
+        set_ledger(&env, 10);
+
+        // Create two vesting schedules that together exceed MAX_SUPPLY
+        let half_supply = MAX_SUPPLY.checked_div(2).unwrap();
+        let excess = half_supply.checked_add(1).unwrap();
+        client.create_vesting(&admin, &instructor1, &half_supply, &10, &30);
+        client.create_vesting(&admin, &instructor2, &excess, &10, &30);
+
+        set_ledger(&env, 30);
+        client.claim_vesting(&instructor1);
+        client.claim_vesting(&instructor2);
     }
 }

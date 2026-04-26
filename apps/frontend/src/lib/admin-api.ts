@@ -43,7 +43,10 @@ export async function fetchAdminStats(): Promise<AdminStats> {
 
 // ── Users ─────────────────────────────────────────────────────────────────────
 export async function fetchAdminUsers(params: {
-  page?: number; limit?: number; search?: string; role?: string;
+  page?: number;
+  limit?: number;
+  search?: string;
+  role?: string;
 }) {
   const { data } = await api.get('/admin/users', { params });
   return data as { data: AdminUser[]; meta: { total: number; page: number; totalPages: number } };
@@ -58,7 +61,11 @@ export const banUser = (id: string, isBanned: boolean) =>
 export const deleteUser = (id: string) => api.delete(`/admin/users/${id}`);
 
 // ── Courses ───────────────────────────────────────────────────────────────────
-export async function fetchAdminCourses(params: { page?: number; limit?: number; search?: string }) {
+export async function fetchAdminCourses(params: {
+  page?: number;
+  limit?: number;
+  search?: string;
+}) {
   const { data } = await api.get('/courses', { params });
   return data as { data: AdminCourse[]; total: number };
 }

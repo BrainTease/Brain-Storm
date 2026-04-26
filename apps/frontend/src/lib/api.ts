@@ -37,7 +37,7 @@ api.interceptors.response.use(
     toast.error(typeof message === 'string' ? message : JSON.stringify(message));
 
     return Promise.reject(error);
-  },
+  }
 );
 
 export default api;

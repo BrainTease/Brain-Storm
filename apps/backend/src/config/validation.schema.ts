@@ -23,6 +23,10 @@ export const validationSchema = Joi.object({
   STELLAR_SECRET_KEY: Joi.string().required(),
   SOROBAN_RPC_URL: Joi.string().uri().default('https://soroban-testnet.stellar.org'),
   SOROBAN_CONTRACT_ID: Joi.string().allow('').default(''),
+  ANALYTICS_CONTRACT_ID: Joi.string().allow('').default(''),
+  TOKEN_CONTRACT_ID: Joi.string().allow('').default(''),
+  INDEXER_POLL_INTERVAL_MS: Joi.number().default(5000),
+  STELLAR_WEB_AUTH_DOMAIN: Joi.string().default('localhost'),
 
   // Mail
   EMAIL_HOST: Joi.string().required(),
@@ -39,11 +43,24 @@ export const validationSchema = Joi.object({
   // Google OAuth (optional)
   GOOGLE_CLIENT_ID: Joi.string().optional(),
   GOOGLE_CLIENT_SECRET: Joi.string().optional(),
-  GOOGLE_CALLBACK_URL: Joi.string()
-    .uri()
-    .default('http://localhost:3000/auth/google/callback'),
+  GOOGLE_CALLBACK_URL: Joi.string().uri().default('http://localhost:3000/auth/google/callback'),
 
   // Throttle
   THROTTLE_TTL: Joi.number().default(60000),
   THROTTLE_LIMIT: Joi.number().default(100),
+
+  // KYC
+  KYC_PROVIDER_API_KEY: Joi.string().allow('').default(''),
+
+  // AWS
+  AWS_REGION: Joi.string().default('us-east-1'),
+  AWS_ACCESS_KEY_ID: Joi.string().allow('').default(''),
+  AWS_SECRET_ACCESS_KEY: Joi.string().allow('').default(''),
+
+  // Moderation
+  MODERATION_TOXICITY_THRESHOLD: Joi.number().min(0).max(1).default(0.7),
+
+  // Elasticsearch
+  ELASTICSEARCH_NODE: Joi.string().uri().default('http://localhost:9200'),
+  ELASTICSEARCH_API_KEY: Joi.string().allow('').default(''),
 });

@@ -37,8 +37,12 @@ const nextConfig = {
             value: 'strict-origin',
           },
           {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
+          },
+          {
             key: 'Content-Security-Policy',
-            value: "default-src 'self'; script-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://*.stellar.org; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://*.stellar.org; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;",
+            value: "default-src 'self'; script-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://*.stellar.org; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://*.stellar.org https://*.sentry.io; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;",
           },
         ],
       },

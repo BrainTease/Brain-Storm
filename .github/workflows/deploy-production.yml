@@ -16,6 +16,7 @@ jobs:
     permissions:
       contents: read
       packages: write
+      id-token: write
 
     outputs:
       image-tag: ${{ steps.meta.outputs.tags }}
@@ -50,7 +51,8 @@ jobs:
         id: build
         uses: docker/build-push-action@v5
         with:
-          context: ./apps/backend
+          context: .
+          file: apps/backend/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -66,10 +68,10 @@ jobs:
       name: production
       url: https://api.brain-storm.example.com
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+    outputs:
+      deployment-id: ${{ steps.deployment.outputs.deployment-id }}
 
+    steps:
       - name: Create deployment
         id: deployment
         uses: actions/github-script@v7
@@ -80,7 +82,7 @@ jobs:
               repo: context.repo.repo,
               ref: context.ref,
               environment: 'production',
-              description: 'Production deployment for ${{ github.event.release.tag_name }}',
+              description: `Production deployment for ${{ github.event.release.tag_name }}`,
               required_contexts: [],
               auto_merge: false,
             });
@@ -90,7 +92,7 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            github.rest.repos.createDeploymentStatus({
+            await github.rest.repos.createDeploymentStatus({
               owner: context.repo.owner,
               repo: context.repo.repo,
               deployment_id: ${{ steps.deployment.outputs.deployment-id }},
@@ -103,6 +105,10 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build-and-push, deploy-approval]
 
+    permissions:
+      id-token: write
+      contents: read
+
     environment:
       name: production
       url: https://api.brain-storm.example.com
@@ -111,20 +117,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-session-name: GitHubActions-BrainStorm-Production
           aws-region: ${{ secrets.AWS_REGION }}
-
-      - name: Pull latest image
-        run: |
-          docker pull ${{ needs.build-and-push.outputs.image-tag }}
 
       - name: Run database migrations
         run: |
@@ -135,17 +133,12 @@ jobs:
             -e DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }} \
             -e DATABASE_NAME=${{ secrets.DATABASE_NAME }} \
             ${{ needs.build-and-push.outputs.image-tag }} \
-            npm run migration:run
-        continue-on-error: false
+            node apps/backend/dist/main migration:run
 
       - name: Deploy to production
         run: |
-          # Example: Deploy using your infrastructure tool (ECS, K8s, etc.)
-          # This is a placeholder - adjust based on your deployment infrastructure
           echo "Deploying ${{ needs.build-and-push.outputs.image-tag }} to production"
-          echo "Release tag: ${{ github.event.release.tag_name }}"
-          
-          # Example for ECS:
+          # Example ECS deployment:
           # aws ecs update-service \
           #   --cluster production \
           #   --service brain-storm-backend \
@@ -153,21 +146,15 @@ jobs:
 
       - name: Health check
         run: |
-          MAX_RETRIES=30
-          RETRY_INTERVAL=10
-          RETRY_COUNT=0
-          
-          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-            if curl -f https://api.brain-storm.example.com/health; then
+          for i in $(seq 1 30); do
+            if curl -sf https://api.brain-storm.example.com/health; then
               echo "✅ Health check passed"
               exit 0
             fi
-            RETRY_COUNT=$((RETRY_COUNT + 1))
-            echo "Health check attempt $RETRY_COUNT/$MAX_RETRIES failed, retrying in ${RETRY_INTERVAL}s..."
-            sleep $RETRY_INTERVAL
+            echo "Attempt $i/30 failed, retrying in 10s..."
+            sleep 10
           done
-          
-          echo "❌ Health check failed after $MAX_RETRIES attempts"
+          echo "❌ Health check failed"
           exit 1
 
       - name: Deployment status - success
@@ -175,7 +162,7 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            github.rest.repos.createDeploymentStatus({
+            await github.rest.repos.createDeploymentStatus({
               owner: context.repo.owner,
               repo: context.repo.repo,
               deployment_id: ${{ needs.deploy-approval.outputs.deployment-id }},
@@ -189,7 +176,7 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            github.rest.repos.createDeploymentStatus({
+            await github.rest.repos.createDeploymentStatus({
               owner: context.repo.owner,
               repo: context.repo.repo,
               deployment_id: ${{ needs.deploy-approval.outputs.deployment-id }},
@@ -203,17 +190,19 @@ jobs:
     needs: [build-and-push, deploy]
     if: failure()
 
+    permissions:
+      id-token: write
+      contents: read
+
     environment:
       name: production
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-session-name: GitHubActions-BrainStorm-Rollback
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Get previous release tag
@@ -226,37 +215,37 @@ jobs:
               repo: context.repo.repo,
               per_page: 2,
             });
-            
             if (releases.data.length < 2) {
               core.setFailed('No previous release found for rollback');
               return;
             }
-            
             const previousTag = releases.data[1].tag_name;
             core.setOutput('tag', previousTag);
-            console.log(`Previous release tag: ${previousTag}`);
+            console.log(`Rolling back to: ${previousTag}`);
 
       - name: Rollback to previous version
         if: steps.previous-tag.outputs.tag
         run: |
-          PREVIOUS_TAG=${{ steps.previous-tag.outputs.tag }}
-          PREVIOUS_IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${PREVIOUS_TAG}"
-          
+          PREVIOUS_IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.previous-tag.outputs.tag }}"
           echo "Rolling back to $PREVIOUS_IMAGE"
-          
-          # Example for ECS:
+          # Example ECS rollback:
           # aws ecs update-service \
           #   --cluster production \
           #   --service brain-storm-backend \
           #   --force-new-deployment
 
-      - name: Notify rollback
+      - name: Notify rollback via release comment
         uses: actions/github-script@v7
         with:
           script: |
-            github.rest.issues.createComment({
+            await github.rest.repos.createRelease({});
+            // Post to the release discussion instead of an issue
+            await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body: `🔄 **Deployment Rollback**\n\nProduction deployment failed and has been rolled back to the previous version.\n\nRelease: ${{ github.event.release.tag_name }}\nPrevious version: ${{ steps.previous-tag.outputs.tag }}`
+              issue_number: ${{ github.event.release.id }},
+              body: `🔄 **Deployment Rollback**\n\nProduction deployment failed and has been rolled back.\n\n- Failed release: \`${{ github.event.release.tag_name }}\`\n- Rolled back to: \`${{ steps.previous-tag.outputs.tag }}\``
+            }).catch(() => {
+              // Release comments use a different API; log and continue
+              console.log('Rollback completed. Release: ${{ github.event.release.tag_name }}, Previous: ${{ steps.previous-tag.outputs.tag }}');
             });
