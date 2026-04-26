@@ -231,6 +231,33 @@ export class StellarService {
     return result.hash;
   }
 
+  async mintCertificateNFT(recipientPublicKey: string, certificateHash: string, courseTitle: string): Promise<string> {
+    const issuerKeypair = Keypair.fromSecret(this.configService.get<string>('stellar.secretKey'));
+    const issuerAccount = await this.server.loadAccount(issuerKeypair.publicKey());
+
+    const tx = new TransactionBuilder(issuerAccount, {
+      fee: BASE_FEE,
+      networkPassphrase: this.networkPassphrase,
+    })
+      .addOperation(
+        Operation.manageData({
+          name: `brain-storm:certificate:${certificateHash}`,
+          value: JSON.stringify({
+            recipient: recipientPublicKey,
+            course: courseTitle,
+            issuedAt: new Date().toISOString(),
+          }),
+        }),
+      )
+      .setTimeout(30)
+      .build();
+
+    tx.sign(issuerKeypair);
+    const result = await this.server.submitTransaction(tx);
+    this.logger.log(`Certificate NFT minted: ${result.hash}`);
+    return result.hash;
+  }
+
   private async retryWithBackoff<T>(
     fn: () => Promise<T>,
     attempt = 1,
