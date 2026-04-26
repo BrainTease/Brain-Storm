@@ -16,12 +16,16 @@ pub struct MetadataRecord {
     pub credential_id: u64,
     pub course_name: String,
     pub completion_date: u64,
+    pub expiry_timestamp: u64,
     pub grade: String,
     pub ipfs_hash: String,
 }
 
 const STORE: Symbol = symbol_short!("store");
 const UPDATE: Symbol = symbol_short!("update");
+const EXPIRE: Symbol = symbol_short!("expire");
+const RENEW: Symbol = symbol_short!("renew");
+const GRACE_PERIOD_SECONDS: u64 = 30 * 24 * 60 * 60; // 30 days grace period
 
 #[contract]
 pub struct CredentialMetadataContract;
@@ -43,6 +47,7 @@ impl CredentialMetadataContract {
         credential_id: u64,
         course_name: String,
         completion_date: u64,
+        expiry_timestamp: u64,
         grade: String,
         ipfs_hash: String,
     ) {
@@ -54,6 +59,7 @@ impl CredentialMetadataContract {
             credential_id,
             course_name,
             completion_date,
+            expiry_timestamp,
             grade,
             ipfs_hash,
         };
@@ -98,6 +104,74 @@ impl CredentialMetadataContract {
         env.storage()
             .persistent()
             .get(&DataKey::Metadata(credential_id))
+    }
+
+    pub fn is_expired(env: Env, credential_id: u64) -> bool {
+        let metadata = Self::get_metadata(env.clone(), credential_id);
+        match metadata {
+            Some(record) => env.ledger().timestamp() > record.expiry_timestamp,
+            None => false,
+        }
+    }
+
+    pub fn is_valid(env: Env, credential_id: u64) -> bool {
+        let metadata = Self::get_metadata(env.clone(), credential_id);
+        match metadata {
+            Some(record) => env.ledger().timestamp() <= record.expiry_timestamp,
+            None => false,
+        }
+    }
+
+    pub fn can_renew(env: Env, credential_id: u64) -> bool {
+        let metadata = Self::get_metadata(env.clone(), credential_id);
+        match metadata {
+            Some(record) => {
+                let current_time = env.ledger().timestamp();
+                current_time <= record.expiry_timestamp + GRACE_PERIOD_SECONDS
+            },
+            None => false,
+        }
+    }
+
+    pub fn renew_credential(
+        env: Env,
+        admin: Address,
+        credential_id: u64,
+        new_expiry_timestamp: u64,
+    ) {
+        admin.require_auth();
+        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
+        assert!(admin == stored_admin, "Only admin can renew credentials");
+
+        let mut metadata: MetadataRecord = env
+            .storage()
+            .persistent()
+            .get(&DataKey::Metadata(credential_id))
+            .expect("Credential not found");
+
+        assert!(
+            Self::can_renew(env.clone(), credential_id),
+            "Credential not eligible for renewal"
+        );
+
+        assert!(
+            new_expiry_timestamp > env.ledger().timestamp(),
+            "New expiry must be in the future"
+        );
+
+        metadata.expiry_timestamp = new_expiry_timestamp;
+
+        env.storage()
+            .persistent()
+            .set(&DataKey::Metadata(credential_id), &metadata);
+
+        env.events()
+            .publish((RENEW, symbol_short!("cred")), credential_id);
+    }
+
+    pub fn emit_expiry_event(env: Env, credential_id: u64) {
+        env.events()
+            .publish((EXPIRE, symbol_short!("cred")), credential_id);
     }
 
     pub fn store_metadata_hash(env: Env, admin: Address, credential_id: u64, hash: Bytes) {
