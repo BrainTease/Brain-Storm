@@ -177,8 +177,11 @@ jobs:
       - name: cargo test
         run: cargo test
 
-      - name: cargo test with fuzz (60s timeout)
-        run: timeout 60 cargo test --lib fuzz || true
+      - name: cargo test with property-based fuzzing (60s timeout)
+        run: timeout 60 cargo test --lib fuzz -- --test-threads=1 || true
+
+      - name: cargo test with proptest fuzzing (120s timeout)
+        run: timeout 120 cargo test --lib proptest -- --test-threads=1 --nocapture || true
 
       - name: cargo fmt check
         run: cargo fmt --check
@@ -191,6 +194,14 @@ jobs:
 
       - name: cargo deny
         run: cargo deny check
+
+      - name: Upload fuzzing results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fuzzing-results
+          path: target/debug/deps/
+          retention-days: 7
 
   load-tests:
     name: Load Tests - k6
