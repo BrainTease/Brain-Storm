@@ -5,6 +5,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { ValidationExceptionFilter } from './common/filters/validation-exception.filter';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import { SanitizationPipe } from './common/pipes/sanitization.pipe';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
@@ -25,7 +26,7 @@ async function bootstrap() {
 
   app.setGlobalPrefix('v1');
   app.useGlobalPipes(new ValidationPipe({ whitelist: true }), new SanitizationPipe());
-  app.useGlobalFilters(new HttpExceptionFilter());
+  app.useGlobalFilters(new HttpExceptionFilter(), new ValidationExceptionFilter());
   app.useGlobalInterceptors(
     new TransformInterceptor(),
     new MetricsInterceptor(app.get(MetricsService))
