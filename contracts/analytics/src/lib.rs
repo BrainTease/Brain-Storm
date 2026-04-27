@@ -23,6 +23,8 @@ pub enum DataKey {
     WeeklyStats(u64),
     MonthlyStats(u64),
     TopPerformers,
+    Milestone(Address, Symbol, u32), // (student, course, milestone_pct) → MilestoneRecord
+    StudentMilestones(Address, Symbol), // (student, course) → Vec<u32> (achieved milestones)
 }
 
 // =============================================================================
@@ -60,6 +62,15 @@ pub struct TopPerformer {
     pub student: Address,
     pub completion_count: u32,
     pub avg_progress: u32,
+}
+
+#[contracttype]
+#[derive(Clone)]
+pub struct MilestoneRecord {
+    pub student: Address,
+    pub course_id: Symbol,
+    pub milestone_pct: u32,
+    pub achieved_at: u64,
 }
 
 // =============================================================================
@@ -146,6 +157,9 @@ impl AnalyticsContract {
             .persistent()
             .extend_ttl(&index_key, TTL_THRESHOLD, TTL_EXTEND_TO);
 
+        // Check and record milestone achievements
+        Self::check_milestones(&env, &student, &course_id, progress_pct);
+
         // Emit events
         env.events().publish(
             (symbol_short!("analytics"), symbol_short!("prog_upd")),
@@ -224,6 +238,74 @@ impl AnalyticsContract {
             }
         }
         results
+    }
+
+    // -------------------------------------------------------------------------
+    // Milestones
+    // -------------------------------------------------------------------------
+
+    fn check_milestones(env: &Env, student: &Address, course_id: &Symbol, progress_pct: u32) {
+        let milestones = vec![&env, 25, 50, 75, 100];
+        let milestone_key = DataKey::StudentMilestones(student.clone(), course_id.clone());
+        let mut achieved: Vec<u32> = env
+            .storage()
+            .persistent()
+            .get(&milestone_key)
+            .unwrap_or_else(|| vec![&env]);
+
+        for milestone in milestones.iter() {
+            if progress_pct >= milestone && !achieved.contains(&milestone) {
+                achieved.push_back(milestone);
+                let record = MilestoneRecord {
+                    student: student.clone(),
+                    course_id: course_id.clone(),
+                    milestone_pct: milestone,
+                    achieved_at: env.ledger().timestamp(),
+                };
+                let key = DataKey::Milestone(student.clone(), course_id.clone(), milestone);
+                env.storage().persistent().set(&key, &record);
+                env.storage()
+                    .persistent()
+                    .extend_ttl(&key, TTL_THRESHOLD, TTL_EXTEND_TO);
+
+                env.events().publish(
+                    (symbol_short!("analytics"), symbol_short!("milestone")),
+                    (student.clone(), course_id.clone(), milestone),
+                );
+            }
+        }
+
+        env.storage().persistent().set(&milestone_key, &achieved);
+        env.storage()
+            .persistent()
+            .extend_ttl(&milestone_key, TTL_THRESHOLD, TTL_EXTEND_TO);
+    }
+
+    pub fn get_milestone(
+        env: Env,
+        student: Address,
+        course_id: Symbol,
+        milestone_pct: u32,
+    ) -> Option<MilestoneRecord> {
+        let key = DataKey::Milestone(student, course_id, milestone_pct);
+        let record = env.storage().persistent().get(&key)?;
+        env.storage()
+            .persistent()
+            .extend_ttl(&key, TTL_THRESHOLD, TTL_EXTEND_TO);
+        Some(record)
+    }
+
+    pub fn get_achieved_milestones(env: Env, student: Address, course_id: Symbol) -> Vec<u32> {
+        let key = DataKey::StudentMilestones(student, course_id);
+        match env.storage().persistent().get(&key) {
+            Some(milestones) => {
+                env.storage()
+                    .persistent()
+                    .extend_ttl(&key, TTL_THRESHOLD, TTL_EXTEND_TO);
+                milestones
+            }
+            None => vec![&env],
+        }
     }
 
     // -------------------------------------------------------------------------

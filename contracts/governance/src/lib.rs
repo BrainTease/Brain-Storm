@@ -16,6 +16,8 @@ pub enum DataKey {
     Proposal(u64),                       // id → ProposalRecord
     Vote(u64, Address),                  // (proposal_id, voter) → bool (support)
     NextProposalId,                      // u64 counter
+    UpgradeProposal(u64),                // id → UpgradeProposalRecord
+    TimelockExpiry(u64),                 // upgrade_id → expiry_ledger
 }
 
 // =============================================================================
@@ -36,6 +38,22 @@ pub struct ProposalRecord {
     pub created_at: u64,
 }
 
+#[contracttype]
+#[derive(Clone)]
+pub struct UpgradeProposalRecord {
+    pub id: u64,
+    pub proposer: Address,
+    pub contract_address: Address,
+    pub new_wasm_hash: Symbol,
+    pub voting_end_ledger: u32,
+    pub votes_for: i128,
+    pub votes_against: i128,
+    pub approved: bool,
+    pub executed: bool,
+    pub timelock_ledger: u32,
+    pub created_at: u64,
+}
+
 // =============================================================================
 // Events
 // =============================================================================
@@ -43,6 +61,9 @@ pub struct ProposalRecord {
 const PROPOSAL_CREATED: Symbol = symbol_short!("prop_new");
 const VOTE_CAST: Symbol = symbol_short!("vote");
 const PROPOSAL_EXECUTED: Symbol = symbol_short!("exec");
+const UPGRADE_PROPOSED: Symbol = symbol_short!("upg_prop");
+const UPGRADE_APPROVED: Symbol = symbol_short!("upg_appr");
+const UPGRADE_EXECUTED: Symbol = symbol_short!("upg_exec");
 
 // =============================================================================
 // Contract
@@ -205,6 +226,176 @@ impl GovernanceContract {
 
         env.events()
             .publish((PROPOSAL_EXECUTED, symbol_short!("id")), proposal_id);
+    }
+
+    // -------------------------------------------------------------------------
+    // Contract Upgrade Governance
+    // -------------------------------------------------------------------------
+
+    pub fn propose_upgrade(
+        env: Env,
+        proposer: Address,
+        contract_address: Address,
+        new_wasm_hash: Symbol,
+        voting_end_ledger: u32,
+        timelock_ledger: u32,
+    ) -> u64 {
+        proposer.require_auth();
+        assert!(
+            voting_end_ledger > env.ledger().sequence(),
+            "Voting end must be in future"
+        );
+        assert!(
+            timelock_ledger > voting_end_ledger,
+            "Timelock must be after voting"
+        );
+
+        let id: u64 = env.storage().instance().get(&DataKey::NextProposalId).unwrap();
+        let upgrade = UpgradeProposalRecord {
+            id,
+            proposer: proposer.clone(),
+            contract_address: contract_address.clone(),
+            new_wasm_hash: new_wasm_hash.clone(),
+            voting_end_ledger,
+            votes_for: 0,
+            votes_against: 0,
+            approved: false,
+            executed: false,
+            timelock_ledger,
+            created_at: env.ledger().timestamp(),
+        };
+
+        env.storage()
+            .persistent()
+            .set(&DataKey::UpgradeProposal(id), &upgrade);
+        env.storage()
+            .instance()
+            .set(&DataKey::NextProposalId, &(id + 1));
+
+        env.events().publish(
+            (UPGRADE_PROPOSED, symbol_short!("id")),
+            (id, contract_address, new_wasm_hash),
+        );
+
+        id
+    }
+
+    pub fn vote_upgrade(env: Env, voter: Address, upgrade_id: u64, support: bool) {
+        voter.require_auth();
+
+        let mut upgrade: UpgradeProposalRecord = env
+            .storage()
+            .persistent()
+            .get(&DataKey::UpgradeProposal(upgrade_id))
+            .expect("Upgrade proposal not found");
+
+        assert!(
+            env.ledger().sequence() < upgrade.voting_end_ledger,
+            "Voting period ended"
+        );
+        assert!(!upgrade.executed, "Upgrade already executed");
+
+        let vote_key = DataKey::Vote(upgrade_id, voter.clone());
+        assert!(
+            !env.storage().persistent().has(&vote_key),
+            "Already voted"
+        );
+
+        let token_contract: Address = env
+            .storage()
+            .instance()
+            .get(&DataKey::TokenContract)
+            .unwrap();
+        let balance: i128 = env.invoke_contract(
+            &token_contract,
+            &symbol_short!("balance"),
+            soroban_sdk::vec![&env, voter.clone().into_val(&env)],
+        );
+
+        assert!(balance > 0, "No voting power");
+
+        env.storage().persistent().set(&vote_key, &support);
+
+        if support {
+            upgrade.votes_for += balance;
+        } else {
+            upgrade.votes_against += balance;
+        }
+        env.storage()
+            .persistent()
+            .set(&DataKey::UpgradeProposal(upgrade_id), &upgrade);
+
+        env.events()
+            .publish((VOTE_CAST, symbol_short!("upg")), (upgrade_id, support));
+    }
+
+    pub fn approve_upgrade(env: Env, upgrade_id: u64) {
+        let mut upgrade: UpgradeProposalRecord = env
+            .storage()
+            .persistent()
+            .get(&DataKey::UpgradeProposal(upgrade_id))
+            .expect("Upgrade proposal not found");
+
+        assert!(
+            env.ledger().sequence() >= upgrade.voting_end_ledger,
+            "Voting still ongoing"
+        );
+        assert!(!upgrade.executed, "Already executed");
+        assert!(
+            upgrade.votes_for > upgrade.votes_against,
+            "Upgrade did not pass"
+        );
+
+        upgrade.approved = true;
+        env.storage()
+            .persistent()
+            .set(&DataKey::UpgradeProposal(upgrade_id), &upgrade);
+        env.storage()
+            .persistent()
+            .set(&DataKey::TimelockExpiry(upgrade_id), &upgrade.timelock_ledger);
+
+        env.events().publish(
+            (UPGRADE_APPROVED, symbol_short!("id")),
+            (upgrade_id, upgrade.contract_address.clone()),
+        );
+    }
+
+    pub fn execute_upgrade(env: Env, upgrade_id: u64) {
+        let mut upgrade: UpgradeProposalRecord = env
+            .storage()
+            .persistent()
+            .get(&DataKey::UpgradeProposal(upgrade_id))
+            .expect("Upgrade proposal not found");
+
+        assert!(upgrade.approved, "Upgrade not approved");
+        assert!(!upgrade.executed, "Already executed");
+
+        let timelock_expiry: u32 = env
+            .storage()
+            .persistent()
+            .get(&DataKey::TimelockExpiry(upgrade_id))
+            .expect("Timelock not found");
+
+        assert!(
+            env.ledger().sequence() >= timelock_expiry,
+            "Timelock not expired"
+        );
+
+        upgrade.executed = true;
+        env.storage()
+            .persistent()
+            .set(&DataKey::UpgradeProposal(upgrade_id), &upgrade);
+
+        env.events().publish(
+            (UPGRADE_EXECUTED, symbol_short!("id")),
+            (upgrade_id, upgrade.contract_address.clone()),
+        );
+    }
+
+    pub fn get_upgrade_proposal(env: Env, upgrade_id: u64) -> Option<UpgradeProposalRecord> {
+        env.storage()
+            .persistent()
+            .get(&DataKey::UpgradeProposal(upgrade_id))
     }
 
     // -------------------------------------------------------------------------

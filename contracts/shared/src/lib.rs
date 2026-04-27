@@ -1,5 +1,5 @@
 #![no_std]
-use soroban_sdk::{contract, contractimpl, contracttype, symbol_short, Address, BytesN, Env};
+use soroban_sdk::{contract, contractimpl, contracttype, symbol_short, Address, BytesN, Env, Symbol};
 
 pub mod pausable;
 
@@ -22,9 +22,24 @@ pub enum Permission {
 }
 
 #[contracttype]
+#[derive(Clone)]
+pub struct CrossContractCallRecord {
+    pub id: u64,
+    pub caller: Address,
+    pub target_contract: Address,
+    pub method: Symbol,
+    pub status: Symbol,                  // "pending", "success", "failed"
+    pub created_at: u64,
+    pub executed_at: u64,
+}
+
+#[contracttype]
 pub enum DataKey {
     Role(Address),
     Admin,
+    CrossContractCall(u64),              // id → CrossContractCallRecord
+    NextCallId,                          // u64 counter
+    AuthorizedCallers(Address),          // contract → Vec<Address> (authorized callers)
 }
 
 #[contract]
@@ -101,6 +116,122 @@ impl SharedContract {
 
         env.deployer()
             .update_current_contract_wasm(new_wasm_hash);
+    }
+
+    // -------------------------------------------------------------------------
+    // Cross-Contract Communication
+    // -------------------------------------------------------------------------
+
+    pub fn authorize_caller(
+        env: Env,
+        admin: Address,
+        target_contract: Address,
+        caller: Address,
+    ) {
+        admin.require_auth();
+        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
+        assert!(admin == stored_admin, "Only admin can authorize");
+
+        let key = DataKey::AuthorizedCallers(target_contract.clone());
+        let mut callers: soroban_sdk::Vec<Address> = env
+            .storage()
+            .instance()
+            .get(&key)
+            .unwrap_or_else(|| soroban_sdk::vec![&env]);
+
+        if !callers.contains(&caller) {
+            callers.push_back(caller.clone());
+            env.storage().instance().set(&key, &callers);
+        }
+
+        env.events().publish(
+            (symbol_short!("shared"), symbol_short!("auth_call")),
+            (target_contract, caller),
+        );
+    }
+
+    pub fn is_caller_authorized(
+        env: Env,
+        target_contract: Address,
+        caller: Address,
+    ) -> bool {
+        let key = DataKey::AuthorizedCallers(target_contract);
+        let callers: Option<soroban_sdk::Vec<Address>> = env.storage().instance().get(&key);
+        match callers {
+            Some(c) => c.contains(&caller),
+            None => false,
+        }
+    }
+
+    pub fn call_contract(
+        env: Env,
+        caller: Address,
+        target_contract: Address,
+        method: Symbol,
+    ) -> u64 {
+        caller.require_auth();
+
+        // Check authorization
+        assert!(
+            Self::is_caller_authorized(env.clone(), target_contract.clone(), caller.clone()),
+            "Caller not authorized"
+        );
+
+        let id: u64 = env
+            .storage()
+            .instance()
+            .get(&DataKey::NextCallId)
+            .unwrap_or(1);
+
+        let call_record = CrossContractCallRecord {
+            id,
+            caller: caller.clone(),
+            target_contract: target_contract.clone(),
+            method: method.clone(),
+            status: symbol_short!("pending"),
+            created_at: env.ledger().timestamp(),
+            executed_at: 0,
+        };
+
+        env.storage()
+            .instance()
+            .set(&DataKey::CrossContractCall(id), &call_record);
+        env.storage()
+            .instance()
+            .set(&DataKey::NextCallId, &(id + 1));
+
+        env.events().publish(
+            (symbol_short!("shared"), symbol_short!("call_init")),
+            (id, target_contract, method),
+        );
+
+        id
+    }
+
+    pub fn get_call_record(env: Env, call_id: u64) -> Option<CrossContractCallRecord> {
+        env.storage()
+            .instance()
+            .get(&DataKey::CrossContractCall(call_id))
+    }
+
+    pub fn relay_event(
+        env: Env,
+        caller: Address,
+        source_contract: Address,
+        event_topic: Symbol,
+    ) {
+        caller.require_auth();
+
+        // Check authorization
+        assert!(
+            Self::is_caller_authorized(env.clone(), source_contract.clone(), caller.clone()),
+            "Caller not authorized"
+        );
+
+        env.events().publish(
+            (symbol_short!("shared"), symbol_short!("relay")),
+            (source_contract, event_topic),
+        );
     }
 
     // -------------------------------------------------------------------------
