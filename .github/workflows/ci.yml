@@ -130,6 +130,10 @@ jobs:
         env:
           NEXT_PUBLIC_GIT_COMMIT_SHA: ${{ github.sha }}
 
+      - name: Run Pact consumer tests
+        run: npm run test:pact --workspace=apps/frontend
+        continue-on-error: true
+
   chromatic-visual-tests:
     name: Frontend - Visual Regression Tests (Chromatic)
     runs-on: ubuntu-latest
