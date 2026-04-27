@@ -311,6 +311,96 @@ impl AnalyticsContract {
             stats.total_completions,
         );
     }
+
+    // -------------------------------------------------------------------------
+    // Event Filtering & Pagination
+    // -------------------------------------------------------------------------
+
+    /// Get completed courses for a student (filtered by completion status).
+    pub fn get_completed_courses(env: Env, student: Address) -> Vec<ProgressRecord> {
+        let all_progress = Self::get_all_progress(env, student);
+        let mut completed = vec![&env];
+        
+        for record in all_progress.iter() {
+            if record.completed {
+                completed.push_back(record.clone());
+            }
+        }
+        completed
+    }
+
+    /// Get in-progress courses for a student (filtered by completion status).
+    pub fn get_in_progress_courses(env: Env, student: Address) -> Vec<ProgressRecord> {
+        let all_progress = Self::get_all_progress(env, student);
+        let mut in_progress = vec![&env];
+        
+        for record in all_progress.iter() {
+            if !record.completed {
+                in_progress.push_back(record.clone());
+            }
+        }
+        in_progress
+    }
+
+    /// Get paginated progress records for a student.
+    /// offset: starting index, limit: max records to return
+    pub fn get_progress_paginated(
+        env: Env,
+        student: Address,
+        offset: u32,
+        limit: u32,
+    ) -> Vec<ProgressRecord> {
+        let all_progress = Self::get_all_progress(env, student);
+        let mut result = vec![&env];
+        
+        let start = offset as usize;
+        let end = (offset as usize + limit as usize).min(all_progress.len());
+        
+        if start < all_progress.len() {
+            for i in start..end {
+                result.push_back(all_progress.get(i as u32).unwrap().clone());
+            }
+        }
+        result
+    }
+
+    /// Get progress records for a student filtered by minimum progress percentage.
+    pub fn get_progress_above_threshold(
+        env: Env,
+        student: Address,
+        min_progress_pct: u32,
+    ) -> Vec<ProgressRecord> {
+        assert!(min_progress_pct <= 100, "Threshold must be 0-100");
+        let all_progress = Self::get_all_progress(env, student);
+        let mut filtered = vec![&env];
+        
+        for record in all_progress.iter() {
+            if record.progress_pct >= min_progress_pct {
+                filtered.push_back(record.clone());
+            }
+        }
+        filtered
+    }
+
+    /// Count total completed courses for a student.
+    pub fn count_completed_courses(env: Env, student: Address) -> u32 {
+        let completed = Self::get_completed_courses(env, student);
+        completed.len() as u32
+    }
+
+    /// Get average progress across all courses for a student.
+    pub fn get_average_progress(env: Env, student: Address) -> u32 {
+        let all_progress = Self::get_all_progress(env, student);
+        if all_progress.len() == 0 {
+            return 0;
+        }
+        
+        let mut total: u64 = 0;
+        for record in all_progress.iter() {
+            total += record.progress_pct as u64;
+        }
+        (total / all_progress.len() as u64) as u32
+    }
 }
 
 // =============================================================================
@@ -653,5 +743,115 @@ mod tests {
         let course = symbol_short!("RUST101");
         client.record_progress(&student, &student, &course, &80);
         client.reset_progress(&rando, &student, &course);
+    }
+
+    // ============================================================================
+    // Event Filtering Tests
+    // ============================================================================
+
+    #[test]
+    fn test_get_completed_courses() {
+        let (_, client, _, student) = setup();
+        let c1 = symbol_short!("RUST101");
+        let c2 = symbol_short!("SOL201");
+        let c3 = symbol_short!("WEB301");
+        client.record_progress(&student, &student, &c1, &100);
+        client.record_progress(&student, &student, &c2, &50);
+        client.record_progress(&student, &student, &c3, &100);
+        
+        let completed = client.get_completed_courses(&student);
+        assert_eq!(completed.len(), 2);
+    }
+
+    #[test]
+    fn test_get_in_progress_courses() {
+        let (_, client, _, student) = setup();
+        let c1 = symbol_short!("RUST101");
+        let c2 = symbol_short!("SOL201");
+        let c3 = symbol_short!("WEB301");
+        client.record_progress(&student, &student, &c1, &100);
+        client.record_progress(&student, &student, &c2, &50);
+        client.record_progress(&student, &student, &c3, &75);
+        
+        let in_progress = client.get_in_progress_courses(&student);
+        assert_eq!(in_progress.len(), 2);
+    }
+
+    #[test]
+    fn test_get_progress_paginated() {
+        let (_, client, _, student) = setup();
+        let c1 = symbol_short!("RUST101");
+        let c2 = symbol_short!("SOL201");
+        let c3 = symbol_short!("WEB301");
+        client.record_progress(&student, &student, &c1, &100);
+        client.record_progress(&student, &student, &c2, &50);
+        client.record_progress(&student, &student, &c3, &75);
+        
+        let page1 = client.get_progress_paginated(&student, &0, &2);
+        assert_eq!(page1.len(), 2);
+        
+        let page2 = client.get_progress_paginated(&student, &2, &2);
+        assert_eq!(page2.len(), 1);
+        
+        let page3 = client.get_progress_paginated(&student, &5, &2);
+        assert_eq!(page3.len(), 0);
+    }
+
+    #[test]
+    fn test_get_progress_above_threshold() {
+        let (_, client, _, student) = setup();
+        let c1 = symbol_short!("RUST101");
+        let c2 = symbol_short!("SOL201");
+        let c3 = symbol_short!("WEB301");
+        client.record_progress(&student, &student, &c1, &100);
+        client.record_progress(&student, &student, &c2, &50);
+        client.record_progress(&student, &student, &c3, &75);
+        
+        let above_75 = client.get_progress_above_threshold(&student, &75);
+        assert_eq!(above_75.len(), 2);
+        
+        let above_50 = client.get_progress_above_threshold(&student, &50);
+        assert_eq!(above_50.len(), 3);
+    }
+
+    #[test]
+    #[should_panic(expected = "Threshold must be 0-100")]
+    fn test_progress_threshold_validation() {
+        let (_, client, _, student) = setup();
+        client.get_progress_above_threshold(&student, &101);
+    }
+
+    #[test]
+    fn test_count_completed_courses() {
+        let (_, client, _, student) = setup();
+        let c1 = symbol_short!("RUST101");
+        let c2 = symbol_short!("SOL201");
+        let c3 = symbol_short!("WEB301");
+        client.record_progress(&student, &student, &c1, &100);
+        client.record_progress(&student, &student, &c2, &50);
+        client.record_progress(&student, &student, &c3, &100);
+        
+        assert_eq!(client.count_completed_courses(&student), 2);
+    }
+
+    #[test]
+    fn test_get_average_progress() {
+        let (_, client, _, student) = setup();
+        let c1 = symbol_short!("RUST101");
+        let c2 = symbol_short!("SOL201");
+        let c3 = symbol_short!("WEB301");
+        client.record_progress(&student, &student, &c1, &100);
+        client.record_progress(&student, &student, &c2, &50);
+        client.record_progress(&student, &student, &c3, &75);
+        
+        let avg = client.get_average_progress(&student);
+        assert_eq!(avg, 75); // (100 + 50 + 75) / 3 = 75
+    }
+
+    #[test]
+    fn test_get_average_progress_empty() {
+        let (env, client, _, student) = setup();
+        let other = Address::generate(&env);
+        assert_eq!(client.get_average_progress(&other), 0);
     }
 }
