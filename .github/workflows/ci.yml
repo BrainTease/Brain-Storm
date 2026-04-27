@@ -160,6 +160,102 @@ jobs:
           storybookBuildDir: apps/frontend/storybook-static
           exitZeroOnChanges: true
 
+  percy-visual-tests:
+    name: Frontend - Visual Regression Tests (Percy)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: brainstorm_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Start backend server
+        run: npm run start:prod --workspace=apps/backend &
+        env:
+          NODE_ENV: production
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/brainstorm_test
+          REDIS_URL: redis://localhost:6379
+        timeout-minutes: 2
+
+      - name: Wait for backend to be ready
+        run: |
+          for i in {1..30}; do
+            if curl -f http://localhost:3000/health; then
+              echo "Backend is ready"
+              exit 0
+            fi
+            echo "Waiting for backend... ($i/30)"
+            sleep 2
+          done
+          echo "Backend failed to start"
+          exit 1
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+        working-directory: apps/frontend
+
+      - name: Run visual regression tests
+        run: npx playwright test --config=playwright-visual.config.ts
+        working-directory: apps/frontend
+        env:
+          PLAYWRIGHT_BASE_URL: http://localhost:3001
+
+      - name: Upload visual regression report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-regression-report
+          path: apps/frontend/visual-regression-report/
+          retention-days: 30
+
+      - name: Upload visual regression results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-regression-results
+          path: apps/frontend/visual-regression-results.json
+          retention-days: 30
+
+      - name: Publish to Percy
+        if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+        run: |
+          npm install -g @percy/cli
+          percy upload apps/frontend/visual-regression-report/ --token ${{ secrets.PERCY_TOKEN }}
+        continue-on-error: true
+
   contracts-check:
     name: Contracts - Test, Format, Lint, Audit, Deny
     runs-on: ubuntu-latest
