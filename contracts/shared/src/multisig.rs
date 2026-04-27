@@ -1,4 +1,4 @@
-use soroban_sdk::{contracttype, Address, Env, Symbol, symbol_short, Vec};
+use soroban_sdk::{contracttype, Address, Env, String, Symbol, symbol_short, Vec};
 
 #[contracttype]
 #[derive(Clone)]
@@ -83,7 +83,7 @@ pub fn approve_proposal(env: &Env, proposal_id: u64, approver: Address) {
 
     let mut approvals = proposal.approvals.clone();
     assert!(
-        !approvals.iter().any(|a| a == &approver),
+        !approvals.iter().any(|a| a == approver),
         "Already approved"
     );
 

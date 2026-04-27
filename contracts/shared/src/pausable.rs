@@ -84,7 +84,7 @@ pub fn check_not_paused(env: &Env) {
             // Auto-unpause
             env.storage().instance().set(&DataKey::Paused, &false);
             env.events().publish(
-                (symbol_short!("pause"), symbol_short!("auto_unpaused")),
+                (symbol_short!("pause"), symbol_short!("auto_un")),
                 env.ledger().timestamp(),
             );
         } else {

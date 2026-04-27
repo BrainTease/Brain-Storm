@@ -9,6 +9,7 @@ members = [
     "contracts/reputation",
     "contracts/buyback",
     "contracts/liquidity_pool",
+    "contracts/grants",
 ]
 resolver = "2"
 
