@@ -33,6 +33,8 @@ import { QuizzesModule } from './quizzes/quizzes.module';
 import { CohortsModule } from './cohorts/cohorts.module';
 import { CdnModule } from './cdn/cdn.module';
 import { AccessControlModule } from './access-control/access-control.module';
+import { RateLimitModule } from './rate-limit/rate-limit.module';
+import { UserRateLimitGuard } from './rate-limit/user-rate-limit.guard';
 import * as redisStore from 'cache-manager-redis-store';
 import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
 import configuration from './config/configuration';
@@ -117,9 +119,11 @@ import { validationSchema } from './config/validation.schema';
     CohortsModule,
     CdnModule,
     AccessControlModule,
+    RateLimitModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },
+    { provide: APP_GUARD, useClass: UserRateLimitGuard },
     { provide: APP_INTERCEPTOR, useClass: ApiUsageInterceptor },
   ],
 })
