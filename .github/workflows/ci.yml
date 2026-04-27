@@ -130,6 +130,10 @@ jobs:
         env:
           NEXT_PUBLIC_GIT_COMMIT_SHA: ${{ github.sha }}
 
+      - name: Run Pact consumer tests
+        run: npm run test:pact --workspace=apps/frontend
+        continue-on-error: true
+
   chromatic-visual-tests:
     name: Frontend - Visual Regression Tests (Chromatic)
     runs-on: ubuntu-latest
@@ -159,6 +163,11 @@ jobs:
           projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
           storybookBuildDir: apps/frontend/storybook-static
           exitZeroOnChanges: true
+
+  accessibility-tests:
+    name: Frontend - Accessibility Tests (WCAG 2.1 AA)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
 
   percy-visual-tests:
     name: Frontend - Visual Regression Tests (Percy)
@@ -202,59 +211,41 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Start backend server
-        run: npm run start:prod --workspace=apps/backend &
-        env:
-          NODE_ENV: production
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/brainstorm_test
-          REDIS_URL: redis://localhost:6379
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: Build frontend
+        run: npm run build --workspace=apps/frontend
+
+      - name: Start frontend server
+        run: npm run start --workspace=apps/frontend &
         timeout-minutes: 2
 
-      - name: Wait for backend to be ready
+      - name: Wait for frontend to be ready
         run: |
           for i in {1..30}; do
-            if curl -f http://localhost:3000/health; then
-              echo "Backend is ready"
+            if curl -f http://localhost:3000; then
+              echo "Frontend is ready"
               exit 0
             fi
-            echo "Waiting for backend... ($i/30)"
+            echo "Waiting for frontend... ($i/30)"
             sleep 2
           done
-          echo "Backend failed to start"
+          echo "Frontend failed to start"
           exit 1
 
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
+      - name: Run accessibility tests
+        run: npm run test:e2e -- e2e/accessibility.spec.ts
         working-directory: apps/frontend
+        continue-on-error: false
 
-      - name: Run visual regression tests
-        run: npx playwright test --config=playwright-visual.config.ts
-        working-directory: apps/frontend
-        env:
-          PLAYWRIGHT_BASE_URL: http://localhost:3001
-
-      - name: Upload visual regression report
+      - name: Upload accessibility test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: visual-regression-report
-          path: apps/frontend/visual-regression-report/
+          name: accessibility-test-results
+          path: apps/frontend/test-results/
           retention-days: 30
-
-      - name: Upload visual regression results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: visual-regression-results
-          path: apps/frontend/visual-regression-results.json
-          retention-days: 30
-
-      - name: Publish to Percy
-        if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
-        run: |
-          npm install -g @percy/cli
-          percy upload apps/frontend/visual-regression-report/ --token ${{ secrets.PERCY_TOKEN }}
-        continue-on-error: true
 
   contracts-check:
     name: Contracts - Test, Format, Lint, Audit, Deny
