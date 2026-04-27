@@ -13,6 +13,8 @@
     "build": "npm run build --workspaces",
     "test": "npm run test --workspaces",
     "test:load": "./scripts/load-test.sh",
+    "test:mutation": "stryker run",
+    "test:mutation:report": "stryker run --reporters html",
     "prepare": "husky install"
   },
   "engines": {
@@ -21,6 +23,9 @@
   "devDependencies": {
     "@commitlint/cli": "^18.0.0",
     "@commitlint/config-conventional": "^18.0.0",
+    "@stryker-mutator/core": "^9.6.1",
+    "@stryker-mutator/jest-runner": "^9.6.1",
+    "@stryker-mutator/typescript-checker": "^9.6.1",
     "husky": "^9.0.0"
   }
 }
