@@ -5,6 +5,10 @@ members = [
     "contracts/shared",
     "contracts/certificate",
     "contracts/governance",
+    "contracts/credential_metadata",
+    "contracts/reputation",
+    "contracts/buyback",
+    "contracts/liquidity_pool",
 ]
 resolver = "2"
 
