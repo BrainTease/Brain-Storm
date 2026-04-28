@@ -35,6 +35,7 @@ import { CdnModule } from './cdn/cdn.module';
 import { AccessControlModule } from './access-control/access-control.module';
 import { RateLimitModule } from './rate-limit/rate-limit.module';
 import { UserRateLimitGuard } from './rate-limit/user-rate-limit.guard';
+import { SecretRotationModule } from './secrets/secret-rotation.module';
 import * as redisStore from 'cache-manager-redis-store';
 import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
 import configuration from './config/configuration';
@@ -120,6 +121,7 @@ import { validationSchema } from './config/validation.schema';
     CdnModule,
     AccessControlModule,
     RateLimitModule,
+    SecretRotationModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },
