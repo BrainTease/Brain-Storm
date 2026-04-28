@@ -31,7 +31,18 @@ async function bootstrap() {
     new TransformInterceptor(),
     new MetricsInterceptor(app.get(MetricsService))
   );
-  app.enableCors();
+
+  const corsOrigins = configService.get<string[]>('cors.origins') || ['http://localhost:3001'];
+  const corsCredentials = configService.get<boolean>('cors.credentials') ?? false;
+  const corsPreflight = configService.get<number>('cors.maxAge') ?? 86400;
+
+  app.enableCors({
+    origin: nodeEnv === 'production' ? corsOrigins : true,
+    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-API-KEY', 'X-Webhook-Signature'],
+    credentials: corsCredentials,
+    maxAge: corsPreflight,
+  });
 
   const config = new DocumentBuilder()
     .setTitle('Brain-Storm API')

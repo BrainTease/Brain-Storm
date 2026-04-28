@@ -49,6 +49,12 @@ export default () => ({
     url: process.env.FRONTEND_URL || 'http://localhost:3001',
   },
 
+  cors: {
+    origins: process.env.CORS_ORIGINS?.split(',') || ['http://localhost:3001'],
+    credentials: process.env.CORS_CREDENTIALS === 'true',
+    maxAge: parseInt(process.env.CORS_MAX_AGE || '86400', 10),
+  },
+
   throttle: {
     ttl: parseInt(process.env.THROTTLE_TTL || '60000', 10),
     limit: parseInt(process.env.THROTTLE_LIMIT || '100', 10),
