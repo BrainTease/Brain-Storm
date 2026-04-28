@@ -17,6 +17,7 @@
     "test:pact": "jest --testPathPattern=pact"
   },
   "dependencies": {
+    "@brain-storm/types": "*",
     "@aws-sdk/client-comprehend": "^3.758.0",
     "@elastic/elasticsearch": "^8.17.0",
     "@nest-lab/throttler-storage-redis": "^1.2.0",
