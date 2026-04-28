@@ -17,12 +17,14 @@ import { ApiKey } from './api-key.entity';
 import { EncryptionService } from '../common/encryption.service';
 import { ApiKeyStrategy } from './api-key.strategy';
 import { ApiKeyAuthGuard } from './api-key-auth.guard';
+import { AuditModule } from '../audit/audit.module';
 
 @Module({
   imports: [
     UsersModule,
     MailModule,
     PassportModule,
+    AuditModule,
     TypeOrmModule.forFeature([PasswordResetToken, RefreshToken, ApiKey]),
     JwtModule.registerAsync({
       imports: [ConfigModule],

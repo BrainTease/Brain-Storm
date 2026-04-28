@@ -18,6 +18,8 @@ import * as crypto from 'crypto';
 import { generateSecret, generateSync, verifySync, generateURI } from 'otplib';
 import * as qrcode from 'qrcode';
 import { EncryptionService } from '../common/encryption.service';
+import { AuditService } from '../audit/audit.service';
+import { AuditAction } from '../audit/audit-log.entity';
 
 @Injectable()
 export class AuthService {
@@ -31,7 +33,8 @@ export class AuthService {
     private refreshTokenRepo: Repository<RefreshToken>,
     @InjectRepository(ApiKey)
     private apiKeyRepo: Repository<ApiKey>,
-    private encryptionService: EncryptionService
+    private encryptionService: EncryptionService,
+    private auditService: AuditService,
   ) {}
 
   async register(email: string, password: string, refCode?: string) {
@@ -59,25 +62,30 @@ export class AuthService {
     });
 
     await this.mailService.sendVerificationEmail(user.email, token);
+    await this.auditService.log(AuditAction.REGISTER, user.id, true, { email });
     return { message: 'Registration successful. Please verify your email.' };
   }
 
-  async login(email: string, password: string, mfaToken?: string) {
+  async login(email: string, password: string, mfaToken?: string, ipAddress?: string, userAgent?: string) {
     const user = await this.usersService.findByEmail(email);
     if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
+      await this.auditService.log(AuditAction.LOGIN_FAILURE, null, false, { email }, ipAddress, userAgent);
       throw new UnauthorizedException('Invalid credentials');
     }
 
     if (user.isBanned) {
+      await this.auditService.log(AuditAction.LOGIN_FAILURE, user.id, false, { reason: 'banned' }, ipAddress, userAgent);
       throw new UnauthorizedException('Account is banned');
     }
 
     if (!user.isVerified) {
+      await this.auditService.log(AuditAction.LOGIN_FAILURE, user.id, false, { reason: 'unverified' }, ipAddress, userAgent);
       throw new ForbiddenException('Please verify your email before logging in');
     }
 
     // Enforce 2FA for admin accounts
     if (user.role === 'admin' && !user.mfaEnabled) {
+      await this.auditService.log(AuditAction.LOGIN_FAILURE, user.id, false, { reason: 'mfa_required' }, ipAddress, userAgent);
       throw new ForbiddenException('Admin accounts must enable 2FA before logging in');
     }
 
@@ -94,11 +102,16 @@ export class AuthService {
       if (!totpValid) {
         // Try backup code
         const used = await this.useBackupCode(user.id, mfaToken);
-        if (!used) throw new UnauthorizedException('Invalid MFA token');
+        if (!used) {
+          await this.auditService.log(AuditAction.LOGIN_FAILURE, user.id, false, { reason: 'invalid_mfa' }, ipAddress, userAgent);
+          throw new UnauthorizedException('Invalid MFA token');
+        }
       }
     }
 
-    return this.issueTokenPair(user.id, user.email, user.role);
+    const result = await this.issueTokenPair(user.id, user.email, user.role);
+    await this.auditService.log(AuditAction.LOGIN_SUCCESS, user.id, true, {}, ipAddress, userAgent);
+    return result;
   }
 
   async refresh(rawRefreshToken: string) {
@@ -122,7 +135,7 @@ export class AuthService {
     return this.issueTokenPair(user.id, user.email, user.role);
   }
 
-  async logout(rawRefreshToken: string) {
+  async logout(rawRefreshToken: string, userId?: string) {
     const hash = this.hashToken(rawRefreshToken);
     const stored = await this.refreshTokenRepo.findOne({
       where: { tokenHash: hash, revoked: false },
@@ -130,6 +143,7 @@ export class AuthService {
     if (stored) {
       await this.refreshTokenRepo.save({ ...stored, revoked: true });
     }
+    await this.auditService.log(AuditAction.LOGOUT, userId || stored?.userId || null, true);
     return { message: 'Logged out successfully.' };
   }
 
@@ -187,6 +201,7 @@ export class AuthService {
     );
 
     await this.mailService.sendPasswordResetEmail(user.email, token);
+    await this.auditService.log(AuditAction.PASSWORD_RESET_REQUEST, user.id, true, { email });
     return { message: 'If that email exists, a reset link has been sent.' };
   }
 
@@ -204,6 +219,7 @@ export class AuthService {
     const passwordHash = await bcrypt.hash(newPassword, 10);
     await this.usersService.update(resetToken.userId, { passwordHash });
     await this.resetTokenRepo.save({ ...resetToken, used: true });
+    await this.auditService.log(AuditAction.PASSWORD_RESET_COMPLETE, resetToken.userId, true);
 
     return { message: 'Password reset successfully. You can now log in.' };
   }
@@ -238,6 +254,7 @@ export class AuthService {
       mfaBackupCodes: backupCodes.map((c) => crypto.createHash('sha256').update(c).digest('hex')),
     });
 
+    await this.auditService.log(AuditAction.MFA_ENABLED, userId, true);
     return { message: 'MFA enabled successfully', backupCodes };
   }
 
@@ -252,6 +269,7 @@ export class AuthService {
     if (!result?.valid) throw new BadRequestException('Invalid MFA code');
 
     await this.usersService.update(userId, { mfaEnabled: false, mfaSecret: null, mfaBackupCodes: [] });
+    await this.auditService.log(AuditAction.MFA_DISABLED, userId, true);
     return { message: 'MFA disabled successfully' };
   }
 
@@ -275,20 +293,17 @@ export class AuthService {
     const rawKey = `bst_${crypto.randomBytes(32).toString('hex')}`;
     const hash = crypto.createHash('sha256').update(rawKey).digest('hex');
 
-    await this.apiKeyRepo.save(
-      this.apiKeyRepo.create({
-        name,
-        keyHash: hash,
-        userId,
-        isActive: true,
-      })
+    const key = await this.apiKeyRepo.save(
+      this.apiKeyRepo.create({ name, keyHash: hash, userId, isActive: true })
     );
 
+    await this.auditService.log(AuditAction.API_KEY_CREATED, userId, true, { name, keyId: key.id });
     return { apiKey: rawKey };
   }
 
-  async revokeApiKey(id: string) {
+  async revokeApiKey(id: string, userId?: string) {
     await this.apiKeyRepo.update(id, { isActive: false });
+    await this.auditService.log(AuditAction.API_KEY_REVOKED, userId || null, true, { keyId: id });
     return { message: 'API key revoked' };
   }
 
