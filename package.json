@@ -4,6 +4,7 @@
   "private": true,
   "description": "Brain-Storm - Blockchain Education Platform on Stellar",
   "workspaces": [
+    "packages/types",
     "apps/frontend",
     "apps/backend"
   ],
