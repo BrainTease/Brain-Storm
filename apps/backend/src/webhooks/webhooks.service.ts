@@ -37,6 +37,12 @@ export class WebhooksService implements OnModuleInit {
     return this.webhookRepo.find({ where: { userId } });
   }
 
+  async getWebhookForUser(id: string, userId: string): Promise<Webhook> {
+    const wh = await this.webhookRepo.findOne({ where: { id, userId } });
+    if (!wh) throw new NotFoundException('Webhook not found');
+    return wh;
+  }
+
   async delete(userId: string, id: string): Promise<void> {
     const wh = await this.webhookRepo.findOne({ where: { id, userId } });
     if (!wh) throw new NotFoundException('Webhook not found');
@@ -72,13 +78,27 @@ export class WebhooksService implements OnModuleInit {
     }
   }
 
+  verifySignature(secret: string, body: string, signature: string, timestamp?: string): boolean {
+    // Validate timestamp to prevent replay attacks (5 min window)
+    if (timestamp) {
+      const ts = parseInt(timestamp, 10);
+      if (isNaN(ts)) return false;
+      const now = Math.floor(Date.now() / 1000);
+      if (Math.abs(now - ts) > 300) return false; // 5 minutes
+    }
+
+    const expected = this.sign(secret, body);
+    return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
+  }
+
   private async deliver(wh: Webhook, delivery: WebhookDelivery): Promise<void> {
     delivery.attempts += 1;
     const body = delivery.payload;
+    const timestamp = Math.floor(Date.now() / 1000).toString();
     const sig = this.sign(wh.secret, body);
 
     try {
-      const { status, responseBody } = await this.httpPost(wh.url, body, sig);
+      const { status, responseBody } = await this.httpPost(wh.url, body, sig, timestamp);
       delivery.responseStatus = status;
       delivery.responseBody = responseBody.slice(0, 500);
       delivery.status = status >= 200 && status < 300 ? DeliveryStatus.SUCCESS : DeliveryStatus.FAILED;
@@ -105,13 +125,19 @@ export class WebhooksService implements OnModuleInit {
     return 'sha256=' + crypto.createHmac('sha256', secret).update(body).digest('hex');
   }
 
-  private httpPost(url: string, body: string, signature: string): Promise<{ status: number; responseBody: string }> {
+  private httpPost(url: string, body: string, signature: string, timestamp: string): Promise<{ status: number; responseBody: string }> {
     return new Promise((resolve, reject) => {
       const parsed = new URL(url);
       const lib = parsed.protocol === 'https:' ? https : http;
       const req = lib.request(
         { hostname: parsed.hostname, port: parsed.port, path: parsed.pathname + parsed.search, method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-Webhook-Signature': signature, 'Content-Length': Buffer.byteLength(body) } },
+          headers: { 
+            'Content-Type': 'application/json', 
+            'X-Webhook-Signature': signature, 
+            'X-Webhook-Timestamp': timestamp,
+            'Content-Length': Buffer.byteLength(body) 
+          } 
+        },
         (res) => {
           let data = '';
           res.on('data', (chunk) => (data += chunk));

@@ -1,5 +1,5 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards, Request } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Headers, UseGuards, Request, HttpCode, HttpStatus, UnauthorizedException } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiHeader } from '@nestjs/swagger';
 import { IsUrl, IsArray, IsString, IsBoolean, IsOptional } from 'class-validator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { WebhooksService } from './webhooks.service';
@@ -13,6 +13,13 @@ class UpdateWebhookDto {
   @IsOptional() @IsUrl() url?: string;
   @IsOptional() @IsArray() @IsString({ each: true }) events?: string[];
   @IsOptional() @IsBoolean() isActive?: boolean;
+}
+
+class VerifySignatureDto {
+  @IsString() webhookId: string;
+  @IsString() body: string;
+  @IsString() signature: string;
+  @IsOptional() @IsString() timestamp?: string;
 }
 
 @ApiTags('webhooks')
@@ -50,5 +57,15 @@ export class WebhooksController {
   @ApiOperation({ summary: 'Get delivery logs for a webhook' })
   logs(@Request() req: any, @Param('id') id: string) {
     return this.service.getLogs(id, req.user.userId);
+  }
+
+  @Post('verify-signature')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Verify a webhook signature (for testing)' })
+  async verifySignature(@Request() req: any, @Body() dto: VerifySignatureDto) {
+    const webhook = await this.service.getWebhookForUser(dto.webhookId, req.user.userId);
+    const valid = this.service.verifySignature(webhook.secret, dto.body, dto.signature, dto.timestamp);
+    if (!valid) throw new UnauthorizedException('Invalid signature or timestamp');
+    return { valid: true };
   }
 }
