@@ -44,6 +44,13 @@ export function Navbar() {
           >
             {t('profile')}
           </Link>
+          <Link
+            href="/settings"
+            aria-current={isActive('/settings') ? 'page' : undefined}
+            className="text-sm text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+          >
+            {t('settings')}
+          </Link>
           <NotificationBell />
           <LanguageSwitcher />
           <ThemeToggle />
