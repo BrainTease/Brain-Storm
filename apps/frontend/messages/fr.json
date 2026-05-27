@@ -88,5 +88,106 @@
     "playPause": "Lecture / Pause",
     "seekBack": "Reculer de 10s",
     "seekForward": "Avancer de 10s"
+  },
+  "leaderboard": {
+    "title": "Classement",
+    "subtitle": "Meilleurs apprenants par points et succès.",
+    "rank": "Rang",
+    "learner": "Apprenant",
+    "points": "Points",
+    "courses": "Cours",
+    "badges": "Badges",
+    "you": "Vous",
+    "loading": "Chargement du classement…",
+    "empty": "Aucun classement à afficher.",
+    "previous": "Précédent",
+    "next": "Suivant",
+    "page": "Page {page} sur {total}",
+    "periods": {
+      "week": "Cette semaine",
+      "month": "Ce mois",
+      "all": "Tout le temps"
+    },
+    "pointsValue": "{value, number} pts",
+    "coursesValue": "{value, number} terminés",
+    "updated": "Mis à jour {date}"
+  },
+  "cohorts": {
+    "title": "Cohortes",
+    "subtitle": "Gérez les cohortes d'étudiants, les membres et les affectations.",
+    "newCohort": "Nouvelle cohorte",
+    "empty": "Aucune cohorte. Créez la première pour commencer.",
+    "loading": "Chargement des cohortes…",
+    "membersCount": "{count, plural, =0 {Aucun membre} one {# membre} other {# membres}}",
+    "coursesCount": "{count, plural, =0 {Aucun cours} one {# cours} other {# cours}}",
+    "progressLabel": "{value, number, ::percent} terminé",
+    "created": "Créée le {date}",
+    "form": {
+      "title": "Créer une cohorte",
+      "editTitle": "Modifier la cohorte",
+      "name": "Nom de la cohorte",
+      "namePlaceholder": "ex. Printemps 2026 — Parcours Stellar",
+      "description": "Description",
+      "descriptionPlaceholder": "Sur quoi cette cohorte est-elle axée ?",
+      "startDate": "Date de début",
+      "endDate": "Date de fin",
+      "capacity": "Capacité",
+      "capacityHint": "Nombre maximum d'étudiants",
+      "submit": "Créer la cohorte",
+      "submitting": "Création…",
+      "cancel": "Annuler"
+    },
+    "tabs": {
+      "overview": "Aperçu",
+      "members": "Membres",
+      "discussion": "Discussion",
+      "courses": "Cours",
+      "analytics": "Analytique"
+    },
+    "members": {
+      "addMember": "Ajouter un membre",
+      "emailPlaceholder": "etudiant@exemple.com",
+      "role": "Rôle",
+      "joined": "Inscrit le {date}",
+      "remove": "Retirer",
+      "roles": {
+        "student": "Étudiant",
+        "ta": "Assistant",
+        "instructor": "Instructeur"
+      },
+      "empty": "Aucun membre pour l'instant. Invitez quelqu'un à rejoindre."
+    },
+    "discussion": {
+      "title": "Discussion de la cohorte",
+      "placeholder": "Partagez une mise à jour avec votre cohorte…",
+      "post": "Publier",
+      "empty": "Aucun message. Lancez la conversation."
+    },
+    "courses": {
+      "assignedTitle": "Cours assignés",
+      "assign": "Assigner un cours",
+      "empty": "Aucun cours assigné.",
+      "due": "Échéance {date}"
+    },
+    "analytics": {
+      "activeMembers": "Membres actifs",
+      "avgProgress": "Progression moyenne",
+      "completionRate": "Taux d'achèvement",
+      "totalPoints": "Points totaux gagnés"
+    }
+  },
+  "forms": {
+    "required": "Ce champ est obligatoire",
+    "invalidEmail": "Saisissez une adresse e-mail valide",
+    "minLength": "Doit contenir au moins {min} caractères",
+    "maxLength": "Doit contenir au plus {max} caractères",
+    "minValue": "Doit être au moins {min}",
+    "maxValue": "Doit être au plus {max}",
+    "passwordMismatch": "Les mots de passe ne correspondent pas",
+    "checking": "Vérification…",
+    "checkingError": "Validation impossible. Réessayez.",
+    "submitting": "Envoi…",
+    "submit": "Envoyer",
+    "reset": "Réinitialiser"
   }
 }

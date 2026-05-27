@@ -40,6 +40,24 @@ export function Navbar() {
           Dashboard
         </Link>
       )}
+      <Link
+        href="/leaderboard"
+        aria-current={pathname.endsWith('/leaderboard') ? 'page' : undefined}
+        className={`text-sm transition-colors ${isActive('/leaderboard')}`}
+        onClick={() => setMenuOpen(false)}
+      >
+        Leaderboard
+      </Link>
+      {isAuthenticated && (
+        <Link
+          href="/cohorts"
+          aria-current={pathname.endsWith('/cohorts') ? 'page' : undefined}
+          className={`text-sm transition-colors ${isActive('/cohorts')}`}
+          onClick={() => setMenuOpen(false)}
+        >
+          Cohorts
+        </Link>
+      )}
     </>
   );
 

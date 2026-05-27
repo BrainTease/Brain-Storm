@@ -80,5 +80,106 @@
     "playPause": "Reproducir / Pausar",
     "seekBack": "Retroceder 10s",
     "seekForward": "Avanzar 10s"
+  },
+  "leaderboard": {
+    "title": "Tabla de clasificación",
+    "subtitle": "Mejores estudiantes por puntos y logros.",
+    "rank": "Puesto",
+    "learner": "Estudiante",
+    "points": "Puntos",
+    "courses": "Cursos",
+    "badges": "Insignias",
+    "you": "Tú",
+    "loading": "Cargando clasificación…",
+    "empty": "Aún no hay clasificaciones.",
+    "previous": "Anterior",
+    "next": "Siguiente",
+    "page": "Página {page} de {total}",
+    "periods": {
+      "week": "Esta semana",
+      "month": "Este mes",
+      "all": "Todo el tiempo"
+    },
+    "pointsValue": "{value, number} pts",
+    "coursesValue": "{value, number} completados",
+    "updated": "Actualizado {date}"
+  },
+  "cohorts": {
+    "title": "Cohortes",
+    "subtitle": "Gestiona cohortes de estudiantes, miembros y asignaciones.",
+    "newCohort": "Nueva cohorte",
+    "empty": "Aún no hay cohortes. Crea la primera para empezar.",
+    "loading": "Cargando cohortes…",
+    "membersCount": "{count, plural, =0 {Sin miembros} one {# miembro} other {# miembros}}",
+    "coursesCount": "{count, plural, =0 {Sin cursos} one {# curso} other {# cursos}}",
+    "progressLabel": "{value, number, ::percent} completado",
+    "created": "Creada el {date}",
+    "form": {
+      "title": "Crear cohorte",
+      "editTitle": "Editar cohorte",
+      "name": "Nombre de la cohorte",
+      "namePlaceholder": "ej. Primavera 2026 — Pista Stellar",
+      "description": "Descripción",
+      "descriptionPlaceholder": "¿En qué se centra esta cohorte?",
+      "startDate": "Fecha de inicio",
+      "endDate": "Fecha de fin",
+      "capacity": "Capacidad",
+      "capacityHint": "Número máximo de estudiantes",
+      "submit": "Crear cohorte",
+      "submitting": "Creando…",
+      "cancel": "Cancelar"
+    },
+    "tabs": {
+      "overview": "Resumen",
+      "members": "Miembros",
+      "discussion": "Discusión",
+      "courses": "Cursos",
+      "analytics": "Analíticas"
+    },
+    "members": {
+      "addMember": "Añadir miembro",
+      "emailPlaceholder": "estudiante@ejemplo.com",
+      "role": "Rol",
+      "joined": "Unido el {date}",
+      "remove": "Eliminar",
+      "roles": {
+        "student": "Estudiante",
+        "ta": "Auxiliar",
+        "instructor": "Instructor"
+      },
+      "empty": "Aún no hay miembros. Invita a alguien a unirse."
+    },
+    "discussion": {
+      "title": "Discusión de la cohorte",
+      "placeholder": "Comparte una actualización con tu cohorte…",
+      "post": "Publicar",
+      "empty": "Aún no hay mensajes. Empieza la conversación."
+    },
+    "courses": {
+      "assignedTitle": "Cursos asignados",
+      "assign": "Asignar curso",
+      "empty": "Sin cursos asignados.",
+      "due": "Hasta {date}"
+    },
+    "analytics": {
+      "activeMembers": "Miembros activos",
+      "avgProgress": "Progreso promedio",
+      "completionRate": "Tasa de finalización",
+      "totalPoints": "Puntos totales ganados"
+    }
+  },
+  "forms": {
+    "required": "Este campo es obligatorio",
+    "invalidEmail": "Introduce un correo electrónico válido",
+    "minLength": "Debe tener al menos {min} caracteres",
+    "maxLength": "Debe tener como máximo {max} caracteres",
+    "minValue": "Debe ser al menos {min}",
+    "maxValue": "Debe ser como máximo {max}",
+    "passwordMismatch": "Las contraseñas no coinciden",
+    "checking": "Comprobando…",
+    "checkingError": "No se pudo validar. Inténtalo de nuevo.",
+    "submitting": "Enviando…",
+    "submit": "Enviar",
+    "reset": "Restablecer"
   }
 }

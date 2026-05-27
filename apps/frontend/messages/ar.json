@@ -88,5 +88,106 @@
     "playPause": "تشغيل / إيقاف",
     "seekBack": "رجوع 10 ثوانٍ",
     "seekForward": "تقديم 10 ثوانٍ"
+  },
+  "leaderboard": {
+    "title": "لوحة المتصدرين",
+    "subtitle": "أفضل المتعلمين حسب النقاط والإنجازات.",
+    "rank": "المرتبة",
+    "learner": "المتعلم",
+    "points": "النقاط",
+    "courses": "الدورات",
+    "badges": "الأوسمة",
+    "you": "أنت",
+    "loading": "جارٍ تحميل التصنيف…",
+    "empty": "لا توجد تصنيفات بعد.",
+    "previous": "السابق",
+    "next": "التالي",
+    "page": "الصفحة {page} من {total}",
+    "periods": {
+      "week": "هذا الأسبوع",
+      "month": "هذا الشهر",
+      "all": "كل الوقت"
+    },
+    "pointsValue": "{value, number} نقطة",
+    "coursesValue": "{value, number} مكتملة",
+    "updated": "آخر تحديث {date}"
+  },
+  "cohorts": {
+    "title": "المجموعات",
+    "subtitle": "إدارة مجموعات الطلاب والأعضاء والتعيينات.",
+    "newCohort": "مجموعة جديدة",
+    "empty": "لا توجد مجموعات بعد. أنشئ أول مجموعة للبدء.",
+    "loading": "جارٍ تحميل المجموعات…",
+    "membersCount": "{count, plural, =0 {لا يوجد أعضاء} one {عضو واحد} two {عضوان} few {# أعضاء} many {# عضواً} other {# عضو}}",
+    "coursesCount": "{count, plural, =0 {لا توجد دورات} one {دورة واحدة} two {دورتان} few {# دورات} many {# دورة} other {# دورة}}",
+    "progressLabel": "{value, number, ::percent} مكتمل",
+    "created": "أُنشئت في {date}",
+    "form": {
+      "title": "إنشاء مجموعة",
+      "editTitle": "تعديل المجموعة",
+      "name": "اسم المجموعة",
+      "namePlaceholder": "مثال: ربيع 2026 — مسار Stellar",
+      "description": "الوصف",
+      "descriptionPlaceholder": "ما الذي تركز عليه هذه المجموعة؟",
+      "startDate": "تاريخ البداية",
+      "endDate": "تاريخ النهاية",
+      "capacity": "السعة",
+      "capacityHint": "الحد الأقصى لعدد الطلاب",
+      "submit": "إنشاء المجموعة",
+      "submitting": "جارٍ الإنشاء…",
+      "cancel": "إلغاء"
+    },
+    "tabs": {
+      "overview": "نظرة عامة",
+      "members": "الأعضاء",
+      "discussion": "النقاش",
+      "courses": "الدورات",
+      "analytics": "التحليلات"
+    },
+    "members": {
+      "addMember": "إضافة عضو",
+      "emailPlaceholder": "student@example.com",
+      "role": "الدور",
+      "joined": "انضم في {date}",
+      "remove": "إزالة",
+      "roles": {
+        "student": "طالب",
+        "ta": "مساعد",
+        "instructor": "مدرّس"
+      },
+      "empty": "لا يوجد أعضاء بعد. ادعُ شخصاً للانضمام."
+    },
+    "discussion": {
+      "title": "نقاش المجموعة",
+      "placeholder": "شارك تحديثاً مع مجموعتك…",
+      "post": "نشر",
+      "empty": "لا توجد رسائل بعد. ابدأ المحادثة."
+    },
+    "courses": {
+      "assignedTitle": "الدورات المعيّنة",
+      "assign": "تعيين دورة",
+      "empty": "لا توجد دورات معيّنة.",
+      "due": "الموعد النهائي {date}"
+    },
+    "analytics": {
+      "activeMembers": "الأعضاء النشطون",
+      "avgProgress": "متوسط التقدم",
+      "completionRate": "معدل الإكمال",
+      "totalPoints": "إجمالي النقاط المكتسبة"
+    }
+  },
+  "forms": {
+    "required": "هذا الحقل مطلوب",
+    "invalidEmail": "أدخل بريداً إلكترونياً صالحاً",
+    "minLength": "يجب أن يحتوي على {min} حرفاً على الأقل",
+    "maxLength": "يجب ألا يتجاوز {max} حرفاً",
+    "minValue": "يجب أن يكون {min} على الأقل",
+    "maxValue": "يجب ألا يتجاوز {max}",
+    "passwordMismatch": "كلمتا المرور غير متطابقتين",
+    "checking": "جارٍ التحقق…",
+    "checkingError": "تعذّر التحقق. حاول مرة أخرى.",
+    "submitting": "جارٍ الإرسال…",
+    "submit": "إرسال",
+    "reset": "إعادة تعيين"
   }
 }
