@@ -48,11 +48,19 @@
     "avatarAlt": "{name}'s avatar",
     "editProfile": "Edit Profile",
     "username": "Username",
+    "usernameHint": "Display name shown on your profile (max 50 characters).",
+    "usernameRequired": "Username is required.",
     "bio": "Bio",
+    "bioHint": "{count}/500 characters",
     "avatarUrl": "Avatar URL",
+    "avatarUrlHint": "Enter a public URL to use as your profile picture.",
+    "uploadAvatar": "Upload new avatar",
     "saving": "Saving…",
     "saved": "Saved ✓",
-    "saveChanges": "Save Changes"
+    "saveChanges": "Save Changes",
+    "loadError": "Failed to load profile. Please try again.",
+    "saveError": "Failed to save profile. Please try again.",
+    "retry": "Try again"
   },
   "wallet": {
     "title": "Stellar Wallet",

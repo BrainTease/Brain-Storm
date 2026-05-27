@@ -60,7 +60,8 @@
     "retry": "إعادة المحاولة",
     "usernameHint": "50 حرفاً كحد أقصى.",
     "bioHint": "{count}/500 حرف.",
-    "avatarUrlHint": "رابط لصورة الملف الشخصي."
+    "avatarUrlHint": "رابط لصورة الملف الشخصي.",
+    "uploadAvatar": "رفع صورة شخصية جديدة"
   },
   "wallet": {
     "title": "محفظة Stellar",

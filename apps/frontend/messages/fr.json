@@ -60,7 +60,8 @@
     "retry": "Réessayer",
     "usernameHint": "50 caractères maximum.",
     "bioHint": "{count}/500 caractères.",
-    "avatarUrlHint": "Lien vers une image de profil."
+    "avatarUrlHint": "Lien vers une image de profil.",
+    "uploadAvatar": "Télécharger un nouvel avatar"
   },
   "wallet": {
     "title": "Portefeuille Stellar",

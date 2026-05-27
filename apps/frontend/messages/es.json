@@ -52,7 +52,15 @@
     "avatarUrl": "URL del avatar",
     "saving": "Guardando…",
     "saved": "Guardado ✓",
-    "saveChanges": "Guardar Cambios"
+    "saveChanges": "Guardar Cambios",
+    "uploadAvatar": "Subir nuevo avatar",
+    "usernameHint": "Nombre de visualización en tu perfil (máx. 50 caracteres).",
+    "usernameRequired": "El nombre de usuario es obligatorio.",
+    "bioHint": "{count}/500 caracteres",
+    "avatarUrlHint": "Ingresa una URL pública para usar como foto de perfil.",
+    "loadError": "Error al cargar el perfil. Por favor, inténtalo de nuevo.",
+    "saveError": "Error al guardar el perfil. Por favor, inténtalo de nuevo.",
+    "retry": "Intentar de nuevo"
   },
   "wallet": {
     "title": "Cartera Stellar",

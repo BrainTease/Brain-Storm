@@ -14,8 +14,11 @@ interface Credential {
   courseId: string;
   courseName: string;
   issuedAt: string;
+  expiresAt?: string;
   txHash: string;
   studentName?: string;
+  instructorName?: string;
+  description?: string;
 }
 
 export default function CredentialsPage() {
@@ -66,6 +69,12 @@ export default function CredentialsPage() {
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 Issued: {new Date(cred.issuedAt).toLocaleDateString()}
               </p>
+              {cred.expiresAt && (
+                <p className={`text-sm ${new Date(cred.expiresAt) < new Date() ? 'text-red-500' : 'text-gray-500 dark:text-gray-400'}`}>
+                  Expires: {new Date(cred.expiresAt).toLocaleDateString()}
+                  {new Date(cred.expiresAt) < new Date() && ' · Expired'}
+                </p>
+              )}
               <p
                 className="text-xs text-gray-400 dark:text-gray-500 font-mono truncate"
                 title={cred.txHash}
