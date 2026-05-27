@@ -40,7 +40,7 @@ export default function RegisterPage() {
     });
     localStorage.setItem('access_token', res.data.access_token);
     login(res.data.access_token, res.data.user);
-    router.push('/dashboard');
+    router.push(`/auth/verify-email?email=${encodeURIComponent(data.email)}`);
   };
 
   return (
