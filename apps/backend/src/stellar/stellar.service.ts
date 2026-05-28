@@ -2,6 +2,8 @@ import { Injectable, Logger, Inject } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Cache } from 'cache-manager';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import {
   Horizon,
   Keypair,
@@ -13,6 +15,11 @@ import {
   nativeToScVal,
   Address,
 } from '@stellar/stellar-sdk';
+import {
+  StellarTransactionLog,
+  StellarTxType,
+  StellarTxStatus,
+} from './stellar-transaction-log.entity';
 
 const MAX_RETRIES = 3;
 const BASE_DELAY_MS = 1000;
@@ -29,7 +36,9 @@ export class StellarService {
 
   constructor(
     private configService: ConfigService,
-    @Inject(CACHE_MANAGER) private cacheManager: Cache
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    @InjectRepository(StellarTransactionLog)
+    private readonly txLogRepo: Repository<StellarTransactionLog>,
   ) {
     const isTestnet = this.configService.get<string>('stellar.network') !== 'mainnet';
     this.networkPassphrase = isTestnet ? Networks.TESTNET : Networks.PUBLIC;
@@ -65,7 +74,61 @@ export class StellarService {
       const body = await response.text();
       throw new Error(`Friendbot error: ${body}`);
     }
+    await this.logTransaction({
+      type: StellarTxType.FUND_TESTNET,
+      recipientPublicKey: publicKey,
+      status: StellarTxStatus.SUCCESS,
+    });
     return { message: `Account ${publicKey} funded successfully` };
+  }
+
+  async mintCertificateNFT(
+    recipientPublicKey: string,
+    certificateHash: string,
+    courseTitle: string,
+  ): Promise<string> {
+    try {
+      const issuerKeypair = Keypair.fromSecret(
+        this.configService.get<string>('stellar.secretKey') ?? '',
+      );
+      const issuerAccount = await this.server.loadAccount(issuerKeypair.publicKey());
+
+      const tx = new TransactionBuilder(issuerAccount, {
+        fee: BASE_FEE,
+        networkPassphrase: this.networkPassphrase,
+      })
+        .addOperation(
+          Operation.manageData({
+            name: `brain-storm:cert:${certificateHash.slice(0, 28)}`,
+            value: recipientPublicKey,
+          }),
+        )
+        .setTimeout(30)
+        .build();
+
+      tx.sign(issuerKeypair);
+      const result = await this.server.submitTransaction(tx);
+      this.logger.log(`Certificate NFT minted: ${result.hash} for ${courseTitle}`);
+
+      await this.logTransaction({
+        type: StellarTxType.MINT_CERTIFICATE,
+        txHash: result.hash,
+        recipientPublicKey,
+        status: StellarTxStatus.SUCCESS,
+        metadata: { certificateHash, courseTitle },
+      });
+
+      return result.hash;
+    } catch (error) {
+      await this.logTransaction({
+        type: StellarTxType.MINT_CERTIFICATE,
+        recipientPublicKey,
+        status: StellarTxStatus.FAILED,
+        errorMessage: error.message,
+        metadata: { certificateHash, courseTitle },
+      });
+      throw error;
+    }
   }
 
   async issueCredential(recipientPublicKey: string, courseId: string): Promise<string> {
@@ -79,7 +142,15 @@ export class StellarService {
       await this.issueCredentialFallback(recipientPublicKey, courseId);
     }
 
-    return this.mintCredentialViaHorizon(recipientPublicKey, courseId);
+    const txHash = await this.mintCredentialViaHorizon(recipientPublicKey, courseId);
+    await this.logTransaction({
+      type: StellarTxType.CREDENTIAL,
+      txHash,
+      recipientPublicKey,
+      courseId,
+      status: StellarTxStatus.SUCCESS,
+    });
+    return txHash;
   }
 
   async recordProgress(
@@ -252,5 +323,25 @@ export class StellarService {
       await new Promise((r) => setTimeout(r, delay));
       return this.retryWithBackoff(fn, attempt + 1);
     }
+  }
+
+  private async logTransaction(data: Partial<StellarTransactionLog>): Promise<void> {
+    try {
+      await this.txLogRepo.save(this.txLogRepo.create(data));
+    } catch (err) {
+      this.logger.error(`Failed to log transaction: ${err.message}`);
+    }
+  }
+
+  async getTransactionLogs(filters?: {
+    recipientPublicKey?: string;
+    type?: StellarTxType;
+    status?: StellarTxStatus;
+  }): Promise<StellarTransactionLog[]> {
+    return this.txLogRepo.find({
+      where: filters ?? {},
+      order: { createdAt: 'DESC' },
+      take: 100,
+    });
   }
 }

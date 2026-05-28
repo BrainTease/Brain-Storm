@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Param, Body, UseGuards, Query } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
 import { StellarService } from './stellar.service';
@@ -44,17 +44,29 @@ export class StellarController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Mint a credential NFT' })
   @ApiBody({ schema: { example: { recipientPublicKey: 'GABC...', courseId: 'uuid' } } })
-  @ApiResponse({
-    status: 201,
-    description: 'Credential minted successfully',
-    schema: {
-      example: { data: 'transaction_hash', statusCode: 201, timestamp: '2024-01-01T00:00:00.000Z' },
-    },
-  })
+  @ApiResponse({ status: 201, description: 'Credential minted successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - admin role required' })
   mintCredential(@Body() body: { recipientPublicKey: string; courseId: string }) {
     return this.stellarService.issueCredential(body.recipientPublicKey, body.courseId);
+  }
+
+  @Get('transactions')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get Stellar transaction audit logs (admin only)' })
+  @ApiResponse({ status: 200, description: 'List of transaction logs' })
+  getTransactionLogs(
+    @Query('publicKey') publicKey?: string,
+    @Query('type') type?: string,
+    @Query('status') status?: string,
+  ) {
+    return this.stellarService.getTransactionLogs({
+      recipientPublicKey: publicKey,
+      type: type as any,
+      status: status as any,
+    });
   }
 }
 
