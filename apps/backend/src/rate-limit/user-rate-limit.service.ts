@@ -1,70 +1,98 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
-import { UserRole } from '../users/entities/user.entity';
 
 export interface RateLimitConfig {
   limit: number;
   windowMs: number;
 }
 
-export const RATE_LIMIT_CONFIGS: Record<UserRole, RateLimitConfig> = {
-  [UserRole.ADMIN]: { limit: 10000, windowMs: 60000 },
-  [UserRole.INSTRUCTOR]: { limit: 5000, windowMs: 60000 },
-  [UserRole.STUDENT]: { limit: 1000, windowMs: 60000 },
-  [UserRole.GUEST]: { limit: 100, windowMs: 60000 },
+// Per-role default limits
+export const ROLE_RATE_LIMITS: Record<string, RateLimitConfig> = {
+  admin: { limit: 10000, windowMs: 60000 },
+  instructor: { limit: 5000, windowMs: 60000 },
+  student: { limit: 1000, windowMs: 60000 },
+  guest: { limit: 100, windowMs: 60000 },
+};
+
+// Endpoint-specific overrides (keyed by route pattern)
+export const ENDPOINT_RATE_LIMITS: Record<string, RateLimitConfig> = {
+  'POST:/v1/auth/login': { limit: 10, windowMs: 60000 },
+  'POST:/v1/auth/register': { limit: 5, windowMs: 60000 },
+  'POST:/v1/certificates': { limit: 20, windowMs: 60000 },
+  'POST:/v1/stellar/mint': { limit: 3, windowMs: 60000 },
 };
 
 @Injectable()
 export class UserRateLimitService {
   constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {}
 
-  async checkRateLimit(userId: string, role: UserRole): Promise<boolean> {
-    const config = RATE_LIMIT_CONFIGS[role];
-    const key = `rate-limit:${userId}`;
+  /**
+   * Sliding window rate limit check.
+   * Returns true if the request is allowed.
+   */
+  async checkRateLimit(
+    userId: string,
+    role: string,
+    endpoint?: string,
+  ): Promise<boolean> {
+    // Admins bypass rate limiting
+    if (role === 'admin') return true;
 
-    const current = await this.cacheManager.get<number>(key);
-    const count = (current || 0) + 1;
+    const config = this.resolveConfig(role, endpoint);
+    const key = endpoint
+      ? `rate-limit:${userId}:${endpoint}`
+      : `rate-limit:${userId}`;
 
-    if (count > config.limit) {
+    const now = Date.now();
+    const windowStart = now - config.windowMs;
+
+    // Retrieve sliding window timestamps
+    const timestamps = (await this.cacheManager.get<number[]>(key)) ?? [];
+
+    // Filter to only timestamps within the current window
+    const windowTimestamps = timestamps.filter((t) => t > windowStart);
+
+    if (windowTimestamps.length >= config.limit) {
       return false;
     }
 
-    await this.cacheManager.set(key, count, config.windowMs);
+    windowTimestamps.push(now);
+    await this.cacheManager.set(key, windowTimestamps, config.windowMs);
     return true;
   }
 
-  async getRateLimitStatus(userId: string, role: UserRole) {
-    const config = RATE_LIMIT_CONFIGS[role];
-    const key = `rate-limit:${userId}`;
-    const current = await this.cacheManager.get<number>(key);
-    const count = current || 0;
+  async getRateLimitStatus(
+    userId: string,
+    role: string,
+    endpoint?: string,
+  ): Promise<{ limit: number; remaining: number; resetTime: Date }> {
+    const config = this.resolveConfig(role, endpoint);
+    const key = endpoint
+      ? `rate-limit:${userId}:${endpoint}`
+      : `rate-limit:${userId}`;
+
+    const now = Date.now();
+    const windowStart = now - config.windowMs;
+    const timestamps = (await this.cacheManager.get<number[]>(key)) ?? [];
+    const windowTimestamps = timestamps.filter((t) => t > windowStart);
+    const count = windowTimestamps.length;
 
     return {
       limit: config.limit,
-      current: count,
       remaining: Math.max(0, config.limit - count),
-      resetTime: new Date(Date.now() + config.windowMs),
+      resetTime: new Date(now + config.windowMs),
     };
   }
 
   async resetUserLimit(userId: string): Promise<void> {
-    const key = `rate-limit:${userId}`;
-    await this.cacheManager.del(key);
+    await this.cacheManager.del(`rate-limit:${userId}`);
   }
 
-  async isTrustedClient(clientId: string): Promise<boolean> {
-    const key = `trusted-client:${clientId}`;
-    return !!(await this.cacheManager.get(key));
-  }
-
-  async addTrustedClient(clientId: string, ttlMs: number = 86400000): Promise<void> {
-    const key = `trusted-client:${clientId}`;
-    await this.cacheManager.set(key, true, ttlMs);
-  }
-
-  async removeTrustedClient(clientId: string): Promise<void> {
-    const key = `trusted-client:${clientId}`;
-    await this.cacheManager.del(key);
+  private resolveConfig(role: string, endpoint?: string): RateLimitConfig {
+    if (endpoint && ENDPOINT_RATE_LIMITS[endpoint]) {
+      return ENDPOINT_RATE_LIMITS[endpoint];
+    }
+    return ROLE_RATE_LIMITS[role] ?? ROLE_RATE_LIMITS['guest'];
   }
 }
