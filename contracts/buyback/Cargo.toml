@@ -7,7 +7,7 @@ edition = "2021"
 soroban-sdk = { version = "21.5.0", features = ["testutils"] }
 
 [lib]
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "rlib"]
 
 [profile.release]
 opt-level = "z"

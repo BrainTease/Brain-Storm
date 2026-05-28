@@ -259,3 +259,6 @@ impl NFTContract {
         }
     }
 }
+
+#[cfg(test)]
+mod tests;

@@ -259,8 +259,52 @@ impl SharedContract {
     pub fn get_pause_state(env: Env) -> pausable::PauseState {
         pausable::get_pause_state(&env)
     }
+
+    // -------------------------------------------------------------------------
+    // Upgrade mechanism (issue #481)
+    // -------------------------------------------------------------------------
+
+    /// Schedule a WASM upgrade with a timelock delay (admin only).
+    pub fn schedule_upgrade(env: Env, admin: Address, new_wasm_hash: BytesN<32>, timelock_ledgers: u32) {
+        admin.require_auth();
+        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
+        assert!(admin == stored_admin, "Only admin can schedule upgrades");
+        upgrade::schedule_upgrade(&env, &admin, new_wasm_hash, timelock_ledgers);
+    }
+
+    /// Execute a previously scheduled upgrade once its timelock has expired (admin only).
+    pub fn execute_upgrade(env: Env, admin: Address) {
+        admin.require_auth();
+        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
+        assert!(admin == stored_admin, "Only admin can execute upgrades");
+        upgrade::execute_upgrade(&env, &admin);
+    }
+
+    /// Cancel a pending upgrade before it executes (admin only).
+    pub fn cancel_upgrade(env: Env, admin: Address) {
+        admin.require_auth();
+        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
+        assert!(admin == stored_admin, "Only admin can cancel upgrades");
+        upgrade::cancel_upgrade(&env, &admin);
+    }
+
+    /// Returns the pending upgrade details, if any.
+    pub fn get_pending_upgrade(env: Env) -> Option<upgrade::ScheduledUpgrade> {
+        upgrade::get_pending_upgrade(&env)
+    }
+
+    /// Returns the number of completed upgrades (for audit trail).
+    pub fn get_upgrade_count(env: Env) -> u32 {
+        upgrade::get_upgrade_count(&env)
+    }
+
+    /// Returns a specific upgrade history entry by index.
+    pub fn get_upgrade_record(env: Env, index: u32) -> Option<upgrade::UpgradeRecord> {
+        upgrade::get_upgrade_record(&env, index)
+    }
 }
 
 pub mod multisig;
+pub mod upgrade;
 
 mod tests;

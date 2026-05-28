@@ -219,3 +219,6 @@ impl RoyaltyDistributionContract {
             .get(&DataKey::RoyaltySplit(course_id))
     }
 }
+
+#[cfg(test)]
+mod tests;

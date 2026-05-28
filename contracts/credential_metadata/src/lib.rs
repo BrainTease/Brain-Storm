@@ -195,3 +195,6 @@ impl CredentialMetadataContract {
         }
     }
 }
+
+#[cfg(test)]
+mod tests;

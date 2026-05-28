@@ -155,3 +155,6 @@ impl TokenRestrictionsContract {
             .unwrap_or(true)
     }
 }
+
+#[cfg(test)]
+mod tests;

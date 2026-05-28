@@ -1,0 +1,7 @@
+[advisories]
+# Ignore advisories for dependencies that have no fix available yet.
+# Format: ["RUSTSEC-YYYY-NNNN"]
+ignore = []
+
+[output]
+deny = ["unmaintained", "unsound", "vulnerability"]

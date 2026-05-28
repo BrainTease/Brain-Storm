@@ -424,3 +424,5 @@ impl LiquidityPoolContract {
         y
     }
 }
+#[cfg(test)]
+mod tests;
