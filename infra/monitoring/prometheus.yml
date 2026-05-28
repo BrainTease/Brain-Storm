@@ -1,6 +1,11 @@
 global:
   scrape_interval: 15s
   evaluation_interval: 15s
+  external_labels:
+    project: brain-storm
+
+rule_files:
+  - 'contracts/alerting-rules.yml'
 
 scrape_configs:
   - job_name: 'brain-storm-backend'
@@ -8,3 +13,13 @@ scrape_configs:
       - targets: ['host.docker.internal:3000']
     metrics_path: '/metrics'
     scrape_interval: 10s
+
+  - job_name: 'brain-storm-contracts'
+    static_configs:
+      - targets: ['host.docker.internal:9101']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'contract-monitor'

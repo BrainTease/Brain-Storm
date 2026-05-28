@@ -1,0 +1,107 @@
+groups:
+  - name: contract_health
+    interval: 60s
+    rules:
+      # Alert when no contract events have been received in 10 minutes
+      - alert: ContractEventSilence
+        expr: |
+          (time() - contract_last_event_timestamp) > 600
+        for: 2m
+        labels:
+          severity: warning
+          team: contracts
+        annotations:
+          summary: "No contract events received for {{ $labels.contract }}"
+          description: >
+            Contract {{ $labels.contract }} has not emitted any events for more
+            than 10 minutes. This may indicate a monitoring connectivity issue
+            or unexpected contract inactivity.
+
+      # Alert when contract transaction error rate exceeds 5%
+      - alert: ContractHighErrorRate
+        expr: |
+          rate(contract_transaction_errors_total[5m])
+            / rate(contract_transactions_total[5m]) > 0.05
+        for: 3m
+        labels:
+          severity: critical
+          team: contracts
+        annotations:
+          summary: "High error rate on {{ $labels.contract }}"
+          description: >
+            Contract {{ $labels.contract }} is experiencing {{ $value | humanizePercentage }}
+            transaction errors over the last 5 minutes.
+
+      # Alert when transaction latency p95 exceeds 5 seconds
+      - alert: ContractHighLatency
+        expr: |
+          histogram_quantile(0.95,
+            rate(contract_transaction_duration_seconds_bucket[10m])
+          ) > 5
+        for: 5m
+        labels:
+          severity: warning
+          team: contracts
+        annotations:
+          summary: "High latency on {{ $labels.contract }}"
+          description: >
+            p95 transaction latency for {{ $labels.contract }} is
+            {{ $value | humanizeDuration }}, exceeding the 5s threshold.
+
+  - name: contract_anomaly
+    interval: 120s
+    rules:
+      # Alert when event rate spikes more than 10x the 1-hour baseline
+      - alert: ContractEventSpike
+        expr: |
+          rate(contract_events_total[5m])
+            > 10 * avg_over_time(rate(contract_events_total[5m])[1h:5m])
+        for: 5m
+        labels:
+          severity: warning
+          team: contracts
+        annotations:
+          summary: "Unusual event spike on {{ $labels.contract }}"
+          description: >
+            Event rate for {{ $labels.contract }} is {{ $value }} events/s,
+            which is more than 10x above the 1-hour baseline.
+
+      # Alert when no progress events are recorded for 30 minutes during business hours
+      - alert: AnalyticsProgressStall
+        expr: |
+          rate(contract_events_total{contract="analytics",event="prog_upd"}[30m]) == 0
+        for: 10m
+        labels:
+          severity: info
+          team: contracts
+        annotations:
+          summary: "No progress updates recorded in 30 minutes"
+          description: >
+            The analytics contract has not received any progress_update events
+            in the past 30 minutes. Verify the backend is submitting transactions.
+
+  - name: contract_performance
+    interval: 60s
+    rules:
+      # Record p50/p95/p99 transaction duration per contract
+      - record: contract:transaction_duration_p50
+        expr: |
+          histogram_quantile(0.50,
+            rate(contract_transaction_duration_seconds_bucket[10m])
+          )
+
+      - record: contract:transaction_duration_p95
+        expr: |
+          histogram_quantile(0.95,
+            rate(contract_transaction_duration_seconds_bucket[10m])
+          )
+
+      - record: contract:transaction_duration_p99
+        expr: |
+          histogram_quantile(0.99,
+            rate(contract_transaction_duration_seconds_bucket[10m])
+          )
+
+      # Record per-contract event rate
+      - record: contract:event_rate_5m
+        expr: rate(contract_events_total[5m])
