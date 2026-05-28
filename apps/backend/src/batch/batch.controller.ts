@@ -51,9 +51,68 @@ export class BatchController {
     return this.batchService.createCourseBatch(operations, req.user.id);
   }
 
+  @Post('certificates')
+  @ApiOperation({ summary: 'Bulk certificate operations (issue, revoke)' })
+  @ApiBody({
+    schema: {
+      example: {
+        operations: [
+          { action: 'issue', userId: 'uuid', courseId: 'uuid' },
+          { action: 'revoke', userId: 'uuid', courseId: 'uuid' },
+        ],
+      },
+    },
+  })
+  batchCertificates(
+    @Body('operations') operations: Record<string, any>[],
+    @Request() req: { user: { id: string } },
+  ) {
+    return this.batchService.createCertificateBatch(operations, req.user.id);
+  }
+
+  @Post('emails')
+  @ApiOperation({ summary: 'Send batch emails' })
+  @ApiBody({
+    schema: {
+      example: {
+        operations: [
+          { to: 'user@example.com', subject: 'Welcome', template: 'welcome', context: { name: 'John' } },
+        ],
+      },
+    },
+  })
+  batchEmails(
+    @Body('operations') operations: Record<string, any>[],
+    @Request() req: { user: { id: string } },
+  ) {
+    return this.batchService.createEmailBatch(operations, req.user.id);
+  }
+
+  @Post('export')
+  @ApiOperation({ summary: 'Create data export job' })
+  @ApiBody({
+    schema: {
+      example: {
+        operations: [
+          {
+            exportType: 'users',
+            filters: { role: 'student' },
+            format: 'csv',
+          },
+        ],
+      },
+    },
+  })
+  batchExport(
+    @Body('operations') operations: Record<string, any>[],
+    @Request() req: { user: { id: string } },
+  ) {
+    return this.batchService.createExportBatch(operations, req.user.id);
+  }
+
   @Get('jobs')
   @ApiOperation({ summary: 'List batch jobs' })
-  @ApiQuery({ name: 'type', required: false, enum: ['users', 'courses'] })
+  @ApiQuery({ name: 'type', required: false, enum: ['users', 'courses', 'certificates', 'emails', 'export'] })
   listJobs(@Query('type') type?: string) {
     return this.batchService.listJobs(type);
   }

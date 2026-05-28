@@ -38,7 +38,7 @@ export class Certificate {
   stellarTransactionId: string;
 
   @Column({ default: 'pending' })
-  status: 'pending' | 'minted' | 'verified';
+  status: 'pending' | 'minted' | 'verified' | 'revoked';
 
   @CreateDateColumn()
   issuedAt: Date;

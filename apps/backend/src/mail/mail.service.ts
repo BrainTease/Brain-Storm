@@ -19,6 +19,28 @@ export class MailService {
     });
   }
 
+  async sendMail(options: {
+    to: string;
+    subject: string;
+    text?: string;
+    html?: string;
+    template?: string;
+    context?: any;
+  }) {
+    if (!this.configService.get<boolean>('mail.enabled')) {
+      this.logger.log(`[DEV] Email to ${options.to}: ${options.subject}`);
+      return;
+    }
+
+    await this.transporter.sendMail({
+      from: this.configService.get<string>('mail.from'),
+      to: options.to,
+      subject: options.subject,
+      text: options.text,
+      html: options.html,
+    });
+  }
+
   async sendPasswordResetEmail(to: string, token: string) {
     const frontendUrl = this.configService.get<string>('frontend.url');
     const resetUrl = `${frontendUrl}/auth/reset-password?token=${token}`;
@@ -33,8 +55,8 @@ export class MailService {
       to,
       subject: 'Reset your password',
       html: `<p>Click the link below to reset your password. It expires in 1 hour.</p>
-             <a href="${resetUrl}">${resetUrl}</a>
-             <p>If you did not request this, ignore this email.</p>`,
+              <a href="${resetUrl}">${resetUrl}</a>
+              <p>If you did not request this, ignore this email.</p>`,
     });
   }
 
@@ -52,7 +74,7 @@ export class MailService {
       to,
       subject: 'Verify your email',
       html: `<p>Click the link below to verify your email. It expires in 24 hours.</p>
-             <a href="${verifyUrl}">${verifyUrl}</a>`,
+              <a href="${verifyUrl}">${verifyUrl}</a>`,
     });
   }
 
@@ -69,9 +91,9 @@ export class MailService {
       to,
       subject: `Continue learning: ${courseTitle}`,
       html: `<p>Hi ${username},</p>
-             <p>We noticed you haven't made progress in <strong>${courseTitle}</strong> recently.</p>
-             <p>Continue your learning journey and earn rewards!</p>
-             <a href="${frontendUrl}/courses">View Courses</a>`,
+              <p>We noticed you haven't made progress in <strong>${courseTitle}</strong> recently.</p>
+              <p>Continue your learning journey and earn rewards!</p>
+              <a href="${frontendUrl}/courses">View Courses</a>`,
     });
   }
 }
