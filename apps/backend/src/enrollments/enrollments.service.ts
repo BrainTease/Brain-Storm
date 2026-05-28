@@ -38,6 +38,20 @@ export class EnrollmentsService {
     await this.repo.remove(enrollment);
   }
 
+  async findById(id: string): Promise<Enrollment> {
+    const enrollment = await this.repo.findOne({
+      where: { id },
+      relations: ['user', 'course'],
+    });
+    if (!enrollment) throw new NotFoundException('Enrollment not found');
+    return enrollment;
+  }
+
+  async deleteById(id: string): Promise<void> {
+    const enrollment = await this.findById(id);
+    await this.repo.remove(enrollment);
+  }
+
   findByUser(userId: string): Promise<Enrollment[]> {
     return this.repo.find({
       where: { userId },

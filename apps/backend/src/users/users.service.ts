@@ -40,6 +40,18 @@ export class UsersService {
     return this.repo.save({ ...user, ...data });
   }
 
+  async uploadAvatar(userId: string, file: Express.Multer.File) {
+    const user = await this.findById(userId);
+    if (!user) throw new NotFoundException('User not found');
+    
+    // In production, upload to S3/CDN and return URL
+    // For now, return a placeholder
+    const avatarUrl = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
+    
+    await this.repo.save({ ...user, avatar: avatarUrl });
+    return { avatarUrl };
+  }
+
   async findAll(
     options: {
       page?: number;

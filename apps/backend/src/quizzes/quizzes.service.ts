@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Quiz } from './quiz.entity';
@@ -23,10 +23,12 @@ export class QuizzesService {
   }
 
   async getQuiz(id: string) {
-    return this.quizRepo.findOne({
+    const quiz = await this.quizRepo.findOne({
       where: { id },
       relations: ['questions', 'questions.answers'],
     });
+    if (!quiz) throw new NotFoundException('Quiz not found');
+    return quiz;
   }
 
   async addQuestion(quizId: string, data: any) {
@@ -44,6 +46,7 @@ export class QuizzesService {
       where: { id: quizId },
       relations: ['questions', 'questions.answers'],
     });
+    if (!quiz) throw new NotFoundException('Quiz not found');
 
     const attempt = this.attemptRepo.create({ quizId, userId });
     const savedAttempt = await this.attemptRepo.save(attempt);
@@ -80,6 +83,30 @@ export class QuizzesService {
     savedAttempt.isGraded = quiz.questions.every((q) => q.type !== QuestionType.ESSAY);
 
     return this.attemptRepo.save(savedAttempt);
+  }
+
+  async getResults(quizId: string, userId?: string) {
+    const quiz = await this.getQuiz(quizId);
+    const attempts = await this.getAttempts(quizId, userId);
+
+    const scores = attempts.map((a) => a.score || 0);
+    const averageScore = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
+    const passRate = scores.length > 0 ? scores.filter((s) => s >= quiz.passingScore).length / scores.length : 0;
+
+    return {
+      quizId,
+      totalAttempts: attempts.length,
+      averageScore: Math.round(averageScore * 100) / 100,
+      passRate: Math.round(passRate * 100) / 100,
+      passingScore: quiz.passingScore,
+      attempts: attempts.map((a) => ({
+        id: a.id,
+        userId: a.userId,
+        score: a.score,
+        isGraded: a.isGraded,
+        submittedAt: a.submittedAt,
+      })),
+    };
   }
 
   async gradeEssay(attemptId: string, questionId: string, points: number, feedback: string) {
