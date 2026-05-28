@@ -343,3 +343,5 @@ impl ReputationContract {
         }
     }
 }
+#[cfg(test)]
+mod tests;

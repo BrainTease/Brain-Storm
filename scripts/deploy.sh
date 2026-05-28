@@ -29,7 +29,8 @@ if [ ! -f "$WASM_FILE" ]; then
     exit 1
 fi
 
-echo "Deploying $CONTRACT_NAME to $NETWORK..."
+echo "[$(date '+%H:%M:%S')] Deploying $CONTRACT_NAME to $NETWORK..."
+DEPLOY_START=$(date +%s)
 
 CONTRACT_ID=$(stellar contract deploy \
   --wasm "$WASM_FILE" \
@@ -41,14 +42,15 @@ if [ -z "$CONTRACT_ID" ]; then
     exit 1
 fi
 
-echo "Deployment successful!"
+DEPLOY_END=$(date +%s)
+echo "[$(date '+%H:%M:%S')] Deployment successful! (took $((DEPLOY_END - DEPLOY_START))s)"
 echo "Contract ID: $CONTRACT_ID"
 
-# Update deployed-contracts.json
+# Update deployed-contracts.json (with backup for rollback support)
 if [ -f "$SCRIPT_DIR/deployed-contracts.json" ]; then
-    # Use a temporary file for atomic update
+    cp "$SCRIPT_DIR/deployed-contracts.json" "$SCRIPT_DIR/deployed-contracts.backup.json"
     tmp_file=$(mktemp)
     jq ".\"$NETWORK\".\"$CONTRACT_NAME\" = \"$CONTRACT_ID\"" "$SCRIPT_DIR/deployed-contracts.json" > "$tmp_file"
     mv "$tmp_file" "$SCRIPT_DIR/deployed-contracts.json"
-    echo "Updated deployed-contracts.json"
+    echo "Updated deployed-contracts.json (backup saved to deployed-contracts.backup.json)"
 fi

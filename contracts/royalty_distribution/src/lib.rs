@@ -276,3 +276,6 @@ impl RoyaltyDistributionContract {
         total
     }
 }
+
+#[cfg(test)]
+mod tests;

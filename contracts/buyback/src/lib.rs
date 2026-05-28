@@ -356,3 +356,5 @@ impl BuybackContract {
             .publish((BUYBACK_EXECUTED, symbol_short!("amount")), (bst_to_buy, xlm_amount));
     }
 }
+#[cfg(test)]
+mod tests;
