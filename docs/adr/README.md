@@ -31,19 +31,12 @@ We use the [MADR (Markdown Any Decision Records)](https://adr.github.io/madr/) t
 
 When making significant architectural decisions:
 
-1. Copy [ADR-TEMPLATE.md](./ADR-TEMPLATE.md)
-2. Number sequentially (ADR-006, ADR-007, etc.)
-3. Use descriptive kebab-case filenames: `ADR-006-your-decision-title.md`
+1. Copy the MADR template
+2. Number sequentially (ADR-005, ADR-006, etc.)
+3. Use descriptive kebab-case filenames
 4. Fill in all sections with context and reasoning
 5. Update this README index
 6. Get team review before marking as "Accepted"
-
-### ADR Lifecycle
-
-- **Proposed:** Initial draft, under discussion
-- **Accepted:** Approved and implemented
-- **Deprecated:** No longer recommended, but not replaced
-- **Superseded:** Replaced by a newer ADR (reference the new ADR)
 
 ## Resources
 
