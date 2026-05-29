@@ -14,6 +14,7 @@ pub enum DataKey {
     OwnerBadges(Address),                // owner → Vec<u64>
     NextId,                              // u64 counter
     BadgeType(Symbol),                   // type → BadgeTypeRecord
+    BurnedBadge(u64),                    // id → bool (burned flag)
 }
 
 // =============================================================================
@@ -42,6 +43,7 @@ pub struct BadgeTypeRecord {
 // =============================================================================
 
 const MINT: Symbol = symbol_short!("mint");
+const BURN: Symbol = symbol_short!("burn");
 
 // =============================================================================
 // Contract
@@ -207,6 +209,41 @@ impl BadgesContract {
 
     pub fn transfer(_env: Env, _from: Address, _to: Address, _id: u64) {
         panic!("soulbound");
+    }
+
+    // -------------------------------------------------------------------------
+    // Burn (admin only)
+    // -------------------------------------------------------------------------
+
+    pub fn burn_badge(env: Env, admin: Address, id: u64) {
+        admin.require_auth();
+        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
+        assert!(admin == stored_admin, "Only admin can burn");
+        assert!(
+            !env.storage().persistent().get::<DataKey, bool>(&DataKey::BurnedBadge(id)).unwrap_or(false),
+            "Badge already burned"
+        );
+
+        let badge: BadgeRecord = env
+            .storage()
+            .persistent()
+            .get(&DataKey::Badge(id))
+            .expect("Badge not found");
+
+        // Remove from owner's list
+        let owner_key = DataKey::OwnerBadges(badge.owner.clone());
+        if let Some(mut ids) = env.storage().persistent().get::<DataKey, Vec<u64>>(&owner_key) {
+            if let Some(pos) = ids.iter().position(|x| x == id) {
+                ids.remove(pos as u32);
+                env.storage().persistent().set(&owner_key, &ids);
+            }
+        }
+
+        // Mark as burned and remove badge record
+        env.storage().persistent().set(&DataKey::BurnedBadge(id), &true);
+        env.storage().persistent().remove(&DataKey::Badge(id));
+
+        env.events().publish((BURN, symbol_short!("id")), (id, badge.owner));
     }
 }
 

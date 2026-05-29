@@ -63,6 +63,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "badges"
+version = "0.1.0"
+dependencies = [
+ "soroban-sdk",
+]
+
+[[package]]
 name = "base16ct"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -134,11 +141,26 @@ dependencies = [
 name = "brain-storm-certificate"
 version = "0.1.0"
 dependencies = [
+ "proptest",
  "soroban-sdk",
 ]
 
 [[package]]
 name = "brain-storm-governance"
+version = "0.1.0"
+dependencies = [
+ "soroban-sdk",
+]
+
+[[package]]
+name = "brain-storm-grants"
+version = "0.1.0"
+dependencies = [
+ "soroban-sdk",
+]
+
+[[package]]
+name = "brain-storm-nft"
 version = "0.1.0"
 dependencies = [
  "soroban-sdk",

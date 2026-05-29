@@ -97,7 +97,7 @@ mod tests {
         let (env, client, admin) = setup();
         let user = Address::generate(&env);
         client.update_reputation(&admin, &user, &400, &symbol_short!("course"), &None);
-        assert!(client.verify_reputation_level(&user, &1));
+        assert!(client.verify_reputation_level(&user, &1_u32));
     }
 
     #[test]

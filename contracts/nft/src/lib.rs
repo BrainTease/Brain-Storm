@@ -1,4 +1,5 @@
 #![no_std]
+#![no_std]
 use soroban_sdk::{
     contract, contractimpl, contracttype, symbol_short, Address, Env, String, Symbol, Vec,
 };
@@ -13,6 +14,8 @@ pub enum DataKey {
     RoyaltyBasis(u32),                // nft_id -> royalty basis points
     RoyaltyRecipient(u32),            // nft_id -> instructor address
     AccessRights(u32, Address),       // (nft_id, holder) -> has_access
+    Listing(u32),                     // nft_id -> Listing
+    BurnedNFT(u32),                   // nft_id -> bool
 }
 
 #[contracttype]
@@ -34,6 +37,15 @@ pub struct CourseNFT {
     pub owner: Address,
     pub instructor: Address,
     pub purchase_price: i128,
+}
+
+#[contracttype]
+#[derive(Clone)]
+pub struct Listing {
+    pub nft_id: u32,
+    pub seller: Address,
+    pub price: i128,
+    pub listed_at: u64,
 }
 
 #[contract]
@@ -149,7 +161,7 @@ impl NFTContract {
         // Update owner's NFT list
         let from_key = DataKey::CourseNFTs(from.clone());
         if let Some(mut nfts) = env.storage().instance().get::<DataKey, Vec<u32>>(&from_key) {
-            if let Some(pos) = nfts.iter().position(|&id| id == nft_id) {
+            if let Some(pos) = nfts.iter().position(|id| id == nft_id) {
                 nfts.remove(pos as u32);
                 env.storage().instance().set(&from_key, &nfts);
             }
@@ -170,7 +182,7 @@ impl NFTContract {
             .set(&DataKey::AccessRights(nft_id, to.clone()), &true);
 
         env.events().publish(
-            (symbol_short!("nft"), symbol_short!("transferred")),
+            (symbol_short!("nft"), symbol_short!("xfer")),
             (nft_id, from, to),
         );
     }
@@ -191,7 +203,7 @@ impl NFTContract {
             .set(&DataKey::AccessRights(nft_id, holder.clone()), &true);
 
         env.events().publish(
-            (symbol_short!("nft"), symbol_short!("access_granted")),
+            (symbol_short!("nft"), symbol_short!("acc_grt")),
             (nft_id, holder),
         );
     }
@@ -212,7 +224,7 @@ impl NFTContract {
             .remove(&DataKey::AccessRights(nft_id, holder.clone()));
 
         env.events().publish(
-            (symbol_short!("nft"), symbol_short!("access_revoked")),
+            (symbol_short!("nft"), symbol_short!("acc_rvk")),
             (nft_id, holder),
         );
     }
@@ -257,6 +269,132 @@ impl NFTContract {
             (Some(r), Some(b)) => Some((r, b)),
             _ => None,
         }
+    }
+
+    // -------------------------------------------------------------------------
+    // Burn
+    // -------------------------------------------------------------------------
+
+    pub fn burn_nft(env: Env, owner: Address, nft_id: u32) {
+        owner.require_auth();
+
+        let current_owner: Address = env
+            .storage()
+            .instance()
+            .get(&DataKey::NFTOwner(nft_id))
+            .expect("NFT not found");
+        assert!(current_owner == owner, "Not NFT owner");
+        assert!(
+            !env.storage().instance().get::<DataKey, bool>(&DataKey::BurnedNFT(nft_id)).unwrap_or(false),
+            "Already burned"
+        );
+
+        // Remove from owner's list
+        let owner_key = DataKey::CourseNFTs(owner.clone());
+        if let Some(mut nfts) = env.storage().instance().get::<DataKey, Vec<u32>>(&owner_key) {
+            if let Some(pos) = nfts.iter().position(|id| id == nft_id) {
+                nfts.remove(pos as u32);
+                env.storage().instance().set(&owner_key, &nfts);
+            }
+        }
+
+        // Remove listing if any
+        env.storage().instance().remove(&DataKey::Listing(nft_id));
+
+        // Mark burned, remove owner + metadata
+        env.storage().instance().set(&DataKey::BurnedNFT(nft_id), &true);
+        env.storage().instance().remove(&DataKey::NFTOwner(nft_id));
+        env.storage().instance().remove(&DataKey::NFTMetadata(nft_id));
+
+        env.events().publish(
+            (symbol_short!("nft"), symbol_short!("burned")),
+            (nft_id, owner),
+        );
+    }
+
+    // -------------------------------------------------------------------------
+    // Marketplace
+    // -------------------------------------------------------------------------
+
+    pub fn list_nft(env: Env, seller: Address, nft_id: u32, price: i128) {
+        seller.require_auth();
+        assert!(price > 0, "Price must be positive");
+
+        let current_owner: Address = env
+            .storage()
+            .instance()
+            .get(&DataKey::NFTOwner(nft_id))
+            .expect("NFT not found");
+        assert!(current_owner == seller, "Not NFT owner");
+        assert!(
+            !env.storage().instance().has(&DataKey::Listing(nft_id)),
+            "Already listed"
+        );
+
+        let listing = Listing {
+            nft_id,
+            seller: seller.clone(),
+            price,
+            listed_at: env.ledger().timestamp(),
+        };
+        env.storage().instance().set(&DataKey::Listing(nft_id), &listing);
+
+        env.events().publish(
+            (symbol_short!("nft"), symbol_short!("listed")),
+            (nft_id, seller, price),
+        );
+    }
+
+    pub fn delist_nft(env: Env, seller: Address, nft_id: u32) {
+        seller.require_auth();
+
+        let listing: Listing = env
+            .storage()
+            .instance()
+            .get(&DataKey::Listing(nft_id))
+            .expect("Not listed");
+        assert!(listing.seller == seller, "Not the seller");
+
+        env.storage().instance().remove(&DataKey::Listing(nft_id));
+
+        env.events().publish(
+            (symbol_short!("nft"), symbol_short!("delisted")),
+            (nft_id, seller),
+        );
+    }
+
+    pub fn buy_nft(env: Env, buyer: Address, nft_id: u32) {
+        buyer.require_auth();
+
+        let listing: Listing = env
+            .storage()
+            .instance()
+            .get(&DataKey::Listing(nft_id))
+            .expect("Not listed");
+
+        // Remove listing
+        env.storage().instance().remove(&DataKey::Listing(nft_id));
+
+        // Transfer ownership (reuse transfer logic)
+        Self::transfer_nft(env.clone(), listing.seller.clone(), buyer.clone(), nft_id);
+
+        // In production: transfer listing.price from buyer to seller (minus royalty)
+        let royalty_basis: u32 = env
+            .storage()
+            .instance()
+            .get(&DataKey::RoyaltyBasis(nft_id))
+            .unwrap_or(0);
+        let royalty_amount = (listing.price * royalty_basis as i128) / 10000;
+        let seller_amount = listing.price - royalty_amount;
+
+        env.events().publish(
+            (symbol_short!("nft"), symbol_short!("sold")),
+            (nft_id, listing.seller, buyer, seller_amount, royalty_amount),
+        );
+    }
+
+    pub fn get_listing(env: Env, nft_id: u32) -> Option<Listing> {
+        env.storage().instance().get(&DataKey::Listing(nft_id))
     }
 }
 

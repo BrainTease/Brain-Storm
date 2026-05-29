@@ -10,6 +10,8 @@ members = [
     "contracts/buyback",
     "contracts/liquidity_pool",
     "contracts/grants",
+    "contracts/badges",
+    "contracts/nft",
 ]
 resolver = "2"
 

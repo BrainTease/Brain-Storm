@@ -22,6 +22,8 @@ pub enum DataKey {
     SwapHistoryCount,                    // u32
     MiningRewards(Address),              // user → accumulated rewards
     MiningConfig,                        // MiningConfig
+    AccumulatedFees,                     // i128 — total fees not yet collected
+    EmergencyDrained,                    // bool
 }
 
 // =============================================================================
@@ -77,6 +79,8 @@ const ADD_LIQUIDITY: Symbol = symbol_short!("add_liq");
 const REMOVE_LIQUIDITY: Symbol = symbol_short!("rem_liq");
 const SWAP: Symbol = symbol_short!("swap");
 const REWARDS_CLAIMED: Symbol = symbol_short!("claim_rew");
+const FEE_COLLECTED: Symbol = symbol_short!("fee_coll");
+const EMERGENCY_DRAIN: Symbol = symbol_short!("emrg_drn");
 
 // =============================================================================
 // Constants
@@ -137,6 +141,8 @@ impl LiquidityPoolContract {
 
         // Initialize history
         env.storage().instance().set(&DataKey::SwapHistoryCount, &0_u32);
+        env.storage().instance().set(&DataKey::AccumulatedFees, &0_i128);
+        env.storage().instance().set(&DataKey::EmergencyDrained, &false);
     }
 
     // -------------------------------------------------------------------------
@@ -272,49 +278,60 @@ impl LiquidityPoolContract {
         let config: PoolConfig = env.storage().instance().get(&DataKey::PoolConfig).unwrap();
         assert!(config.swap_enabled, "Swapping is disabled");
         assert!(amount_in > 0, "Amount in must be positive");
+        assert!(
+            !env.storage().instance().get::<DataKey, bool>(&DataKey::EmergencyDrained).unwrap_or(false),
+            "Pool has been emergency drained"
+        );
 
         let reserve_a: i128 = env.storage().instance().get(&DataKey::ReserveA).unwrap_or(0);
         let reserve_b: i128 = env.storage().instance().get(&DataKey::ReserveB).unwrap_or(0);
 
-        let (reserve_in, reserve_out) = match token_in {
-            symbol_short!("bst") => (reserve_a, reserve_b),
-            symbol_short!("xlm") => (reserve_b, reserve_a),
-            _ => panic!("Invalid token"),
+        let bst = symbol_short!("bst");
+        let xlm = symbol_short!("xlm");
+
+        let (reserve_in, reserve_out) = if token_in == bst {
+            (reserve_a, reserve_b)
+        } else if token_in == xlm {
+            (reserve_b, reserve_a)
+        } else {
+            panic!("Invalid token")
         };
 
         // Calculate output amount with fee
-        let amount_in_with_fee = amount_in * (config.fee_denominator - config.fee_numerator);
+        let amount_in_with_fee = amount_in * (config.fee_denominator - config.fee_numerator) as i128;
         let numerator = amount_in_with_fee * reserve_out;
-        let denominator = (reserve_in * config.fee_denominator) + amount_in_with_fee;
+        let denominator = (reserve_in * config.fee_denominator as i128) + amount_in_with_fee;
         let amount_out = numerator / denominator;
 
         assert!(amount_out >= amount_out_min, "Insufficient output amount");
         assert!(amount_out <= reserve_out, "Insufficient liquidity");
 
         // Update reserves
-        match token_in {
-            symbol_short!("bst") => {
-                env.storage().instance().set(&DataKey::ReserveA, &(reserve_a + amount_in));
-                env.storage().instance().set(&DataKey::ReserveB, &(reserve_b - amount_out));
-            },
-            symbol_short!("xlm") => {
-                env.storage().instance().set(&DataKey::ReserveB, &(reserve_b + amount_in));
-                env.storage().instance().set(&DataKey::ReserveA, &(reserve_a - amount_out));
-            },
-            _ => {},
+        if token_in == bst {
+            env.storage().instance().set(&DataKey::ReserveA, &(reserve_a + amount_in));
+            env.storage().instance().set(&DataKey::ReserveB, &(reserve_b - amount_out));
+        } else {
+            env.storage().instance().set(&DataKey::ReserveB, &(reserve_b + amount_in));
+            env.storage().instance().set(&DataKey::ReserveA, &(reserve_a - amount_out));
         }
 
         // Calculate fee
-        let fee = (amount_in * config.fee_numerator) / config.fee_denominator;
+        let fee = (amount_in * config.fee_numerator as i128) / config.fee_denominator as i128;
+
+        // Accumulate fees for collection
+        let mut accumulated: i128 = env.storage().instance().get(&DataKey::AccumulatedFees).unwrap_or(0);
+        accumulated = accumulated.saturating_add(fee);
+        env.storage().instance().set(&DataKey::AccumulatedFees, &accumulated);
 
         // Record swap history
         let history_count: u32 = env.storage().instance().get(&DataKey::SwapHistoryCount).unwrap_or(0);
+        let token_out = if token_in == bst { xlm } else { bst };
         let record = SwapRecord {
             timestamp: env.ledger().timestamp(),
             user: user.clone(),
             token_in,
             amount_in,
-            token_out: if token_in == symbol_short!("bst") { symbol_short!("xlm") } else { symbol_short!("bst") },
+            token_out,
             amount_out,
             fee,
         };
@@ -400,6 +417,68 @@ impl LiquidityPoolContract {
         }
 
         history
+    }
+
+    // -------------------------------------------------------------------------
+    // Fee Collection
+    // -------------------------------------------------------------------------
+
+    pub fn collect_fees(env: Env, admin: Address) -> i128 {
+        admin.require_auth();
+        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
+        assert!(admin == stored_admin, "Only admin can collect fees");
+
+        let fees: i128 = env.storage().instance().get(&DataKey::AccumulatedFees).unwrap_or(0);
+        assert!(fees > 0, "No fees to collect");
+
+        let fee_collector: Address = env.storage().instance().get(&DataKey::FeeCollector).unwrap();
+
+        // Reset accumulated fees
+        env.storage().instance().set(&DataKey::AccumulatedFees, &0_i128);
+
+        // In production this would transfer tokens to fee_collector
+        env.events().publish((FEE_COLLECTED, symbol_short!("to")), (fee_collector, fees));
+
+        fees
+    }
+
+    pub fn get_accumulated_fees(env: Env) -> i128 {
+        env.storage().instance().get(&DataKey::AccumulatedFees).unwrap_or(0)
+    }
+
+    // -------------------------------------------------------------------------
+    // Emergency Drain
+    // -------------------------------------------------------------------------
+
+    pub fn emergency_drain(env: Env, admin: Address) -> (i128, i128) {
+        admin.require_auth();
+        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
+        assert!(admin == stored_admin, "Only admin can emergency drain");
+        assert!(
+            !env.storage().instance().get::<DataKey, bool>(&DataKey::EmergencyDrained).unwrap_or(false),
+            "Already drained"
+        );
+
+        let reserve_a: i128 = env.storage().instance().get(&DataKey::ReserveA).unwrap_or(0);
+        let reserve_b: i128 = env.storage().instance().get(&DataKey::ReserveB).unwrap_or(0);
+
+        // Zero out reserves and disable pool
+        env.storage().instance().set(&DataKey::ReserveA, &0_i128);
+        env.storage().instance().set(&DataKey::ReserveB, &0_i128);
+        env.storage().instance().set(&DataKey::TotalLiquidity, &0_i128);
+        env.storage().instance().set(&DataKey::EmergencyDrained, &true);
+
+        // Disable all operations
+        let mut config: PoolConfig = env.storage().instance().get(&DataKey::PoolConfig).unwrap();
+        config.swap_enabled = false;
+        config.add_liquidity_enabled = false;
+        config.remove_liquidity_enabled = false;
+        env.storage().instance().set(&DataKey::PoolConfig, &config);
+
+        // In production this would transfer all tokens to admin
+        env.events().publish((EMERGENCY_DRAIN, symbol_short!("admin")), (admin, reserve_a, reserve_b));
+
+        (reserve_a, reserve_b)
     }
 
     // -------------------------------------------------------------------------
