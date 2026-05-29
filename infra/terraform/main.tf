@@ -81,3 +81,16 @@ module "oidc" {
   github_org  = var.github_org
   github_repo = var.github_repo
 }
+
+module "secrets" {
+  source = "./modules/secrets"
+
+  environment        = var.environment
+  aws_region         = var.aws_region
+  account_id         = var.account_id
+  db_password        = var.db_password
+  jwt_secret         = var.jwt_secret
+  stellar_secret_key = var.stellar_secret_key
+  enable_rotation    = var.environment == "prod"
+  alert_sns_arns     = var.alert_sns_arns
+}
