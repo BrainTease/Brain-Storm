@@ -8,6 +8,8 @@ members = [
     "contracts/credential_metadata",
     "contracts/reputation",
     "contracts/buyback",
+    "contracts/scholarship_fund",
+    "contracts/token_restrictions",
     "contracts/liquidity_pool",
     "contracts/grants",
     "contracts/badges",
