@@ -14,13 +14,19 @@
   "scripts": {
     "build": "tsc",
     "build:watch": "tsc --watch",
+    "clean": "rm -rf dist",
     "lint": "eslint src --ext .ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "validate": "npm run typecheck && npm run build",
+    "type-check": "tsc --noEmit"
   },
   "files": [
     "dist",
     "src"
   ],
+  "dependencies": {
+    "zod": "^3.22.4"
+  },
   "devDependencies": {
     "typescript": "^5.4.0"
   }
