@@ -267,10 +267,10 @@ GitHub Actions workflows in `.github/workflows/` run on every push and PR:
 
 ## Stellar & Soroban Resources
 
-- [Stellar Documentation](https://developers.stellar.org)
-- [Soroban Smart Contracts](https://soroban.stellar.org)
-- [Stellar Laboratory](https://laboratory.stellar.org)
-- [Stellar Discord](https://discord.gg/stellardev)
+- [Stellar Documentation](https://developers.stellar.org),
+- [Soroban Smart Contracts](https://soroban.stellar.org),
+- [Stellar Laboratory](https://laboratory.stellar.org),
+- [Stellar Discord](https://discord.gg/stellardev).
 
 ---
 
