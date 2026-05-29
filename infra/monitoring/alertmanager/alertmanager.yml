@@ -1,0 +1,117 @@
+global:
+  resolve_timeout: 5m
+  slack_api_url: "${SLACK_WEBHOOK_URL}"
+  smtp_smarthost: "${SMTP_HOST:localhost:587}"
+  smtp_from: "alerts@brain-storm.example.com"
+  smtp_auth_username: "${SMTP_USERNAME}"
+  smtp_auth_password: "${SMTP_PASSWORD}"
+
+templates:
+  - /etc/alertmanager/templates/*.tmpl
+
+route:
+  group_by: ["alertname", "severity", "team"]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  receiver: slack-default
+
+  routes:
+    - matchers:
+        - severity="critical"
+      receiver: slack-critical
+      repeat_interval: 1h
+      continue: true
+
+    - matchers:
+        - severity="critical"
+        - team="contracts"
+      receiver: slack-contracts-critical
+
+    - matchers:
+        - severity="warning"
+        - team="contracts"
+      receiver: slack-contracts-warning
+
+    - matchers:
+        - alertname="DeploymentFailed"
+      receiver: slack-deployments
+
+    - matchers:
+        - alertname=~"Blackbox.*"
+      receiver: slack-uptime
+
+receivers:
+  - name: slack-default
+    slack_configs:
+      - channel: "#alerts"
+        send_resolved: true
+        title: "[{{ .Status | toUpper }}] {{ .GroupLabels.alertname }}"
+        text: |
+          {{ range .Alerts }}
+          *Summary:* {{ .Annotations.summary }}
+          *Description:* {{ .Annotations.description }}
+          *Severity:* {{ .Labels.severity }}
+          {{ end }}
+
+  - name: slack-critical
+    slack_configs:
+      - channel: "#alerts-critical"
+        send_resolved: true
+        color: '{{ if eq .Status "firing" }}danger{{ else }}good{{ end }}'
+        title: "🔴 CRITICAL: {{ .GroupLabels.alertname }}"
+        text: |
+          {{ range .Alerts }}
+          *Summary:* {{ .Annotations.summary }}
+          *Description:* {{ .Annotations.description }}
+          *Team:* {{ .Labels.team }}
+          {{ end }}
+
+  - name: slack-contracts-critical
+    slack_configs:
+      - channel: "#contracts-alerts"
+        send_resolved: true
+        title: "🔴 Contract Alert: {{ .GroupLabels.alertname }}"
+        text: |
+          {{ range .Alerts }}
+          *Contract:* {{ .Labels.contract }}
+          *Summary:* {{ .Annotations.summary }}
+          {{ end }}
+
+  - name: slack-contracts-warning
+    slack_configs:
+      - channel: "#contracts-alerts"
+        send_resolved: true
+        title: "⚠️ Contract Warning: {{ .GroupLabels.alertname }}"
+        text: |
+          {{ range .Alerts }}
+          *Contract:* {{ .Labels.contract }}
+          *Summary:* {{ .Annotations.summary }}
+          {{ end }}
+
+  - name: slack-deployments
+    slack_configs:
+      - channel: "#deployments"
+        send_resolved: true
+        title: "🚀 Deployment Alert: {{ .GroupLabels.alertname }}"
+        text: |
+          {{ range .Alerts }}
+          *Summary:* {{ .Annotations.summary }}
+          {{ end }}
+
+  - name: slack-uptime
+    slack_configs:
+      - channel: "#uptime"
+        send_resolved: true
+        title: "{{ if eq .Status \"firing\" }}🔴{{ else }}✅{{ end }} Uptime: {{ .GroupLabels.alertname }}"
+        text: |
+          {{ range .Alerts }}
+          *Summary:* {{ .Annotations.summary }}
+          {{ end }}
+
+inhibit_rules:
+  - source_matchers:
+      - severity="critical"
+    target_matchers:
+      - severity="warning"
+    equal: ["alertname", "team"]

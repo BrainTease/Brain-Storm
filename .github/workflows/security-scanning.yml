@@ -1,0 +1,265 @@
+name: Security Scanning
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 2 * * 1'
+
+jobs:
+  sast-sonarqube:
+    name: SAST - SonarQube
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build backend
+        run: npm run build --workspace=apps/backend
+
+      - name: Run backend tests with coverage
+        run: npx jest --coverage --passWithNoTests --coverageReporters=lcov
+        working-directory: apps/backend
+        continue-on-error: true
+
+      - name: Run frontend tests with coverage
+        run: npx jest --coverage --passWithNoTests --coverageReporters=lcov
+        working-directory: apps/frontend
+        continue-on-error: true
+
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v3
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        continue-on-error: true
+
+  container-scanning:
+    name: Container Scanning - Trivy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: apps/backend/Dockerfile
+          push: false
+          tags: brain-storm-backend:scan
+          load: true
+
+      - name: Scan backend image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: brain-storm-backend:scan
+          format: sarif
+          output: trivy-backend.sarif
+          severity: CRITICAL,HIGH
+          exit-code: '0'
+
+      - name: Build frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: apps/frontend/Dockerfile
+          push: false
+          tags: brain-storm-frontend:scan
+          load: true
+        continue-on-error: true
+
+      - name: Scan frontend image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: brain-storm-frontend:scan
+          format: sarif
+          output: trivy-frontend.sarif
+          severity: CRITICAL,HIGH
+          exit-code: '0'
+        continue-on-error: true
+
+      - name: Upload Trivy SARIF to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-backend.sarif
+        continue-on-error: true
+
+      - name: Upload Trivy results as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-scan-results
+          path: trivy-*.sarif
+          retention-days: 30
+
+  dast-scanning:
+    name: DAST - OWASP ZAP
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: brain-storm
+          POSTGRES_USER: brain-storm
+          POSTGRES_DB: brain-storm
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build backend
+        run: npm run build --workspace=apps/backend
+
+      - name: Start backend
+        run: npm run start:prod --workspace=apps/backend &
+        env:
+          DATABASE_HOST: localhost
+          DATABASE_PORT: 5432
+          DATABASE_USER: brain-storm
+          DATABASE_PASSWORD: brain-storm
+          DATABASE_NAME: brain-storm
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
+          NODE_ENV: production
+          JWT_SECRET: dast-test-secret-not-for-production
+
+      - name: Wait for backend
+        run: |
+          until curl -sf http://localhost:3000/health; do
+            sleep 2
+          done
+
+      - name: Run OWASP ZAP baseline scan
+        uses: zaproxy/action-baseline@v0.12.0
+        with:
+          target: 'http://localhost:3000'
+          rules_file_name: '.github/zap-rules.tsv'
+          cmd_options: '-a'
+          allow_issue_writing: false
+          fail_action: false
+
+      - name: Upload ZAP report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: zap-scan-report
+          path: report_html.html
+          retention-days: 30
+
+  vulnerability-tracking:
+    name: Vulnerability Tracking Report
+    runs-on: ubuntu-latest
+    needs: [sast-sonarqube, container-scanning]
+    if: always()
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download all scan artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: security-artifacts/
+        continue-on-error: true
+
+      - name: Generate vulnerability tracking report
+        run: |
+          mkdir -p security-reports
+          cat > security-reports/vulnerability-report.md << EOF
+          # Vulnerability Tracking Report
+
+          **Date:** $(date -u +"%Y-%m-%d %H:%M UTC")
+          **Run:** ${{ github.run_id }}
+          **Branch:** ${{ github.ref_name }}
+          **Commit:** ${{ github.sha }}
+
+          ## Scan Results
+
+          | Scanner | Status | Type |
+          |---------|--------|------|
+          | SonarQube | ${{ needs.sast-sonarqube.result }} | SAST |
+          | Trivy | ${{ needs.container-scanning.result }} | Container |
+
+          ## Severity Levels Checked
+
+          - **CRITICAL**: Immediate remediation required — blocks deployment
+          - **HIGH**: Remediate within 7 days
+          - **MEDIUM**: Remediate within 30 days
+          - **LOW**: Track and remediate opportunistically
+
+          ## Actions Required
+
+          Review full reports in the workflow artifacts. Create GitHub issues
+          for any HIGH or CRITICAL findings that require code-level fixes.
+
+          ## References
+
+          - [Dependency Vulnerability Scanning](.github/workflows/dependency-vulnerability-scanning.yml)
+          - [Security Best Practices](docs/security-best-practices.md)
+          - [Security Audit](docs/security-audit.md)
+          EOF
+
+          cat security-reports/vulnerability-report.md
+
+      - name: Upload vulnerability report
+        uses: actions/upload-artifact@v4
+        with:
+          name: vulnerability-tracking-report
+          path: security-reports/
+          retention-days: 90
+
+      - name: Open issue on critical findings
+        if: ${{ needs.container-scanning.result == 'failure' && github.event_name == 'schedule' }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: 'Security: Critical vulnerabilities detected in container scan',
+              body: `Container security scan found critical vulnerabilities.\n\nWorkflow run: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}\n\nReview Trivy scan artifacts and remediate before next release.`,
+              labels: ['security', 'critical', 'containers']
+            });

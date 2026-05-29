@@ -1,0 +1,103 @@
+name: Deployment Notifications
+
+on:
+  deployment_status:
+
+jobs:
+  notify-deployment:
+    name: Notify Deployment Status
+    runs-on: ubuntu-latest
+    if: github.event.deployment_status.state == 'success' || github.event.deployment_status.state == 'failure' || github.event.deployment_status.state == 'error'
+
+    steps:
+      - name: Set notification variables
+        id: vars
+        run: |
+          STATE="${{ github.event.deployment_status.state }}"
+          ENV="${{ github.event.deployment.environment }}"
+          REF="${{ github.event.deployment.ref }}"
+          URL="${{ github.event.deployment_status.environment_url }}"
+
+          if [ "$STATE" = "success" ]; then
+            echo "emoji=✅"   >> $GITHUB_OUTPUT
+            echo "color=good" >> $GITHUB_OUTPUT
+            echo "title=Deployment Successful" >> $GITHUB_OUTPUT
+          else
+            echo "emoji=❌"    >> $GITHUB_OUTPUT
+            echo "color=danger" >> $GITHUB_OUTPUT
+            echo "title=Deployment Failed" >> $GITHUB_OUTPUT
+          fi
+
+          echo "environment=$ENV" >> $GITHUB_OUTPUT
+          echo "ref=$REF"         >> $GITHUB_OUTPUT
+          echo "url=$URL"         >> $GITHUB_OUTPUT
+
+      - name: Post Slack notification
+        if: env.SLACK_WEBHOOK_URL != ''
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          curl -sf -X POST "$SLACK_WEBHOOK_URL" \
+            -H 'Content-Type: application/json' \
+            -d "{
+              \"attachments\": [{
+                \"color\": \"${{ steps.vars.outputs.color }}\",
+                \"title\": \"${{ steps.vars.outputs.emoji }} ${{ steps.vars.outputs.title }}\",
+                \"fields\": [
+                  { \"title\": \"Environment\", \"value\": \"${{ steps.vars.outputs.environment }}\", \"short\": true },
+                  { \"title\": \"Ref\",         \"value\": \"${{ steps.vars.outputs.ref }}\",         \"short\": true },
+                  { \"title\": \"Status\",      \"value\": \"${{ github.event.deployment_status.state }}\", \"short\": true },
+                  { \"title\": \"URL\",         \"value\": \"${{ steps.vars.outputs.url }}\",         \"short\": false }
+                ],
+                \"footer\": \"Brain-Storm CI\",
+                \"ts\": $(date +%s)
+              }]
+            }"
+
+      - name: Create GitHub deployment comment (failure only)
+        if: github.event.deployment_status.state == 'failure' || github.event.deployment_status.state == 'error'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `❌ Deployment Failed — ${{ github.event.deployment.environment }} (${{ github.event.deployment.ref }})`,
+              body: [
+                `## Deployment Failure`,
+                ``,
+                `| Field | Value |`,
+                `|---|---|`,
+                `| Environment | \`${{ github.event.deployment.environment }}\` |`,
+                `| Ref | \`${{ github.event.deployment.ref }}\` |`,
+                `| Status | ${{ github.event.deployment_status.state }} |`,
+                `| Description | ${{ github.event.deployment_status.description }} |`,
+                ``,
+                `[View workflow run](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/deployments)`,
+              ].join('\n'),
+              labels: ['incident', 'deployment']
+            });
+
+  notify-rollback:
+    name: Notify on Rollback Workflow
+    runs-on: ubuntu-latest
+    if: github.event.deployment_status.state == 'failure' && contains(github.event.deployment.environment, 'production')
+
+    steps:
+      - name: Post critical Slack alert
+        if: env.SLACK_WEBHOOK_URL != ''
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          curl -sf -X POST "$SLACK_WEBHOOK_URL" \
+            -H 'Content-Type: application/json' \
+            -d "{
+              \"text\": \"🚨 *Production deployment failed* — automatic rollback may be in progress.\",
+              \"attachments\": [{
+                \"color\": \"danger\",
+                \"fields\": [
+                  { \"title\": \"Environment\", \"value\": \"${{ github.event.deployment.environment }}\", \"short\": true },
+                  { \"title\": \"Ref\",         \"value\": \"${{ github.event.deployment.ref }}\",         \"short\": true }
+                ]
+              }]
+            }"

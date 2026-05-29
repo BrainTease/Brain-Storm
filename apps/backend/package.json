@@ -17,7 +17,13 @@
     "test:pact": "jest --testPathPattern=pact",
     "seed:basic": "ts-node -r tsconfig-paths/register src/test/seeds/basic.seed.ts",
     "seed:performance": "ts-node -r tsconfig-paths/register src/test/seeds/performance.seed.ts",
-    "seed:cleanup": "ts-node -r tsconfig-paths/register src/test/seeds/cleanup.seed.ts"
+    "seed:cleanup": "ts-node -r tsconfig-paths/register src/test/seeds/cleanup.seed.ts",
+    "migration:run": "ts-node -r tsconfig-paths/register src/migrations/migration-runner.ts",
+    "migration:rollback": "ts-node -r tsconfig-paths/register src/migrations/migration-rollback.ts",
+    "migration:validate": "ts-node -r tsconfig-paths/register src/migrations/migration-validator.ts",
+    "migration:create": "typeorm migration:create",
+    "migration:generate": "typeorm-ts-node-commonjs migration:generate -d src/data-source.ts",
+    "migration:show": "typeorm-ts-node-commonjs migration:show -d src/data-source.ts"
   },
   "dependencies": {
     "@brain-storm/types": "*",

@@ -411,8 +411,123 @@ gzip_min_length 1024;
 
 ---
 
+## 6. Performance Monitoring & Metrics
+
+### Key Metrics to Track
+
+| Metric | Target | Tool |
+|---|---|---|
+| API p95 latency | < 500 ms | Prometheus + Grafana |
+| Database query p95 | < 100 ms | PostgreSQL slow query log |
+| Cache hit rate | > 80% | Redis `INFO stats` |
+| Error rate | < 1% | Application logs |
+| Stellar RPC latency | < 2 s | Health check endpoint |
+
+### Prometheus Metrics
+
+The backend exposes metrics at `/metrics`:
+
+```bash
+curl http://localhost:3000/metrics | grep http_request_duration_seconds
+```
+
+Key metrics:
+
+- `http_request_duration_seconds` — API response time histogram
+- `http_requests_total` — Total requests by endpoint and status
+- `db_query_duration_seconds` — Database query latency
+- `cache_hits_total` / `cache_misses_total` — Cache effectiveness
+
+### Grafana Dashboards
+
+Pre-built dashboards in `infra/monitoring/grafana/dashboards/`:
+
+- **API Performance:** Request latency, error rate, throughput
+- **Database:** Query latency, connection pool usage, table sizes
+- **Cache:** Hit rate, evictions, memory usage
+- **Stellar:** RPC latency, transaction success rate
+
+### Alerting
+
+Configure alerts in Prometheus for:
+
+- API p95 latency > 1000 ms
+- Error rate > 5%
+- Cache hit rate < 50%
+- Database connections > 80% of pool size
+
+---
+
+## 7. Performance Checklist
+
+Before deploying to production:
+
+- [ ] All API endpoints have cache TTLs configured
+- [ ] Database queries use indexes on `WHERE` and `JOIN` columns
+- [ ] Frontend images use Next.js `<Image>` component
+- [ ] Static assets have long-lived cache headers
+- [ ] Contract functions minimize ledger entry writes
+- [ ] Load tests pass with p95 < 500 ms
+- [ ] Cache hit rate > 80% on leaderboard endpoint
+- [ ] No N+1 queries in critical paths
+- [ ] Pagination is enforced on all list endpoints
+- [ ] Slow query log is monitored
+
+---
+
+## 8. Performance Troubleshooting
+
+### Slow API Responses
+
+1. Check Prometheus dashboard for latency trends.
+2. Identify the slow endpoint via `http_request_duration_seconds` histogram.
+3. Check database slow query log:
+   ```sql
+   SELECT query, mean_time, calls FROM pg_stat_statements
+   ORDER BY mean_time DESC LIMIT 10;
+   ```
+4. Add indexes on `WHERE` and `JOIN` columns if missing.
+5. Check Redis connectivity — if down, cache misses cascade to Stellar RPC calls.
+
+### High Memory Usage
+
+1. Check Node.js heap size:
+   ```bash
+   node --max-old-space-size=2048 dist/main.js
+   ```
+2. Profile with `clinic.js`:
+   ```bash
+   npm install -g clinic
+   clinic doctor -- node dist/main.js
+   ```
+3. Look for memory leaks in event listeners or unclosed connections.
+
+### Database Connection Pool Exhaustion
+
+```sql
+SELECT count(*) FROM pg_stat_activity;
+```
+
+If approaching max pool size:
+- Increase pool size in TypeORM config.
+- Check for long-running queries blocking connections.
+- Enable connection pooling via PgBouncer.
+
+### Stellar RPC Timeouts
+
+Check `/v1/health` endpoint:
+
+```bash
+curl http://localhost:3000/v1/health | jq .soroban
+```
+
+If `"down"`, check [status.stellar.org](https://status.stellar.org) or switch to a different RPC endpoint in `.env`.
+
+---
+
 ## Related Docs
 
 - [development-setup.md](./development-setup.md) — Local environment setup
 - [contracts.md](./contracts.md) — Soroban contract reference
-- [monitoring.md](./monitoring.md) — Metrics and observability
+- [monitoring-observability.md](./monitoring-observability.md) — Detailed monitoring guide
+- [load-testing-guide.md](./load-testing-guide.md) — Load testing procedures

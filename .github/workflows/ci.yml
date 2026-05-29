@@ -40,6 +40,37 @@ jobs:
         run: npm run test:pact --workspace=apps/backend
         continue-on-error: true
 
+  migration-validate:
+    name: Backend - Validate Migrations
+    runs-on: ubuntu-latest
+    needs: backend-test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build backend
+        run: npm run build --workspace=apps/backend
+
+      - name: Validate migration ordering
+        run: npm run migration:validate --workspace=apps/backend
+        env:
+          DATABASE_HOST: localhost
+          DATABASE_PORT: 5432
+          DATABASE_USER: brain-storm
+          DATABASE_PASSWORD: brain-storm
+          DATABASE_NAME: brain-storm
+        continue-on-error: true
+
   backend-integration-test:
     name: Backend - Integration Tests (PostgreSQL)
     runs-on: ubuntu-latest

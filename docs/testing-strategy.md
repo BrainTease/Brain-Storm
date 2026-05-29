@@ -380,6 +380,107 @@ For full k6 setup and troubleshooting, see [docs/load-testing.md](./load-testing
 
 ---
 
+## 7. Testing Best Practices
+
+### Naming Conventions
+
+- **Unit tests:** `describe('ClassName', () => { it('should...', ...) })`
+- **Integration tests:** `describe('FeatureName Integration', () => { ... })`
+- **E2E tests:** `test('user journey: register → enroll → complete', ...)`
+
+### Test Data Management
+
+Use factories or fixtures to generate consistent test data:
+
+```typescript
+// apps/backend/test/factories/user.factory.ts
+export function createTestUser(overrides?: Partial<User>): User {
+  return {
+    id: uuid(),
+    email: `test-${Date.now()}@example.com`,
+    passwordHash: bcrypt.hashSync('Test@1234!', 10),
+    role: 'student',
+    ...overrides,
+  };
+}
+```
+
+### Isolation & Cleanup
+
+- Each test must be independent — no shared state between tests.
+- Use `beforeEach` to set up fixtures and `afterEach` to clean up.
+- For database tests, wrap each test in a transaction and rollback:
+
+```typescript
+beforeEach(async () => {
+  await queryRunner.startTransaction();
+});
+
+afterEach(async () => {
+  await queryRunner.rollbackTransaction();
+});
+```
+
+### Mocking External Services
+
+Mock Stellar SDK calls to avoid network dependency:
+
+```typescript
+jest.mock('@stellar/stellar-sdk', () => ({
+  Server: jest.fn(() => ({
+    getAccount: jest.fn().mockResolvedValue({ sequence: '123' }),
+    submitTransaction: jest.fn().mockResolvedValue({ id: 'tx-hash' }),
+  })),
+}));
+```
+
+### Assertion Patterns
+
+- Use specific matchers: `expect(value).toBe(expected)` not `expect(value).toBeTruthy()`.
+- Test both happy path and error cases.
+- Verify side effects (e.g. cache invalidation, event emission).
+
+### Debugging Failed Tests
+
+```bash
+# Run a single test file
+npm run test -- --testPathPattern=auth.service.spec.ts
+
+# Run tests matching a pattern
+npm run test -- --testNamePattern="should throw.*email"
+
+# Run with verbose output
+npm run test -- --verbose
+
+# Debug in Node inspector
+node --inspect-brk node_modules/.bin/jest --runInBand
+```
+
+---
+
+## 8. Test Coverage Targets
+
+| Layer | Target | Current |
+|---|---|---|
+| Backend services | ≥ 80% | Enforced via SonarCloud |
+| Backend controllers | ≥ 70% | Enforced via SonarCloud |
+| Frontend components | ≥ 70% | Enforced via SonarCloud |
+| Contracts | Best-effort | All public functions must have ≥ 1 test |
+
+**Coverage reports:**
+
+```bash
+# Backend
+npm run test --workspace=apps/backend -- --coverage
+open apps/backend/coverage/lcov-report/index.html
+
+# Frontend
+npm run test:coverage --workspace=apps/frontend
+open apps/frontend/coverage/index.html
+```
+
+---
+
 ## Running the Full Test Suite
 
 ```bash
@@ -398,4 +499,21 @@ cargo test --workspace
 
 # Load tests (requires running backend)
 ./scripts/load-test.sh
+
+# Full suite (all layers)
+npm run test:all
 ```
+
+---
+
+## CI/CD Integration
+
+All tests run automatically on every push and PR:
+
+- **Backend tests** run in parallel (unit + integration + e2e).
+- **Frontend tests** run in parallel (unit + pact + e2e).
+- **Contract tests** run via `cargo test`.
+- **Coverage gates** fail the build if thresholds are not met.
+- **Load tests** run against staging on PRs to `main`.
+
+See `.github/workflows/` for the full CI configuration.
