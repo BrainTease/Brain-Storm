@@ -81,3 +81,27 @@ module "oidc" {
   github_org  = var.github_org
   github_repo = var.github_repo
 }
+
+module "secrets" {
+  source = "./modules/secrets"
+
+  environment        = var.environment
+  aws_region         = var.aws_region
+  account_id         = var.account_id
+  db_password        = var.db_password
+  jwt_secret         = var.jwt_secret
+  stellar_secret_key = var.stellar_secret_key
+  enable_rotation    = var.environment == "prod"
+  alert_sns_arns     = var.alert_sns_arns
+}
+
+module "api_gateway" {
+  source = "./modules/api-gateway"
+
+  environment        = var.environment
+  vpc_id             = module.vpc.vpc_id
+  private_subnet_ids = module.vpc.private_subnet_ids
+  alb_listener_arn   = module.alb.http_listener_arn
+  cors_allow_origins = var.api_gateway_cors_origins
+  alert_sns_arns     = var.alert_sns_arns
+}

@@ -65,3 +65,32 @@ variable "github_repo" {
   type        = string
   default     = "Brain-Storm"
 }
+
+variable "account_id" {
+  description = "AWS account ID"
+  type        = string
+}
+
+variable "jwt_secret" {
+  description = "JWT signing secret"
+  type        = string
+  sensitive   = true
+}
+
+variable "stellar_secret_key" {
+  description = "Stellar signing key"
+  type        = string
+  sensitive   = true
+}
+
+variable "alert_sns_arns" {
+  description = "SNS topic ARNs for security alerts"
+  type        = list(string)
+  default     = []
+}
+
+variable "api_gateway_cors_origins" {
+  description = "Allowed CORS origins for the API Gateway"
+  type        = list(string)
+  default     = ["*"]
+}

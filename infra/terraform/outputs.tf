@@ -24,3 +24,8 @@ output "github_actions_role_arn" {
   description = "IAM role ARN for GitHub Actions OIDC — set as AWS_ROLE_ARN secret"
   value       = module.oidc.role_arn
 }
+
+output "api_gateway_endpoint" {
+  description = "API Gateway invoke URL"
+  value       = module.api_gateway.api_gateway_endpoint
+}
