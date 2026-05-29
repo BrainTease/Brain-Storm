@@ -484,6 +484,261 @@ When a user requests account deletion:
 3. Remove the `kyc_customers` row for the user's Stellar public key.
 4. Log the erasure event in your audit log.
 
-### Archival
+## 6. Indexing Strategy
 
-For long-term analytics, consider archiving completed `progress` and `enrollments` rows older than 2 years to a separate `archive` schema or a data warehouse before purging from the operational database. The `txHash` column on `progress` and `credentials` provides a permanent on-chain audit trail independent of the PostgreSQL data.
+### Index Design Principles
+
+1. **Selectivity:** Index columns with high cardinality (many distinct values).
+2. **Query patterns:** Index columns used in `WHERE`, `ORDER BY`, and `JOIN` conditions.
+3. **Write cost:** Each index adds overhead to `INSERT`, `UPDATE`, and `DELETE` operations.
+4. **Composite indexes:** Order columns by selectivity (most selective first) and query frequency.
+
+### Current Indexes
+
+| Table | Columns | Type | Reason |
+|---|---|---|---|
+| `users` | `email` | UNIQUE | Login lookups |
+| `users` | `username` | UNIQUE | Profile lookups |
+| `courses` | `(isPublished, isDeleted)` | Composite | Every list query filters on both |
+| `courses` | `createdAt` | Single | Default sort column |
+| `enrollments` | `(userId, courseId)` | UNIQUE | Prevent duplicate enrollments |
+| `progress` | `(userId, courseId)` | Composite | Progress lookups by student + course |
+| `reviews` | `(userId, courseId)` | UNIQUE | One review per student per course |
+| `api_keys` | `keyHash` | UNIQUE | O(1) lookup on every API request |
+| `kyc_customers` | `stellarPublicKey` | UNIQUE | KYC status lookups |
+| `notifications` | `userId` | Single | Notification feed queries |
+
+### Adding New Indexes
+
+```bash
+# Generate a migration
+npm run typeorm:generate -- src/migrations/AddIndexOnColumn
+
+# Review the generated migration, then apply
+npm run typeorm:run
+```
+
+### Monitoring Index Usage
+
+```sql
+-- Find unused indexes
+SELECT schemaname, tablename, indexname
+FROM pg_indexes
+WHERE schemaname NOT IN ('pg_catalog', 'information_schema')
+  AND indexname NOT IN (
+    SELECT constraint_name FROM information_schema.table_constraints
+  );
+
+-- Check index size
+SELECT indexname, pg_size_pretty(pg_relation_size(indexrelid)) AS size
+FROM pg_stat_user_indexes
+ORDER BY pg_relation_size(indexrelid) DESC;
+```
+
+---
+
+## 7. Schema Versioning
+
+### Version Tracking
+
+The schema version is stored in a `schema_version` table:
+
+```sql
+CREATE TABLE schema_version (
+  id SERIAL PRIMARY KEY,
+  version INT NOT NULL,
+  description VARCHAR NOT NULL,
+  installed_on TIMESTAMP DEFAULT NOW(),
+  execution_time INT
+);
+```
+
+### Semantic Versioning
+
+Schema versions follow `MAJOR.MINOR.PATCH`:
+
+- **MAJOR:** Breaking changes (e.g. dropping a column, changing a constraint).
+- **MINOR:** Additive changes (e.g. new table, new column with default).
+- **PATCH:** Non-breaking fixes (e.g. index optimization, constraint relaxation).
+
+### Current Version
+
+```bash
+SELECT version FROM schema_version ORDER BY installed_on DESC LIMIT 1;
+```
+
+### Backward Compatibility
+
+All migrations must be backward-compatible with the previous version for at least one release cycle. This allows for safe rolling deployments:
+
+1. Deploy new code that reads/writes both old and new schema.
+2. Run migration.
+3. Deploy code that uses only the new schema.
+
+Example: Adding a new column with a default value is safe; dropping a column requires a deprecation period.
+
+---
+
+## 8. Query Patterns & Examples
+
+### Fetch User with All Enrollments
+
+```typescript
+const user = await this.usersRepo
+  .createQueryBuilder('user')
+  .leftJoinAndSelect('user.enrollments', 'enrollment')
+  .leftJoinAndSelect('enrollment.course', 'course')
+  .where('user.id = :id', { id: userId })
+  .getOne();
+```
+
+### Leaderboard: Top 50 by BST Balance
+
+```typescript
+const leaderboard = await this.usersRepo
+  .createQueryBuilder('user')
+  .select('user.id')
+  .addSelect('user.username')
+  .addSelect('user.stellarPublicKey')
+  .where('user.stellarPublicKey IS NOT NULL')
+  .orderBy('user.bstBalance', 'DESC')
+  .limit(50)
+  .getMany();
+```
+
+### Course Completion Rate
+
+```typescript
+const stats = await this.coursesRepo
+  .createQueryBuilder('course')
+  .select('course.id')
+  .addSelect('course.title')
+  .addSelect('COUNT(enrollment.id)', 'totalEnrollments')
+  .addSelect('COUNT(CASE WHEN progress.completedAt IS NOT NULL THEN 1 END)', 'completions')
+  .leftJoin('course.enrollments', 'enrollment')
+  .leftJoin('course.progress', 'progress')
+  .groupBy('course.id')
+  .getRawMany();
+```
+
+### Find Courses Requiring KYC
+
+```typescript
+const kycCourses = await this.coursesRepo.find({
+  where: { requiresKyc: true, isPublished: true, isDeleted: false },
+  order: { createdAt: 'DESC' },
+});
+```
+
+---
+
+## 9. Data Integrity Constraints
+
+### Foreign Key Constraints
+
+All foreign keys are defined with explicit cascade/set-null behavior:
+
+```typescript
+@ManyToOne(() => User, { onDelete: 'CASCADE' })
+@JoinColumn({ name: 'userId' })
+user: User;
+```
+
+### Unique Constraints
+
+Prevent duplicate records:
+
+```typescript
+@Entity()
+@Unique(['userId', 'courseId'])
+export class Enrollment {
+  @Column() userId: string;
+  @Column() courseId: string;
+}
+```
+
+### Check Constraints
+
+Enforce valid value ranges at the database level:
+
+```sql
+ALTER TABLE progress ADD CONSTRAINT check_progress_pct CHECK (progressPct >= 0 AND progressPct <= 100);
+ALTER TABLE reviews ADD CONSTRAINT check_rating CHECK (rating >= 1 AND rating <= 5);
+```
+
+---
+
+## 10. Disaster Recovery
+
+### Backup Strategy
+
+- **Frequency:** Daily automated backups via AWS RDS or managed PostgreSQL service.
+- **Retention:** 30 days of daily backups + 1 weekly backup retained for 90 days.
+- **Testing:** Restore a backup to a test database weekly to verify integrity.
+
+### Point-in-Time Recovery
+
+PostgreSQL WAL (Write-Ahead Logging) enables recovery to any point in time within the backup retention window:
+
+```bash
+# Restore to a specific timestamp
+pg_restore --data-only --dbname=brain-storm /path/to/backup.sql
+```
+
+### Verification Queries
+
+After a restore, verify data integrity:
+
+```sql
+-- Check row counts
+SELECT COUNT(*) FROM users;
+SELECT COUNT(*) FROM courses;
+SELECT COUNT(*) FROM enrollments;
+
+-- Verify foreign key constraints
+SELECT * FROM pg_constraint WHERE contype = 'f';
+
+-- Check for orphaned records
+SELECT * FROM enrollments WHERE courseId NOT IN (SELECT id FROM courses);
+```
+
+---
+
+## 11. Performance Tuning
+
+### Query Analysis
+
+Use `EXPLAIN ANALYZE` to understand query performance:
+
+```sql
+EXPLAIN ANALYZE
+SELECT * FROM courses
+WHERE isPublished = true AND isDeleted = false
+ORDER BY createdAt DESC
+LIMIT 20;
+```
+
+Look for:
+- **Seq Scan:** Full table scan — add an index.
+- **Index Scan:** Good — index is being used.
+- **Nested Loop:** May indicate missing index on join column.
+
+### Vacuum & Analyze
+
+PostgreSQL requires periodic maintenance:
+
+```bash
+# Automatic via autovacuum (enabled by default)
+# Manual trigger (if needed)
+VACUUM ANALYZE;
+```
+
+### Connection Pooling
+
+The backend uses PgBouncer or TypeORM's built-in pool. Monitor pool exhaustion:
+
+```sql
+SELECT count(*) FROM pg_stat_activity;
+```
+
+If approaching the max pool size, increase `max_connections` in PostgreSQL or the pool size in TypeORM.
