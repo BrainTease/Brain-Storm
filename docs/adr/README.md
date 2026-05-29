@@ -31,14 +31,18 @@ We use the [MADR (Markdown Any Decision Records)](https://adr.github.io/madr/) t
 
 When making significant architectural decisions:
 
-1. Copy the MADR template
-2. Number sequentially (ADR-005, ADR-006, etc.)
+1. Copy the template from `ADR-TEMPLATE.md`
+2. Number sequentially (ADR-006, ADR-007, etc.)
 3. Use descriptive kebab-case filenames
 4. Fill in all sections with context and reasoning
 5. Update this README index
 6. Get team review before marking as "Accepted"
 
+For detailed guidance, see [ADR-GUIDE.md](./ADR-GUIDE.md).
+
 ## Resources
 
-- [MADR Template](https://adr.github.io/madr/)
+- [ADR Guide](./ADR-GUIDE.md) — How to create and review ADRs
+- [ADR Template](./ADR-TEMPLATE.md) — Template for new ADRs
+- [MADR Format](https://adr.github.io/madr/) — Markdown ADR format
 - [ADR GitHub Organization](https://adr.github.io/)
