@@ -17,7 +17,8 @@ resource "aws_security_group" "redis" {
     from_port   = 6379
     to_port     = 6379
     protocol    = "tcp"
-    cidr_blocks = ["10.0.0.0/16"]
+    cidr_blocks = [var.vpc_cidr]
+    description = "Redis access from within VPC"
   }
 
   egress {
@@ -34,28 +35,47 @@ resource "aws_security_group" "redis" {
 }
 
 resource "aws_elasticache_replication_group" "main" {
-  replication_group_id       = "${var.environment}-brain-storm-redis"
-  replication_group_description = "Redis cluster for Brain Storm ${var.environment}"
-  
+  replication_group_id = "${var.environment}-brain-storm-redis"
+  description          = "Redis cluster for Brain Storm ${var.environment}"
+
   engine               = "redis"
-  engine_version       = "7.0"
+  engine_version       = "7.1"
   node_type            = var.node_type
-  num_cache_clusters   = 2
+  num_cache_clusters   = var.environment == "prod" ? 2 : 1
   parameter_group_name = "default.redis7"
   port                 = 6379
 
   subnet_group_name  = aws_elasticache_subnet_group.main.name
   security_group_ids = [aws_security_group.redis.id]
 
-  automatic_failover_enabled = true
+  automatic_failover_enabled = var.environment == "prod"
+  multi_az_enabled           = var.environment == "prod"
   at_rest_encryption_enabled = true
   transit_encryption_enabled = true
 
   snapshot_retention_limit = 5
   snapshot_window          = "03:00-05:00"
+  maintenance_window       = "mon:05:00-mon:06:00"
+
+  log_delivery_configuration {
+    destination      = aws_cloudwatch_log_group.redis.name
+    destination_type = "cloudwatch-logs"
+    log_format       = "text"
+    log_type         = "slow-log"
+  }
 
   tags = {
     Name        = "${var.environment}-brain-storm-redis"
+    Environment = var.environment
+  }
+}
+
+resource "aws_cloudwatch_log_group" "redis" {
+  name              = "/elasticache/${var.environment}-brain-storm/redis"
+  retention_in_days = 14
+
+  tags = {
+    Name        = "${var.environment}-brain-storm-redis-logs"
     Environment = var.environment
   }
 }

@@ -17,3 +17,8 @@ variable "node_type" {
   description = "ElastiCache node type"
   type        = string
 }
+
+variable "vpc_cidr" {
+  description = "VPC CIDR block for security group ingress"
+  type        = string
+}

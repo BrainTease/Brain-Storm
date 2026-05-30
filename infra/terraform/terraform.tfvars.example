@@ -1,23 +1,61 @@
-# AWS Configuration
+# ─── Core ─────────────────────────────────────────────────────────────────────
 aws_region  = "us-east-1"
 environment = "prod"
+account_id  = "123456789012"
 
-# Network Configuration
-vpc_cidr = "10.0.0.0/16"
+# ─── Networking ───────────────────────────────────────────────────────────────
+vpc_cidr         = "10.0.0.0/16"
+enable_flow_logs = true
 
-# Database Configuration
+# ─── Database ─────────────────────────────────────────────────────────────────
 db_name           = "brainstorm"
-db_username       = "admin"
-db_password       = "change-me-in-production"
-db_instance_class = "db.t3.micro"
+db_username       = "brainstorm_admin"
+db_password       = "CHANGE_ME_use_secrets_manager_in_prod"
+db_instance_class = "db.t3.micro"   # db.t3.medium or larger for prod
+rds_multi_az      = false            # set true for prod
 
-# Redis Configuration
-redis_node_type = "cache.t3.micro"
+# ─── Redis ────────────────────────────────────────────────────────────────────
+redis_node_type = "cache.t3.micro"  # cache.t3.medium or larger for prod
 
-# Application Images
-backend_image  = "your-registry/brain-storm-backend:latest"
-frontend_image = "your-registry/brain-storm-frontend:latest"
+# ─── ECR ──────────────────────────────────────────────────────────────────────
+ecr_image_retention_count = 10
 
-# GitHub OIDC
+# ─── ECS / Application ────────────────────────────────────────────────────────
+# Leave empty to default to the ECR repositories created by this config.
+# Override with an explicit URI (e.g. from a previous build) if needed.
+backend_image  = ""
+frontend_image = ""
+
+# Public URL the browser-side frontend JavaScript will use for API calls.
+# Set to your custom domain (e.g. "https://api.brainstorm.example.com")
+# or to the api_gateway_endpoint output after first apply.
+api_base_url = "https://api.brainstorm.example.com"
+
+ecs_backend_desired_count  = 2
+ecs_frontend_desired_count = 2
+
+# ─── Auto Scaling ─────────────────────────────────────────────────────────────
+backend_min_capacity  = 2
+backend_max_capacity  = 10
+frontend_min_capacity = 2
+frontend_max_capacity = 6
+
+# ─── HTTPS ────────────────────────────────────────────────────────────────────
+# Optional: provide an ACM certificate ARN to enable HTTPS on the ALB.
+# When set, HTTP traffic is automatically redirected to HTTPS.
+# Leave empty for HTTP-only (not recommended in production).
+https_certificate_arn = ""
+# https_certificate_arn = "arn:aws:acm:us-east-1:123456789012:certificate/..."
+
+# ─── GitHub OIDC ──────────────────────────────────────────────────────────────
 github_org  = "your-github-org"
 github_repo = "Brain-Storm"
+
+# ─── Secrets (use environment variables or a .tfvars file NOT committed to git)
+# TF_VAR_db_password, TF_VAR_jwt_secret, TF_VAR_stellar_secret_key
+jwt_secret         = "CHANGE_ME_generate_with_openssl_rand_hex_64"
+stellar_secret_key = "CHANGE_ME_your_stellar_secret_key"
+
+# ─── Observability ────────────────────────────────────────────────────────────
+alert_sns_arns           = []  # ["arn:aws:sns:us-east-1:123456789012:brain-storm-alerts"]
+api_gateway_cors_origins = ["https://brainstorm.example.com"]

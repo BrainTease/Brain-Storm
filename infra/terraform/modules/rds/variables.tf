@@ -8,6 +8,11 @@ variable "vpc_id" {
   type        = string
 }
 
+variable "vpc_cidr" {
+  description = "VPC CIDR block for security group ingress"
+  type        = string
+}
+
 variable "private_subnet_ids" {
   description = "Private subnet IDs"
   type        = list(string)
@@ -33,4 +38,16 @@ variable "db_password" {
 variable "db_instance_class" {
   description = "RDS instance class"
   type        = string
+}
+
+variable "multi_az" {
+  description = "Enable Multi-AZ deployment for high availability"
+  type        = bool
+  default     = false
+}
+
+variable "monitoring_interval" {
+  description = "Enhanced monitoring interval in seconds (0 to disable)"
+  type        = number
+  default     = 60
 }

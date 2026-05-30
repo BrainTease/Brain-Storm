@@ -7,13 +7,33 @@ variable "aws_region" {
 variable "environment" {
   description = "Environment name (dev, staging, prod)"
   type        = string
+
+  validation {
+    condition     = contains(["dev", "staging", "prod"], var.environment)
+    error_message = "environment must be one of: dev, staging, prod."
+  }
 }
+
+variable "account_id" {
+  description = "AWS account ID"
+  type        = string
+}
+
+# ─── Networking ───────────────────────────────────────────────────────────────
 
 variable "vpc_cidr" {
   description = "CIDR block for VPC"
   type        = string
   default     = "10.0.0.0/16"
 }
+
+variable "enable_flow_logs" {
+  description = "Enable VPC flow logs to CloudWatch"
+  type        = bool
+  default     = true
+}
+
+# ─── Database ─────────────────────────────────────────────────────────────────
 
 variable "db_name" {
   description = "Database name"
@@ -39,21 +59,101 @@ variable "db_instance_class" {
   default     = "db.t3.micro"
 }
 
+variable "rds_multi_az" {
+  description = "Enable Multi-AZ RDS for high availability (recommended for prod)"
+  type        = bool
+  default     = false
+}
+
+variable "rds_monitoring_interval" {
+  description = "Enhanced RDS monitoring interval in seconds (0 to disable)"
+  type        = number
+  default     = 60
+}
+
+# ─── Redis ────────────────────────────────────────────────────────────────────
+
 variable "redis_node_type" {
   description = "ElastiCache node type"
   type        = string
   default     = "cache.t3.micro"
 }
 
+# ─── ECR ──────────────────────────────────────────────────────────────────────
+
+variable "ecr_image_retention_count" {
+  description = "Number of tagged images to retain per ECR repository"
+  type        = number
+  default     = 10
+}
+
+# ─── ECS / Application ────────────────────────────────────────────────────────
+
 variable "backend_image" {
-  description = "Docker image for backend service"
+  description = "Docker image URI for backend service. Defaults to ECR repo when empty."
   type        = string
+  default     = ""
 }
 
 variable "frontend_image" {
-  description = "Docker image for frontend service"
+  description = "Docker image URI for frontend service. Defaults to ECR repo when empty."
   type        = string
+  default     = ""
 }
+
+variable "api_base_url" {
+  description = "Public API base URL injected as NEXT_PUBLIC_API_URL into the frontend container"
+  type        = string
+  default     = ""
+}
+
+variable "ecs_backend_desired_count" {
+  description = "Initial desired count for the backend ECS service"
+  type        = number
+  default     = 2
+}
+
+variable "ecs_frontend_desired_count" {
+  description = "Initial desired count for the frontend ECS service"
+  type        = number
+  default     = 2
+}
+
+# ─── Auto Scaling ─────────────────────────────────────────────────────────────
+
+variable "backend_min_capacity" {
+  description = "Minimum number of backend ECS tasks"
+  type        = number
+  default     = 2
+}
+
+variable "backend_max_capacity" {
+  description = "Maximum number of backend ECS tasks"
+  type        = number
+  default     = 10
+}
+
+variable "frontend_min_capacity" {
+  description = "Minimum number of frontend ECS tasks"
+  type        = number
+  default     = 2
+}
+
+variable "frontend_max_capacity" {
+  description = "Maximum number of frontend ECS tasks"
+  type        = number
+  default     = 6
+}
+
+# ─── ALB / HTTPS ──────────────────────────────────────────────────────────────
+
+variable "https_certificate_arn" {
+  description = "ACM certificate ARN for HTTPS. HTTP redirects to HTTPS when set."
+  type        = string
+  default     = ""
+}
+
+# ─── GitHub OIDC ──────────────────────────────────────────────────────────────
 
 variable "github_org" {
   description = "GitHub organization or username owning this repo"
@@ -66,10 +166,7 @@ variable "github_repo" {
   default     = "Brain-Storm"
 }
 
-variable "account_id" {
-  description = "AWS account ID"
-  type        = string
-}
+# ─── Secrets ──────────────────────────────────────────────────────────────────
 
 variable "jwt_secret" {
   description = "JWT signing secret"
@@ -83,8 +180,10 @@ variable "stellar_secret_key" {
   sensitive   = true
 }
 
+# ─── Observability / Alerting ─────────────────────────────────────────────────
+
 variable "alert_sns_arns" {
-  description = "SNS topic ARNs for security alerts"
+  description = "SNS topic ARNs for CloudWatch alarms and security alerts"
   type        = list(string)
   default     = []
 }
