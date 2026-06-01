@@ -141,8 +141,9 @@ jobs:
             scripts/load-tests/spike-test.js
         continue-on-error: true
 
-      - name: Check regression against baselines
-        run: node scripts/compare-performance.js
+      - name: Compare against baselines and generate alerts
+        id: baseline-check
+        run: node scripts/load-test-baseline-comparison.js
         env:
           RESULTS_DIR: load-test-results
           BASELINES_FILE: scripts/load-tests/baselines/performance-baselines.json
@@ -156,15 +157,53 @@ jobs:
           path: load-test-results/
           retention-days: 30
 
-      - name: Create issue on regression
+      - name: Send Slack notification on regression
+        if: failure() && github.event_name == 'schedule' && env.SLACK_WEBHOOK_URL
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          payload: |
+            {
+              "text": "🚨 Performance Regression Detected",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Performance Regression Detected*\n\nLoad tests detected performance degradation.\n\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>"
+                  }
+                }
+              ]
+            }
+
+      - name: Create GitHub issue on critical regression
         if: failure() && github.event_name == 'schedule'
         uses: actions/github-script@v7
         with:
           script: |
-            await github.rest.issues.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: 'Performance Regression Detected',
-              body: `Scheduled load tests detected a regression.\n\nRun: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}\n\nReview the uploaded artifacts for details.`,
-              labels: ['performance', 'regression']
-            });
+            const fs = require('fs');
+            const reportPath = 'load-test-results/baseline-comparison-report.json';
+            
+            if (fs.existsSync(reportPath)) {
+              const report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
+              const criticalTests = report.tests.filter(t => t.regressions.length > 0);
+              
+              if (criticalTests.length > 0) {
+                const body = `## Performance Regression Detected\n\n` +
+                  `**Run**: [#${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})\n\n` +
+                  `### Affected Tests\n` +
+                  criticalTests.map(t => 
+                    `- **${t.name}**: ${t.regressions.length} regression(s)\n` +
+                    t.regressions.map(r => `  - ${r.metric}: ${r.change_percent}% (${r.severity})`).join('\n')
+                  ).join('\n') +
+                  `\n\n### Details\n\`\`\`json\n${JSON.stringify(report, null, 2)}\n\`\`\``;
+                
+                await github.rest.issues.create({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  title: '🚨 Performance Regression Detected in Load Tests',
+                  body: body,
+                  labels: ['performance', 'regression', 'load-testing']
+                });
+              }
+            }
