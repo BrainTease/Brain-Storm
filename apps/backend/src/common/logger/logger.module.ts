@@ -2,6 +2,10 @@ import { Module } from '@nestjs/common';
 import { WinstonModule } from 'nest-winston';
 import { ConfigService } from '@nestjs/config';
 import * as winston from 'winston';
+import { CustomLoggerService } from './logger.service';
+import { LoggerFactory } from './logger-factory';
+import { LoggingMiddleware, ErrorLoggingMiddleware } from './logging.middleware';
+import { LoggingInterceptor } from './logging.interceptor';
 
 @Module({
   imports: [
@@ -45,6 +49,20 @@ import * as winston from 'winston';
       },
     }),
   ],
-  exports: [WinstonModule],
+  providers: [
+    CustomLoggerService,
+    LoggerFactory,
+    LoggingMiddleware,
+    ErrorLoggingMiddleware,
+    LoggingInterceptor,
+  ],
+  exports: [
+    WinstonModule,
+    CustomLoggerService,
+    LoggerFactory,
+    LoggingMiddleware,
+    ErrorLoggingMiddleware,
+    LoggingInterceptor,
+  ],
 })
 export class LoggerModule {}
