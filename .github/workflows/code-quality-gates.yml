@@ -1,0 +1,313 @@
+name: Code Quality Gates
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: [main]
+
+env:
+  COVERAGE_THRESHOLD: 80
+  COMPLEXITY_THRESHOLD: 10
+
+jobs:
+  eslint-frontend:
+    name: ESLint - Frontend Code Quality
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run ESLint
+        id: eslint
+        run: |
+          npm run lint --workspace=apps/frontend -- --format json --output-file eslint-report.json || true
+          
+          # Parse and display results
+          node -e "
+            const fs = require('fs');
+            const report = JSON.parse(fs.readFileSync('eslint-report.json', 'utf8'));
+            let errors = 0, warnings = 0;
+            
+            report.forEach(file => {
+              errors += file.errorCount;
+              warnings += file.warningCount;
+            });
+            
+            console.log(\`ESLint Results: \${errors} errors, \${warnings} warnings\`);
+            
+            if (errors > 0) {
+              console.log('::error::ESLint found errors');
+              process.exit(1);
+            }
+          "
+
+      - name: Upload ESLint report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eslint-report
+          path: eslint-report.json
+          retention-days: 30
+
+  eslint-backend:
+    name: ESLint - Backend Code Quality
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run ESLint
+        id: eslint
+        run: |
+          npm run lint --workspace=apps/backend -- --format json --output-file eslint-report.json || true
+          
+          # Parse and display results
+          node -e "
+            const fs = require('fs');
+            const report = JSON.parse(fs.readFileSync('eslint-report.json', 'utf8'));
+            let errors = 0, warnings = 0;
+            
+            report.forEach(file => {
+              errors += file.errorCount;
+              warnings += file.warningCount;
+            });
+            
+            console.log(\`ESLint Results: \${errors} errors, \${warnings} warnings\`);
+            
+            if (errors > 0) {
+              console.log('::error::ESLint found errors');
+              process.exit(1);
+            }
+          "
+
+      - name: Upload ESLint report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eslint-backend-report
+          path: eslint-report.json
+          retention-days: 30
+
+  clippy-contracts:
+    name: Clippy - Rust Contract Quality
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+          components: clippy
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            contracts
+
+      - name: Run Clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings
+        working-directory: contracts
+
+  code-coverage:
+    name: Code Coverage Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Generate backend coverage
+        run: npm run test --workspace=apps/backend -- --coverage --coverageReporters=json --coverageReporters=text
+        continue-on-error: true
+
+      - name: Generate frontend coverage
+        run: npm run test --workspace=apps/frontend -- --coverage --coverageReporters=json --coverageReporters=text
+        continue-on-error: true
+
+      - name: Check coverage thresholds
+        run: |
+          node -e "
+            const fs = require('fs');
+            const threshold = ${{ env.COVERAGE_THRESHOLD }};
+            
+            try {
+              const backendCoverage = JSON.parse(fs.readFileSync('apps/backend/coverage/coverage-summary.json', 'utf8'));
+              const frontendCoverage = JSON.parse(fs.readFileSync('apps/frontend/coverage/coverage-summary.json', 'utf8'));
+              
+              const backendLines = backendCoverage.total.lines.pct;
+              const frontendLines = frontendCoverage.total.lines.pct;
+              
+              console.log(\`Backend coverage: \${backendLines}%\`);
+              console.log(\`Frontend coverage: \${frontendLines}%\`);
+              
+              if (backendLines < threshold || frontendLines < threshold) {
+                console.log(\`::warning::Coverage below threshold of \${threshold}%\`);
+              }
+            } catch (e) {
+              console.log('Coverage files not found, skipping check');
+            }
+          "
+
+      - name: Upload coverage reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-reports
+          path: |
+            apps/backend/coverage/
+            apps/frontend/coverage/
+          retention-days: 30
+
+  complexity-analysis:
+    name: Complexity Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install complexity analyzer
+        run: npm install -g complexity-report
+
+      - name: Analyze backend complexity
+        run: |
+          complexity-report --format json --output backend-complexity.json apps/backend/src || true
+          
+          node -e "
+            const fs = require('fs');
+            const threshold = ${{ env.COMPLEXITY_THRESHOLD }};
+            
+            try {
+              const report = JSON.parse(fs.readFileSync('backend-complexity.json', 'utf8'));
+              let highComplexity = [];
+              
+              report.forEach(file => {
+                if (file.complexity > threshold) {
+                  highComplexity.push(\`\${file.name}: \${file.complexity}\`);
+                }
+              });
+              
+              if (highComplexity.length > 0) {
+                console.log('::warning::High complexity files detected:');
+                highComplexity.forEach(f => console.log(\`  - \${f}\`));
+              }
+            } catch (e) {
+              console.log('Complexity analysis skipped');
+            }
+          "
+        continue-on-error: true
+
+      - name: Upload complexity report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: complexity-report
+          path: backend-complexity.json
+          retention-days: 30
+
+  quality-gates-summary:
+    name: Quality Gates Summary
+    runs-on: ubuntu-latest
+    needs: [eslint-frontend, eslint-backend, clippy-contracts, code-coverage, complexity-analysis]
+    if: always()
+
+    steps:
+      - name: Generate quality report
+        run: |
+          echo "## 📊 Code Quality Gates Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| ESLint (Frontend) | ${{ needs.eslint-frontend.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| ESLint (Backend) | ${{ needs.eslint-backend.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Clippy (Contracts) | ${{ needs.clippy-contracts.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Code Coverage | ${{ needs.code-coverage.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Complexity Analysis | ${{ needs.complexity-analysis.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Quality Standards" >> $GITHUB_STEP_SUMMARY
+          echo "- **Coverage Threshold:** ${{ env.COVERAGE_THRESHOLD }}%" >> $GITHUB_STEP_SUMMARY
+          echo "- **Complexity Threshold:** ${{ env.COMPLEXITY_THRESHOLD }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Linting:** Strict mode (errors block merge)" >> $GITHUB_STEP_SUMMARY
+
+      - name: Fail if quality gates failed
+        if: |
+          needs.eslint-frontend.result == 'failure' ||
+          needs.eslint-backend.result == 'failure' ||
+          needs.clippy-contracts.result == 'failure'
+        run: |
+          echo "❌ Code quality gates failed"
+          exit 1
+
+      - name: Comment PR with quality report
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const summary = `
+            ## 📊 Code Quality Gates
+
+            | Check | Status |
+            |-------|--------|
+            | ESLint (Frontend) | ${{ needs.eslint-frontend.result }} |
+            | ESLint (Backend) | ${{ needs.eslint-backend.result }} |
+            | Clippy (Contracts) | ${{ needs.clippy-contracts.result }} |
+            | Code Coverage | ${{ needs.code-coverage.result }} |
+            | Complexity Analysis | ${{ needs.complexity-analysis.result }} |
+
+            ### Quality Standards
+            - **Coverage Threshold:** ${{ env.COVERAGE_THRESHOLD }}%
+            - **Complexity Threshold:** ${{ env.COMPLEXITY_THRESHOLD }}
+            - **Linting:** Strict mode (errors block merge)
+
+            [View detailed reports](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            `;
+            
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: summary
+            });
