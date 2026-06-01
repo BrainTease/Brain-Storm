@@ -4,6 +4,7 @@ import { Course } from './course.entity';
 import { CourseModule } from './course-module.entity';
 import { Lesson } from './lesson.entity';
 import { CoursesService } from './courses.service';
+import { CoursesBusinessService } from './courses-business.service';
 import { ModulesService } from './modules.service';
 import { LessonsService } from './lessons.service';
 import { CoursesController } from './courses.controller';
@@ -28,8 +29,8 @@ import { NotificationsModule } from '../notifications/notifications.module';
     SearchModule,
     NotificationsModule,
   ],
-  providers: [CoursesService, ModulesService, LessonsService, ReviewsService, CourseVersioningService, PrerequisitesService, CourseSchedulerService],
+  providers: [CoursesService, CoursesBusinessService, ModulesService, LessonsService, ReviewsService, CourseVersioningService, PrerequisitesService, CourseSchedulerService],
   controllers: [CoursesController, ModulesController, ReviewsController, CourseVersioningController, PrerequisitesController],
-  exports: [CoursesService, PrerequisitesService],
+  exports: [CoursesService, CoursesBusinessService, PrerequisitesService],
 })
 export class CoursesModule {}

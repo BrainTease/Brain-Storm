@@ -8,8 +8,9 @@ import {
   Body,
   Query,
   UseGuards,
+  Request,
 } from '@nestjs/common';
-import { CoursesService } from './courses.service';
+import { CoursesBusinessService } from './courses-business.service';
 import {
   ApiTags,
   ApiOperation,
@@ -29,7 +30,7 @@ import { ScheduleCourseDto } from './dto/schedule-course.dto';
 @ApiTags('courses')
 @Controller('courses')
 export class CoursesController {
-  constructor(private coursesService: CoursesService) {}
+  constructor(private coursesBusinessService: CoursesBusinessService) {}
 
   @Get()
   @ApiOperation({ summary: 'Get all published courses' })
@@ -62,7 +63,12 @@ export class CoursesController {
     schema: { example: { data: [], total: 0, page: 1, limit: 20 } },
   })
   findAll(@Query() query: CourseQueryDto) {
-    return this.coursesService.findAll(query);
+    return this.coursesBusinessService.getAllCourses(
+      query.search,
+      query.level,
+      query.page,
+      query.limit,
+    );
   }
 
   @Get(':id')
@@ -74,7 +80,7 @@ export class CoursesController {
   })
   @ApiResponse({ status: 404, description: 'Course not found' })
   findOne(@Param('id') id: string) {
-    return this.coursesService.findOne(id);
+    return this.coursesBusinessService.getCourse(id);
   }
 
   @Post()
@@ -90,8 +96,8 @@ export class CoursesController {
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
-  create(@Body() data: CreateCourseDto) {
-    return this.coursesService.create(data);
+  create(@Body() data: CreateCourseDto, @Request() req: any) {
+    return this.coursesBusinessService.createCourse(req.user.id, req.user.role, data);
   }
 
   @Patch(':id')
@@ -108,8 +114,8 @@ export class CoursesController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
   @ApiResponse({ status: 404, description: 'Course not found' })
-  update(@Param('id') id: string, @Body() data: UpdateCourseDto) {
-    return this.coursesService.update(id, data);
+  update(@Param('id') id: string, @Body() data: UpdateCourseDto, @Request() req: any) {
+    return this.coursesBusinessService.updateCourse(id, req.user.id, req.user.role, data);
   }
 
   @Delete(':id')
@@ -125,8 +131,8 @@ export class CoursesController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
   @ApiResponse({ status: 404, description: 'Course not found' })
-  delete(@Param('id') id: string) {
-    return this.coursesService.delete(id);
+  delete(@Param('id') id: string, @Request() req: any) {
+    return this.coursesBusinessService.deleteCourse(id, req.user.id, req.user.role);
   }
 
   @Post(':id/schedule')
@@ -137,9 +143,14 @@ export class CoursesController {
   @ApiBody({ type: ScheduleCourseDto })
   @ApiResponse({ status: 200, description: 'Course scheduled' })
   @ApiResponse({ status: 400, description: 'scheduledAt must be in the future' })
-  schedule(@Param('id') id: string, @Body() dto: ScheduleCourseDto) {
+  schedule(@Param('id') id: string, @Body() dto: ScheduleCourseDto, @Request() req: any) {
     const scheduledAt = resolveScheduledAt(dto.scheduledAt, dto.timezone);
-    return this.coursesService.scheduleCourse(id, scheduledAt);
+    return this.coursesBusinessService.scheduleCourseForPublication(
+      id,
+      req.user.id,
+      req.user.role,
+      scheduledAt,
+    );
   }
 
   @Post(':id/publish')
@@ -148,8 +159,8 @@ export class CoursesController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Immediately publish a course' })
   @ApiResponse({ status: 200, description: 'Course published' })
-  publishNow(@Param('id') id: string) {
-    return this.coursesService.publishNow(id);
+  publishNow(@Param('id') id: string, @Request() req: any) {
+    return this.coursesBusinessService.publishCourseNow(id, req.user.id, req.user.role);
   }
 }
 
