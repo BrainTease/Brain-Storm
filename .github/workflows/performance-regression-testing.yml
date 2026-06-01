@@ -243,7 +243,71 @@ jobs:
             git push
           fi
 
-  generate-report:
+  performance-alerts:
+    name: Performance Alerts & Notifications
+    runs-on: ubuntu-latest
+    needs: compare-with-baseline
+    if: always()
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download comparison results
+        uses: actions/download-artifact@v4
+        with:
+          path: comparison-results/
+        continue-on-error: true
+
+      - name: Check for significant regressions
+        id: alert-check
+        run: |
+          if [ -f "comparison-results/performance-comparison.json" ]; then
+            node -e "
+              const fs = require('fs');
+              const comparison = JSON.parse(fs.readFileSync('comparison-results/performance-comparison.json', 'utf8'));
+              let alerts = [];
+              
+              Object.entries(comparison.metrics).forEach(([metric, data]) => {
+                const regression = ((data.current - data.baseline) / data.baseline) * 100;
+                if (regression > 15) {
+                  alerts.push({
+                    metric,
+                    regression: regression.toFixed(2),
+                    baseline: data.baseline,
+                    current: data.current
+                  });
+                }
+              });
+              
+              if (alerts.length > 0) {
+                console.log('::warning::Performance regressions detected');
+                console.log(JSON.stringify(alerts, null, 2));
+                process.exit(1);
+              }
+            "
+          fi
+
+      - name: Create performance alert issue
+        if: failure() && github.event_name == 'schedule'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: 'Performance: Significant regression detected',
+              body: `Performance regression detected in scheduled test run.\n\nWorkflow: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}\n\nReview performance metrics and investigate root cause.`,
+              labels: ['performance', 'regression', 'alert']
+            });
+
+      - name: Post performance summary
+        run: |
+          echo "## 📈 Performance Regression Testing Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status:** ${{ needs.compare-with-baseline.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Baseline Comparison:** Complete" >> $GITHUB_STEP_SUMMARY
+          echo "- **Regression Detection:** Enabled" >> $GITHUB_STEP_SUMMARY
+          echo "- **Alert Threshold:** 15% increase" >> $GITHUB_STEP_SUMMARY
     name: Generate Performance Report
     runs-on: ubuntu-latest
     needs: compare-with-baseline

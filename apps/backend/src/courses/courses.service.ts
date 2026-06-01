@@ -7,6 +7,8 @@ import { Inject } from '@nestjs/common';
 import { Course, CourseStatus } from './course.entity';
 import { CourseQueryDto } from './dto/course-query.dto';
 import { SearchService } from '../search/search.service';
+import { PaginatedResponseDto } from '../common/dto/api-response.dto';
+import { QueryOptimizer } from '../common/database/query-optimizer';
 
 @Injectable()
 export class CoursesService {
@@ -24,51 +26,45 @@ export class CoursesService {
     const { search, level, page = 1, limit = 20 } = query;
     const cacheKey = `${this.CACHE_KEY}:${search ?? 'all'}:${level ?? 'all'}:${page}:${limit}`;
 
-    return this.cacheManager.wrap(cacheKey, async () => this.queryCourses(query), {
+    const result = await this.cacheManager.wrap(cacheKey, async () => this.queryCourses(query), {
       ttl: this.CACHE_TTL,
     });
+
+    return new PaginatedResponseDto(result.data, 200, result.page, result.limit, result.total);
   }
 
   private async queryCourses(query: CourseQueryDto = {}) {
     const { search, level, page = 1, limit = 20 } = query;
 
-    const qb = this.repo
+    let qb = this.repo
       .createQueryBuilder('course')
       .where('course.isPublished = :isPublished', { isPublished: true })
       .andWhere('course.isDeleted = :isDeleted', { isDeleted: false });
 
+    // Apply filters
     if (search) {
-      qb.andWhere('(course.title ILIKE :search OR course.description ILIKE :search)', {
+      qb = qb.andWhere('(course.title ILIKE :search OR course.description ILIKE :search)', {
         search: `%${search}%`,
       });
     }
 
     if (level) {
-      qb.andWhere('course.level = :level', { level });
+      qb = qb.andWhere('course.level = :level', { level });
     }
 
+    // Eager load relations to prevent N+1 queries
+    qb = QueryOptimizer.eagerLoadRelations(qb, ['modules', 'reviews']);
+
+    // Get total count before pagination
     const total = await qb.clone().getCount();
-    const offset = (page - 1) * limit;
 
-    const { raw, entities } = await qb
-      .leftJoin('course.reviews', 'review')
-      .addSelect('COALESCE(AVG(review.rating), 0)', 'course_averageRating')
-      .skip(offset)
-      .take(limit)
-      .orderBy('course.createdAt', 'DESC')
-      .groupBy('course.id')
-      .getRawAndEntities();
+    // Apply pagination and sorting
+    qb = QueryOptimizer.paginate(qb, page, limit);
+    qb = QueryOptimizer.sort(qb, 'createdAt', 'DESC');
 
-    const averageRatings = new Map(
-      raw.map((item, index) => [entities[index].id, Number(item.course_averageRating) || 0])
-    );
+    const courses = await qb.getMany();
 
-    const data = entities.map((course) => ({
-      ...course,
-      averageRating: averageRatings.get(course.id) ?? 0,
-    }));
-
-    return { data, total, page, limit };
+    return { data: courses, total, page, limit };
   }
 
   async findOne(id: string): Promise<Course> {

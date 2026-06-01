@@ -1,12 +1,10 @@
 version: 2
 updates:
-  # Frontend npm dependencies
+  # Frontend npm dependencies - Security patches prioritized
   - package-ecosystem: npm
     directory: "/apps/frontend"
     schedule:
-      interval: weekly
-      day: monday
-      time: "03:00"
+      interval: daily
     open-pull-requests-limit: 10
     reviewers:
       - "brain-tease"
@@ -18,6 +16,14 @@ updates:
     pull-request-branch-name:
       separator: "/"
     groups:
+      security-updates:
+        dependency-types:
+          - "production"
+        update-types:
+          - "semver:patch"
+        patterns:
+          - "*security*"
+          - "*vulnerability*"
       minor-and-patch:
         dependency-types:
           - "minor"
@@ -25,14 +31,17 @@ updates:
     allow:
       - dependency-type: "direct"
       - dependency-type: "indirect"
+    labels:
+      - "dependencies"
+      - "frontend"
+    pull-request-branch-name:
+      separator: "/"
 
-  # Backend npm dependencies
+  # Backend npm dependencies - Security patches prioritized
   - package-ecosystem: npm
     directory: "/apps/backend"
     schedule:
-      interval: weekly
-      day: monday
-      time: "03:30"
+      interval: daily
     open-pull-requests-limit: 10
     reviewers:
       - "brain-tease"
@@ -44,6 +53,14 @@ updates:
     pull-request-branch-name:
       separator: "/"
     groups:
+      security-updates:
+        dependency-types:
+          - "production"
+        update-types:
+          - "semver:patch"
+        patterns:
+          - "*security*"
+          - "*vulnerability*"
       minor-and-patch:
         dependency-types:
           - "minor"
@@ -51,14 +68,15 @@ updates:
     allow:
       - dependency-type: "direct"
       - dependency-type: "indirect"
+    labels:
+      - "dependencies"
+      - "backend"
 
-  # Cargo dependencies (Rust contracts)
+  # Cargo dependencies (Rust contracts) - Security patches prioritized
   - package-ecosystem: cargo
     directory: "/"
     schedule:
-      interval: weekly
-      day: monday
-      time: "04:00"
+      interval: daily
     open-pull-requests-limit: 10
     reviewers:
       - "brain-tease"
@@ -70,6 +88,14 @@ updates:
     pull-request-branch-name:
       separator: "/"
     groups:
+      security-updates:
+        dependency-types:
+          - "production"
+        update-types:
+          - "semver:patch"
+        patterns:
+          - "*security*"
+          - "*vulnerability*"
       minor-and-patch:
         dependency-types:
           - "minor"
@@ -77,14 +103,15 @@ updates:
     allow:
       - dependency-type: "direct"
       - dependency-type: "indirect"
+    labels:
+      - "dependencies"
+      - "contracts"
 
-  # GitHub Actions versions
+  # GitHub Actions versions - Daily checks
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
-      interval: weekly
-      day: monday
-      time: "04:30"
+      interval: daily
     open-pull-requests-limit: 5
     reviewers:
       - "brain-tease"
@@ -93,3 +120,6 @@ updates:
     commit-message:
       prefix: "chore(ci):"
       include: "scope"
+    labels:
+      - "dependencies"
+      - "ci"

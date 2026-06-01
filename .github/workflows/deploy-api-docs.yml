@@ -6,19 +6,25 @@ on:
     paths:
       - 'apps/backend/src/**'
       - 'docs/api/**'
+  pull_request:
+    paths:
+      - 'apps/backend/src/**'
+      - 'docs/api/**'
   workflow_dispatch:
 
 permissions:
   contents: read
   pages: write
   id-token: write
+  pull-requests: write
 
 concurrency:
   group: pages
   cancel-in-progress: false
 
 jobs:
-  build:
+  validate-openapi:
+    name: Validate OpenAPI Specification
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -38,11 +44,151 @@ jobs:
         working-directory: apps/backend
         run: EXPORT_OPENAPI=true node dist/main --export-openapi
 
-      - name: Assemble static site
+      - name: Validate OpenAPI spec
+        run: |
+          npm install -g @apidevtools/swagger-cli
+          swagger-cli validate apps/backend/openapi.json
+
+      - name: Check for breaking changes
+        run: |
+          if [ -f "docs/api/openapi-previous.json" ]; then
+            echo "Comparing with previous version..."
+            npm install -g openapi-diff
+            openapi-diff docs/api/openapi-previous.json apps/backend/openapi.json || true
+          fi
+
+  build-documentation:
+    name: Build API Documentation
+    runs-on: ubuntu-latest
+    needs: validate-openapi
+    outputs:
+      doc_version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build backend
+        run: npm run build --workspace=apps/backend
+
+      - name: Export OpenAPI spec
+        working-directory: apps/backend
+        run: EXPORT_OPENAPI=true node dist/main --export-openapi
+
+      - name: Extract API version
+        id: version
+        run: |
+          VERSION=$(grep -o '"version":"[^"]*"' apps/backend/openapi.json | head -1 | cut -d'"' -f4)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "API Version: $VERSION"
+
+      - name: Generate ReDoc documentation
+        run: |
+          npm install -g redoc-cli
+          mkdir -p docs/api/dist
+          redoc-cli build apps/backend/openapi.json -o docs/api/dist/redoc.html --title "Brain-Storm API Documentation"
+
+      - name: Generate Swagger UI
         run: |
           mkdir -p docs/api/dist
-          cp apps/backend/openapi.json docs/api/dist/openapi.json
           cp docs/api/swagger-ui.html docs/api/dist/index.html
+          cp apps/backend/openapi.json docs/api/dist/openapi.json
+
+      - name: Create API documentation index
+        run: |
+          cat > docs/api/dist/versions.json << 'EOF'
+          {
+            "current": "${{ steps.version.outputs.version }}",
+            "versions": [
+              {
+                "version": "${{ steps.version.outputs.version }}",
+                "url": "./index.html",
+                "redoc": "./redoc.html",
+                "date": "$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+              }
+            ]
+          }
+          EOF
+
+      - name: Generate API changelog
+        run: |
+          cat > docs/api/dist/CHANGELOG.md << 'EOF'
+          # API Changelog
+          
+          ## Version ${{ steps.version.outputs.version }}
+          
+          Generated: $(date -u +'%Y-%m-%d %H:%M:%S UTC')
+          
+          ### Endpoints
+          
+          EOF
+          
+          # Extract endpoints from OpenAPI spec
+          jq -r '.paths | keys[]' apps/backend/openapi.json >> docs/api/dist/CHANGELOG.md || true
+
+      - name: Create documentation search index
+        run: |
+          cat > docs/api/dist/search-index.json << 'EOF'
+          {
+            "version": "${{ steps.version.outputs.version }}",
+            "endpoints": [],
+            "schemas": [],
+            "tags": []
+          }
+          EOF
+          
+          # Build search index from OpenAPI spec
+          jq '.paths | to_entries[] | {path: .key, methods: .value | keys}' apps/backend/openapi.json >> docs/api/dist/search-index.json || true
+
+      - name: Upload documentation artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-docs
+          path: docs/api/dist/
+          retention-days: 30
+
+      - name: Comment PR with documentation preview
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const version = '${{ steps.version.outputs.version }}';
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## 📚 API Documentation Preview
+              
+              **Version**: ${version}
+              
+              - [Swagger UI](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+              - [ReDoc](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+              
+              Documentation will be deployed to GitHub Pages on merge to main.`
+            });
+
+  deploy-documentation:
+    name: Deploy to GitHub Pages
+    needs: build-documentation
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: api-docs
+          path: docs/api/dist
 
       - uses: actions/configure-pages@v4
 
@@ -50,13 +196,76 @@ jobs:
         with:
           path: docs/api/dist
 
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+  generate-sdk:
+    name: Generate API SDKs
+    runs-on: ubuntu-latest
+    needs: validate-openapi
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build backend
+        run: npm run build --workspace=apps/backend
+
+      - name: Export OpenAPI spec
+        working-directory: apps/backend
+        run: EXPORT_OPENAPI=true node dist/main --export-openapi
+
+      - name: Generate TypeScript SDK
+        run: |
+          npm install -g @openapitools/openapi-generator-cli
+          openapi-generator-cli generate \
+            -i apps/backend/openapi.json \
+            -g typescript-fetch \
+            -o packages/sdk-typescript \
+            --additional-properties=npmName=@brain-storm/sdk,npmVersion=1.0.0
+
+      - name: Generate Python SDK
+        run: |
+          openapi-generator-cli generate \
+            -i apps/backend/openapi.json \
+            -g python \
+            -o packages/sdk-python \
+            --additional-properties=packageName=brain_storm_sdk,packageVersion=1.0.0
+
+      - name: Upload SDK artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-sdks
+          path: packages/sdk-*/
+          retention-days: 30
+
+  notify-documentation:
+    name: Notify Documentation Update
+    runs-on: ubuntu-latest
+    needs: [build-documentation, deploy-documentation]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Create deployment notification
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const version = '${{ needs.build-documentation.outputs.doc_version }}';
+            
+            github.rest.repos.createDeployment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: context.ref,
+              environment: 'api-documentation',
+              description: `API Documentation v${version}`,
+              auto_merge: false,
+              required_contexts: []
+            });
+

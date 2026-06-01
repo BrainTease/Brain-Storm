@@ -189,10 +189,33 @@ jobs:
           path: report_html.html
           retention-days: 30
 
+  security-gates:
+    name: Security Gates - Fail on Critical
+    runs-on: ubuntu-latest
+    needs: [sast-sonarqube, container-scanning, dast-scanning]
+    if: always()
+
+    steps:
+      - name: Check for critical vulnerabilities
+        run: |
+          echo "## Security Gate Check" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ needs.sast-sonarqube.result }}" == "failure" ]; then
+            echo "❌ SAST scan failed - critical issues detected" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+          
+          if [ "${{ needs.container-scanning.result }}" == "failure" ]; then
+            echo "❌ Container scan failed - critical vulnerabilities detected" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+          
+          echo "✅ All security gates passed" >> $GITHUB_STEP_SUMMARY
+
   vulnerability-tracking:
     name: Vulnerability Tracking Report
     runs-on: ubuntu-latest
-    needs: [sast-sonarqube, container-scanning]
+    needs: [sast-sonarqube, container-scanning, dast-scanning]
     if: always()
 
     steps:
@@ -205,61 +228,97 @@ jobs:
           path: security-artifacts/
         continue-on-error: true
 
-      - name: Generate vulnerability tracking report
+      - name: Generate comprehensive security report
         run: |
           mkdir -p security-reports
           cat > security-reports/vulnerability-report.md << EOF
-          # Vulnerability Tracking Report
+          # Comprehensive Security Report
 
           **Date:** $(date -u +"%Y-%m-%d %H:%M UTC")
           **Run:** ${{ github.run_id }}
           **Branch:** ${{ github.ref_name }}
           **Commit:** ${{ github.sha }}
 
-          ## Scan Results
+          ## Scan Results Summary
 
-          | Scanner | Status | Type |
-          |---------|--------|------|
-          | SonarQube | ${{ needs.sast-sonarqube.result }} | SAST |
-          | Trivy | ${{ needs.container-scanning.result }} | Container |
+          | Scanner | Status | Type | Coverage |
+          |---------|--------|------|----------|
+          | SonarQube | ${{ needs.sast-sonarqube.result }} | SAST | Code Quality & Vulnerabilities |
+          | Trivy | ${{ needs.container-scanning.result }} | Container | Image Vulnerabilities |
+          | OWASP ZAP | ${{ needs.dast-scanning.result }} | DAST | API Security |
 
-          ## Severity Levels Checked
+          ## Severity Levels & SLAs
 
           - **CRITICAL**: Immediate remediation required — blocks deployment
           - **HIGH**: Remediate within 7 days
           - **MEDIUM**: Remediate within 30 days
           - **LOW**: Track and remediate opportunistically
 
+          ## Security Scanning Coverage
+
+          ### SAST (Static Application Security Testing)
+          - Code quality analysis via SonarQube
+          - Dependency vulnerability detection
+          - Code coverage metrics
+
+          ### Container Scanning
+          - Base image vulnerability scanning
+          - Runtime dependency analysis
+          - Configuration security checks
+
+          ### DAST (Dynamic Application Security Testing)
+          - API endpoint security testing
+          - Authentication/Authorization validation
+          - Input validation and injection testing
+
           ## Actions Required
 
-          Review full reports in the workflow artifacts. Create GitHub issues
-          for any HIGH or CRITICAL findings that require code-level fixes.
+          1. Review full reports in workflow artifacts
+          2. Create GitHub issues for HIGH or CRITICAL findings
+          3. Link issues to security milestone
+          4. Update security tracking dashboard
 
           ## References
 
           - [Dependency Vulnerability Scanning](.github/workflows/dependency-vulnerability-scanning.yml)
           - [Security Best Practices](docs/security-best-practices.md)
           - [Security Audit](docs/security-audit.md)
+          - [Security Guidelines](docs/security-guidelines.md)
           EOF
 
           cat security-reports/vulnerability-report.md
 
-      - name: Upload vulnerability report
+      - name: Upload comprehensive security report
         uses: actions/upload-artifact@v4
         with:
-          name: vulnerability-tracking-report
+          name: comprehensive-security-report
           path: security-reports/
           retention-days: 90
 
+      - name: Post security summary to PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('security-reports/vulnerability-report.md', 'utf8');
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## 🔒 Security Scan Results\n\n${report}`
+            });
+
       - name: Open issue on critical findings
-        if: ${{ needs.container-scanning.result == 'failure' && github.event_name == 'schedule' }}
+        if: ${{ (needs.sast-sonarqube.result == 'failure' || needs.container-scanning.result == 'failure') && github.event_name == 'schedule' }}
         uses: actions/github-script@v7
         with:
           script: |
             await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title: 'Security: Critical vulnerabilities detected in container scan',
-              body: `Container security scan found critical vulnerabilities.\n\nWorkflow run: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}\n\nReview Trivy scan artifacts and remediate before next release.`,
-              labels: ['security', 'critical', 'containers']
+              title: 'Security: Critical vulnerabilities detected in automated scans',
+              body: `Automated security scans detected critical vulnerabilities.\n\nWorkflow run: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}\n\nReview scan artifacts and remediate before next release.`,
+              labels: ['security', 'critical', 'automated-scan']
             });

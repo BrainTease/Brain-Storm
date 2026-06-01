@@ -2,6 +2,12 @@
 
 > A blockchain education platform built on the **Stellar network**, delivering verifiable on-chain credentials and token-based learning incentives.
 
+[![CI](https://github.com/BrainTease/Brain-Storm/actions/workflows/ci.yml/badge.svg)](https://github.com/BrainTease/Brain-Storm/actions/workflows/ci.yml)
+[![Contracts](https://github.com/BrainTease/Brain-Storm/actions/workflows/contracts.yml/badge.svg)](https://github.com/BrainTease/Brain-Storm/actions/workflows/contracts.yml)
+[![Security Scanning](https://github.com/BrainTease/Brain-Storm/actions/workflows/security-scanning.yml/badge.svg)](https://github.com/BrainTease/Brain-Storm/actions/workflows/security-scanning.yml)
+[![Code Quality Gates](https://github.com/BrainTease/Brain-Storm/actions/workflows/code-quality-gates.yml/badge.svg)](https://github.com/BrainTease/Brain-Storm/actions/workflows/code-quality-gates.yml)
+[![Performance Regression Testing](https://github.com/BrainTease/Brain-Storm/actions/workflows/performance-regression-testing.yml/badge.svg)](https://github.com/BrainTease/Brain-Storm/actions/workflows/performance-regression-testing.yml)
+
 ---
 
 ## Overview

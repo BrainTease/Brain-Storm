@@ -7,6 +7,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  packages: write
 
 jobs:
   release-please:
@@ -15,6 +16,7 @@ jobs:
       release_created: ${{ steps.release.outputs.release_created }}
       tag_name: ${{ steps.release.outputs.tag_name }}
       version: ${{ steps.release.outputs.version }}
+      pr: ${{ steps.release.outputs.pr }}
     steps:
       - uses: actions/checkout@v4
 
@@ -25,30 +27,62 @@ jobs:
           manifest-file: .release-please-manifest.json
           token: ${{ secrets.GITHUB_TOKEN }}
 
+  create-github-release:
+    needs: release-please
+    if: needs.release-please.outputs.release_created == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      release_url: ${{ steps.create_release.outputs.upload_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.release-please.outputs.tag_name }}
+
       - name: Create GitHub Release
-        if: steps.release.outputs.release_created == 'true'
+        id: create_release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ steps.release.outputs.tag_name }}
-          release_name: Release ${{ steps.release.outputs.version }}
-          body: ${{ steps.release.outputs.body }}
+          tag_name: ${{ needs.release-please.outputs.tag_name }}
+          release_name: Release ${{ needs.release-please.outputs.version }}
+          body: ${{ needs.release-please.outputs.body }}
           draft: false
           prerelease: false
 
-  tag-docker:
-    needs: release-please
+      - name: Generate release notes
+        id: release_notes
+        run: |
+          VERSION="${{ needs.release-please.outputs.version }}"
+          echo "## Release $VERSION" > release_notes.md
+          echo "" >> release_notes.md
+          echo "### Changelog" >> release_notes.md
+          echo "${{ needs.release-please.outputs.body }}" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "### Docker Images" >> release_notes.md
+          echo "- Backend: \`ghcr.io/${{ github.repository }}/backend:$VERSION\`" >> release_notes.md
+          echo "- Frontend: \`ghcr.io/${{ github.repository }}/frontend:$VERSION\`" >> release_notes.md
+          cat release_notes.md
+
+  tag-docker-images:
+    needs: [release-please, create-github-release]
     if: needs.release-please.outputs.release_created == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
+    strategy:
+      matrix:
+        image: [backend, frontend]
     env:
       REGISTRY: ghcr.io
-      IMAGE_NAME: ${{ github.repository }}/backend
+      IMAGE_NAME: ${{ github.repository }}/${{ matrix.image }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.release-please.outputs.tag_name }}
 
       - uses: docker/setup-buildx-action@v3
 
@@ -65,13 +99,77 @@ jobs:
           tags: |
             type=semver,pattern={{version}},value=${{ needs.release-please.outputs.tag_name }}
             type=semver,pattern={{major}}.{{minor}},value=${{ needs.release-please.outputs.tag_name }}
+            type=semver,pattern={{major}},value=${{ needs.release-please.outputs.tag_name }}
             type=raw,value=latest
 
       - uses: docker/build-push-action@v5
         with:
-          context: ./apps/backend
+          context: ./apps/${{ matrix.image }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  publish-release-notes:
+    needs: [release-please, tag-docker-images]
+    if: needs.release-please.outputs.release_created == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.release-please.outputs.tag_name }}
+
+      - name: Update CHANGELOG.md
+        run: |
+          VERSION="${{ needs.release-please.outputs.version }}"
+          DATE=$(date -u +'%Y-%m-%d')
+          
+          # Create changelog entry
+          {
+            echo "## [$VERSION] - $DATE"
+            echo ""
+            echo "${{ needs.release-please.outputs.body }}"
+            echo ""
+            cat CHANGELOG.md 2>/dev/null || true
+          } > CHANGELOG.md.tmp
+          
+          mv CHANGELOG.md.tmp CHANGELOG.md
+
+      - name: Commit changelog
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md
+          git commit -m "docs: update CHANGELOG for ${{ needs.release-please.outputs.version }}" || true
+          git push
+
+  notify-release:
+    needs: [release-please, publish-release-notes]
+    if: needs.release-please.outputs.release_created == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create release notification
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const version = '${{ needs.release-please.outputs.version }}';
+            const tagName = '${{ needs.release-please.outputs.tag_name }}';
+            
+            const message = `🚀 **Release $${version} Published**
+            
+            **Docker Images:**
+            - Backend: \`ghcr.io/${{ github.repository }}/backend:$${version}\`
+            - Frontend: \`ghcr.io/${{ github.repository }}/frontend:$${version}\`
+            
+            **Release Notes:**
+            https://github.com/${{ github.repository }}/releases/tag/$${tagName}
+            
+            **Changelog:**
+            https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md`;
+            
+            // Create discussion or comment
+            console.log(message);
+
