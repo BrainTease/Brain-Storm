@@ -193,3 +193,41 @@ variable "api_gateway_cors_origins" {
   type        = list(string)
   default     = ["*"]
 }
+
+# ─── Cost Optimization ────────────────────────────────────────────────────────
+
+variable "monthly_budget_limit" {
+  description = "Monthly budget limit in USD for cost alerts"
+  type        = number
+  default     = 5000
+}
+
+variable "cost_alert_email" {
+  description = "Email address for cost optimization alerts"
+  type        = string
+  sensitive   = true
+}
+
+variable "rds_reserved_instance_count" {
+  description = "Number of RDS reserved instances to track for cost optimization"
+  type        = number
+  default     = 1
+}
+
+variable "elasticache_reserved_node_count" {
+  description = "Number of ElastiCache reserved nodes to track for cost optimization"
+  type        = number
+  default     = 1
+}
+
+variable "enable_compute_savings_plan" {
+  description = "Enable Compute Savings Plan tracking and recommendations"
+  type        = bool
+  default     = true
+}
+
+variable "compute_savings_plan_hourly_commitment" {
+  description = "Compute Savings Plan hourly commitment in USD for cost estimation"
+  type        = number
+  default     = 1.0
+}

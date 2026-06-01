@@ -182,3 +182,27 @@ module "secrets" {
   enable_rotation    = var.environment == "prod"
   alert_sns_arns     = var.alert_sns_arns
 }
+
+# ─── Cost Analysis & Optimization ─────────────────────────────────────────────
+
+module "cost_analysis" {
+  source = "./modules/cost-analysis"
+
+  environment             = var.environment
+  monthly_budget_limit    = var.monthly_budget_limit
+  cost_alert_email        = var.cost_alert_email
+}
+
+# ─── Reserved Instances & Savings Plans ────────────────────────────────────────
+
+module "savings_plans" {
+  source = "./modules/savings-plans"
+
+  environment                           = var.environment
+  db_instance_class                     = var.db_instance_class
+  redis_node_type                       = var.redis_node_type
+  rds_reserved_instance_count           = var.rds_reserved_instance_count
+  elasticache_reserved_node_count       = var.elasticache_reserved_node_count
+  enable_compute_savings_plan           = var.enable_compute_savings_plan
+  compute_savings_plan_hourly_commitment = var.compute_savings_plan_hourly_commitment
+}
