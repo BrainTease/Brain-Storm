@@ -114,3 +114,109 @@ resource "aws_cloudwatch_metric_alarm" "frontend_high_cpu" {
     Environment = var.environment
   }
 }
+
+# ─── RDS Storage Auto-scaling ─────────────────────────────────────────────────
+# This is controlled via the rds module with max_allocated_storage parameter
+
+# ─── Scheduled Scaling for Non-Prod Environments ────────────────────────────────
+# Scale down non-production environments during off-hours to reduce costs
+
+resource "aws_appautoscaling_scheduled_action" "backend_scale_down_nonprod" {
+  count = var.environment != "prod" ? 1 : 0
+
+  service_namespace      = "ecs"
+  resource_id            = "service/${var.cluster_name}/${var.backend_service_name}"
+  scalable_dimension     = "ecs:service:DesiredCount"
+  
+  schedule               = "cron(0 20 * * MON-FRI *)"  # 8 PM UTC weekdays
+  timezone               = "UTC"
+  
+  scalable_target_action {
+    min_capacity = 1
+    max_capacity = 2
+  }
+}
+
+resource "aws_appautoscaling_scheduled_action" "backend_scale_up_nonprod" {
+  count = var.environment != "prod" ? 1 : 0
+
+  service_namespace      = "ecs"
+  resource_id            = "service/${var.cluster_name}/${var.backend_service_name}"
+  scalable_dimension     = "ecs:service:DesiredCount"
+  
+  schedule               = "cron(0 8 * * MON-FRI *)"   # 8 AM UTC weekdays
+  timezone               = "UTC"
+  
+  scalable_target_action {
+    min_capacity = var.backend_min_capacity
+    max_capacity = var.backend_max_capacity
+  }
+}
+
+resource "aws_appautoscaling_scheduled_action" "frontend_scale_down_nonprod" {
+  count = var.environment != "prod" ? 1 : 0
+
+  service_namespace      = "ecs"
+  resource_id            = "service/${var.cluster_name}/${var.frontend_service_name}"
+  scalable_dimension     = "ecs:service:DesiredCount"
+  
+  schedule               = "cron(0 20 * * MON-FRI *)"  # 8 PM UTC weekdays
+  timezone               = "UTC"
+  
+  scalable_target_action {
+    min_capacity = 1
+    max_capacity = 2
+  }
+}
+
+resource "aws_appautoscaling_scheduled_action" "frontend_scale_up_nonprod" {
+  count = var.environment != "prod" ? 1 : 0
+
+  service_namespace      = "ecs"
+  resource_id            = "service/${var.cluster_name}/${var.frontend_service_name}"
+  scalable_dimension     = "ecs:service:DesiredCount"
+  
+  schedule               = "cron(0 8 * * MON-FRI *)"   # 8 AM UTC weekdays
+  timezone               = "UTC"
+  
+  scalable_target_action {
+    min_capacity = var.frontend_min_capacity
+    max_capacity = var.frontend_max_capacity
+  }
+}
+
+# ─── Cost Optimization Tracking ────────────────────────────────────────────────
+
+resource "aws_ssm_parameter" "autoscaling_config" {
+  name  = "/${var.environment}/cost-optimization/autoscaling-config"
+  type  = "String"
+  value = jsonencode({
+    backend = {
+      min_capacity           = var.backend_min_capacity
+      max_capacity           = var.backend_max_capacity
+      cpu_target             = var.backend_cpu_target
+      memory_target          = var.backend_memory_target
+      scale_out_cooldown     = 60
+      scale_in_cooldown      = 300
+      estimated_monthly_savings = (var.backend_max_capacity - var.backend_min_capacity) * 100
+    }
+    frontend = {
+      min_capacity           = var.frontend_min_capacity
+      max_capacity           = var.frontend_max_capacity
+      cpu_target             = var.frontend_cpu_target
+      memory_target          = var.frontend_memory_target
+      scale_out_cooldown     = 60
+      scale_in_cooldown      = 300
+      estimated_monthly_savings = (var.frontend_max_capacity - var.frontend_min_capacity) * 50
+    }
+    environment = var.environment
+    scheduled_scaling_enabled = var.environment != "prod"
+    last_updated = timestamp()
+  })
+
+  tags = {
+    Name        = "${var.environment}-autoscaling-config"
+    Environment = var.environment
+    Purpose     = "cost-optimization"
+  }
+}
