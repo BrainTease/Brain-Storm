@@ -525,6 +525,81 @@ If `"down"`, check [status.stellar.org](https://status.stellar.org) or switch to
 
 ---
 
+---
+
+## 9. Bundle Optimization Wins (2026)
+
+### Bundle Analysis & Code-Splitting
+
+The following optimizations were applied to reduce JS payload and improve Core Web Vitals:
+
+| Optimization | Impact |
+|---|---|
+| **Dynamic import of CourseCreationWizard** (uses `@dnd-kit`) | Reduces main bundle by ~25 KB gzip; loads only on `/instructor/courses/new` |
+| **Lazy-loaded socket.io** in Student Dashboard | Defers ~30 KB WebSocket client until socket is needed |
+| **Dynamic import of `@stellar/freighter-api`** | Already lazy-loaded in WalletSection; kept pattern |
+| **`optimizePackageImports`** in `next.config.js` | Enables barrel-export tree-shaking for `zustand`, `next-intl`, `react-hook-form`, `zod` |
+| **`removeConsole` in production** | Strips `console.*` calls from production bundle |
+| **Removed catch-all `hostname: '**'` image pattern** | Replaced with explicit domains (`lh3.googleusercontent.com`, `gravatar.com`, `images.unsplash.com`) |
+
+### Image Optimization
+
+- Next.js `<Image>` now configured with explicit `deviceSizes` and `imageSizes` for optimal srcset generation
+- AVIF + WebP formats enabled by default via `formats: ['image/avif', 'image/webp']`
+- Course cards use `sizes` prop for responsive image loading
+- All remote images restricted to specific CDN domains (removed insecure `**` catch-all)
+
+### Caching Strategy
+
+- `/_next/static/*` files: `max-age=31536000, immutable` (1 year)
+- `/fonts/*` files: `max-age=31536000, immutable` (1 year)
+- Fonts self-hosted via `next/font` eliminating external font requests
+
+### Performance Budgets (Lighthouse CI)
+
+A Lighthouse CI config (`lighthouserc.js`) enforces the following budgets:
+
+| Metric | Budget |
+|---|---|
+| Largest Contentful Paint (LCP) | < 2500 ms |
+| Cumulative Layout Shift (CLS) | < 0.1 |
+| Total Blocking Time (TBT) | < 200 ms |
+| Interaction to Next Paint (INP) | < 200 ms |
+| First Contentful Paint (FCP) | < 1800 ms |
+| Speed Index | < 3000 ms |
+| Total Bundle Size | < 500 KB |
+| Unused JavaScript | < 100 KB |
+
+### How to Verify
+
+```bash
+# Run bundle analysis
+npm run analyze
+
+# Run Lighthouse CI locally
+npx lhci autorun
+
+# Check production build size
+npm run build
+# Look at the .next/analyze/ output for detailed bundle breakdowns
+```
+
+### Running Lighthouse CI in CI/CD
+
+Add the following step to your CI pipeline (e.g., `.github/workflows`):
+
+```yaml
+- name: Run Lighthouse CI
+  run: |
+    npm install -g @lhci/cli
+    npm run build
+    lhci autorun
+  env:
+    LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+```
+
+---
+
 ## Related Docs
 
 - [development-setup.md](./development-setup.md) — Local environment setup

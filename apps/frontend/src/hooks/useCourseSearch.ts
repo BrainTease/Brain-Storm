@@ -15,8 +15,12 @@ export interface Course {
   durationHours?: number;
   price?: number;
   rating?: number;
+  reviewCount?: number;
   enrollments?: number;
   description?: string;
+  instructor?: string;
+  imageUrl?: string;
+  language?: string;
 }
 
 export interface CoursesResponse {
@@ -31,6 +35,8 @@ export interface SearchFilters {
   level: string;
   category: string;
   duration: string;
+  language: string;
+  price: string;
   sort: SortOption;
 }
 
@@ -48,6 +54,8 @@ export function useCourseSearch() {
   const [level, setLevel] = useState(() => searchParams.get('level') ?? '');
   const [category, setCategory] = useState(() => searchParams.get('category') ?? '');
   const [duration, setDuration] = useState(() => searchParams.get('duration') ?? '');
+  const [language, setLanguage] = useState(() => searchParams.get('language') ?? '');
+  const [price, setPrice] = useState(() => searchParams.get('price') ?? '');
   const [sort, setSort] = useState<SortOption>(() => (searchParams.get('sort') as SortOption) ?? 'newest');
 
   const debouncedQuery = useDebounce(query);
@@ -59,15 +67,19 @@ export function useCourseSearch() {
       const l = overrides.level ?? level;
       const c = overrides.category ?? category;
       const d = overrides.duration ?? duration;
+      const lang = overrides.language ?? language;
+      const pr = overrides.price ?? price;
       const s = overrides.sort ?? sort;
       if (q.trim()) p.set('search', q.trim());
       if (l) p.set('level', l);
       if (c) p.set('category', c);
       if (d) p.set('duration', d);
+      if (lang) p.set('language', lang);
+      if (pr) p.set('price', pr);
       if (s !== 'newest') p.set('sort', s);
       router.push(`/courses?${p.toString()}`, { scroll: false });
     },
-    [debouncedQuery, level, category, duration, sort, router]
+    [debouncedQuery, level, category, duration, language, price, sort, router]
   );
 
   const isFirstRender = useRef(true);
@@ -77,9 +89,9 @@ export function useCourseSearch() {
       return;
     }
     pushUrl({ query: debouncedQuery });
-  }, [debouncedQuery]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [debouncedQuery]);
 
-  const filterKey = `${debouncedQuery}-${level}-${category}-${duration}-${sort}`;
+  const filterKey = `${debouncedQuery}-${level}-${category}-${duration}-${language}-${price}-${sort}`;
 
   const getKey = (pageIndex: number, previousPageData: CoursesResponse | null) => {
     if (previousPageData && previousPageData.data.length === 0) return null;
@@ -92,9 +104,11 @@ export function useCourseSearch() {
       p.set('durationMin', min);
       p.set('durationMax', max);
     }
+    if (language) p.set('language', language);
+    if (price) p.set('price', price);
     p.set('sort', sort);
     p.set('page', String(pageIndex + 1));
-    p.set('limit', '9');
+    p.set('limit', '12');
     return `/courses?${p.toString()}`;
   };
 
@@ -109,8 +123,9 @@ export function useCourseSearch() {
   }, [filterKey, setSize]);
 
   const courses = data ? data.flatMap((page) => page.data) : [];
+  const total = data?.[0]?.total ?? 0;
   const isLoadingMore = isValidating && size > 1;
-  const hasMore = data && data[data.length - 1]?.data.length === 9;
+  const hasMore = data && data[data.length - 1]?.data.length === 12;
 
   const applyFilter = useCallback(
     (key: keyof SearchFilters, value: string) => {
@@ -118,6 +133,8 @@ export function useCourseSearch() {
       if (key === 'level') setLevel(value);
       if (key === 'category') setCategory(value);
       if (key === 'duration') setDuration(value);
+      if (key === 'language') setLanguage(value);
+      if (key === 'price') setPrice(value);
       if (key === 'sort') setSort(value as SortOption);
       pushUrl(updates);
     },
@@ -128,6 +145,8 @@ export function useCourseSearch() {
     setLevel('');
     setCategory('');
     setDuration('');
+    setLanguage('');
+    setPrice('');
     setSort('newest');
     router.push('/courses', { scroll: false });
   }, [router]);
@@ -138,15 +157,18 @@ export function useCourseSearch() {
     level,
     category,
     duration,
+    language,
+    price,
     sort,
     applyFilter,
     clearAll,
     courses,
+    total,
     error,
     isLoading,
     isLoadingMore,
     hasMore,
     loadMore: () => setSize(size + 1),
-    filters: { query, level, category, duration, sort },
+    filters: { query, level, category, duration, language, price, sort },
   };
 }
