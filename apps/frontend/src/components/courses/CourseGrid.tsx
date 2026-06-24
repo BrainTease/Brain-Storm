@@ -3,14 +3,24 @@ import Link from 'next/link';
 import { Course } from '@/hooks/useCourseSearch';
 import { useBookmarksStore } from '@/store/bookmarks.store';
 import { useCompareStore } from '@/store/compare.store';
+import { CourseCardSkeleton } from '@/components/ui/Skeleton';
 
-function SkeletonCard() {
+function CompareCheckbox({ course }: { course: Course }) {
+  const { isSelected, toggle, isFull } = useCompareStore();
+  const selected = isSelected(course.id);
+  const full = isFull();
   return (
-    <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 bg-white dark:bg-gray-900 animate-pulse">
-      <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mb-3" />
-      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mb-3" />
-      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full" />
-    </div>
+    <label className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 cursor-pointer select-none">
+      <input
+        type="checkbox"
+        checked={selected}
+        disabled={!selected && full}
+        onChange={() => toggle(course)}
+        className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
+        aria-label={`Compare ${course.title}`}
+      />
+      Compare
+    </label>
   );
 }
 
@@ -36,25 +46,6 @@ function BookmarkButton({ course }: { course: Course }) {
         <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
       </svg>
     </button>
-  );
-}
-
-function CompareCheckbox({ course }: { course: Course }) {
-  const { isSelected, toggle, isFull } = useCompareStore();
-  const selected = isSelected(course.id);
-  const full = isFull();
-  return (
-    <label className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 cursor-pointer select-none">
-      <input
-        type="checkbox"
-        checked={selected}
-        disabled={!selected && full}
-        onChange={() => toggle(course)}
-        className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
-        aria-label={`Compare ${course.title}`}
-      />
-      Compare
-    </label>
   );
 }
 
@@ -101,7 +92,7 @@ export function CourseGrid({ courses, isLoading, isLoadingMore, hasMore, onLoadM
     <>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3" role="grid" aria-label="Courses list">
         {isLoading
-          ? Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)
+          ? Array.from({ length: 6 }).map((_, i) => <CourseCardSkeleton key={i} />)
           : courses.length === 0
           ? <p className="col-span-3 text-gray-500 dark:text-gray-400">No courses match those filters.</p>
           : courses.map((course, index) => (
