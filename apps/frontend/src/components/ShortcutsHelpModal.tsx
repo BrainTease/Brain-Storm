@@ -7,7 +7,7 @@ interface ShortcutsHelpModalProps {
 }
 
 const SHORTCUTS = [
-  { keys: ['Ctrl', 'K'], description: 'Focus search' },
+  { keys: ['Cmd/Ctrl', 'K'], description: 'Open command palette' },
   { keys: ['/'], description: 'Focus search' },
   { keys: ['?'], description: 'Show this help' },
   { keys: ['Esc'], description: 'Close modal / dialog' },
