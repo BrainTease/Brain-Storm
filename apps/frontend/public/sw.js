@@ -121,3 +121,80 @@ self.addEventListener('message', event => {
     self.skipWaiting();
   }
 });
+
+// ── IndexedDB sync queue ──────────────────────────────────────────────────────
+
+function openSyncDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open('brain-storm-sync', 1);
+    req.onupgradeneeded = e => {
+      const store = e.target.result.createObjectStore('sync-queue', { keyPath: 'id', autoIncrement: true });
+      store.createIndex('timestamp', 'timestamp', { unique: false });
+    };
+    req.onsuccess = e => resolve(e.target.result);
+    req.onerror = e => reject(e.target.error);
+  });
+}
+
+async function enqueueRequest(method, url, body) {
+  const db = await openSyncDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('sync-queue', 'readwrite');
+    tx.objectStore('sync-queue').add({ method, url, body, timestamp: Date.now() });
+    tx.oncomplete = resolve;
+    tx.onerror = e => reject(e.target.error);
+  });
+}
+
+async function flushQueue() {
+  const db = await openSyncDB();
+  const items = await new Promise((resolve, reject) => {
+    const tx = db.transaction('sync-queue', 'readonly');
+    const req = tx.objectStore('sync-queue').getAll();
+    req.onsuccess = e => resolve(e.target.result);
+    req.onerror = e => reject(e.target.error);
+  });
+
+  for (const item of items) {
+    try {
+      await fetch(item.url, {
+        method: item.method,
+        headers: { 'Content-Type': 'application/json' },
+        body: item.body,
+      });
+      await new Promise((resolve, reject) => {
+        const tx = db.transaction('sync-queue', 'readwrite');
+        tx.objectStore('sync-queue').delete(item.id);
+        tx.oncomplete = resolve;
+        tx.onerror = e => reject(e.target.error);
+      });
+    } catch {
+      // leave in queue for next sync attempt
+    }
+  }
+}
+
+// ── Background sync ───────────────────────────────────────────────────────────
+
+self.addEventListener('sync', event => {
+  if (event.tag === 'progress-sync') {
+    event.waitUntil(flushQueue());
+  }
+});
+
+// ── Intercept offline non-GET API calls ───────────────────────────────────────
+
+self.addEventListener('fetch', event => {
+  const { request } = event;
+  const url = new URL(request.url);
+
+  if (request.method !== 'GET' && url.pathname.startsWith('/api/')) {
+    event.respondWith(
+      fetch(request.clone()).catch(async () => {
+        const body = await request.text().catch(() => null);
+        await enqueueRequest(request.method, request.url, body);
+        return Response.json({ queued: true }, { status: 202 });
+      })
+    );
+  }
+});
