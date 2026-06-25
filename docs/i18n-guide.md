@@ -261,16 +261,17 @@ npm run test:e2e --workspace=apps/frontend
 
 ## 4. RTL Language Support
 
-Brain-Storm does not currently support any RTL (right-to-left) languages. This section documents what must be done when an RTL language (e.g. Arabic `ar`, Hebrew `he`, Persian `fa`) is added.
+Brain-Storm now supports RTL (right-to-left) languages, with Arabic (`ar`) currently implemented. This section documents the RTL implementation and how to extend it for additional RTL languages like Hebrew (`he`) or Farsi (`fa`).
 
 ### HTML Direction Attribute
 
-The `<html>` element must carry the correct `dir` attribute. Update the locale layout:
+The `<html>` element automatically carries the correct `dir` attribute based on the active locale. This is handled in the locale layout:
 
 ```typescript
 // src/app/[locale]/layout.tsx
-const RTL_LOCALES = ['ar', 'he', 'fa'];
-const dir = RTL_LOCALES.includes(locale) ? 'rtl' : 'ltr';
+import { isRTLLocale } from '@/i18n/routing';
+
+const dir = isRTLLocale(locale) ? 'rtl' : 'ltr';
 
 return (
   <html lang={locale} dir={dir}>
@@ -279,45 +280,130 @@ return (
 );
 ```
 
-### Tailwind CSS RTL
+The `isRTLLocale()` function checks if a locale is in the `RTL_LOCALES` list defined in `src/i18n/routing.ts`.
 
-Tailwind CSS v3+ supports logical properties and the `rtl:` variant. Prefer logical utilities over directional ones in new components:
+### RTL Detection in Components
 
-| Avoid (directional) | Prefer (logical) |
-|---|---|
-| `pl-4` | `ps-4` (padding-inline-start) |
-| `mr-2` | `me-2` (margin-inline-end) |
-| `text-left` | `text-start` |
-| `float-right` | `float-end` |
+Use the `useIsRTL()` hook in client components to detect RTL mode for conditional styling:
 
-For components that already use directional classes, add `rtl:` overrides:
+```typescript
+'use client';
+import { useIsRTL } from '@/hooks/useIsRTL';
+
+export function MyComponent() {
+  const isRTL = useIsRTL();
+  return <div className={isRTL ? 'rtl-specific-class' : 'ltr-class'}>...</div>;
+}
+```
+
+### Tailwind CSS Logical Properties
+
+Prefer logical CSS properties over directional ones. This ensures layouts adapt automatically to RTL:
+
+| Avoid (directional) | Prefer (logical) | Notes |
+|---|---|---|
+| `pl-4` | `ps-4` | padding-inline-start |
+| `pr-4` | `pe-4` | padding-inline-end |
+| `ml-2` | `ms-2` | margin-inline-start |
+| `mr-2` | `me-2` | margin-inline-end |
+| `text-left` | `text-start` | text alignment |
+| `text-right` | `text-end` | text alignment |
+| `float-left` | `float-start` | float direction |
+| `float-right` | `float-end` | float direction |
+| `left-0` | `inset-s-0` | positioning (if unavoidable) |
+| `right-0` | `inset-e-0` | positioning (if unavoidable) |
+
+For existing components with directional classes, use Tailwind's `rtl:` variant to override:
 
 ```html
-<div class="pl-4 rtl:pl-0 rtl:pr-4">...</div>
+<div class="pl-4 rtl:pl-0 rtl:pr-4">Content</div>
+<div class="text-left rtl:text-right">Directional text</div>
 ```
 
 ### Icon and Arrow Mirroring
 
-Icons that imply direction (arrows, chevrons, "→" in link text) must be mirrored in RTL. Use the CSS `scale-x-[-1]` transform via the `rtl:` variant:
+Icons that imply direction (arrows, chevrons, direction indicators) must be mirrored in RTL. Use the `scale-x-[-1]` transform via the `rtl:` variant or the `useIsRTL()` hook:
 
+**Option 1: CSS-based (simpler)**
 ```html
 <span class="rtl:scale-x-[-1] inline-block">→</span>
 ```
 
-### Font Considerations
-
-RTL scripts often require different fonts. Load an appropriate font for RTL locales and apply it conditionally:
-
+**Option 2: Component-based (with useIsRTL hook)**
 ```typescript
-// layout.tsx
-const fontClass = RTL_LOCALES.includes(locale) ? 'font-arabic' : 'font-sans';
+'use client';
+import { useIsRTL } from '@/hooks/useIsRTL';
+
+export function DirectionalIcon() {
+  const isRTL = useIsRTL();
+  return <span className={isRTL ? 'scale-x-[-1]' : ''}>→</span>;
+}
 ```
+
+### CSS in globals.css
+
+RTL-specific utilities have been added to `src/app/globals.css`:
+
+- `.skip-link` now uses logical properties (`inset-block-start`, `inset-inline-start`, `border-end-start-radius`)
+- Custom RTL utilities like `animate-pulse-rtl-mirror` are available for specialized animations
+- All spacing and positioning uses logical CSS properties where possible
 
 ### Testing RTL
 
-- Use a browser's built-in RTL emulation or set `dir="rtl"` on `<html>` temporarily.
-- Check all flex/grid layouts, form inputs, navigation, and icon directions.
-- Verify that text alignment, padding, and margins are correct.
+To test RTL implementation:
+
+1. **Browser testing**: Navigate to `http://localhost:3001/ar` to view the app in Arabic (RTL)
+2. **Browser DevTools**: Set `dir="rtl"` on the `<html>` element temporarily to simulate RTL
+3. **Check layout**: Verify that:
+   - Flex/grid layouts flow correctly (flex-row reverses visually)
+   - Padding and margins are reversed
+   - Text alignment is correct
+   - Icons and directional indicators are mirrored
+   - Navigation and menus display correctly
+
+### Adding New RTL Languages
+
+To add a new RTL language (e.g., Hebrew `he`):
+
+1. **Add to RTL_LOCALES** in `src/i18n/routing.ts`:
+   ```typescript
+   export const RTL_LOCALES = ['ar', 'he', 'fa'] as const;
+   ```
+
+2. **Add to routing locales** in the same file:
+   ```typescript
+   export const routing = defineRouting({
+     locales: ['en', 'es', 'fr', 'ar', 'he'],
+     defaultLocale: 'en',
+   });
+   ```
+
+3. **Create message file** `messages/he.json` with Hebrew translations
+
+4. **Update type guards** in `src/i18n/request.ts` and `src/app/[locale]/layout.tsx` to include the new locale
+
+5. **Consider font requirements**: RTL scripts often require specific fonts. Add font loading in the layout if needed:
+   ```typescript
+   const fontClass = RTL_LOCALES.includes(locale) ? 'font-hebrew' : 'font-sans';
+   ```
+
+### RTL Audit Utility
+
+A debug component and console utility are available for auditing RTL implementation:
+
+```typescript
+import { RTLAudit, auditRTLImplementation } from '@/components/RTLAudit';
+
+// In browser console:
+auditRTLImplementation();
+```
+
+This outputs a detailed report of:
+- HTML dir/lang attributes
+- Hard-coded left/right styles (potential issues)
+- Flex/grid layout counts
+- Mirrored icon counts
+- Text alignment usage
 
 ---
 
