@@ -1,108 +1,147 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
-import { forumApi, Thread, ThreadSort } from '@/lib/forumApi';
-import { ThreadCard } from './ThreadCard';
-import { Button } from '@/components/ui/Button';
+
+import React, { useState, useCallback } from 'react';
+import Link from 'next/link';
+import { Post } from '@/lib/forumApi';
+import { useForumPosts } from '@/hooks/useForum';
 
 interface ThreadListProps {
   courseId: string;
+  onThreadClick?: (postId: string) => void;
 }
 
-const SORT_OPTIONS: { value: ThreadSort; label: string }[] = [
-  { value: 'newest', label: 'Newest' },
-  { value: 'upvoted', label: 'Most Upvoted' },
-  { value: 'replies', label: 'Most Replies' },
-];
-
-const CATEGORIES = ['All', 'General', 'Questions', 'Announcements', 'Resources'];
-
-export function ThreadList({ courseId }: ThreadListProps) {
-  const [threads, setThreads] = useState<Thread[]>([]);
-  const [sort, setSort] = useState<ThreadSort>('newest');
-  const [search, setSearch] = useState('');
-  const [category, setCategory] = useState('All');
+/**
+ * Paginated forum thread list with lazy loading
+ */
+export function ThreadList({ courseId, onThreadClick }: ThreadListProps) {
   const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [allPosts, setAllPosts] = useState<Post[]>([]);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
-  function load(p: number, s: ThreadSort, q: string, cat: string) {
-    setLoading(true);
-    forumApi.getThreads(courseId, s, q || undefined, cat !== 'All' ? cat : undefined).then((data) => {
-      setThreads(data.threads);
-      setTotal(data.total);
-      setLoading(false);
-    });
+  const { posts, hasMore, isLoading, error } = useForumPosts(courseId, page);
+
+  // Load more posts
+  const loadMore = useCallback(async () => {
+    if (isLoadingMore || !hasMore) return;
+    setIsLoadingMore(true);
+    setPage((p) => p + 1);
+    setIsLoadingMore(false);
+  }, [hasMore, isLoadingMore]);
+
+  // Update all posts when new page loads
+  React.useEffect(() => {
+    if (posts.length > 0) {
+      setAllPosts((prev) => {
+        const ids = new Set(prev.map((p) => p.id));
+        const newPosts = posts.filter((p) => !ids.has(p.id));
+        return [...prev, ...newPosts];
+      });
+    }
+  }, [posts]);
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <p className="text-red-700">Failed to load forum posts. Please try again.</p>
+      </div>
+    );
   }
 
-  useEffect(() => { load(page, sort, search, category); }, [sort, category, page]);
-
-  function handleSearch(value: string) {
-    setSearch(value);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => { setPage(1); load(1, sort, value, category); }, 300);
-  }
-
-  const totalPages = Math.ceil(total / 20);
+  const displayPosts = allPosts.length > 0 ? allPosts : posts;
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap gap-3 items-center">
-        <input
-          type="search"
-          placeholder="Search threads…"
-          className="border rounded-lg px-3 py-2 text-sm flex-1 min-w-[200px] focus:outline-none focus:ring-2 focus:ring-blue-500"
-          value={search}
-          onChange={(e) => handleSearch(e.target.value)}
-          aria-label="Search threads"
-        />
-        <select
-          className="border rounded-lg px-2 py-2 text-sm"
-          value={sort}
-          onChange={(e) => { setSort(e.target.value as ThreadSort); setPage(1); }}
-          aria-label="Sort threads"
-        >
-          {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-        </select>
-      </div>
-
-      <div className="flex gap-2 flex-wrap">
-        {CATEGORIES.map((cat) => (
-          <button
-            key={cat}
-            onClick={() => { setCategory(cat); setPage(1); }}
-            className={`text-xs px-3 py-1 rounded-full border transition-colors ${
-              category === cat ? 'bg-blue-600 text-white border-blue-600' : 'text-gray-600 hover:border-blue-400'
-            }`}
-          >
-            {cat}
-          </button>
-        ))}
-      </div>
-
-      {loading ? (
-        <div className="space-y-3">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="animate-pulse border rounded-lg p-4 h-20 bg-gray-50" />
-          ))}
+    <div>
+      {/* Pinned Posts */}
+      {displayPosts.filter((p) => p.isPinned).length > 0 && (
+        <div className="mb-6">
+          <h3 className="text-sm font-semibold text-gray-500 uppercase mb-3">Pinned</h3>
+          <div className="space-y-2">
+            {displayPosts
+              .filter((p) => p.isPinned)
+              .map((post) => (
+                <ThreadListItem key={post.id} post={post} courseId={courseId} />
+              ))}
+          </div>
         </div>
-      ) : threads.length === 0 ? (
-        <p className="text-gray-500 text-sm">No threads found.</p>
-      ) : (
-        <ul className="space-y-3">
-          {threads.map((t) => (
-            <li key={t.id}><ThreadCard thread={t} courseId={courseId} /></li>
-          ))}
-        </ul>
       )}
 
-      {totalPages > 1 && (
-        <div className="flex gap-2 items-center text-sm">
-          <Button variant="outline" disabled={page === 1} onClick={() => setPage((p) => p - 1)}>Previous</Button>
-          <span>{page} / {totalPages}</span>
-          <Button variant="outline" disabled={page === totalPages} onClick={() => setPage((p) => p + 1)}>Next</Button>
-        </div>
+      {/* Recent Posts */}
+      <div>
+        <h3 className="text-sm font-semibold text-gray-500 uppercase mb-3">Recent</h3>
+        {displayPosts.length === 0 && isLoading ? (
+          <div className="space-y-2">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="h-20 bg-gray-200 rounded animate-pulse" />
+            ))}
+          </div>
+        ) : displayPosts.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-gray-500">No discussions yet. Be the first to start one!</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {displayPosts
+              .filter((p) => !p.isPinned)
+              .map((post) => (
+                <ThreadListItem key={post.id} post={post} courseId={courseId} />
+              ))}
+          </div>
+        )}
+      </div>
+
+      {/* Load More Button */}
+      {hasMore && (
+        <button
+          onClick={loadMore}
+          disabled={isLoadingMore}
+          className="mt-4 w-full px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg font-medium disabled:opacity-50"
+        >
+          {isLoadingMore ? 'Loading...' : 'Load More Discussions'}
+        </button>
       )}
     </div>
+  );
+}
+
+interface ThreadListItemProps {
+  post: Post;
+  courseId: string;
+}
+
+function ThreadListItem({ post, courseId }: ThreadListItemProps) {
+  return (
+    <Link href={`/courses/${courseId}/forum/${post.id}`}>
+      <div className="bg-white border rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer">
+        <div className="flex items-start justify-between gap-4">
+          {/* Content */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <h4 className="font-semibold text-gray-900 truncate">{post.title}</h4>
+              {post.isPinned && <span className="text-lg">📌</span>}
+              {post.answerReplyId && <span className="text-lg">✓</span>}
+            </div>
+            <p className="text-sm text-gray-600 line-clamp-2">{post.content}</p>
+            <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
+              <span>{post.user?.username || 'Unknown'}</span>
+              <span>•</span>
+              <span>{new Date(post.createdAt).toLocaleDateString()}</span>
+              {post.replyCount !== undefined && (
+                <>
+                  <span>•</span>
+                  <span>{post.replyCount} replies</span>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Reply Count Badge */}
+          {post.replyCount !== undefined && (
+            <div className="flex-shrink-0 bg-blue-100 text-blue-700 rounded-full w-10 h-10 flex items-center justify-center font-semibold text-sm">
+              {post.replyCount}
+            </div>
+          )}
+        </div>
+      </div>
+    </Link>
   );
 }

@@ -1,90 +1,232 @@
 'use client';
-import { useState } from 'react';
-import { Thread, forumApi } from '@/lib/forumApi';
-import { VoteButton } from './VoteButton';
-import { Button } from '@/components/ui/Button';
+
+import React, { useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import { Post, Reply } from '@/lib/forumApi';
+import { useAuthStore } from '@/store/auth.store';
+import { useCreateReply, useFlagContent, useDeletePost } from '@/hooks/useForum';
+import { MarkdownEditor } from './MarkdownEditor';
+import { ReplyItem } from './ReplyItem';
 
 interface ThreadDetailProps {
-  thread: Thread;
+  post: Post;
+  replies: Reply[];
   courseId: string;
-  canModerate: boolean;
-  onThreadUpdate: (updated: Thread) => void;
+  onReplyCreated?: () => void;
+  canMarkAsAnswer?: boolean;
 }
 
-export function ThreadDetail({ thread, courseId, canModerate, onThreadUpdate }: ThreadDetailProps) {
-  const [error, setError] = useState<string | null>(null);
-  const [confirmDelete, setConfirmDelete] = useState(false);
+/**
+ * Full thread detail view with replies and composer
+ */
+export function ThreadDetail({
+  post,
+  replies,
+  courseId,
+  onReplyCreated,
+  canMarkAsAnswer = false,
+}: ThreadDetailProps) {
+  const [replyContent, setReplyContent] = useState('');
+  const [showReplyForm, setShowReplyForm] = useState(false);
+  const user = useAuthStore((s) => s.user);
+  const isAuthor = user?.id === post.userId;
 
-  async function handlePin() {
-    setError(null);
-    try {
-      await forumApi.pinThread(courseId, thread.id);
-      onThreadUpdate({ ...thread, isPinned: !thread.isPinned });
-    } catch {
-      setError('Failed to pin thread.');
-    }
-  }
+  const { createReply, isLoading: isCreatingReply } = useCreateReply(post.id);
+  const { flagContent, isLoading: isFlagging } = useFlagContent();
+  const { deletePost, isLoading: isDeleting } = useDeletePost();
 
-  async function handleLock() {
-    setError(null);
-    try {
-      await forumApi.lockThread(courseId, thread.id);
-      onThreadUpdate({ ...thread, isLocked: !thread.isLocked });
-    } catch {
-      setError('Failed to lock thread.');
-    }
-  }
+  const handleSubmitReply = async () => {
+    if (!replyContent.trim()) return;
 
-  async function handleDelete() {
-    setConfirmDelete(false);
-    setError(null);
     try {
-      await forumApi.deleteThread(courseId, thread.id);
-      // Parent page handles redirect
-    } catch {
-      setError('Failed to delete thread.');
+      await createReply(replyContent.trim());
+      setReplyContent('');
+      setShowReplyForm(false);
+      onReplyCreated?.();
+    } catch (err) {
+      console.error('Failed to create reply:', err);
     }
-  }
+  };
+
+  const handleFlagPost = async () => {
+    const reason = prompt('Please describe why you are flagging this post:');
+    if (!reason) return;
+    try {
+      await flagContent('post', post.id, reason);
+      alert('Post flagged for review. Thank you!');
+    } catch (err) {
+      console.error('Failed to flag post:', err);
+    }
+  };
+
+  const handleDeletePost = async () => {
+    if (!confirm('Are you sure you want to delete this post? This action cannot be undone.'))
+      return;
+    try {
+      await deletePost(post.id);
+      // Navigate back to forum list
+      window.location.href = `/courses/${courseId}/forum`;
+    } catch (err) {
+      console.error('Failed to delete post:', err);
+    }
+  };
+
+  const answeredReply = replies.find((r) => r.id === post.answerReplyId);
 
   return (
-    <div className="border rounded-xl p-6 space-y-4">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <div className="flex gap-2 mb-2">
-            {thread.isPinned && <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">Pinned</span>}
-            {thread.isLocked && <span className="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">Locked</span>}
-            <span className="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">{thread.category}</span>
-          </div>
-          <h1 className="text-2xl font-bold">{thread.title}</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            {thread.authorName} · {new Date(thread.createdAt).toLocaleDateString()}
-          </p>
-        </div>
-        {canModerate && (
-          <div className="flex gap-2 shrink-0">
-            <Button variant="outline" onClick={handlePin}>{thread.isPinned ? 'Unpin' : 'Pin'}</Button>
-            <Button variant="outline" onClick={handleLock}>{thread.isLocked ? 'Unlock' : 'Lock'}</Button>
-            <Button variant="outline" onClick={() => setConfirmDelete(true)} className="text-red-600 border-red-300 hover:bg-red-50">Delete</Button>
-          </div>
-        )}
-      </div>
-
-      <div className="text-gray-700 whitespace-pre-wrap">{thread.body}</div>
-
-      <VoteButton type="thread" id={thread.id} initialUpvotes={thread.upvotes} initialDownvotes={thread.downvotes} />
-
-      {error && <p className="text-red-600 text-sm">{error}</p>}
-
-      {confirmDelete && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" role="dialog" aria-modal="true">
-          <div className="bg-white rounded-xl p-6 max-w-sm w-full shadow-xl space-y-4">
-            <h2 className="font-semibold">Delete this thread?</h2>
-            <p className="text-sm text-gray-600">All replies will also be deleted. This cannot be undone.</p>
-            <div className="flex gap-3">
-              <Button onClick={handleDelete}>Delete</Button>
-              <Button variant="outline" onClick={() => setConfirmDelete(false)}>Cancel</Button>
+    <div className="max-w-4xl mx-auto">
+      {/* Thread Header */}
+      <div className="bg-white rounded-lg border p-6 mb-6">
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">{post.title}</h1>
+            <div className="flex items-center gap-3">
+              {post.user?.avatar && (
+                <img
+                  src={post.user.avatar}
+                  alt={post.user?.username}
+                  className="w-8 h-8 rounded-full"
+                />
+              )}
+              <div>
+                <p className="font-semibold text-gray-900">{post.user?.username || 'Unknown'}</p>
+                <p className="text-xs text-gray-500">
+                  {new Date(post.createdAt).toLocaleDateString()} at{' '}
+                  {new Date(post.createdAt).toLocaleTimeString()}
+                </p>
+              </div>
             </div>
           </div>
+
+          {/* Post Actions */}
+          <div className="flex gap-2">
+            {isAuthor && (
+              <button
+                onClick={handleDeletePost}
+                disabled={isDeleting}
+                className="px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded disabled:opacity-50"
+              >
+                {isDeleting ? 'Deleting...' : 'Delete'}
+              </button>
+            )}
+            {!isAuthor && (
+              <button
+                onClick={handleFlagPost}
+                disabled={isFlagging}
+                className="px-3 py-2 text-sm text-orange-600 hover:bg-orange-50 rounded disabled:opacity-50"
+              >
+                {isFlagging ? 'Flagging...' : 'Flag'}
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Thread Content */}
+        <div className="prose prose-sm max-w-none text-gray-700 mb-4">
+          <ReactMarkdown>{post.content}</ReactMarkdown>
+        </div>
+
+        {/* Status Badges */}
+        <div className="flex gap-2">
+          {post.isPinned && (
+            <span className="px-2 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded">
+              📌 Pinned
+            </span>
+          )}
+          {answeredReply && (
+            <span className="px-2 py-1 text-xs font-medium text-green-700 bg-green-100 rounded">
+              ✓ Answered
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Answered Reply Highlight */}
+      {answeredReply && (
+        <div className="mb-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-3">✓ Accepted Answer</h2>
+          <ReplyItem
+            reply={answeredReply}
+            isAnswer={true}
+            courseId={courseId}
+            postId={post.id}
+            canMarkAsAnswer={canMarkAsAnswer}
+          />
+        </div>
+      )}
+
+      {/* Other Replies */}
+      {replies.length > 0 && (
+        <div className="mb-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            Replies ({replies.filter((r) => r.id !== answeredReply?.id).length})
+          </h2>
+          <div className="space-y-4">
+            {replies
+              .filter((r) => r.id !== answeredReply?.id)
+              .map((reply) => (
+                <ReplyItem
+                  key={reply.id}
+                  reply={reply}
+                  isAnswer={reply.isAnswer}
+                  courseId={courseId}
+                  postId={post.id}
+                  onAnswerMarked={onReplyCreated}
+                  canMarkAsAnswer={canMarkAsAnswer}
+                />
+              ))}
+          </div>
+        </div>
+      )}
+
+      {/* Reply Form */}
+      {user ? (
+        <div className="bg-white rounded-lg border p-6">
+          {!showReplyForm ? (
+            <button
+              onClick={() => setShowReplyForm(true)}
+              className="w-full px-4 py-2 text-left text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              Write a reply...
+            </button>
+          ) : (
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">Write a Reply</h3>
+              <MarkdownEditor
+                value={replyContent}
+                onChange={setReplyContent}
+                placeholder="Share your thoughts, solutions, or questions..."
+                minHeight={200}
+              />
+              <div className="flex gap-2 mt-4 justify-end">
+                <button
+                  onClick={() => {
+                    setShowReplyForm(false);
+                    setReplyContent('');
+                  }}
+                  className="px-4 py-2 text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-lg font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSubmitReply}
+                  disabled={isCreatingReply || !replyContent.trim()}
+                  className="px-4 py-2 text-white bg-blue-600 hover:bg-blue-700 rounded-lg font-medium disabled:opacity-50"
+                >
+                  {isCreatingReply ? 'Posting...' : 'Post Reply'}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
+          <p className="text-gray-700">
+            <a href="/login" className="font-semibold text-blue-600 hover:underline">
+              Sign in
+            </a>{' '}
+            to reply to this thread.
+          </p>
         </div>
       )}
     </div>

@@ -1,4 +1,11 @@
 const createNextIntlPlugin = require('next-intl/plugin');
+const withPWA = require('next-pwa')({
+  dest: 'public',
+  disable: process.env.NODE_ENV === 'development',
+  register: true,
+  skipWaiting: true,
+  sw: 'sw.js',
+});
 
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
@@ -46,10 +53,14 @@ const nextConfig = {
           },
           // CSP is now handled by middleware for nonce support
           // See middleware.ts for dynamic CSP generation
+          {
+            key: 'Service-Worker-Allowed',
+            value: '/',
+          },
         ],
       },
     ];
   },
 };
 
-module.exports = withNextIntl(nextConfig);
+module.exports = withPWA(withNextIntl(nextConfig));
