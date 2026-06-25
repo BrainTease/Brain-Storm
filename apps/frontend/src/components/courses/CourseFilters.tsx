@@ -8,6 +8,16 @@ const DURATIONS = [
   { label: '5–10h', value: '5-10' },
   { label: '10h+', value: '10-999' },
 ];
+const LANGUAGES = [
+  { label: 'English', value: 'en' },
+  { label: 'Spanish', value: 'es' },
+  { label: 'French', value: 'fr' },
+  { label: 'Arabic', value: 'ar' },
+];
+const PRICE_OPTIONS = [
+  { label: 'Free', value: 'free' },
+  { label: 'Paid', value: 'paid' },
+];
 const SORT_OPTIONS: { label: string; value: SortOption }[] = [
   { label: 'Newest', value: 'newest' },
   { label: 'Most Popular', value: 'popular' },
@@ -18,11 +28,13 @@ interface CourseFiltersProps {
   level: string;
   category: string;
   duration: string;
+  language: string;
+  price: string;
   sort: SortOption;
-  onFilterChange: (key: 'level' | 'category' | 'duration' | 'sort', value: string) => void;
+  onFilterChange: (key: 'level' | 'category' | 'duration' | 'language' | 'price' | 'sort', value: string) => void;
 }
 
-export function CourseFilters({ level, category, duration, sort, onFilterChange }: CourseFiltersProps) {
+export function CourseFilters({ level, category, duration, language, price, sort, onFilterChange }: CourseFiltersProps) {
   return (
     <div className="flex flex-wrap gap-3">
       <select
@@ -68,6 +80,34 @@ export function CourseFilters({ level, category, duration, sort, onFilterChange 
       </select>
 
       <select
+        value={language}
+        onChange={(e) => onFilterChange('language', e.target.value)}
+        className="rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100"
+        aria-label="Filter by language"
+      >
+        <option value="">All Languages</option>
+        {LANGUAGES.map((l) => (
+          <option key={l.value} value={l.value}>
+            {l.label}
+          </option>
+        ))}
+      </select>
+
+      <select
+        value={price}
+        onChange={(e) => onFilterChange('price', e.target.value)}
+        className="rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100"
+        aria-label="Filter by price"
+      >
+        <option value="">All Prices</option>
+        {PRICE_OPTIONS.map((p) => (
+          <option key={p.value} value={p.value}>
+            {p.label}
+          </option>
+        ))}
+      </select>
+
+      <select
         value={sort}
         onChange={(e) => onFilterChange('sort', e.target.value)}
         className="rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100"
@@ -83,4 +123,4 @@ export function CourseFilters({ level, category, duration, sort, onFilterChange 
   );
 }
 
-export { DURATIONS, SORT_OPTIONS };
+export { DURATIONS, SORT_OPTIONS, LANGUAGES, PRICE_OPTIONS };

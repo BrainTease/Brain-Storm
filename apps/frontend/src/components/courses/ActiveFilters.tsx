@@ -1,12 +1,14 @@
 import { SortOption } from '@/hooks/useCourseSearch';
-import { DURATIONS, SORT_OPTIONS } from './CourseFilters';
+import { DURATIONS, SORT_OPTIONS, LANGUAGES, PRICE_OPTIONS } from './CourseFilters';
 
 interface ActiveFiltersProps {
   level: string;
   category: string;
   duration: string;
+  language: string;
+  price: string;
   sort: SortOption;
-  onRemove: (key: 'level' | 'category' | 'duration' | 'sort') => void;
+  onRemove: (key: 'level' | 'category' | 'duration' | 'language' | 'price' | 'sort') => void;
   onClearAll: () => void;
 }
 
@@ -25,7 +27,7 @@ function FilterChip({ label, onRemove }: { label: string; onRemove: () => void }
   );
 }
 
-export function ActiveFilters({ level, category, duration, sort, onRemove, onClearAll }: ActiveFiltersProps) {
+export function ActiveFilters({ level, category, duration, language, price, sort, onRemove, onClearAll }: ActiveFiltersProps) {
   const activeFilters: { label: string; clear: () => void }[] = [
     ...(level ? [{ label: `Level: ${level}`, clear: () => onRemove('level') }] : []),
     ...(category ? [{ label: `Category: ${category}`, clear: () => onRemove('category') }] : []),
@@ -36,6 +38,12 @@ export function ActiveFilters({ level, category, duration, sort, onRemove, onCle
             clear: () => onRemove('duration'),
           },
         ]
+      : []),
+    ...(language
+      ? [{ label: `Language: ${LANGUAGES.find((l) => l.value === language)?.label ?? language}`, clear: () => onRemove('language') }]
+      : []),
+    ...(price
+      ? [{ label: `Price: ${PRICE_OPTIONS.find((p) => p.value === price)?.label ?? price}`, clear: () => onRemove('price') }]
       : []),
     ...(sort !== 'newest'
       ? [{ label: `Sort: ${SORT_OPTIONS.find((s) => s.value === sort)?.label}`, clear: () => onRemove('sort') }]

@@ -17,7 +17,7 @@ import {
   type QuizScoreDataPoint,
 } from '@/components/analytics';
 import Link from 'next/link';
-import { io } from 'socket.io-client';
+
 
 interface ProgressRecord {
   id: string;
@@ -267,23 +267,27 @@ export default function StudentDashboardPage() {
     load();
   }, [state.isLoading, userId]);
 
-  // Real-time progress updates via WebSocket
+  // Real-time progress updates via WebSocket (lazy loaded)
   useEffect(() => {
     if (!userId) return;
-    const socket = io(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000', {
-      auth: { token: state.token },
-      transports: ['websocket'],
+    let socket: Awaited<ReturnType<typeof import('socket.io-client')['io']>>;
+
+    import('socket.io-client').then(({ io }) => {
+      socket = io(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000', {
+        auth: { token: state.token },
+        transports: ['websocket'],
+      });
+
+      socket.on(`progress:${userId}`, (update: { courseId: string; progressPct: number }) => {
+        setProgress((prev) =>
+          prev.map((p) =>
+            p.courseId === update.courseId ? { ...p, progressPct: update.progressPct } : p
+          )
+        );
+      });
     });
 
-    socket.on(`progress:${userId}`, (update: { courseId: string; progressPct: number }) => {
-      setProgress((prev) =>
-        prev.map((p) =>
-          p.courseId === update.courseId ? { ...p, progressPct: update.progressPct } : p
-        )
-      );
-    });
-
-    return () => { socket.disconnect(); };
+    return () => { socket?.disconnect(); };
   }, [userId, state.token]);
 
   const enrolledCourses = useMemo(() => {

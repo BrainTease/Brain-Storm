@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "analyze": "ANALYZE=true next build",
     "postbuild": "next-sitemap",
     "start": "next start",
     "lint": "eslint src --ext .ts,.tsx",
@@ -58,6 +59,7 @@
     "@types/jest-axe": "^3.5.9",
     "@chromatic-com/storybook": "^3.0.0",
     "@pact-foundation/pact": "^16.3.0",
+    "@next/bundle-analyzer": "^14.2.0",
     "@playwright/test": "^1.44.0",
     "@storybook/addon-essentials": "^8.6.18",
     "@storybook/addon-interactions": "^8.6.18",

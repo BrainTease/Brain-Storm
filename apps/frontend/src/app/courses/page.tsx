@@ -55,10 +55,13 @@ export default function CoursesPage() {
     level,
     category,
     duration,
+    language,
+    price,
     sort,
     applyFilter,
     clearAll,
     courses,
+    total,
     error,
     isLoading,
     isLoadingMore,
@@ -100,6 +103,8 @@ export default function CoursesPage() {
           level={level}
           category={category}
           duration={duration}
+          language={language}
+          price={price}
           sort={sort}
           onFilterChange={applyFilter}
           onClearAll={clearAll}
@@ -107,6 +112,7 @@ export default function CoursesPage() {
 
         <CourseGrid
           courses={courses}
+          total={total}
           isLoading={isLoading}
           isLoadingMore={isLoadingMore}
           hasMore={hasMore}

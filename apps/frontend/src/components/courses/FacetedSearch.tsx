@@ -11,8 +11,10 @@ interface FacetedSearchProps {
   level: string;
   category: string;
   duration: string;
+  language: string;
+  price: string;
   sort: SortOption;
-  onFilterChange: (key: 'level' | 'category' | 'duration' | 'sort', value: string) => void;
+  onFilterChange: (key: 'level' | 'category' | 'duration' | 'language' | 'price' | 'sort', value: string) => void;
   onClearAll: () => void;
 }
 
@@ -22,6 +24,8 @@ export function FacetedSearch({
   level,
   category,
   duration,
+  language,
+  price,
   sort,
   onFilterChange,
   onClearAll,
@@ -33,6 +37,8 @@ export function FacetedSearch({
         level={level}
         category={category}
         duration={duration}
+        language={language}
+        price={price}
         sort={sort}
         onFilterChange={onFilterChange}
       />
@@ -40,6 +46,8 @@ export function FacetedSearch({
         level={level}
         category={category}
         duration={duration}
+        language={language}
+        price={price}
         sort={sort}
         onRemove={(key) => onFilterChange(key, key === 'sort' ? 'newest' : '')}
         onClearAll={onClearAll}
