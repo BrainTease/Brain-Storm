@@ -1,8 +1,9 @@
 'use client';
 
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import React, { Component, ErrorInfo, ReactNode, useCallback } from 'react';
 import * as Sentry from '@sentry/nextjs';
 import { Button } from './Button';
+import { categorizeError, getErrorDescription, getErrorTitle } from '@/lib/error-utils';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -23,8 +24,10 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   componentDidCatch(error: Error, info: ErrorInfo): void {
+    const category = categorizeError(error);
     Sentry.captureException(error, {
       contexts: { react: { componentStack: info.componentStack } },
+      tags: { component: 'ErrorBoundary', category },
     });
     this.props.onError?.(error, info);
   }
@@ -68,9 +71,31 @@ interface ErrorFallbackProps {
 export function ErrorFallback({
   error,
   reset,
-  title = 'Something went wrong',
-  description = 'An unexpected error occurred. Please try again.',
+  title,
+  description,
 }: ErrorFallbackProps) {
+  const category = categorizeError(error);
+  const displayTitle = title ?? getErrorTitle(category);
+  const displayDescription = description ?? getErrorDescription(category);
+  const [isRetrying, setIsRetrying] = React.useState(false);
+
+  const handleRetry = useCallback(async () => {
+    setIsRetrying(true);
+    try {
+      reset();
+    } finally {
+      setIsRetrying(false);
+    }
+  }, [reset]);
+
+  const reportIssue = useCallback(() => {
+    const subject = encodeURIComponent('Error Report from Brain Storm App');
+    const body = encodeURIComponent(
+      `Error: ${error?.message || 'Unknown error'}\n\nStack:\n${error?.stack || 'N/A'}`
+    );
+    window.location.href = `mailto:support@brainstorm.com?subject=${subject}&body=${body}`;
+  }, [error]);
+
   return (
     <div
       role="alert"
@@ -78,16 +103,23 @@ export function ErrorFallback({
       className="flex flex-col items-center justify-center p-8 text-center min-h-[300px]"
     >
       <div className="text-5xl mb-4" aria-hidden="true">
-        ⚠️
+        {category === 'chunk-load' ? '🔄' : category === 'network' ? '🌐' : '⚠️'}
       </div>
-      <h2 className="text-xl font-bold mb-2 text-gray-900 dark:text-white">{title}</h2>
-      <p className="text-gray-500 dark:text-gray-400 mb-4 max-w-md">{description}</p>
+      <h2 className="text-xl font-bold mb-2 text-gray-900 dark:text-white">{displayTitle}</h2>
+      <p className="text-gray-500 dark:text-gray-400 mb-4 max-w-md">{displayDescription}</p>
       {process.env.NODE_ENV !== 'production' && error?.message && (
-        <p className="text-xs text-gray-400 bg-gray-100 dark:bg-gray-800 rounded px-3 py-2 mb-4 max-w-md break-all">
+        <p className="text-xs text-gray-400 bg-gray-100 dark:bg-gray-800 rounded px-3 py-2 mb-4 max-w-md break-all font-mono">
           {error.message}
         </p>
       )}
-      <Button onClick={reset}>Try again</Button>
+      <div className="flex gap-3 flex-wrap justify-center">
+        <Button onClick={handleRetry} disabled={isRetrying}>
+          {isRetrying ? 'Retrying…' : 'Try Again'}
+        </Button>
+        <Button variant="outline" onClick={reportIssue}>
+          Report Issue
+        </Button>
+      </div>
     </div>
   );
 }

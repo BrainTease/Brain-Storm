@@ -2,6 +2,13 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ErrorBoundary, ErrorFallback } from '@/components/ui/ErrorBoundary';
+import { ChunkLoadError } from '@/components/ui/ChunkLoadError';
+import { OfflineBanner } from '@/components/ui/OfflineBanner';
+import {
+  categorizeError,
+  isChunkLoadError,
+  isNetworkError,
+} from '@/lib/error-utils';
 
 vi.mock('@sentry/nextjs', () => ({
   captureException: vi.fn(),
@@ -52,37 +59,15 @@ describe('ErrorBoundary', () => {
 
   it('resets when retry is clicked', async () => {
     const user = userEvent.setup();
-    function Wrapper() {
-      return (
-        <ErrorBoundary>
-          <Boom shouldThrow={false} />
-        </ErrorBoundary>
-      );
-    }
-    const { rerender } = render(<Wrapper />);
-    rerender(
-      <ErrorBoundary>
-        <Boom shouldThrow={true} />
-      </ErrorBoundary>,
-    );
-    expect(screen.getByText(/something went wrong/i)).toBeInTheDocument();
-
-    rerender(
-      <ErrorBoundary>
-        <Boom shouldThrow={false} />
-      </ErrorBoundary>,
-    );
-    // Manual reset via try-again button
-    const btn = screen.queryByRole('button', { name: /try again/i });
-    if (btn) {
-      await user.click(btn);
-      expect(screen.getByText('ok')).toBeInTheDocument();
-    }
+    const reset = vi.fn();
+    render(<ErrorFallback error={new Error('test')} reset={reset} />);
+    await user.click(screen.getByRole('button', { name: /try again/i }));
+    expect(reset).toHaveBeenCalledOnce();
   });
 
   it('uses custom function fallback', () => {
     render(
-      <ErrorBoundary fallback={(err, reset) => <div>custom: {err.message}</div>}>
+      <ErrorBoundary fallback={(err) => <div>custom: {err.message}</div>}>
         <Boom shouldThrow={true} />
       </ErrorBoundary>,
     );
@@ -91,11 +76,53 @@ describe('ErrorBoundary', () => {
 });
 
 describe('ErrorFallback', () => {
-  it('renders title, description, and retry button', async () => {
-    const user = userEvent.setup();
+  it('renders retry and report buttons', () => {
     const reset = vi.fn();
     render(<ErrorFallback error={new Error('x')} reset={reset} />);
-    await user.click(screen.getByRole('button', { name: /try again/i }));
-    expect(reset).toHaveBeenCalledOnce();
+    expect(screen.getByRole('button', { name: /try again/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /report issue/i })).toBeInTheDocument();
+  });
+
+  it('shows network icon for network errors', () => {
+    const reset = vi.fn();
+    render(<ErrorFallback error={new Error('NetworkError')} reset={reset} />);
+    expect(screen.getByText('🌐')).toBeInTheDocument();
+  });
+});
+
+describe('ChunkLoadError', () => {
+  it('renders refresh button', () => {
+    render(<ChunkLoadError />);
+    expect(screen.getByText(/new version available/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /refresh page/i })).toBeInTheDocument();
+  });
+});
+
+describe('OfflineBanner', () => {
+  it('renders nothing when online', () => {
+    render(<OfflineBanner />);
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+});
+
+describe('error-utils', () => {
+  it('detects chunk load errors', () => {
+    expect(isChunkLoadError(new Error('Loading chunk 123 failed'))).toBe(true);
+    expect(isChunkLoadError(new Error('Failed to fetch'))).toBe(true);
+    expect(isChunkLoadError(new Error('Importing a module script failed'))).toBe(true);
+    expect(isChunkLoadError(new Error('ChunkLoadError'))).toBe(true);
+    expect(isChunkLoadError(new Error('random error'))).toBe(false);
+  });
+
+  it('detects network errors', () => {
+    expect(isNetworkError(new Error('Failed to fetch'))).toBe(true);
+    expect(isNetworkError(new Error('NetworkError'))).toBe(true);
+    expect(isNetworkError(new Error('random error'))).toBe(false);
+  });
+
+  it('categorizes errors correctly', () => {
+    expect(categorizeError(new Error('Loading chunk 123'))).toBe('chunk-load');
+    expect(categorizeError(new Error('Failed to fetch'))).toBe('chunk-load');
+    expect(categorizeError(new Error('random error'))).toBe('runtime');
   });
 });

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -37,11 +37,12 @@ export function EnrollmentModal({
 }: EnrollmentModalProps) {
   const [step, setStep] = useState<Step>('confirm');
   const [errorMsg, setErrorMsg] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors },
     reset,
   } = useForm<FormValues>({ resolver: zodResolver(schema) });
 
@@ -52,19 +53,26 @@ export function EnrollmentModal({
     onClose();
   }
 
-  async function onSubmit() {
+  const onSubmit = useCallback(async () => {
+    setIsSubmitting(true);
+
+    // Optimistic: show success immediately
+    setStep('success');
+    toast.success(`Enrolled in "${courseTitle}" successfully!`);
+    onSuccess?.();
+
     try {
       await api.post(`/courses/${courseId}/enroll`);
-      setStep('success');
-      toast.success(`Enrolled in "${courseTitle}" successfully!`);
-      onSuccess?.();
     } catch (err: any) {
       const msg =
         err?.response?.data?.message ?? err?.message ?? 'Enrollment failed. Please try again.';
       setErrorMsg(typeof msg === 'string' ? msg : JSON.stringify(msg));
       setStep('error');
+      toast.error('Enrollment failed. Changes reverted.');
+    } finally {
+      setIsSubmitting(false);
     }
-  }
+  }, [courseId, courseTitle, onSuccess]);
 
   return (
     <Modal isOpen={isOpen} onClose={handleClose} title="Enroll in Course">

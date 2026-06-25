@@ -1,8 +1,13 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import * as Sentry from '@sentry/nextjs';
 import { Button } from '@/components/ui/Button';
+import {
+  categorizeError,
+  getErrorDescription,
+  getErrorTitle,
+} from '@/lib/error-utils';
 
 export default function GlobalError({
   error,
@@ -11,36 +16,63 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  useEffect(() => {
-    Sentry.captureException(error);
-  }, [error]);
+  const [isRetrying, setIsRetrying] = useState(false);
+  const category = categorizeError(error);
 
-  const reportIssue = () => {
+  useEffect(() => {
+    Sentry.captureException(error, {
+      tags: { errorBoundary: 'global', category, digest: error.digest },
+      extra: { href: typeof window !== 'undefined' ? window.location.href : '' },
+    });
+  }, [error, category]);
+
+  const handleRetry = useCallback(async () => {
+    setIsRetrying(true);
+    try {
+      reset();
+    } finally {
+      setIsRetrying(false);
+    }
+  }, [reset]);
+
+  const handleRefresh = useCallback(() => {
+    window.location.reload();
+  }, []);
+
+  const reportIssue = useCallback(() => {
     const subject = encodeURIComponent('Error Report from Brain Storm App');
     const body = encodeURIComponent(
-      `Error Details:\n${error?.message || 'Unknown error'}\n\nStack Trace:\n${error?.stack || 'No stack trace'}\n\nPlease describe what you were doing when this error occurred:`
+      `Error: ${error?.message || 'Unknown error'}\n\nStack:\n${error?.stack || 'N/A'}\n\nURL: ${typeof window !== 'undefined' ? window.location.href : 'N/A'}\n\nPlease describe what you were doing:`
     );
     window.location.href = `mailto:support@brainstorm.com?subject=${subject}&body=${body}`;
-  };
+  }, [error]);
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-center p-8 text-center">
-      <div className="text-6xl mb-6">⚠️</div>
-      <h1 className="text-2xl font-bold mb-2">Something went wrong</h1>
-      <p className="text-gray-500 mb-6 max-w-md">
-        An unexpected error occurred. You can try again or go back to the home page.
-      </p>
+      <div className="text-6xl mb-6" aria-hidden="true">
+        {category === 'chunk-load' ? '🔄' : category === 'network' ? '🌐' : '⚠️'}
+      </div>
+      <h1 className="text-2xl font-bold mb-2">{getErrorTitle(category)}</h1>
+      <p className="text-gray-500 mb-6 max-w-md">{getErrorDescription(category)}</p>
       {error?.message && (
-        <p className="text-xs text-gray-400 bg-gray-100 rounded px-3 py-2 mb-6 max-w-md break-all">
+        <p className="text-xs text-gray-400 bg-gray-100 dark:bg-gray-800 rounded px-3 py-2 mb-6 max-w-md break-all font-mono">
           {error.message}
         </p>
       )}
       <div className="flex gap-3 flex-wrap justify-center">
-        <Button onClick={reset}>Try Again</Button>
+        {category === 'chunk-load' ? (
+          <Button onClick={handleRefresh} disabled={isRetrying}>
+            {isRetrying ? 'Refreshing…' : 'Refresh Page'}
+          </Button>
+        ) : (
+          <Button onClick={handleRetry} disabled={isRetrying}>
+            {isRetrying ? 'Retrying…' : 'Try Again'}
+          </Button>
+        )}
         <Button variant="outline" onClick={() => (window.location.href = '/')}>
           Go Home
         </Button>
-        <Button variant="secondary" onClick={reportIssue}>
+        <Button variant="outline" onClick={reportIssue}>
           Report Issue
         </Button>
       </div>

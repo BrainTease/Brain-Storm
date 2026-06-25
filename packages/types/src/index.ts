@@ -40,3 +40,5 @@ export interface Credential {
 
 export type UserRole = User['role'];
 export type EnrollmentStatus = Enrollment['status'];
+
+export * from './exercise.types';

@@ -3,18 +3,20 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import api from '@/lib/api';
 import { useVideoShortcuts } from '@/hooks/useVideoShortcuts';
+import { useOptimisticProgress } from '@/hooks/useOptimisticProgress';
 
 export interface VideoPlayerProps {
   src: string;
+  captionSrc?: string;
+  captionLanguage?: string;
   courseId: string;
   lessonId: string;
-  /** Initial resume position in seconds */
   initialTime?: number;
   onComplete?: () => void;
 }
 
-const SYNC_INTERVAL_MS = 10_000; // sync progress every 10 s
-const COMPLETION_THRESHOLD = 0.9; // 90% watched = complete
+const SYNC_INTERVAL_MS = 10_000;
+const COMPLETION_THRESHOLD = 0.9;
 
 function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60);
@@ -22,7 +24,15 @@ function formatTime(seconds: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
-export function VideoPlayer({ src, courseId, lessonId, initialTime = 0, onComplete }: VideoPlayerProps) {
+export function VideoPlayer({
+  src,
+  captionSrc,
+  captionLanguage = 'en',
+  courseId,
+  lessonId,
+  initialTime = 0,
+  onComplete,
+}: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -30,12 +40,13 @@ export function VideoPlayer({ src, courseId, lessonId, initialTime = 0, onComple
   const [speed, setSpeed] = useState(1);
   const [volume, setVolume] = useState(1);
   const [completed, setCompleted] = useState(false);
+  const [captionsOn, setCaptionsOn] = useState(true);
   const completedRef = useRef(false);
   const lastSyncedRef = useRef(0);
+  const { pending: progressPending, complete: markComplete } = useOptimisticProgress(courseId, lessonId);
 
   useVideoShortcuts(videoRef);
 
-  // Resume from saved position
   useEffect(() => {
     const v = videoRef.current;
     if (!v || !initialTime) return;
@@ -57,7 +68,6 @@ export function VideoPlayer({ src, courseId, lessonId, initialTime = 0, onComple
     [courseId, lessonId]
   );
 
-  // Periodic sync
   useEffect(() => {
     const id = setInterval(() => {
       const v = videoRef.current;
@@ -68,7 +78,6 @@ export function VideoPlayer({ src, courseId, lessonId, initialTime = 0, onComple
     return () => clearInterval(id);
   }, [duration, syncProgress]);
 
-  // Sync on unmount
   useEffect(() => {
     return () => {
       const v = videoRef.current;
@@ -85,6 +94,7 @@ export function VideoPlayer({ src, courseId, lessonId, initialTime = 0, onComple
       completedRef.current = true;
       setCompleted(true);
       syncProgress(v.currentTime, 1);
+      markComplete();
       onComplete?.();
     }
   }
@@ -135,7 +145,6 @@ export function VideoPlayer({ src, courseId, lessonId, initialTime = 0, onComple
       role="region"
       aria-label="Video player"
     >
-      {/* Video element */}
       <video
         ref={videoRef}
         src={src}
@@ -146,21 +155,28 @@ export function VideoPlayer({ src, courseId, lessonId, initialTime = 0, onComple
         onLoadedMetadata={handleLoadedMetadata}
         aria-label="Course video"
         playsInline
-      />
+      >
+        {captionSrc && captionsOn && (
+          <track
+            src={captionSrc}
+            kind="captions"
+            srcLang={captionLanguage}
+            label={captionLanguage}
+            default
+          />
+        )}
+      </video>
 
-      {/* Completion banner */}
       {completed && (
         <div
           role="status"
           className="absolute top-4 left-1/2 -translate-x-1/2 bg-green-600 text-white text-sm font-medium px-4 py-2 rounded-full shadow-lg"
         >
-          🎉 Lesson complete!
+          {progressPending ? 'Saving…' : 'Lesson complete!'}
         </div>
       )}
 
-      {/* Controls overlay */}
       <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent px-4 pb-3 pt-6 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
-        {/* Progress bar */}
         <div className="flex items-center gap-2 mb-2">
           <span className="text-white text-xs tabular-nums">{formatTime(currentTime)}</span>
           <input
@@ -176,14 +192,12 @@ export function VideoPlayer({ src, courseId, lessonId, initialTime = 0, onComple
           <span className="text-white text-xs tabular-nums">{formatTime(duration)}</span>
         </div>
 
-        {/* Buttons row */}
         <div className="flex items-center gap-3">
-          {/* Skip back */}
           <button
             onClick={() => skip(-10)}
             className="text-white hover:text-blue-400 transition-colors"
             aria-label="Rewind 10 seconds"
-            title="Rewind 10s (←)"
+            title="Rewind 10s"
           >
             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/>
@@ -191,12 +205,11 @@ export function VideoPlayer({ src, courseId, lessonId, initialTime = 0, onComple
             </svg>
           </button>
 
-          {/* Play/Pause */}
           <button
             onClick={togglePlay}
             className="text-white hover:text-blue-400 transition-colors"
             aria-label={isPlaying ? 'Pause' : 'Play'}
-            title={isPlaying ? 'Pause (Space)' : 'Play (Space)'}
+            title={isPlaying ? 'Pause' : 'Play'}
           >
             {isPlaying ? (
               <svg className="w-7 h-7" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -209,12 +222,11 @@ export function VideoPlayer({ src, courseId, lessonId, initialTime = 0, onComple
             )}
           </button>
 
-          {/* Skip forward */}
           <button
             onClick={() => skip(10)}
             className="text-white hover:text-blue-400 transition-colors"
             aria-label="Skip forward 10 seconds"
-            title="Skip 10s (→)"
+            title="Skip 10s"
           >
             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M12 5V1l5 5-5 5V7c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6h2c0 4.42-3.58 8-8 8s-8-3.58-8-8 3.58-8 8-8z"/>
@@ -222,7 +234,6 @@ export function VideoPlayer({ src, courseId, lessonId, initialTime = 0, onComple
             </svg>
           </button>
 
-          {/* Volume */}
           <input
             type="range"
             min={0}
@@ -234,13 +245,21 @@ export function VideoPlayer({ src, courseId, lessonId, initialTime = 0, onComple
             aria-label="Volume"
           />
 
-          {/* Spacer */}
+          <button
+            onClick={() => setCaptionsOn((c) => !c)}
+            className={`text-white transition-colors ${captionsOn ? 'text-blue-400' : 'hover:text-blue-400'}`}
+            aria-label={captionsOn ? 'Disable captions' : 'Enable captions'}
+            title="Captions"
+          >
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-6 7h-2v-2h2v2zm-4 0H8v-2h2v2zm8 0h-2v-2h2v2z"/>
+            </svg>
+          </button>
+
           <div className="flex-1" />
 
-          {/* Progress % */}
           <span className="text-white text-xs tabular-nums">{Math.round(progress)}%</span>
 
-          {/* Speed */}
           <select
             value={speed}
             onChange={handleSpeed}
@@ -249,7 +268,7 @@ export function VideoPlayer({ src, courseId, lessonId, initialTime = 0, onComple
           >
             {[0.5, 0.75, 1, 1.25, 1.5, 2].map((s) => (
               <option key={s} value={s} className="bg-gray-900">
-                {s}×
+                {s}x
               </option>
             ))}
           </select>
