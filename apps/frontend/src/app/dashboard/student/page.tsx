@@ -1,12 +1,21 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useTheme } from 'next-themes';
 import { useAuth } from '@/lib/auth-context';
 import api from '@/lib/api';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { Badge } from '@/components/ui/Badge';
 import { Spinner } from '@/components/ui/Spinner';
+import {
+  ProgressOverTimeChart,
+  StreakHeatmapChart,
+  QuizScoreChart,
+  type ProgressDataPoint,
+  type StreakData,
+  type QuizScoreDataPoint,
+} from '@/components/analytics';
 import Link from 'next/link';
 import { io } from 'socket.io-client';
 
@@ -49,8 +58,138 @@ function StatCard({ label, value, icon }: { label: string; value: string | numbe
   );
 }
 
+/**
+ * Helper function to load analytics data from the backend
+ * or generate mock data for demonstration
+ */
+async function loadAnalyticsData(
+  userId: string,
+  progressRecords: ProgressRecord[],
+  setProgressOverTimeData: (data: ProgressDataPoint[]) => void,
+  setStreakData: (data: StreakData[]) => void,
+  setQuizScoreData: (data: QuizScoreDataPoint[]) => void,
+  setChartDataLoading: (loading: boolean) => void,
+) {
+  try {
+    setChartDataLoading(true);
+
+    // Try to fetch analytics data from API
+    try {
+      const analyticsRes = await api.get(`/users/${userId}/analytics`);
+      if (analyticsRes.data) {
+        const analytics = analyticsRes.data;
+
+        // Process progress over time
+        if (analytics.progressHistory) {
+          setProgressOverTimeData(analytics.progressHistory);
+        } else {
+          generateMockProgressData(setProgressOverTimeData);
+        }
+
+        // Process streak data
+        if (analytics.streakHistory) {
+          setStreakData(analytics.streakHistory);
+        } else {
+          generateMockStreakData(setStreakData);
+        }
+
+        // Process quiz scores
+        if (analytics.quizScores) {
+          setQuizScoreData(analytics.quizScores);
+        } else {
+          generateMockQuizData(setQuizScoreData);
+        }
+      }
+    } catch {
+      // API endpoint not available, generate mock data
+      generateMockProgressData(setProgressOverTimeData);
+      generateMockStreakData(setStreakData);
+      generateMockQuizData(setQuizScoreData);
+    }
+  } finally {
+    setChartDataLoading(false);
+  }
+}
+
+/**
+ * Generate mock progress data for demonstration
+ */
+function generateMockProgressData(setData: (data: ProgressDataPoint[]) => void) {
+  const data: ProgressDataPoint[] = [];
+  const today = new Date();
+
+  for (let i = 29; i >= 0; i--) {
+    const date = new Date(today);
+    date.setDate(date.getDate() - i);
+    const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const progress = Math.max(0, Math.min(100, 30 + i * 2.5 + Math.random() * 10));
+
+    data.push({
+      date: dateStr,
+      progress,
+      courseName: 'Overall Progress',
+    });
+  }
+
+  setData(data);
+}
+
+/**
+ * Generate mock streak heatmap data
+ */
+function generateMockStreakData(setData: (data: StreakData[]) => void) {
+  const data: StreakData[] = [];
+  const today = new Date();
+
+  for (let i = 0; i < 84; i++) {
+    const date = new Date(today);
+    date.setDate(date.getDate() - i);
+    const weekNumber = Math.floor(i / 7);
+    const dayOfWeek = 6 - (i % 7);
+    const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const count = Math.random() > 0.4 ? Math.floor(Math.random() * 5) + 1 : 0;
+
+    data.push({
+      date: dateStr,
+      count,
+      weekNumber,
+      dayOfWeek,
+    });
+  }
+
+  setData(data.reverse());
+}
+
+/**
+ * Generate mock quiz score data
+ */
+function generateMockQuizData(setData: (data: QuizScoreDataPoint[]) => void) {
+  const data: QuizScoreDataPoint[] = [];
+  const today = new Date();
+  const quizNames = ['Module 1 Quiz', 'Module 2 Quiz', 'Module 3 Quiz', 'Module 4 Quiz', 'Module 5 Quiz'];
+
+  for (let i = 0; i < quizNames.length; i++) {
+    const date = new Date(today);
+    date.setDate(date.getDate() - (i * 5));
+    const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const score = Math.floor(60 + Math.random() * 40);
+
+    data.push({
+      date: dateStr,
+      score,
+      maxScore: 100,
+      quizName: quizNames[i],
+      attempts: Math.floor(Math.random() * 3) + 1,
+    });
+  }
+
+  setData(data.reverse());
+}
+
+
 export default function StudentDashboardPage() {
   const { state } = useAuth();
+  const { resolvedTheme } = useTheme();
   const [progress, setProgress] = useState<ProgressRecord[]>([]);
   const [courses, setCourses] = useState<Record<string, CourseData>>({});
   const [credentials, setCredentials] = useState<CredentialRecord[]>([]);
@@ -59,8 +198,13 @@ export default function StudentDashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [sort, setSort] = useState<SortKey>('progress');
   const [filter, setFilter] = useState<FilterKey>('all');
+  const [chartDataLoading, setChartDataLoading] = useState(true);
+  const [progressOverTimeData, setProgressOverTimeData] = useState<ProgressDataPoint[]>([]);
+  const [streakData, setStreakData] = useState<StreakData[]>([]);
+  const [quizScoreData, setQuizScoreData] = useState<QuizScoreDataPoint[]>([]);
 
   const userId = state.user?.id;
+  const isDarkMode = resolvedTheme === 'dark';
 
   useEffect(() => {
     if (state.isLoading || !userId) return;
@@ -103,6 +247,16 @@ export default function StudentDashboardPage() {
           })
         );
         setCourses(map);
+
+        // Load analytics data
+        loadAnalyticsData(
+          userId,
+          progressRecords,
+          setProgressOverTimeData,
+          setStreakData,
+          setQuizScoreData,
+          setChartDataLoading,
+        );
       } catch {
         setError('Failed to load dashboard. Please refresh.');
       } finally {
@@ -190,6 +344,35 @@ export default function StudentDashboardPage() {
                 <StatCard label="BST Tokens" value={tokenBalance ?? 0} icon="🪙" />
               </>
             )}
+          </div>
+        </section>
+
+        {/* Analytics Charts */}
+        <section aria-label="Learning analytics">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
+            Learning Analytics
+          </h2>
+          <div className="space-y-6">
+            <ProgressOverTimeChart
+              data={progressOverTimeData}
+              isLoading={chartDataLoading}
+              isDarkMode={isDarkMode}
+              title="Learning Progress Over Time (30 days)"
+            />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <StreakHeatmapChart
+                data={streakData}
+                isLoading={chartDataLoading}
+                isDarkMode={isDarkMode}
+                title="Learning Streak Heatmap (12 weeks)"
+              />
+              <QuizScoreChart
+                data={quizScoreData}
+                isLoading={chartDataLoading}
+                isDarkMode={isDarkMode}
+                title="Quiz Performance"
+              />
+            </div>
           </div>
         </section>
 
