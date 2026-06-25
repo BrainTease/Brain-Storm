@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useNotifications } from '@/hooks/useNotifications';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import { WalletButton } from '@/components/wallet/WalletButton';
 
 export function Navbar() {
   const pathname = usePathname();
@@ -77,6 +78,7 @@ export function Navbar() {
           {navLinks}
           <LanguageSwitcher />
           <ThemeToggle />
+          <WalletButton />
           {isAuthenticated && user ? (
             <div className="flex items-center gap-2">
               {/* Notification bell */}

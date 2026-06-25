@@ -1,17 +1,26 @@
 'use client';
+
 import { useEffect, useRef } from 'react';
-import { useWalletStore } from '@/store/walletStore';
-import { connectFreighter, fetchXlmBalance } from '@/lib/walletApi';
+import { useWallet } from '@/hooks/useWallet';
 
 interface WalletMenuProps {
   onClose: () => void;
 }
 
 export function WalletMenu({ onClose }: WalletMenuProps) {
-  const { address, balance, balanceError, disconnect, setAddress, setBalance, setBalanceError, setIsConnecting, setError } = useWalletStore();
+  const {
+    address,
+    balance,
+    bstBalance,
+    balanceError,
+    network,
+    networkMismatch,
+    walletType,
+    disconnect,
+    refreshBalances,
+  } = useWallet();
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Close on outside click
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
@@ -22,70 +31,59 @@ export function WalletMenu({ onClose }: WalletMenuProps) {
     return () => document.removeEventListener('mousedown', handleClick);
   }, [onClose]);
 
-  async function handleSwitch() {
-    onClose();
-    setIsConnecting(true);
-    setError(null);
-    try {
-      const publicKey = await connectFreighter();
-      setAddress(publicKey);
-      try {
-        const bal = await fetchXlmBalance(publicKey);
-        setBalance(bal);
-        setBalanceError(false);
-      } catch {
-        setBalance(null);
-        setBalanceError(true);
-      }
-    } catch {
-      setError('Failed to switch wallet.');
-    } finally {
-      setIsConnecting(false);
-    }
-  }
-
-  async function handleRetryBalance() {
-    if (!address) return;
-    try {
-      const bal = await fetchXlmBalance(address);
-      setBalance(bal);
-      setBalanceError(false);
-    } catch {
-      setBalanceError(true);
-    }
-  }
-
   return (
     <div
       ref={menuRef}
-      className="absolute right-0 top-full mt-1 w-72 bg-white border rounded-xl shadow-lg p-4 z-50 space-y-3"
+      className="absolute right-0 top-full mt-1 w-72 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg p-4 z-50 space-y-3"
       role="menu"
     >
       <div>
         <p className="text-xs text-gray-500 mb-0.5">Connected Wallet</p>
         <p className="font-mono text-xs break-all">{address}</p>
+        {walletType && (
+          <p className="text-xs text-gray-400 mt-0.5 capitalize">{walletType}</p>
+        )}
       </div>
+
+      {network && (
+        <div>
+          <p className="text-xs text-gray-500 mb-0.5">Network</p>
+          <p className={`text-xs font-medium ${networkMismatch ? 'text-amber-600' : 'text-gray-700 dark:text-gray-300'}`}>
+            {network}
+            {networkMismatch && ' — mismatch'}
+          </p>
+        </div>
+      )}
+
       <div>
         <p className="text-xs text-gray-500 mb-0.5">XLM Balance</p>
         {balanceError ? (
           <p className="text-sm text-gray-500">
             Balance unavailable{' '}
-            <button className="text-blue-600 underline text-xs" onClick={handleRetryBalance}>Retry</button>
+            <button className="text-blue-600 underline text-xs" onClick={refreshBalances}>
+              Retry
+            </button>
           </p>
         ) : (
           <p className="text-sm font-medium">{balance ?? '—'} XLM</p>
         )}
       </div>
-      <div className="flex gap-2 pt-2 border-t">
+
+      <div>
+        <p className="text-xs text-gray-500 mb-0.5">BST Balance</p>
+        <p className="text-sm font-medium">{bstBalance ?? '—'} BST</p>
+      </div>
+
+      <div className="flex gap-2 pt-2 border-t border-gray-100 dark:border-gray-700">
         <button
-          className="flex-1 text-sm border rounded-lg py-1.5 hover:bg-gray-50 transition-colors"
-          onClick={handleSwitch}
+          className="flex-1 text-sm border border-gray-200 dark:border-gray-600 rounded-lg py-1.5 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+          onClick={() => { onClose(); }}
           role="menuitem"
         >
-          Switch Wallet
+          Close
         </button>
         <button
-          className="flex-1 text-sm border border-red-200 text-red-600 rounded-lg py-1.5 hover:bg-red-50 transition-colors"
+          className="flex-1 text-sm border border-red-200 text-red-600 rounded-lg py-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
           onClick={() => { disconnect(); onClose(); }}
           role="menuitem"
         >
