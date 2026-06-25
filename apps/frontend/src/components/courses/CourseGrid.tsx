@@ -2,7 +2,10 @@ import { useEffect, useRef } from 'react';
 import { Course } from '@/hooks/useCourseSearch';
 import { CourseCard } from './CourseCard';
 
-function SkeletonCard() {
+function CompareCheckbox({ course }: { course: Course }) {
+  const { isSelected, toggle, isFull } = useCompareStore();
+  const selected = isSelected(course.id);
+  const full = isFull();
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden animate-pulse">
       <div className="aspect-video bg-gray-200 dark:bg-gray-700" />
@@ -70,7 +73,7 @@ export function CourseGrid({ courses, total, isLoading, isLoadingMore, hasMore, 
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3" role="list" aria-label="Courses list">
         {isLoading
-          ? Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)
+          ? Array.from({ length: 6 }).map((_, i) => <CourseCardSkeleton key={i} />)
           : courses.length === 0
           ? null
           : courses.map((course, index) => (

@@ -16,6 +16,15 @@ export const metadata: Metadata = {
   description:
     'Learn blockchain development with verifiable on-chain credentials powered by the Stellar network.',
   alternates: { canonical: '/' },
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Brain-Storm',
+  },
+  formatDetection: {
+    telephone: false,
+  },
   openGraph: {
     siteName: 'Brain-Storm',
     type: 'website',
@@ -36,6 +45,15 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <meta name="theme-color" content="#2563eb" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="Brain-Storm" />
+        <link rel="icon" href="/favicon.ico" />
+        <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+      </head>
       <body className="antialiased">
         <ThemeProvider>
           <TourProvider>

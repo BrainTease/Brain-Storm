@@ -1,65 +1,94 @@
 import api from './api';
 
-export interface Thread {
+export interface Post {
   id: string;
   courseId: string;
   title: string;
-  body: string;
-  authorId: string;
-  authorName: string;
-  category: string;
-  replyCount: number;
-  upvotes: number;
-  downvotes: number;
+  content: string;
+  userId: string;
+  user?: {
+    id: string;
+    username: string;
+    avatar?: string;
+  };
   isPinned: boolean;
-  isLocked: boolean;
+  answerReplyId?: string | null;
+  replyCount?: number;
   createdAt: string;
-  lastActivityAt: string;
+  updatedAt?: string;
 }
 
 export interface Reply {
   id: string;
-  threadId: string;
-  authorId: string;
-  authorName: string;
-  body: string;
-  upvotes: number;
-  downvotes: number;
+  postId: string;
+  content: string;
+  userId: string;
+  user?: {
+    id: string;
+    username: string;
+    avatar?: string;
+  };
+  isAnswer: boolean;
   createdAt: string;
+  updatedAt?: string;
 }
 
-export type ThreadSort = 'newest' | 'upvoted' | 'replies';
+export interface PostWithReplies extends Post {
+  replies: Reply[];
+}
+
+export interface PaginatedPosts {
+  data: Post[];
+  total: number;
+  page: number;
+  limit: number;
+  hasMore: boolean;
+}
 
 export const forumApi = {
-  getThreads: (courseId: string, sort: ThreadSort = 'newest', search?: string, category?: string) =>
-    api.get<{ threads: Thread[]; total: number }>(`/courses/${courseId}/forum/threads`, {
-      params: { sort, search, category },
-    }).then((r) => r.data),
+  // Posts
+  getPosts: (courseId: string, page = 1, limit = 10) =>
+    api
+      .get<PaginatedPosts>(`/courses/${courseId}/posts`, {
+        params: { page, limit },
+      })
+      .then((r) => r.data),
 
-  getThread: (courseId: string, threadId: string) =>
-    api.get<Thread>(`/courses/${courseId}/forum/threads/${threadId}`).then((r) => r.data),
+  getPost: (postId: string) =>
+    api.get<PostWithReplies>(`/posts/${postId}`).then((r) => r.data),
 
-  getReplies: (courseId: string, threadId: string) =>
-    api.get<Reply[]>(`/courses/${courseId}/forum/threads/${threadId}/replies`).then((r) => r.data),
+  createPost: (courseId: string, data: { title: string; content: string; isPinned?: boolean }) =>
+    api.post<Post>(`/courses/${courseId}/posts`, data).then((r) => r.data),
 
-  createThread: (courseId: string, data: { title: string; body: string; category: string }) =>
-    api.post<Thread>(`/courses/${courseId}/forum/threads`, data).then((r) => r.data),
+  updatePost: (postId: string, data: { title?: string; content?: string }) =>
+    api.patch<Post>(`/posts/${postId}`, data).then((r) => r.data),
 
-  createReply: (courseId: string, threadId: string, body: string) =>
-    api.post<Reply>(`/courses/${courseId}/forum/threads/${threadId}/replies`, { body }).then((r) => r.data),
+  deletePost: (postId: string) =>
+    api.delete(`/posts/${postId}`).then((r) => r.data),
 
-  vote: (type: 'thread' | 'reply', id: string, direction: 'up' | 'down' | 'remove') =>
-    api.post(`/forum/${type}s/${id}/vote`, { direction }).then((r) => r.data),
+  // Replies
+  createReply: (postId: string, data: { content: string; isAnswer?: boolean }) =>
+    api.post<Reply>(`/posts/${postId}/replies`, data).then((r) => r.data),
 
-  pinThread: (courseId: string, threadId: string) =>
-    api.post(`/courses/${courseId}/forum/threads/${threadId}/pin`).then((r) => r.data),
+  updateReply: (replyId: string, data: { content?: string }) =>
+    api.patch<Reply>(`/replies/${replyId}`, data).then((r) => r.data),
 
-  lockThread: (courseId: string, threadId: string) =>
-    api.post(`/courses/${courseId}/forum/threads/${threadId}/lock`).then((r) => r.data),
+  deleteReply: (replyId: string) =>
+    api.delete(`/replies/${replyId}`).then((r) => r.data),
 
-  deleteThread: (courseId: string, threadId: string) =>
-    api.delete(`/courses/${courseId}/forum/threads/${threadId}`).then((r) => r.data),
+  markAsAnswer: (replyId: string) =>
+    api.post<Reply>(`/replies/${replyId}/mark-answer`, {}).then((r) => r.data),
 
-  deleteReply: (courseId: string, threadId: string, replyId: string) =>
-    api.delete(`/courses/${courseId}/forum/threads/${threadId}/replies/${replyId}`).then((r) => r.data),
+  unmarkAsAnswer: (replyId: string) =>
+    api.post<Reply>(`/replies/${replyId}/unmark-answer`, {}).then((r) => r.data),
+
+  // Moderation
+  flagContent: (contentType: 'post' | 'reply', contentId: string, reason?: string) =>
+    api
+      .post(`/moderation/flag`, {
+        contentType: contentType.toUpperCase(),
+        contentId,
+        reason,
+      })
+      .then((r) => r.data),
 };
