@@ -40,6 +40,8 @@ import { AuditModule } from './audit/audit.module';
 import { RemindersModule } from './reminders/reminders.module';
 import { CertificatesModule } from './certificates/certificates.module';
 import { PayoutsModule } from './payouts/payouts.module';
+import { GdprModule } from './gdpr/gdpr.module';
+import { BookingsModule } from './bookings/bookings.module';
 import { GatewayModule } from './gateway/gateway.module';
 import { GatewayLoggingInterceptor } from './gateway/gateway.interceptor';
 import { WsGatewayModule } from './ws-gateway/ws-gateway.module';
@@ -111,6 +113,8 @@ import { validationSchema } from './config/validation.schema';
     RemindersModule,
     CertificatesModule,
     PayoutsModule,
+    GdprModule,
+    BookingsModule,
     HealthModule,
     MetricsModule,
     KycModule,
