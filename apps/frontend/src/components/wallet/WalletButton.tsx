@@ -1,57 +1,34 @@
 'use client';
+
 import { useState } from 'react';
-import { useWalletStore } from '@/store/walletStore';
-import { connectFreighter, fetchXlmBalance, isFreighterInstalled, truncateAddress } from '@/lib/walletApi';
+import { useWallet } from '@/hooks/useWallet';
 import { WalletMenu } from './WalletMenu';
+import { WalletSelectModal } from './WalletSelectModal';
 
 export function WalletButton() {
-  const { address, isConnecting, error, setAddress, setBalance, setIsConnecting, setError, setBalanceError } = useWalletStore();
+  const { isConnected, truncatedAddress, isConnecting, error, networkMismatch, clearError } =
+    useWallet();
   const [showMenu, setShowMenu] = useState(false);
-  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
+  const [showSelect, setShowSelect] = useState(false);
 
-  async function handleConnect() {
-    if (!isFreighterInstalled()) {
-      setShowInstallPrompt(true);
-      return;
-    }
-    setIsConnecting(true);
-    setError(null);
-    try {
-      const publicKey = await connectFreighter();
-      setAddress(publicKey);
-      // Fetch balance
-      try {
-        const bal = await fetchXlmBalance(publicKey);
-        setBalance(bal);
-        setBalanceError(false);
-      } catch {
-        setBalance(null);
-        setBalanceError(true);
-      }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      if (msg === 'FREIGHTER_NOT_CONNECTED') {
-        setError('Connection cancelled.');
-      } else {
-        setError('Failed to connect wallet. Please try again.');
-      }
-    } finally {
-      setIsConnecting(false);
-    }
-  }
-
-  if (address) {
+  if (isConnected) {
     return (
       <div className="relative">
+        {networkMismatch && (
+          <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-amber-400" title="Network mismatch" />
+        )}
         <button
           data-tour="wallet-button"
-          className="flex items-center gap-2 border rounded-lg px-3 py-1.5 text-sm hover:bg-gray-50 transition-colors"
+          className="flex items-center gap-2 border rounded-lg px-3 py-1.5 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
           onClick={() => setShowMenu((v) => !v)}
           aria-expanded={showMenu}
           aria-haspopup="true"
         >
-          <span className="w-2 h-2 rounded-full bg-green-500" aria-hidden="true" />
-          {truncateAddress(address)}
+          <span
+            className={`w-2 h-2 rounded-full ${networkMismatch ? 'bg-amber-400' : 'bg-green-500'}`}
+            aria-hidden="true"
+          />
+          {truncatedAddress}
         </button>
         {showMenu && <WalletMenu onClose={() => setShowMenu(false)} />}
       </div>
@@ -62,13 +39,16 @@ export function WalletButton() {
     <div>
       <button
         className="flex items-center gap-2 bg-blue-600 text-white rounded-lg px-3 py-1.5 text-sm hover:bg-blue-700 disabled:opacity-60 transition-colors"
-        onClick={handleConnect}
+        onClick={() => setShowSelect(true)}
         disabled={isConnecting}
         aria-busy={isConnecting}
       >
         {isConnecting ? (
           <>
-            <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" aria-hidden="true" />
+            <span
+              className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"
+              aria-hidden="true"
+            />
             Connecting…
           </>
         ) : (
@@ -77,25 +57,27 @@ export function WalletButton() {
       </button>
       {error && (
         <p className="text-xs text-red-600 mt-1">
-          {error}{' '}
-          <button className="underline" onClick={() => setError(null)}>Dismiss</button>
+          {error === 'FREIGHTER_NOT_INSTALLED' ? (
+            <>
+              Freighter not found.{' '}
+              <a
+                href="https://www.freighter.app/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline"
+              >
+                Install Freighter
+              </a>{' '}
+            </>
+          ) : (
+            error
+          )}{' '}
+          <button className="underline" onClick={clearError}>
+            Dismiss
+          </button>
         </p>
       )}
-      {showInstallPrompt && (
-        <p className="text-xs text-gray-600 mt-1">
-          Freighter not found.{' '}
-          <a
-            href="https://www.freighter.app/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-600 underline"
-          >
-            Install Freighter
-          </a>
-          {' '}
-          <button className="underline text-gray-500" onClick={() => setShowInstallPrompt(false)}>Dismiss</button>
-        </p>
-      )}
+      {showSelect && <WalletSelectModal onClose={() => setShowSelect(false)} />}
     </div>
   );
 }
