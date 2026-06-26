@@ -174,9 +174,21 @@ export const MobileNav: React.FC<MobileNavProps> = ({ isAuthenticated, onLogout 
   );
 };
 
+function triggerHaptic() {
+  if (typeof navigator !== 'undefined' && navigator.vibrate) {
+    navigator.vibrate(10);
+  }
+}
+
+interface BottomMobileNavProps {
+  onSwipeLeft?: () => void;
+  onSwipeRight?: () => void;
+}
+
 // Compact mobile navigation bar for bottom of screen
-export const BottomMobileNav: React.FC = () => {
+export const BottomMobileNav: React.FC<BottomMobileNavProps> = ({ onSwipeLeft, onSwipeRight }) => {
   const pathname = usePathname();
+  const touchStartX = React.useRef<number | null>(null);
 
   const navItems: NavItem[] = [
     { label: 'Home', href: '/', icon: <Home className="w-5 h-5" /> },
@@ -185,10 +197,25 @@ export const BottomMobileNav: React.FC = () => {
     { label: 'Profile', href: '/profile', icon: <User className="w-5 h-5" /> },
   ];
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.targetTouches[0].clientX;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const distance = touchStartX.current - e.changedTouches[0].clientX;
+    if (distance > 50) onSwipeLeft?.();
+    else if (distance < -50) onSwipeRight?.();
+    touchStartX.current = null;
+  };
+
   return (
     <nav
       className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t dark:border-gray-800 lg:hidden z-30"
+      style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
       aria-label="Bottom mobile navigation"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
     >
       <div className="flex items-center justify-around">
         {navItems.map(item => {
@@ -197,6 +224,7 @@ export const BottomMobileNav: React.FC = () => {
             <Link
               key={item.href}
               href={item.href}
+              onClick={triggerHaptic}
               className={`flex flex-col items-center justify-center py-2 px-3 min-w-[60px] transition-colors ${
                 isActive
                   ? 'text-blue-600 dark:text-blue-400'
