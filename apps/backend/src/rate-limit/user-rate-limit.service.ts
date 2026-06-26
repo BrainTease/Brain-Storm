@@ -9,12 +9,26 @@ export interface RateLimitConfig {
   windowMs: number;
 }
 
-export const RATE_LIMIT_CONFIGS: Record<UserRole, RateLimitConfig> = {
-  admin: { limit: 10000, windowMs: 60000 },
-  instructor: { limit: 5000, windowMs: 60000 },
-  student: { limit: 1000, windowMs: 60000 },
-  guest: { limit: 100, windowMs: 60000 },
+/** Per-role default limits (configurable without redeploy via env). */
+export const ROLE_RATE_LIMITS: Record<string, RateLimitConfig> = {
+  admin: { limit: Number(process.env.RATE_LIMIT_ADMIN) || 10000, windowMs: 60000 },
+  instructor: { limit: Number(process.env.RATE_LIMIT_INSTRUCTOR) || 5000, windowMs: 60000 },
+  student: { limit: Number(process.env.RATE_LIMIT_STUDENT) || 1000, windowMs: 60000 },
+  guest: { limit: Number(process.env.RATE_LIMIT_GUEST) || 100, windowMs: 60000 },
 };
+
+/** Per-endpoint overrides (stricter limits for sensitive routes). */
+export const ENDPOINT_RATE_LIMITS: Record<string, RateLimitConfig> = {
+  'POST:/v1/auth/login': { limit: 10, windowMs: 60000 },
+  'POST:/v1/auth/register': { limit: 5, windowMs: 60000 },
+  'POST:/v1/auth/password-reset': { limit: 5, windowMs: 300000 },
+  'GET:/v1/courses': { limit: 200, windowMs: 60000 },
+};
+
+/** Admin allowlist: these user IDs bypass all rate limiting. */
+const ADMIN_ALLOWLIST = new Set<string>(
+  (process.env.RATE_LIMIT_ALLOWLIST || '').split(',').filter(Boolean)
+);
 
 @Injectable()
 export class UserRateLimitService {
@@ -24,26 +38,16 @@ export class UserRateLimitService {
    * Sliding window rate limit check.
    * Returns true if the request is allowed.
    */
-  async checkRateLimit(
-    userId: string,
-    role: string,
-    endpoint?: string,
-  ): Promise<boolean> {
-    // Admins bypass rate limiting
-    if (role === 'admin') return true;
+  async checkRateLimit(userId: string, role: string, endpoint?: string): Promise<boolean> {
+    // Allowlist & admin bypass
+    if (role === 'admin' || ADMIN_ALLOWLIST.has(userId)) return true;
 
     const config = this.resolveConfig(role, endpoint);
-    const key = endpoint
-      ? `rate-limit:${userId}:${endpoint}`
-      : `rate-limit:${userId}`;
+    const key = endpoint ? `rate-limit:${userId}:${endpoint}` : `rate-limit:${userId}`;
 
     const now = Date.now();
     const windowStart = now - config.windowMs;
-
-    // Retrieve sliding window timestamps
     const timestamps = (await this.cacheManager.get<number[]>(key)) ?? [];
-
-    // Filter to only timestamps within the current window
     const windowTimestamps = timestamps.filter((t) => t > windowStart);
 
     if (windowTimestamps.length >= config.limit) {
@@ -58,28 +62,33 @@ export class UserRateLimitService {
   async getRateLimitStatus(
     userId: string,
     role: string,
-    endpoint?: string,
+    endpoint?: string
   ): Promise<{ limit: number; remaining: number; resetTime: Date }> {
     const config = this.resolveConfig(role, endpoint);
-    const key = endpoint
-      ? `rate-limit:${userId}:${endpoint}`
-      : `rate-limit:${userId}`;
+    const key = endpoint ? `rate-limit:${userId}:${endpoint}` : `rate-limit:${userId}`;
 
     const now = Date.now();
     const windowStart = now - config.windowMs;
     const timestamps = (await this.cacheManager.get<number[]>(key)) ?? [];
     const windowTimestamps = timestamps.filter((t) => t > windowStart);
-    const count = windowTimestamps.length;
 
     return {
       limit: config.limit,
-      remaining: Math.max(0, config.limit - count),
+      remaining: Math.max(0, config.limit - windowTimestamps.length),
       resetTime: new Date(now + config.windowMs),
     };
   }
 
   async resetUserLimit(userId: string): Promise<void> {
     await this.cacheManager.del(`rate-limit:${userId}`);
+  }
+
+  addToAllowlist(userId: string): void {
+    ADMIN_ALLOWLIST.add(userId);
+  }
+
+  removeFromAllowlist(userId: string): void {
+    ADMIN_ALLOWLIST.delete(userId);
   }
 
   private resolveConfig(role: string, endpoint?: string): RateLimitConfig {

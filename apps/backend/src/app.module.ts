@@ -41,6 +41,8 @@ import { RemindersModule } from './reminders/reminders.module';
 import { CertificatesModule } from './certificates/certificates.module';
 import { PayoutsModule } from './payouts/payouts.module';
 import { GatewayModule } from './gateway/gateway.module';
+import { AdminModule } from './admin/admin.module';
+import { QueueModule } from './queue/queue.module';
 import { GatewayLoggingInterceptor } from './gateway/gateway.interceptor';
 import { WsGatewayModule } from './ws-gateway/ws-gateway.module';
 import * as redisStore from 'cache-manager-redis-store';
@@ -130,6 +132,8 @@ import { validationSchema } from './config/validation.schema';
     AccessControlModule,
     RateLimitModule,
     AuditModule,
+    AdminModule,
+    QueueModule,
     GatewayModule,
     WsGatewayModule,
   ],

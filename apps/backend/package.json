@@ -26,11 +26,12 @@
     "migration:show": "typeorm-ts-node-commonjs migration:show -d src/data-source.ts"
   },
   "dependencies": {
-    "@brain-storm/types": "*",
     "@aws-sdk/client-comprehend": "^3.758.0",
+    "@brain-storm/types": "*",
     "@elastic/elasticsearch": "^8.17.0",
     "@nest-lab/throttler-storage-redis": "^1.2.0",
     "@nestjs/axios": "^4.0.1",
+    "@nestjs/bullmq": "^11.0.2",
     "@nestjs/cache-manager": "^3.1.0",
     "@nestjs/common": "^10.0.0",
     "@nestjs/config": "^3.0.0",
@@ -53,6 +54,7 @@
     "@willsoto/nestjs-prometheus": "^6.0.0",
     "adm-zip": "^0.5.16",
     "bcrypt": "^5.1.0",
+    "bullmq": "^5.52.0",
     "cache-manager": "^7.2.8",
     "cache-manager-redis-store": "^3.0.1",
     "class-sanitizer": "^1.0.1",
@@ -77,6 +79,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^8.56.0",
+    "@faker-js/faker": "^8.4.1",
     "@nestjs/cli": "^10.0.0",
     "@nestjs/testing": "^10.4.22",
     "@pact-foundation/pact": "^16.3.0",
@@ -90,7 +93,6 @@
     "@types/xml2js": "^0.4.14",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
-    "@faker-js/faker": "^8.4.1",
     "eslint": "^8.56.0",
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-prettier": "^5.0.0",
