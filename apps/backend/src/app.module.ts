@@ -44,6 +44,7 @@ import { PayoutsModule } from './payouts/payouts.module';
 import { GatewayModule } from './gateway/gateway.module';
 import { GatewayLoggingInterceptor } from './gateway/gateway.interceptor';
 import { WsGatewayModule } from './ws-gateway/ws-gateway.module';
+import { AppGraphQLModule } from './graphql/graphql.module';
 import * as redisStore from 'cache-manager-redis-store';
 import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
 import configuration from './config/configuration';
@@ -133,6 +134,7 @@ import { validationSchema } from './config/validation.schema';
     AuditModule,
     GatewayModule,
     WsGatewayModule,
+    AppGraphQLModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },
