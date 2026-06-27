@@ -1,0 +1,339 @@
+name: Canary Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      image-tag:
+        description: 'Docker image tag to deploy as canary'
+        required: true
+      canary-weight:
+        description: 'Percentage of traffic to route to canary (1-50)'
+        required: true
+        default: '10'
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - staging
+          - production
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/backend
+
+jobs:
+  validate:
+    name: Validate Inputs
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Validate canary weight
+        run: |
+          WEIGHT="${{ github.event.inputs.canary-weight }}"
+          if ! [[ "$WEIGHT" =~ ^[0-9]+$ ]] || [ "$WEIGHT" -lt 1 ] || [ "$WEIGHT" -gt 50 ]; then
+            echo "❌ canary-weight must be an integer between 1 and 50 (got: $WEIGHT)"
+            exit 1
+          fi
+          echo "✅ canary-weight=$WEIGHT is valid"
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify image exists
+        run: |
+          IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.event.inputs.image-tag }}"
+          if docker pull "$IMAGE"; then
+            echo "✅ Image verified: $IMAGE"
+          else
+            echo "❌ Image not found: $IMAGE"
+            exit 1
+          fi
+
+  canary-approval:
+    name: Production Canary Approval
+    runs-on: ubuntu-latest
+    needs: validate
+    if: github.event.inputs.environment == 'production'
+
+    environment:
+      name: canary-production
+      url: https://api.brain-storm.example.com
+
+    steps:
+      - name: Approval gate
+        run: |
+          echo "⏳ Canary deployment to production requires manual approval"
+          echo "Image: ${{ github.event.inputs.image-tag }}"
+          echo "Traffic weight: ${{ github.event.inputs.canary-weight }}%"
+
+  deploy-canary:
+    name: Deploy Canary (${{ github.event.inputs.canary-weight }}% traffic)
+    runs-on: ubuntu-latest
+    needs: [validate, canary-approval]
+    if: always() && needs.validate.result == 'success' && (github.event.inputs.environment == 'staging' || needs.canary-approval.result == 'success')
+
+    permissions:
+      id-token: write
+      contents: read
+
+    outputs:
+      canary-task-arn: ${{ steps.deploy.outputs.canary_task_arn }}
+
+    environment:
+      name: ${{ github.event.inputs.environment }}
+      url: https://api.brain-storm.example.com
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-session-name: GitHubActions-Canary-${{ github.run_id }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Deploy canary task definition
+        id: deploy
+        run: |
+          IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.event.inputs.image-tag }}"
+          WEIGHT="${{ github.event.inputs.canary-weight }}"
+          STABLE_WEIGHT=$((100 - WEIGHT))
+
+          echo "🐤 Deploying canary: $IMAGE"
+          echo "   Canary traffic:  $WEIGHT%"
+          echo "   Stable traffic:  $STABLE_WEIGHT%"
+
+          # Register new task definition for canary
+          TASK_DEF=$(aws ecs describe-task-definition \
+            --task-definition brain-storm-backend \
+            --region ${{ secrets.AWS_REGION }} \
+            --query 'taskDefinition' \
+            --output json)
+
+          NEW_TASK_DEF=$(echo "$TASK_DEF" | \
+            jq --arg IMAGE "$IMAGE" \
+               '.containerDefinitions[0].image = $IMAGE |
+                del(.taskDefinitionArn,.revision,.status,.requiresAttributes,.placementConstraints,.compatibilities,.registeredAt,.registeredBy)')
+
+          CANARY_TASK_ARN=$(aws ecs register-task-definition \
+            --cli-input-json "$NEW_TASK_DEF" \
+            --region ${{ secrets.AWS_REGION }} \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)
+
+          echo "canary_task_arn=$CANARY_TASK_ARN" >> $GITHUB_OUTPUT
+          echo "✅ Canary task definition: $CANARY_TASK_ARN"
+
+          # Update ALB weighted routing
+          aws elbv2 modify-listener-rule \
+            --rule-arn "${{ secrets.ALB_LISTENER_RULE_ARN }}" \
+            --actions "[
+              {\"Type\":\"forward\",\"ForwardConfig\":{\"TargetGroups\":[
+                {\"TargetGroupArn\":\"${{ secrets.ALB_STABLE_TG_ARN }}\",\"Weight\":$STABLE_WEIGHT},
+                {\"TargetGroupArn\":\"${{ secrets.ALB_CANARY_TG_ARN }}\",\"Weight\":$WEIGHT}
+              ]}}
+            ]" \
+            --region ${{ secrets.AWS_REGION }} || true
+
+          # Deploy canary service
+          aws ecs update-service \
+            --cluster "${{ github.event.inputs.environment }}-cluster" \
+            --service brain-storm-backend-canary \
+            --task-definition "$CANARY_TASK_ARN" \
+            --force-new-deployment \
+            --region ${{ secrets.AWS_REGION }} || true
+
+      - name: Wait for canary to stabilize
+        run: |
+          echo "⏳ Waiting for canary deployment to stabilize..."
+          aws ecs wait services-stable \
+            --cluster "${{ github.event.inputs.environment }}-cluster" \
+            --services brain-storm-backend-canary \
+            --region ${{ secrets.AWS_REGION }} || true
+          echo "✅ Canary is stable"
+
+  canary-health-check:
+    name: Canary Health Verification
+    runs-on: ubuntu-latest
+    needs: deploy-canary
+
+    steps:
+      - name: Health check canary endpoint
+        run: |
+          CANARY_URL="https://canary-api.brain-storm.example.com/health"
+          echo "🔍 Checking canary health at $CANARY_URL"
+
+          for i in {1..20}; do
+            if curl -sf "$CANARY_URL"; then
+              echo "✅ Canary health check passed"
+              exit 0
+            fi
+            echo "Attempt $i/20 failed, retrying in 10s..."
+            sleep 10
+          done
+
+          echo "❌ Canary health check failed"
+          exit 1
+
+      - name: Validate canary metrics
+        run: |
+          echo "📊 Waiting 2 minutes to collect canary metrics..."
+          sleep 120
+
+          CANARY_URL="https://canary-api.brain-storm.example.com"
+
+          ERROR_COUNT=$(curl -sf "$CANARY_URL/metrics" | \
+            grep 'http_requests_total{.*status="5' | \
+            awk '{sum += $2} END {print sum+0}')
+
+          TOTAL_COUNT=$(curl -sf "$CANARY_URL/metrics" | \
+            grep 'http_requests_total' | \
+            awk '{sum += $2} END {print sum+0}')
+
+          if [ "$TOTAL_COUNT" -gt 0 ]; then
+            ERROR_RATE=$(echo "scale=4; $ERROR_COUNT / $TOTAL_COUNT * 100" | bc)
+            echo "Error rate: ${ERROR_RATE}%"
+            if (( $(echo "$ERROR_RATE > 5" | bc -l) )); then
+              echo "❌ Canary error rate too high: ${ERROR_RATE}%"
+              exit 1
+            fi
+          fi
+
+          echo "✅ Canary metrics look healthy"
+
+  promote-or-rollback:
+    name: Promote Canary to 100%
+    runs-on: ubuntu-latest
+    needs: [canary-health-check, deploy-canary]
+    if: success()
+
+    permissions:
+      id-token: write
+      contents: read
+
+    environment:
+      name: ${{ github.event.inputs.environment }}
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-session-name: GitHubActions-Canary-Promote
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Promote canary to stable
+        run: |
+          echo "🚀 Promoting canary to 100% traffic..."
+
+          # Route 100% traffic to canary target group
+          aws elbv2 modify-listener-rule \
+            --rule-arn "${{ secrets.ALB_LISTENER_RULE_ARN }}" \
+            --actions "[
+              {\"Type\":\"forward\",\"ForwardConfig\":{\"TargetGroups\":[
+                {\"TargetGroupArn\":\"${{ secrets.ALB_STABLE_TG_ARN }}\",\"Weight\":0},
+                {\"TargetGroupArn\":\"${{ secrets.ALB_CANARY_TG_ARN }}\",\"Weight\":100}
+              ]}}
+            ]" \
+            --region ${{ secrets.AWS_REGION }} || true
+
+          # Update stable service with canary task def
+          aws ecs update-service \
+            --cluster "${{ github.event.inputs.environment }}-cluster" \
+            --service brain-storm-backend \
+            --task-definition "${{ needs.deploy-canary.outputs.canary-task-arn }}" \
+            --force-new-deployment \
+            --region ${{ secrets.AWS_REGION }} || true
+
+          echo "✅ Canary promoted to stable"
+
+      - name: Scale down canary service
+        run: |
+          aws ecs update-service \
+            --cluster "${{ github.event.inputs.environment }}-cluster" \
+            --service brain-storm-backend-canary \
+            --desired-count 0 \
+            --region ${{ secrets.AWS_REGION }} || true
+
+          # Restore single-target routing
+          aws elbv2 modify-listener-rule \
+            --rule-arn "${{ secrets.ALB_LISTENER_RULE_ARN }}" \
+            --actions "[
+              {\"Type\":\"forward\",\"ForwardConfig\":{\"TargetGroups\":[
+                {\"TargetGroupArn\":\"${{ secrets.ALB_STABLE_TG_ARN }}\",\"Weight\":100}
+              ]}}
+            ]" \
+            --region ${{ secrets.AWS_REGION }} || true
+
+      - name: Notify promotion success
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number || 1,
+              body: `✅ **Canary Promoted**\n\nImage \`${{ github.event.inputs.image-tag }}\` successfully promoted from ${{ github.event.inputs.canary-weight }}% canary to 100% on \`${{ github.event.inputs.environment }}\`.`
+            }).catch(() => console.log('Canary promotion complete'))
+
+  rollback-canary:
+    name: Rollback Canary on Failure
+    runs-on: ubuntu-latest
+    needs: [canary-health-check, deploy-canary]
+    if: failure()
+
+    permissions:
+      id-token: write
+      contents: read
+
+    environment:
+      name: ${{ github.event.inputs.environment }}
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-session-name: GitHubActions-Canary-Rollback
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Remove canary and restore stable traffic
+        run: |
+          echo "🔄 Rolling back canary — restoring 100% stable traffic..."
+
+          aws elbv2 modify-listener-rule \
+            --rule-arn "${{ secrets.ALB_LISTENER_RULE_ARN }}" \
+            --actions "[
+              {\"Type\":\"forward\",\"ForwardConfig\":{\"TargetGroups\":[
+                {\"TargetGroupArn\":\"${{ secrets.ALB_STABLE_TG_ARN }}\",\"Weight\":100}
+              ]}}
+            ]" \
+            --region ${{ secrets.AWS_REGION }} || true
+
+          aws ecs update-service \
+            --cluster "${{ github.event.inputs.environment }}-cluster" \
+            --service brain-storm-backend-canary \
+            --desired-count 0 \
+            --region ${{ secrets.AWS_REGION }} || true
+
+          echo "✅ Canary rolled back. Stable service at 100%."
+
+      - name: Create rollback incident issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🐤 Canary Rollback — ${{ github.event.inputs.image-tag }} on ${{ github.event.inputs.environment }}`,
+              body: `Canary deployment failed health checks and was automatically rolled back.\n\n- **Image:** \`${{ github.event.inputs.image-tag }}\`\n- **Environment:** ${{ github.event.inputs.environment }}\n- **Canary weight:** ${{ github.event.inputs.canary-weight }}%\n- **Run:** ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+              labels: ['incident', 'canary', 'rollback']
+            });

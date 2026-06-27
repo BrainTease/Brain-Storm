@@ -1,16 +1,16 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ScheduleModule } from '@nestjs/schedule';
 import { User } from './user.entity';
 import { UsersService } from './users.service';
 import { UsersController, AdminUsersController } from './users.controller';
-import { GdprRetentionService } from './gdpr-retention.service';
-import { GdprController } from './gdpr.controller';
+import { StellarModule } from '../stellar/stellar.module';
+import { ImportJob } from '../import-export/import-job.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User]), ScheduleModule.forRoot()],
-  controllers: [UsersController, AdminUsersController, GdprController],
-  providers: [UsersService, GdprRetentionService],
-  exports: [UsersService, GdprRetentionService],
+  imports: [TypeOrmModule.forFeature([User, ImportJob]), forwardRef(() => StellarModule)],
+  controllers: [UsersController, AdminUsersController],
+  providers: [UsersService],
+  exports: [UsersService],
 })
 export class UsersModule {}

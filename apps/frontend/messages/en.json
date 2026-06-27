@@ -1,0 +1,194 @@
+{
+  "nav": {
+    "brand": "Brain-Storm",
+    "courses": "Courses",
+    "dashboard": "Dashboard",
+    "credentials": "Credentials",
+    "profile": "Profile",
+    "login": "Login",
+    "logout": "Logout",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "userMenu": "User menu",
+    "switchLight": "Switch to light mode",
+    "switchDark": "Switch to dark mode",
+    "language": "Language",
+    "settings": "Settings",
+    "siteNav": "Site navigation"
+  },
+  "home": {
+    "title": "Brain-Storm",
+    "description": "Blockchain education platform built on the Stellar network. Earn verifiable on-chain credentials as you learn.",
+    "browseCourses": "Browse Courses",
+    "getStarted": "Get Started"
+  },
+  "courses": {
+    "title": "Courses",
+    "viewCourse": "View Course →",
+    "viewCourseLabel": "View course: {title}",
+    "levels": {
+      "Beginner": "Beginner",
+      "Intermediate": "Intermediate",
+      "Advanced": "Advanced"
+    }
+  },
+  "credentials": {
+    "title": "My Credentials",
+    "subtitle": "Verifiable on-chain certificates earned by completing courses.",
+    "loading": "Loading credentials…",
+    "empty": "No credentials yet. Complete a course to earn your first certificate!",
+    "issued": "Issued: {date}",
+    "tx": "Tx: {hash}",
+    "verify": "Verify on Stellar ↗",
+    "share": "Share 🔗",
+    "completed": "Completed"
+  },
+  "profile": {
+    "loading": "Loading…",
+    "joined": "Joined {date}",
+    "avatarAlt": "{name}'s avatar",
+    "editProfile": "Edit Profile",
+    "username": "Username",
+    "usernameHint": "Display name shown on your profile (max 50 characters).",
+    "usernameRequired": "Username is required.",
+    "bio": "Bio",
+    "bioHint": "{count}/500 characters",
+    "avatarUrl": "Avatar URL",
+    "avatarUrlHint": "Enter a public URL to use as your profile picture.",
+    "uploadAvatar": "Upload new avatar",
+    "saving": "Saving…",
+    "saved": "Saved ✓",
+    "saveChanges": "Save Changes",
+    "loadError": "Failed to load profile. Please try again.",
+    "saveError": "Failed to save profile. Please try again.",
+    "retry": "Try again"
+  },
+  "wallet": {
+    "title": "Stellar Wallet",
+    "linkedKey": "Linked public key",
+    "publicKeyLabel": "Stellar public key: {key}",
+    "bstBalance": "BST Balance: {balance} BST",
+    "unlinkWallet": "Unlink Wallet",
+    "description": "Link your Freighter wallet to receive credentials and BST tokens.",
+    "freighterMissing": "Freighter not detected.",
+    "installFreighter": "Install Freighter",
+    "connecting": "Connecting…",
+    "linkWallet": "Link Wallet"
+  },
+  "bookmarks": {
+    "title": "My Bookmarks",
+    "empty": "No bookmarks yet.",
+    "browseCourses": "Browse courses →"
+  },
+  "shortcuts": {
+    "title": "Keyboard Shortcuts",
+    "navigation": "Navigation",
+    "search": "Search",
+    "closeModal": "Close modal",
+    "showHelp": "Show help",
+    "playPause": "Play / Pause",
+    "seekBack": "Seek back 10s",
+    "seekForward": "Seek forward 10s"
+  },
+  "leaderboard": {
+    "title": "Leaderboard",
+    "subtitle": "Top learners by points and achievements.",
+    "rank": "Rank",
+    "learner": "Learner",
+    "points": "Points",
+    "courses": "Courses",
+    "badges": "Badges",
+    "you": "You",
+    "loading": "Loading rankings…",
+    "empty": "No rankings to display yet.",
+    "previous": "Previous",
+    "next": "Next",
+    "page": "Page {page} of {total}",
+    "periods": {
+      "week": "This week",
+      "month": "This month",
+      "all": "All time"
+    },
+    "pointsValue": "{value, number} pts",
+    "coursesValue": "{value, number} completed",
+    "updated": "Updated {date}"
+  },
+  "cohorts": {
+    "title": "Cohorts",
+    "subtitle": "Manage student cohorts, members, and assignments.",
+    "newCohort": "New cohort",
+    "empty": "No cohorts yet. Create your first one to get started.",
+    "loading": "Loading cohorts…",
+    "membersCount": "{count, plural, =0 {No members} one {# member} other {# members}}",
+    "coursesCount": "{count, plural, =0 {No courses} one {# course} other {# courses}}",
+    "progressLabel": "{value, number, ::percent} complete",
+    "created": "Created {date}",
+    "form": {
+      "title": "Create cohort",
+      "editTitle": "Edit cohort",
+      "name": "Cohort name",
+      "namePlaceholder": "e.g. Spring 2026 — Stellar Track",
+      "description": "Description",
+      "descriptionPlaceholder": "What is this cohort focused on?",
+      "startDate": "Start date",
+      "endDate": "End date",
+      "capacity": "Capacity",
+      "capacityHint": "Maximum number of students",
+      "submit": "Create cohort",
+      "submitting": "Creating…",
+      "cancel": "Cancel"
+    },
+    "tabs": {
+      "overview": "Overview",
+      "members": "Members",
+      "discussion": "Discussion",
+      "courses": "Courses",
+      "analytics": "Analytics"
+    },
+    "members": {
+      "addMember": "Add member",
+      "emailPlaceholder": "student@example.com",
+      "role": "Role",
+      "joined": "Joined {date}",
+      "remove": "Remove",
+      "roles": {
+        "student": "Student",
+        "ta": "TA",
+        "instructor": "Instructor"
+      },
+      "empty": "No members yet. Invite someone to join."
+    },
+    "discussion": {
+      "title": "Cohort discussion",
+      "placeholder": "Share an update with your cohort…",
+      "post": "Post",
+      "empty": "No messages yet. Start the conversation."
+    },
+    "courses": {
+      "assignedTitle": "Assigned courses",
+      "assign": "Assign course",
+      "empty": "No courses assigned.",
+      "due": "Due {date}"
+    },
+    "analytics": {
+      "activeMembers": "Active members",
+      "avgProgress": "Average progress",
+      "completionRate": "Completion rate",
+      "totalPoints": "Total points earned"
+    }
+  },
+  "forms": {
+    "required": "This field is required",
+    "invalidEmail": "Enter a valid email address",
+    "minLength": "Must be at least {min} characters",
+    "maxLength": "Must be at most {max} characters",
+    "minValue": "Must be at least {min}",
+    "maxValue": "Must be at most {max}",
+    "passwordMismatch": "Passwords do not match",
+    "checking": "Checking…",
+    "checkingError": "Could not validate. Try again.",
+    "submitting": "Submitting…",
+    "submit": "Submit",
+    "reset": "Reset"
+  }
+}

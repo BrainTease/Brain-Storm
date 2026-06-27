@@ -1,11 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
-
-export enum NotificationChannel {
-  IN_APP = 'in_app',
-  EMAIL = 'email',
-  PUSH = 'push',
-  WEBHOOK = 'webhook',
-}
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from 'typeorm';
 
 @Entity('notification_preferences')
 export class NotificationPreference {
@@ -15,27 +8,27 @@ export class NotificationPreference {
   @Column({ unique: true })
   userId: string;
 
-  /** Enabled channels */
-  @Column({ type: 'simple-array', default: 'in_app' })
-  channels: NotificationChannel[];
+  @Column({ default: true })
+  inApp: boolean;
 
-  /** Quiet hours: "HH:MM-HH:MM" in user's locale, e.g. "22:00-08:00" */
-  @Column({ nullable: true })
-  quietHours: string;
+  @Column({ default: true })
+  email: boolean;
 
-  /** IANA timezone, e.g. "America/New_York" */
-  @Column({ default: 'UTC' })
-  timezone: string;
+  @Column({ default: false })
+  push: boolean;
 
-  /** User locale for templated content, e.g. "en-US" */
-  @Column({ default: 'en' })
-  locale: string;
+  @Column({ default: true })
+  enrollment: boolean;
 
-  /** VAPID push subscription JSON */
-  @Column({ type: 'text', nullable: true })
-  pushSubscription: string;
+  @Column({ default: true })
+  completion: boolean;
 
-  /** Webhook URL */
-  @Column({ nullable: true })
-  webhookUrl: string;
+  @Column({ default: true })
+  credentialIssued: boolean;
+
+  @Column({ default: true })
+  coursePublished: boolean;
+
+  @CreateDateColumn()
+  updatedAt: Date;
 }

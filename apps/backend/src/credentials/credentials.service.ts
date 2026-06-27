@@ -1,0 +1,74 @@
+import {
+  Injectable,
+  Inject,
+  forwardRef,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Credential } from './credential.entity';
+import { StellarService } from '../stellar/stellar.service';
+import { KycService } from '../kyc/kyc.service';
+import { CoursesService } from '../courses/courses.service';
+
+@Injectable()
+export class CredentialsService {
+  constructor(
+    @InjectRepository(Credential) private repo: Repository<Credential>,
+    @Inject(forwardRef(() => StellarService)) private stellarService: StellarService,
+    private kycService: KycService,
+    private coursesService: CoursesService
+  ) {}
+
+  async issue(userId: string, courseId: string, stellarPublicKey: string): Promise<Credential> {
+    // Avoid duplicate credentials
+    const existing = await this.repo.findOne({ where: { userId, courseId } });
+    if (existing) return existing;
+
+    // KYC gate — only enforced when the course requires it
+    const course = await this.coursesService.findOne(courseId);
+    if (course.requiresKyc) {
+      const approved = await this.kycService.isApproved(stellarPublicKey);
+      if (!approved) {
+        throw new ForbiddenException(
+          'KYC verification required before credential issuance for this course'
+        );
+      }
+    }
+
+    const txHash = await this.stellarService.issueCredential(stellarPublicKey, courseId);
+
+    // Mint reward tokens after credential issuance
+    try {
+      await this.stellarService.mintReward(stellarPublicKey, 100);
+    } catch {
+      // Non-fatal
+    }
+
+    const credential = this.repo.create({ userId, courseId, txHash, stellarPublicKey });
+    return this.repo.save(credential);
+  }
+
+  findByUser(userId: string) {
+    return this.repo.find({ where: { userId }, order: { issuedAt: 'DESC' } });
+  }
+
+  async findOne(id: string) {
+    const credential = await this.repo.findOne({
+      where: { id },
+      relations: ['user', 'course'],
+    });
+
+    if (!credential) {
+      throw new NotFoundException('Credential not found');
+    }
+
+    return credential;
+  }
+
+  async verify(txHash: string) {
+    const credential = await this.repo.findOne({ where: { txHash } });
+    return { credential, verified: !!credential };
+  }
+}

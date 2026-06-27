@@ -1,0 +1,195 @@
+{
+  "nav": {
+    "brand": "Brain-Storm",
+    "courses": "Cours",
+    "dashboard": "Tableau de bord",
+    "credentials": "Diplômes",
+    "profile": "Profil",
+    "login": "Connexion",
+    "logout": "Déconnexion",
+    "openMenu": "Ouvrir le menu",
+    "closeMenu": "Fermer le menu",
+    "userMenu": "Menu utilisateur",
+    "switchLight": "Passer en mode clair",
+    "switchDark": "Passer en mode sombre",
+    "language": "Langue",
+    "settings": "Paramètres",
+    "siteNav": "Navigation du site",
+    "bookmarks": "Favoris"
+  },
+  "home": {
+    "title": "Brain-Storm",
+    "description": "Plateforme d'éducation blockchain sur le réseau Stellar. Gagnez des diplômes vérifiables en apprenant.",
+    "browseCourses": "Parcourir les cours",
+    "getStarted": "Commencer"
+  },
+  "courses": {
+    "title": "Cours",
+    "viewCourse": "Voir le cours →",
+    "viewCourseLabel": "Voir le cours : {title}",
+    "levels": {
+      "Beginner": "Débutant",
+      "Intermediate": "Intermédiaire",
+      "Advanced": "Avancé"
+    }
+  },
+  "credentials": {
+    "title": "Mes Diplômes",
+    "subtitle": "Certificats vérifiables sur la blockchain obtenus en complétant des cours.",
+    "loading": "Chargement des diplômes…",
+    "empty": "Aucun diplôme pour l'instant. Complétez un cours pour obtenir votre premier certificat !",
+    "issued": "Émis le : {date}",
+    "tx": "Tx : {hash}",
+    "verify": "Vérifier sur Stellar ↗",
+    "share": "Partager 🔗",
+    "completed": "Terminé"
+  },
+  "profile": {
+    "loading": "Chargement…",
+    "joined": "Inscrit le {date}",
+    "avatarAlt": "Avatar de {name}",
+    "editProfile": "Modifier le profil",
+    "username": "Nom d'utilisateur",
+    "bio": "Biographie",
+    "avatarUrl": "URL de l'avatar",
+    "saving": "Enregistrement…",
+    "saved": "Enregistré ✓",
+    "saveChanges": "Enregistrer les modifications",
+    "loadError": "Échec du chargement du profil.",
+    "saveError": "Échec de l'enregistrement du profil.",
+    "usernameRequired": "Le nom d'utilisateur est requis.",
+    "retry": "Réessayer",
+    "usernameHint": "50 caractères maximum.",
+    "bioHint": "{count}/500 caractères.",
+    "avatarUrlHint": "Lien vers une image de profil.",
+    "uploadAvatar": "Télécharger un nouvel avatar"
+  },
+  "wallet": {
+    "title": "Portefeuille Stellar",
+    "linkedKey": "Clé publique liée",
+    "publicKeyLabel": "Clé publique Stellar : {key}",
+    "bstBalance": "Solde BST : {balance} BST",
+    "unlinkWallet": "Délier le portefeuille",
+    "description": "Liez votre portefeuille Freighter pour recevoir des diplômes et des tokens BST.",
+    "freighterMissing": "Freighter non détecté.",
+    "installFreighter": "Installer Freighter",
+    "connecting": "Connexion…",
+    "linkWallet": "Lier le portefeuille"
+  },
+  "bookmarks": {
+    "title": "Mes Favoris",
+    "empty": "Aucun favori pour l'instant.",
+    "browseCourses": "Parcourir les cours →"
+  },
+  "shortcuts": {
+    "title": "Raccourcis clavier",
+    "navigation": "Navigation",
+    "search": "Rechercher",
+    "closeModal": "Fermer la fenêtre",
+    "showHelp": "Afficher l'aide",
+    "playPause": "Lecture / Pause",
+    "seekBack": "Reculer de 10s",
+    "seekForward": "Avancer de 10s"
+  },
+  "leaderboard": {
+    "title": "Classement",
+    "subtitle": "Meilleurs apprenants par points et succès.",
+    "rank": "Rang",
+    "learner": "Apprenant",
+    "points": "Points",
+    "courses": "Cours",
+    "badges": "Badges",
+    "you": "Vous",
+    "loading": "Chargement du classement…",
+    "empty": "Aucun classement à afficher.",
+    "previous": "Précédent",
+    "next": "Suivant",
+    "page": "Page {page} sur {total}",
+    "periods": {
+      "week": "Cette semaine",
+      "month": "Ce mois",
+      "all": "Tout le temps"
+    },
+    "pointsValue": "{value, number} pts",
+    "coursesValue": "{value, number} terminés",
+    "updated": "Mis à jour {date}"
+  },
+  "cohorts": {
+    "title": "Cohortes",
+    "subtitle": "Gérez les cohortes d'étudiants, les membres et les affectations.",
+    "newCohort": "Nouvelle cohorte",
+    "empty": "Aucune cohorte. Créez la première pour commencer.",
+    "loading": "Chargement des cohortes…",
+    "membersCount": "{count, plural, =0 {Aucun membre} one {# membre} other {# membres}}",
+    "coursesCount": "{count, plural, =0 {Aucun cours} one {# cours} other {# cours}}",
+    "progressLabel": "{value, number, ::percent} terminé",
+    "created": "Créée le {date}",
+    "form": {
+      "title": "Créer une cohorte",
+      "editTitle": "Modifier la cohorte",
+      "name": "Nom de la cohorte",
+      "namePlaceholder": "ex. Printemps 2026 — Parcours Stellar",
+      "description": "Description",
+      "descriptionPlaceholder": "Sur quoi cette cohorte est-elle axée ?",
+      "startDate": "Date de début",
+      "endDate": "Date de fin",
+      "capacity": "Capacité",
+      "capacityHint": "Nombre maximum d'étudiants",
+      "submit": "Créer la cohorte",
+      "submitting": "Création…",
+      "cancel": "Annuler"
+    },
+    "tabs": {
+      "overview": "Aperçu",
+      "members": "Membres",
+      "discussion": "Discussion",
+      "courses": "Cours",
+      "analytics": "Analytique"
+    },
+    "members": {
+      "addMember": "Ajouter un membre",
+      "emailPlaceholder": "etudiant@exemple.com",
+      "role": "Rôle",
+      "joined": "Inscrit le {date}",
+      "remove": "Retirer",
+      "roles": {
+        "student": "Étudiant",
+        "ta": "Assistant",
+        "instructor": "Instructeur"
+      },
+      "empty": "Aucun membre pour l'instant. Invitez quelqu'un à rejoindre."
+    },
+    "discussion": {
+      "title": "Discussion de la cohorte",
+      "placeholder": "Partagez une mise à jour avec votre cohorte…",
+      "post": "Publier",
+      "empty": "Aucun message. Lancez la conversation."
+    },
+    "courses": {
+      "assignedTitle": "Cours assignés",
+      "assign": "Assigner un cours",
+      "empty": "Aucun cours assigné.",
+      "due": "Échéance {date}"
+    },
+    "analytics": {
+      "activeMembers": "Membres actifs",
+      "avgProgress": "Progression moyenne",
+      "completionRate": "Taux d'achèvement",
+      "totalPoints": "Points totaux gagnés"
+    }
+  },
+  "forms": {
+    "required": "Ce champ est obligatoire",
+    "invalidEmail": "Saisissez une adresse e-mail valide",
+    "minLength": "Doit contenir au moins {min} caractères",
+    "maxLength": "Doit contenir au plus {max} caractères",
+    "minValue": "Doit être au moins {min}",
+    "maxValue": "Doit être au plus {max}",
+    "passwordMismatch": "Les mots de passe ne correspondent pas",
+    "checking": "Vérification…",
+    "checkingError": "Validation impossible. Réessayez.",
+    "submitting": "Envoi…",
+    "submit": "Envoyer",
+    "reset": "Réinitialiser"
+  }
+}

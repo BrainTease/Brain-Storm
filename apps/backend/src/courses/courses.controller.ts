@@ -1,63 +1,205 @@
-import { Controller, Get, Post, Patch, Delete, Param, Body, UseGuards } from '@nestjs/common';
-import { CoursesService } from './courses.service';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { ApiTags } from '@nestjs/swagger';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Param,
+  Body,
+  Query,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
+import { CoursesBusinessService } from './courses-business.service';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiQuery,
+  ApiBearerAuth,
+  ApiBody,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+import { CourseQueryDto } from './dto/course-query.dto';
+import { CreateCourseDto } from './dto/create-course.dto';
+import { UpdateCourseDto } from './dto/update-course.dto';
+import { ScheduleCourseDto } from './dto/schedule-course.dto';
 
 @ApiTags('courses')
 @Controller('courses')
 export class CoursesController {
-  constructor(private coursesService: CoursesService) {}
+  constructor(private coursesBusinessService: CoursesBusinessService) {}
 
   @Get()
   @ApiOperation({ summary: 'Get all published courses' })
-  @ApiResponse({ status: 200, description: 'Returns all published courses', schema: { example: { data: [], statusCode: 200, timestamp: '2024-01-01T00:00:00.000Z' } } })
-  findAll() {
-    return this.coursesService.findAll();
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    description: 'Search by title or description (ILIKE)',
+  })
+  @ApiQuery({
+    name: 'level',
+    required: false,
+    enum: ['beginner', 'intermediate', 'advanced'],
+    description: 'Filter by level',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Page number (default: 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Results per page (default: 20)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns paginated published courses',
+    schema: { example: { data: [], total: 0, page: 1, limit: 20 } },
+  })
+  findAll(@Query() query: CourseQueryDto) {
+    return this.coursesBusinessService.getAllCourses(
+      query.search,
+      query.level,
+      query.page,
+      query.limit,
+    );
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get a course by ID' })
-  @ApiResponse({ status: 200, description: 'Returns a single course', schema: { example: { data: {}, statusCode: 200, timestamp: '2024-01-01T00:00:00.000Z' } } })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns a single course',
+    schema: { example: { data: {}, statusCode: 200, timestamp: '2024-01-01T00:00:00.000Z' } },
+  })
   @ApiResponse({ status: 404, description: 'Course not found' })
   findOne(@Param('id') id: string) {
-    return this.coursesService.findOne(id);
+    return this.coursesBusinessService.getCourse(id);
   }
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin', 'instructor')
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a new course' })
-  @ApiResponse({ status: 201, description: 'Course created successfully', schema: { example: { data: {}, statusCode: 201, timestamp: '2024-01-01T00:00:00.000Z' } } })
+  @ApiBody({ type: CreateCourseDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Course created successfully',
+    schema: { example: { data: {}, statusCode: 201, timestamp: '2024-01-01T00:00:00.000Z' } },
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
-  create(@Body() data: any) {
-    return this.coursesService.create(data);
+  create(@Body() data: CreateCourseDto, @Request() req: any) {
+    return this.coursesBusinessService.createCourse(req.user.id, req.user.role, data);
   }
 
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin', 'instructor')
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Update a course' })
-  @ApiResponse({ status: 200, description: 'Course updated successfully', schema: { example: { data: {}, statusCode: 200, timestamp: '2024-01-01T00:00:00.000Z' } } })
+  @ApiBody({ type: UpdateCourseDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Course updated successfully',
+    schema: { example: { data: {}, statusCode: 200, timestamp: '2024-01-01T00:00:00.000Z' } },
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
   @ApiResponse({ status: 404, description: 'Course not found' })
-  update(@Param('id') id: string, @Body() data: any) {
-    return this.coursesService.update(id, data);
+  update(@Param('id') id: string, @Body() data: UpdateCourseDto, @Request() req: any) {
+    return this.coursesBusinessService.updateCourse(id, req.user.id, req.user.role, data);
   }
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin', 'instructor')
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Delete a course' })
-  @ApiResponse({ status: 200, description: 'Course deleted successfully', schema: { example: { data: {}, statusCode: 200, timestamp: '2024-01-01T00:00:00.000Z' } } })
+  @ApiResponse({
+    status: 200,
+    description: 'Course deleted successfully',
+    schema: { example: { data: {}, statusCode: 200, timestamp: '2024-01-01T00:00:00.000Z' } },
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
   @ApiResponse({ status: 404, description: 'Course not found' })
-  delete(@Param('id') id: string) {
-    return this.coursesService.delete(id);
+  delete(@Param('id') id: string, @Request() req: any) {
+    return this.coursesBusinessService.deleteCourse(id, req.user.id, req.user.role);
   }
+
+  @Post(':id/schedule')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin', 'instructor')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Schedule a course for future publication' })
+  @ApiBody({ type: ScheduleCourseDto })
+  @ApiResponse({ status: 200, description: 'Course scheduled' })
+  @ApiResponse({ status: 400, description: 'scheduledAt must be in the future' })
+  schedule(@Param('id') id: string, @Body() dto: ScheduleCourseDto, @Request() req: any) {
+    const scheduledAt = resolveScheduledAt(dto.scheduledAt, dto.timezone);
+    return this.coursesBusinessService.scheduleCourseForPublication(
+      id,
+      req.user.id,
+      req.user.role,
+      scheduledAt,
+    );
+  }
+
+  @Post(':id/publish')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin', 'instructor')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Immediately publish a course' })
+  @ApiResponse({ status: 200, description: 'Course published' })
+  publishNow(@Param('id') id: string, @Request() req: any) {
+    return this.coursesBusinessService.publishCourseNow(id, req.user.id, req.user.role);
+  }
+}
+
+/**
+ * Converts an ISO datetime string to a UTC Date, optionally interpreting it
+ * in the given IANA timezone (e.g. "America/New_York").
+ *
+ * If the input already carries a UTC offset (e.g. "2026-05-01T10:00:00-05:00")
+ * the timezone parameter is ignored — the offset in the string takes precedence.
+ */
+function resolveScheduledAt(isoString: string, timezone?: string): Date {
+  // If the string already has an explicit offset, parse it directly.
+  if (/[+-]\d{2}:\d{2}$|Z$/.test(isoString)) {
+    return new Date(isoString);
+  }
+
+  if (!timezone) {
+    return new Date(isoString);
+  }
+
+  // Use Intl to find the UTC offset for the given timezone at the requested moment.
+  const naive = new Date(isoString);
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: timezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  });
+
+  // Re-parse the formatted local time back to UTC via the offset trick.
+  const parts = formatter.formatToParts(naive);
+  const get = (type: string) => Number(parts.find((p) => p.type === type)?.value ?? 0);
+  const localDate = new Date(
+    Date.UTC(get('year'), get('month') - 1, get('day'), get('hour'), get('minute'), get('second')),
+  );
+  const offsetMs = localDate.getTime() - naive.getTime();
+  return new Date(naive.getTime() - offsetMs);
 }

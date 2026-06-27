@@ -1,0 +1,143 @@
+groups:
+  - name: application_health
+    interval: 30s
+    rules:
+      - alert: BackendDown
+        expr: up{job="brain-storm-backend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: backend
+        annotations:
+          summary: "Backend service is down"
+          description: "The brain-storm backend has been unreachable for more than 1 minute."
+
+      - alert: HighResponseLatency
+        expr: |
+          histogram_quantile(0.95,
+            rate(http_request_duration_seconds_bucket{job="brain-storm-backend"}[5m])
+          ) > 2
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "High p95 response latency ({{ $value | humanizeDuration }})"
+          description: "95th percentile response time exceeds 2s on {{ $labels.instance }}."
+
+      - alert: HighErrorRate
+        expr: |
+          rate(http_requests_total{job="brain-storm-backend",status=~"5.."}[5m])
+            / rate(http_requests_total{job="brain-storm-backend"}[5m]) > 0.05
+        for: 3m
+        labels:
+          severity: critical
+          team: backend
+        annotations:
+          summary: "HTTP 5xx error rate above 5% ({{ $value | humanizePercentage }})"
+          description: "Server error rate on {{ $labels.instance }} exceeds the 5% threshold."
+
+      - alert: HighRequestRate
+        expr: |
+          rate(http_requests_total{job="brain-storm-backend"}[5m]) > 1000
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "Unusually high request rate ({{ $value | humanize }} req/s)"
+          description: "Request rate on {{ $labels.instance }} exceeds 1000 req/s."
+
+  - name: infrastructure_health
+    interval: 60s
+    rules:
+      - alert: HighCpuUsage
+        expr: |
+          100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 85
+        for: 10m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "CPU usage above 85% on {{ $labels.instance }}"
+          description: "CPU utilisation has been above 85% for more than 10 minutes."
+
+      - alert: HighMemoryUsage
+        expr: |
+          (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes)
+            / node_memory_MemTotal_bytes * 100 > 90
+        for: 5m
+        labels:
+          severity: critical
+          team: devops
+        annotations:
+          summary: "Memory usage above 90% on {{ $labels.instance }}"
+          description: "Available memory is critically low on {{ $labels.instance }}."
+
+      - alert: DiskSpaceLow
+        expr: |
+          (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 < 15
+        for: 5m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "Disk space below 15% on {{ $labels.instance }}"
+          description: "Free disk space on {{ $labels.instance }} is {{ $value | humanize }}%."
+
+      - alert: DiskSpaceCritical
+        expr: |
+          (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 < 5
+        for: 2m
+        labels:
+          severity: critical
+          team: devops
+        annotations:
+          summary: "Disk space critically low (<5%) on {{ $labels.instance }}"
+          description: "Immediate action required — disk almost full on {{ $labels.instance }}."
+
+  - name: database_health
+    interval: 30s
+    rules:
+      - alert: DatabaseConnectionsHigh
+        expr: |
+          pg_stat_activity_count{job="postgres"} > 80
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "Database connection count above 80 ({{ $value }})"
+          description: "High connection count may indicate a connection leak or traffic spike."
+
+      - alert: DatabaseSlowQueries
+        expr: |
+          rate(pg_stat_activity_max_tx_duration{job="postgres"}[5m]) > 30
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "Long-running database transactions detected"
+          description: "Transactions exceeding 30s detected on {{ $labels.instance }}."
+
+  - name: performance_recording_rules
+    interval: 60s
+    rules:
+      - record: job:http_requests:rate5m
+        expr: rate(http_requests_total{job="brain-storm-backend"}[5m])
+
+      - record: job:http_errors:rate5m
+        expr: rate(http_requests_total{job="brain-storm-backend",status=~"5.."}[5m])
+
+      - record: job:http_latency_p95
+        expr: |
+          histogram_quantile(0.95,
+            rate(http_request_duration_seconds_bucket{job="brain-storm-backend"}[5m])
+          )
+
+      - record: job:http_latency_p99
+        expr: |
+          histogram_quantile(0.99,
+            rate(http_request_duration_seconds_bucket{job="brain-storm-backend"}[5m])
+          )

@@ -20,35 +20,56 @@ DATABASE_NAME=brain-storm
 
 ## Available Scripts
 
+Run all commands from `apps/backend/`:
+
+| Command | Description |
+|---------|-------------|
+| `npm run migration:show` | List executed and pending migrations |
+| `npm run migration:validate` | Validate ordering and detect duplicate timestamps |
+| `npm run migration:run` | Apply all pending migrations (transactional) |
+| `npm run migration:rollback` | Revert the last applied migration |
+| `npm run migration:generate -- src/migrations/<Name>` | Auto-generate migration from entity diff |
+| `npm run migration:create -- src/migrations/<Name>` | Create an empty migration file |
+
 ### Generate a New Migration
 
 Generate a new migration based on entity changes:
 
 ```bash
-npm run typeorm:generate -- src/migrations/YourMigrationName
+npm run migration:generate -- src/migrations/YourMigrationName
 ```
 
 This command compares your entities with the current database schema and generates a migration file with the necessary SQL changes.
+
+### Validate Migrations
+
+Before deploying, validate migration ordering and integrity:
+
+```bash
+npm run migration:validate
+```
+
+Checks for: ascending timestamp ordering, duplicate timestamps, and executed count consistency.
 
 ### Run Migrations
 
 Apply all pending migrations:
 
 ```bash
-npm run typeorm:run
+npm run migration:run
 ```
 
-This executes all migrations that haven't been applied yet, in the order they were created.
+Each migration runs inside its own transaction (`transaction: 'each'`), so a failure mid-set does not leave partial changes.
 
 ### Revert Last Migration
 
 Revert the most recently applied migration:
 
 ```bash
-npm run typeorm:revert
+npm run migration:rollback
 ```
 
-This rolls back the last migration, useful for testing or fixing issues.
+This rolls back the last migration by running its `down()` method. Run repeatedly to revert multiple migrations.
 
 ## Migration Workflow
 

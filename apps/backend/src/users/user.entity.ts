@@ -34,13 +34,27 @@ export class User {
 
   @Column({ nullable: true })
   deletedAt: Date;
-  isVerified: boolean;
 
   @Column({ nullable: true, type: 'varchar' })
   verificationToken: string | null;
 
-  @Column({ nullable: true, type: 'timestamp' })
+  @Column({ nullable: true, type: 'datetime' })
   verificationTokenExpiresAt: Date | null;
+
+  @Column({ default: false })
+  mfaEnabled: boolean;
+
+  @Column({ nullable: true })
+  mfaSecret: string | null;
+
+  @Column({ type: 'simple-array', nullable: true, default: null })
+  mfaBackupCodes: string[] | null;
+
+  @Column({ unique: true, nullable: true })
+  referralCode: string;
+
+  @Column({ nullable: true, type: 'varchar' })
+  referredBy: string | null;
 
   @CreateDateColumn()
   createdAt: Date;

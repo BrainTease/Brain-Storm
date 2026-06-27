@@ -4,6 +4,7 @@ export enum NotificationType {
   ENROLLMENT = 'enrollment',
   COMPLETION = 'completion',
   CREDENTIAL_ISSUED = 'credential_issued',
+  COURSE_PUBLISHED = 'course_published',
 }
 
 @Entity('notifications')

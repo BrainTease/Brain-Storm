@@ -1,0 +1,125 @@
+version: 2
+updates:
+  # Frontend npm dependencies - Security patches prioritized
+  - package-ecosystem: npm
+    directory: "/apps/frontend"
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 10
+    reviewers:
+      - "brain-tease"
+    assignees:
+      - "brain-tease"
+    commit-message:
+      prefix: "chore(deps-frontend):"
+      include: "scope"
+    pull-request-branch-name:
+      separator: "/"
+    groups:
+      security-updates:
+        dependency-types:
+          - "production"
+        update-types:
+          - "semver:patch"
+        patterns:
+          - "*security*"
+          - "*vulnerability*"
+      minor-and-patch:
+        dependency-types:
+          - "minor"
+          - "patch"
+    allow:
+      - dependency-type: "direct"
+      - dependency-type: "indirect"
+    labels:
+      - "dependencies"
+      - "frontend"
+    pull-request-branch-name:
+      separator: "/"
+
+  # Backend npm dependencies - Security patches prioritized
+  - package-ecosystem: npm
+    directory: "/apps/backend"
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 10
+    reviewers:
+      - "brain-tease"
+    assignees:
+      - "brain-tease"
+    commit-message:
+      prefix: "chore(deps-backend):"
+      include: "scope"
+    pull-request-branch-name:
+      separator: "/"
+    groups:
+      security-updates:
+        dependency-types:
+          - "production"
+        update-types:
+          - "semver:patch"
+        patterns:
+          - "*security*"
+          - "*vulnerability*"
+      minor-and-patch:
+        dependency-types:
+          - "minor"
+          - "patch"
+    allow:
+      - dependency-type: "direct"
+      - dependency-type: "indirect"
+    labels:
+      - "dependencies"
+      - "backend"
+
+  # Cargo dependencies (Rust contracts) - Security patches prioritized
+  - package-ecosystem: cargo
+    directory: "/"
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 10
+    reviewers:
+      - "brain-tease"
+    assignees:
+      - "brain-tease"
+    commit-message:
+      prefix: "chore(deps-contracts):"
+      include: "scope"
+    pull-request-branch-name:
+      separator: "/"
+    groups:
+      security-updates:
+        dependency-types:
+          - "production"
+        update-types:
+          - "semver:patch"
+        patterns:
+          - "*security*"
+          - "*vulnerability*"
+      minor-and-patch:
+        dependency-types:
+          - "minor"
+          - "patch"
+    allow:
+      - dependency-type: "direct"
+      - dependency-type: "indirect"
+    labels:
+      - "dependencies"
+      - "contracts"
+
+  # GitHub Actions versions - Daily checks
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 5
+    reviewers:
+      - "brain-tease"
+    assignees:
+      - "brain-tease"
+    commit-message:
+      prefix: "chore(ci):"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "ci"

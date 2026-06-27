@@ -1,0 +1,209 @@
+name: Load Testing
+
+on:
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+    inputs:
+      scenario:
+        description: 'Load test scenario to run'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - user-journey
+          - high-concurrency
+          - stress-test
+          - spike-test
+      api_url:
+        description: 'Target API URL'
+        required: false
+        default: 'http://localhost:3000'
+
+env:
+  K6_VERSION: '0.54.0'
+
+jobs:
+  load-test:
+    name: Run Load Tests
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: brain-storm
+          POSTGRES_USER: brain-storm
+          POSTGRES_DB: brain-storm
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install k6
+        run: |
+          curl -fsSL https://github.com/grafana/k6/releases/download/v${{ env.K6_VERSION }}/k6-v${{ env.K6_VERSION }}-linux-amd64.tar.gz \
+            | tar -xz --strip-components=1 -C /usr/local/bin k6-v${{ env.K6_VERSION }}-linux-amd64/k6
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build backend
+        run: npm run build --workspace=apps/backend
+
+      - name: Run migrations
+        run: npm run migration:run --workspace=apps/backend
+        env:
+          DATABASE_HOST: localhost
+          DATABASE_PORT: 5432
+          DATABASE_USER: brain-storm
+          DATABASE_PASSWORD: brain-storm
+          DATABASE_NAME: brain-storm
+
+      - name: Start backend
+        run: npm run start:prod --workspace=apps/backend &
+        env:
+          DATABASE_HOST: localhost
+          DATABASE_PORT: 5432
+          DATABASE_USER: brain-storm
+          DATABASE_PASSWORD: brain-storm
+          DATABASE_NAME: brain-storm
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
+          NODE_ENV: production
+
+      - name: Wait for backend
+        run: |
+          until curl -sf http://localhost:3000/health; do
+            sleep 2
+          done
+
+      - name: Create results directory
+        run: mkdir -p load-test-results
+
+      - name: Run user journey test
+        if: ${{ github.event.inputs.scenario == 'all' || github.event.inputs.scenario == 'user-journey' || github.event_name == 'schedule' }}
+        run: |
+          k6 run \
+            --out json=load-test-results/user-journey.json \
+            --env API_URL=http://localhost:3000 \
+            scripts/load-tests/user-journey.js
+        continue-on-error: true
+
+      - name: Run high concurrency test
+        if: ${{ github.event.inputs.scenario == 'all' || github.event.inputs.scenario == 'high-concurrency' || github.event_name == 'schedule' }}
+        run: |
+          k6 run \
+            --out json=load-test-results/high-concurrency.json \
+            --env API_URL=http://localhost:3000 \
+            scripts/load-tests/high-concurrency.js
+        continue-on-error: true
+
+      - name: Run stress test
+        if: ${{ github.event.inputs.scenario == 'all' || github.event.inputs.scenario == 'stress-test' || github.event_name == 'schedule' }}
+        run: |
+          k6 run \
+            --out json=load-test-results/stress-test.json \
+            --env API_URL=http://localhost:3000 \
+            scripts/load-tests/stress-test.js
+        continue-on-error: true
+
+      - name: Run spike test
+        if: ${{ github.event.inputs.scenario == 'all' || github.event.inputs.scenario == 'spike-test' || github.event_name == 'schedule' }}
+        run: |
+          k6 run \
+            --out json=load-test-results/spike-test.json \
+            --env API_URL=http://localhost:3000 \
+            scripts/load-tests/spike-test.js
+        continue-on-error: true
+
+      - name: Compare against baselines and generate alerts
+        id: baseline-check
+        run: node scripts/load-test-baseline-comparison.js
+        env:
+          RESULTS_DIR: load-test-results
+          BASELINES_FILE: scripts/load-tests/baselines/performance-baselines.json
+        continue-on-error: true
+
+      - name: Upload load test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: load-test-results-${{ github.run_id }}
+          path: load-test-results/
+          retention-days: 30
+
+      - name: Send Slack notification on regression
+        if: failure() && github.event_name == 'schedule' && env.SLACK_WEBHOOK_URL
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          payload: |
+            {
+              "text": "🚨 Performance Regression Detected",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Performance Regression Detected*\n\nLoad tests detected performance degradation.\n\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>"
+                  }
+                }
+              ]
+            }
+
+      - name: Create GitHub issue on critical regression
+        if: failure() && github.event_name == 'schedule'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const reportPath = 'load-test-results/baseline-comparison-report.json';
+            
+            if (fs.existsSync(reportPath)) {
+              const report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
+              const criticalTests = report.tests.filter(t => t.regressions.length > 0);
+              
+              if (criticalTests.length > 0) {
+                const body = `## Performance Regression Detected\n\n` +
+                  `**Run**: [#${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})\n\n` +
+                  `### Affected Tests\n` +
+                  criticalTests.map(t => 
+                    `- **${t.name}**: ${t.regressions.length} regression(s)\n` +
+                    t.regressions.map(r => `  - ${r.metric}: ${r.change_percent}% (${r.severity})`).join('\n')
+                  ).join('\n') +
+                  `\n\n### Details\n\`\`\`json\n${JSON.stringify(report, null, 2)}\n\`\`\``;
+                
+                await github.rest.issues.create({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  title: '🚨 Performance Regression Detected in Load Tests',
+                  body: body,
+                  labels: ['performance', 'regression', 'load-testing']
+                });
+              }
+            }
