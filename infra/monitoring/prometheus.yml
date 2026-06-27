@@ -16,9 +16,24 @@ rule_files:
 scrape_configs:
   - job_name: 'brain-storm-backend'
     static_configs:
-      - targets: ['host.docker.internal:3000']
+      - targets: ['backend:3000']
     metrics_path: '/metrics'
     scrape_interval: 10s
+
+  - job_name: 'brain-storm-frontend'
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+          - http://frontend:3001/api/health
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
 
   - job_name: 'brain-storm-contracts'
     static_configs:
@@ -48,13 +63,19 @@ scrape_configs:
       - targets: ['postgres-exporter:9187']
     scrape_interval: 30s
 
+  - job_name: 'otel-collector'
+    static_configs:
+      - targets: ['otel-collector:8888']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
   - job_name: 'blackbox'
     metrics_path: /probe
     params:
       module: [http_2xx]
     static_configs:
       - targets:
-          - https://api.brain-storm.example.com/health
+          - https://api.brain-storm.example.com/v1/health/readiness
           - https://brain-storm.example.com
     relabel_configs:
       - source_labels: [__address__]

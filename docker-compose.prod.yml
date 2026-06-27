@@ -1,15 +1,25 @@
 version: '3.8'
 
+# Production compose — all secrets via environment variables / .env file.
+# Start: docker compose -f docker-compose.prod.yml up -d --build
+
 services:
   postgres:
     image: postgres:16-alpine
+    restart: unless-stopped
     environment:
       POSTGRES_DB: brain-storm
       POSTGRES_USER: ${DATABASE_USER}
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    restart: unless-stopped
+    networks:
+      - brain-storm-prod
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     deploy:
       resources:
         limits:
@@ -18,18 +28,20 @@ services:
         reservations:
           cpus: '0.5'
           memory: 512M
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
   redis:
     image: redis:7-alpine
+    restart: unless-stopped
     command: redis-server --appendonly yes
     volumes:
       - redis_data:/data
-    restart: unless-stopped
+    networks:
+      - brain-storm-prod
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
     deploy:
       resources:
         limits:
@@ -38,19 +50,16 @@ services:
         reservations:
           cpus: '0.25'
           memory: 256M
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
 
   backend:
     build:
       context: .
       dockerfile: apps/backend/Dockerfile
+    restart: unless-stopped
     ports:
       - "3000:3000"
     environment:
+      NODE_ENV: production
       PORT: 3000
       DATABASE_HOST: postgres
       DATABASE_PORT: 5432
@@ -61,7 +70,7 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
-      STELLAR_NETWORK: ${STELLAR_NETWORK}
+      STELLAR_NETWORK: ${STELLAR_NETWORK:-testnet}
       STELLAR_SECRET_KEY: ${STELLAR_SECRET_KEY}
       SOROBAN_RPC_URL: ${SOROBAN_RPC_URL}
       ANALYTICS_CONTRACT_ID: ${ANALYTICS_CONTRACT_ID}
@@ -71,7 +80,14 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    restart: unless-stopped
+    networks:
+      - brain-storm-prod
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/v1/health/readiness || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -85,14 +101,27 @@ services:
     build:
       context: .
       dockerfile: apps/frontend/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://backend:3000}
+        NEXT_PUBLIC_STELLAR_NETWORK: ${NEXT_PUBLIC_STELLAR_NETWORK:-testnet}
+        NEXT_PUBLIC_SENTRY_DSN: ${NEXT_PUBLIC_SENTRY_DSN:-}
+    restart: unless-stopped
     ports:
       - "3001:3001"
     environment:
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3000}
-      NEXT_PUBLIC_STELLAR_NETWORK: ${NEXT_PUBLIC_STELLAR_NETWORK:-testnet}
+      NODE_ENV: production
+      PORT: 3001
     depends_on:
-      - backend
-    restart: unless-stopped
+      backend:
+        condition: service_healthy
+    networks:
+      - brain-storm-prod
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3001/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -105,3 +134,8 @@ services:
 volumes:
   postgres_data:
   redis_data:
+
+networks:
+  brain-storm-prod:
+    name: brain-storm-prod
+    driver: bridge

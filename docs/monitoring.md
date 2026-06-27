@@ -1,79 +1,74 @@
-# Monitoring Setup
+# Monitoring & Observability
 
-Brain Storm uses Prometheus for metrics collection and Grafana for visualization.
+Brain-Storm ships a full observability stack: **Prometheus metrics**, **OpenTelemetry distributed tracing**, and **Grafana dashboards**.
 
-## Quick Start
+## Stack
 
-1. Start the monitoring stack:
+| Component | Purpose | Port |
+|-----------|---------|------|
+| Prometheus | Metrics collection & alerting | 9090 |
+| Grafana | Dashboards | 3002 |
+| Alertmanager | Alert routing | 9093 |
+| OTel Collector | Trace + metric pipeline | 4317 (gRPC), 4318 (HTTP) |
+| Jaeger | Trace storage & UI | 16686 |
+| Blackbox Exporter | HTTP endpoint probing | 9115 |
+| Node Exporter | Host metrics | 9100 |
+| Postgres Exporter | DB metrics | 9187 |
+
+## Start
+
 ```bash
-docker-compose -f docker-compose.monitoring.yml up -d
+docker compose -f docker-compose.monitoring.yml up -d
 ```
 
-2. Access the dashboards:
-- Grafana: http://localhost:3002 (admin/admin)
+- Grafana: http://localhost:3002 (admin / admin)
 - Prometheus: http://localhost:9090
+- Jaeger UI: http://localhost:16686
 
-## Available Metrics
+## Metrics
 
-### HTTP Metrics
-- `http_requests_total` - Total HTTP requests by method, route, and status code
+The backend exposes Prometheus metrics at `GET /metrics` via `@willsoto/nestjs-prometheus`.
 
-### Business Metrics
-- `credential_issued_total` - Credentials issued by type
-- `bst_minted_total` - BST tokens minted by user
+Custom metrics defined in `apps/backend/src/metrics/metrics.service.ts`:
 
-### Performance Metrics
-- `stellar_rpc_latency_seconds` - Stellar RPC call latency histogram
+| Metric | Type | Description |
+|--------|------|-------------|
+| `http_requests_total` | Counter | HTTP requests by method, route, status_code |
+| `credential_issued_total` | Counter | On-chain credentials issued |
+| `bst_minted_total` | Counter | BST tokens minted |
+| `stellar_rpc_latency_seconds` | Histogram | Stellar RPC call duration |
 
-### System Metrics (default)
-- `process_cpu_user_seconds_total` - CPU usage
-- `process_resident_memory_bytes` - Memory usage
-- `nodejs_eventloop_lag_seconds` - Event loop lag
-- `nodejs_heap_size_total_bytes` - Heap size
+Default Node.js metrics (event loop lag, heap, GC) are exported automatically.
 
-## Grafana Dashboard
+## Tracing
 
-A pre-built dashboard is automatically provisioned at startup showing:
-- HTTP request rates
-- Credential issuance stats
-- BST token minting stats
-- Stellar RPC latency percentiles
-- Node.js memory usage
+OTel tracing is bootstrapped in `apps/backend/src/tracing.ts` and initialised before the app starts (`instrument.ts`). Spans are sent to the OTel Collector via OTLP HTTP, then forwarded to Jaeger.
 
-## Custom Metrics
+### Environment variables
 
-To add custom metrics, use the `MetricsService`:
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | `http://localhost:4318` | OTel Collector URL |
+| `OTEL_SERVICE_NAME` | `brain-storm-api` | Service name in traces |
+| `OTEL_TRACES_SAMPLER_ARG` | `0.1` (prod), `1.0` (dev) | Sampling ratio |
 
-```typescript
-import { MetricsService } from './metrics/metrics.service';
+Auto-instrumented: HTTP, PostgreSQL (`pg`), Redis (`ioredis`), BullMQ, NestJS.
 
-constructor(private metricsService: MetricsService) {}
+## Grafana Dashboards
 
-// Increment counters
-this.metricsService.incrementCredentialIssued('course-completion');
-this.metricsService.incrementBstMinted(userId);
+Dashboards are provisioned automatically from `infra/monitoring/grafana/dashboards/`.
 
-// Observe latency
-const start = Date.now();
-// ... perform operation
-const duration = (Date.now() - start) / 1000;
-this.metricsService.observeStellarRpcLatency('submitTransaction', 'success', duration);
-```
+| Dashboard | UID | Covers |
+|-----------|-----|--------|
+| API Observability | `brainstorm-observability` | Throughput, error rate, latency (p50/p95), Stellar RPC, credentials, BST tokens, heap |
+| NestJS Metrics | `brainstorm-nestjs` | HTTP request rate, status codes |
+| Performance Overview | `brainstorm-perf` | End-to-end performance |
+| Contracts Monitoring | `brainstorm-contracts` | Soroban contract events |
 
-## Production Deployment
+## Alerts
 
-In production, configure Prometheus to scrape the `/metrics` endpoint:
+Alert rules live in:
+- `infra/monitoring/alerts/application-rules.yml` — API error rate, latency SLOs
+- `infra/monitoring/contracts/alerting-rules.yml` — Contract-specific alerts
 
-```yaml
-scrape_configs:
-  - job_name: 'brain-storm-backend'
-    static_configs:
-      - targets: ['backend:3000']
-```
-
-## Alerting
-
-Configure Prometheus alerting rules in `infra/monitoring/prometheus.yml` for:
-- High error rates (5xx responses)
-- Slow Stellar RPC calls (p95 > 2s)
-- Memory leaks (continuous memory growth)
+Alert routing configured in `infra/monitoring/alertmanager/alertmanager.yml`.

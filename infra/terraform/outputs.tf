@@ -66,3 +66,23 @@ output "jwt_secret_arn" {
   value       = module.secrets.jwt_secret_arn
   sensitive   = true
 }
+
+output "assets_bucket_name" {
+  description = "S3 bucket for user-uploaded assets and CDN content"
+  value       = module.storage.assets_bucket_name
+}
+
+output "backups_bucket_name" {
+  description = "S3 bucket for database and application backups"
+  value       = module.storage.backups_bucket_name
+}
+
+output "assets_bucket_name" {
+  description = "S3 bucket for user-uploaded assets and CDN content"
+  value       = module.storage.assets_bucket_name
+}
+
+output "backups_bucket_name" {
+  description = "S3 bucket for database and application backups"
+  value       = module.storage.backups_bucket_name
+}

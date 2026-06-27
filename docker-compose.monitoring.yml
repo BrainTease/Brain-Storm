@@ -89,6 +89,34 @@ services:
     networks:
       - monitoring
 
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.103.0
+    container_name: otel-collector
+    command: ["--config=/etc/otel-collector/otel-collector.yml"]
+    volumes:
+      - ./infra/monitoring/otel-collector/otel-collector.yml:/etc/otel-collector/otel-collector.yml:ro
+    ports:
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+      - "8888:8888"   # Prometheus metrics scrape endpoint
+    depends_on:
+      - jaeger
+    restart: unless-stopped
+    networks:
+      - monitoring
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.57
+    container_name: jaeger
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    ports:
+      - "16686:16686"  # Jaeger UI
+      - "14250:14250"  # gRPC model.proto
+    restart: unless-stopped
+    networks:
+      - monitoring
+
   postgres-exporter:
     image: prometheuscommunity/postgres-exporter:latest
     container_name: postgres-exporter

@@ -1,0 +1,45 @@
+# Staging overrides — apply with: helm upgrade --install brain-storm . -f values-staging.yaml
+backend:
+  image:
+    tag: staging
+  replicaCount: 1
+  autoscaling:
+    minReplicas: 1
+    maxReplicas: 3
+  env:
+    NODE_ENV: staging
+    STELLAR_NETWORK: testnet
+
+frontend:
+  image:
+    tag: staging
+  replicaCount: 1
+  autoscaling:
+    minReplicas: 1
+    maxReplicas: 2
+  env:
+    NODE_ENV: staging
+    NEXT_PUBLIC_STELLAR_NETWORK: testnet
+
+postgresql:
+  primary:
+    persistence:
+      size: 5Gi
+
+ingress:
+  hosts:
+    - host: staging.brain-storm.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+          service: frontend
+    - host: api.staging.brain-storm.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+          service: backend
+  tls:
+    - secretName: brain-storm-staging-tls
+      hosts:
+        - staging.brain-storm.example.com
+        - api.staging.brain-storm.example.com
