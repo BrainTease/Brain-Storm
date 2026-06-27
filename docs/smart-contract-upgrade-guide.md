@@ -410,3 +410,61 @@ If a redeployed contract (analytics, token, etc.) has issues:
 - **Time-lock for high-impact upgrades.** Consider adding a time-lock to the admin role for production: submit the upgrade transaction but delay execution by N ledgers, giving the community time to detect and respond to a malicious upgrade.
 
 - **Monitor post-upgrade.** Watch the Horizon event stream for unexpected events after an upgrade. The `("shared", "upgraded")` event should be the only upgrade-related event. Set up alerts via the monitoring stack (`infra/monitoring/`) for anomalous contract activity.
+
+
+---
+
+## Automated Upgrade Test Harness (#665)
+
+The file `contracts/shared/src/upgrade_tests.rs` contains an end-to-end test harness for the upgrade path. Run it with:
+
+```bash
+cargo test -p shared -- upgrade_tests
+```
+
+### What the harness covers
+
+| Test | Scenario |
+|---|---|
+| `test_schedule_upgrade_stores_pending` | Deploy v1, schedule upgrade, assert pending upgrade stored |
+| `test_non_admin_cannot_schedule_upgrade` | Unauthorised schedule rejected |
+| `test_cancel_upgrade_removes_pending` | Cancel clears the pending upgrade |
+| `test_non_admin_cannot_cancel_upgrade` | Unauthorised cancel rejected |
+| `test_execute_before_timelock_panics` | Timelock enforced — execute fails before delay |
+| `test_non_admin_cannot_execute_upgrade` | Unauthorised execute rejected |
+| `test_state_preserved_after_schedule` | Write state (roles) → schedule upgrade → state intact |
+| `test_state_preserved_after_cancel` | Write state → cancel upgrade → state intact |
+| `test_migration_pattern_reads_existing_data` | Simulates v1→v2 storage-layout compatibility check |
+| `test_upgrade_history_initially_empty` | Upgrade history count starts at 0 |
+| `test_no_pending_upgrade_initially` | No pending upgrade on fresh contract |
+| `test_direct_upgrade_non_admin_rejected` | Direct `upgrade()` by non-admin panics |
+
+### Upgrade flow
+
+```
+initialize(admin)
+  └─ write v1 state (roles, permissions)
+       └─ schedule_upgrade(admin, new_hash, timelock)
+            ├─ [before timelock] execute_upgrade → panics "Timelock not expired"
+            ├─ cancel_upgrade(admin) → removes pending, state intact
+            └─ [after timelock] execute_upgrade(admin)
+                 └─ WASM replaced, storage preserved, history recorded
+```
+
+### Storage compatibility guarantee
+
+All `DataKey` variants and their value types are XDR-encoded on-chain. Adding new variants is always backward-compatible. **Changing or removing existing variants requires a migration function** — see the [Storage Preservation & Data Migration](#storage-preservation--data-migration) section.
+
+### Running the full test suite
+
+```bash
+# All contracts
+cargo test
+
+# Upgrade harness only
+cargo test -p shared -- upgrade_tests
+
+# Property/fuzz tests (market + registry)
+cargo test -p market -- fuzz_tests
+cargo test -p registry -- fuzz_tests
+```

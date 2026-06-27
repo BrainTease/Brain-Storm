@@ -347,3 +347,5 @@ pub mod multisig;
 pub mod upgrade;
 
 mod tests;
+#[cfg(test)]
+mod upgrade_tests;
