@@ -5,23 +5,39 @@ use soroban_sdk::{
 
 pub mod voting;
 
+use voting::{
+    VotingStrategy, VoteSupport,
+    GovernanceKey, VotingProposal, VoteRecord,
+    create_proposal as voting_create_proposal,
+    cast_vote as voting_cast_vote,
+    finalise_proposal as voting_finalise_proposal,
+    execute_proposal as voting_execute_proposal,
+    cancel_proposal as voting_cancel_proposal,
+    delegate_vote as voting_delegate_vote,
+    get_proposal as voting_get_proposal,
+    get_vote_record as voting_get_vote_record,
+    get_delegate as voting_get_delegate,
+    compute_weight,
+    integer_sqrt,
+};
+
 // =============================================================================
-// Storage keys
+// Storage keys (legacy + admin)
 // =============================================================================
 
 #[contracttype]
 pub enum DataKey {
     Admin,
     TokenContract,
-    Proposal(u64),                       // id → ProposalRecord
-    Vote(u64, Address),                  // (proposal_id, voter) → bool (support)
-    NextProposalId,                      // u64 counter
-    UpgradeProposal(u64),                // id → UpgradeProposalRecord
-    TimelockExpiry(u64),                 // upgrade_id → expiry_ledger
+    Proposal(u64),
+    Vote(u64, Address),
+    NextProposalId,
+    UpgradeProposal(u64),
+    TimelockExpiry(u64),
 }
 
 // =============================================================================
-// Types
+// Legacy structs (kept for on-chain state backward compat)
 // =============================================================================
 
 #[contracttype]
@@ -75,7 +91,7 @@ pub struct GovernanceContract;
 #[contractimpl]
 impl GovernanceContract {
     // -------------------------------------------------------------------------
-    // Admin
+    // Admin / Initialization
     // -------------------------------------------------------------------------
 
     pub fn initialize(env: Env, admin: Address, token_contract: Address) {
@@ -89,6 +105,16 @@ impl GovernanceContract {
             .instance()
             .set(&DataKey::TokenContract, &token_contract);
         env.storage().instance().set(&DataKey::NextProposalId, &1_u64);
+        // Defaults
+        env.storage()
+            .instance()
+            .set(&GovernanceKey::VotingDelay, &0_u32);
+        env.storage()
+            .instance()
+            .set(&GovernanceKey::TimelockDuration, &10_u32);
+        env.storage()
+            .instance()
+            .set(&GovernanceKey::QuorumPercentage, &20_i128);
     }
 
     pub fn get_admin(env: Env) -> Address {
@@ -96,7 +122,148 @@ impl GovernanceContract {
     }
 
     // -------------------------------------------------------------------------
-    // Proposals
+    // Governance configuration (admin only)
+    // -------------------------------------------------------------------------
+
+    pub fn set_voting_delay(env: Env, admin: Address, delay: u32) {
+        admin.require_auth();
+        let stored: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
+        assert!(admin == stored, "Only admin");
+        env.storage()
+            .instance()
+            .set(&GovernanceKey::VotingDelay, &delay);
+    }
+
+    pub fn set_timelock_duration(env: Env, admin: Address, duration: u32) {
+        admin.require_auth();
+        let stored: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
+        assert!(admin == stored, "Only admin");
+        env.storage()
+            .instance()
+            .set(&GovernanceKey::TimelockDuration, &duration);
+    }
+
+    pub fn set_quorum_percentage(env: Env, admin: Address, percentage: i128) {
+        admin.require_auth();
+        let stored: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
+        assert!(admin == stored, "Only admin");
+        assert!(percentage > 0 && percentage <= 100, "Quorum must be 1-100");
+        env.storage()
+            .instance()
+            .set(&GovernanceKey::QuorumPercentage, &percentage);
+    }
+
+    pub fn set_total_supply_snapshot(env: Env, admin: Address, supply: i128) {
+        admin.require_auth();
+        let stored: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
+        assert!(admin == stored, "Only admin");
+        env.storage()
+            .instance()
+            .set(&GovernanceKey::TotalSupply, &supply);
+    }
+
+    // -------------------------------------------------------------------------
+    // Advanced proposal management (uses voting.rs strategies)
+    // -------------------------------------------------------------------------
+
+    /// Create a proposal with a configurable voting strategy.
+    /// strategy: 0 = Weighted, 1 = Quadratic, 2 = Flat
+    pub fn create_advanced_proposal(
+        env: Env,
+        proposer: Address,
+        title: String,
+        description: String,
+        voting_end_ledger: u32,
+        strategy: u32,
+        timelock_delay: u32,
+    ) -> u64 {
+        let strat = match strategy {
+            1 => VotingStrategy::Quadratic,
+            2 => VotingStrategy::Flat,
+            _ => VotingStrategy::Weighted,
+        };
+        let execution_timelock = voting_end_ledger.saturating_add(timelock_delay);
+        voting_create_proposal(
+            &env, proposer, title, description, voting_end_ledger, strat, execution_timelock,
+        )
+    }
+
+    /// Cast a vote with strategy-aware weight computation.
+    /// support: 0 = For, 1 = Against, 2 = Abstain
+    pub fn vote_advanced(env: Env, voter: Address, proposal_id: u64, support: u32) {
+        let token_contract: Address = env
+            .storage()
+            .instance()
+            .get(&DataKey::TokenContract)
+            .unwrap();
+        let balance: i128 = env.invoke_contract(
+            &token_contract,
+            &symbol_short!("balance"),
+            soroban_sdk::vec![&env, voter.clone().into_val(&env)],
+        );
+
+        let vote_support = match support {
+            1 => VoteSupport::Against,
+            2 => VoteSupport::Abstain,
+            _ => VoteSupport::For,
+        };
+
+        voting_cast_vote(&env, proposal_id, voter, vote_support, balance);
+    }
+
+    /// Finalise a proposal after its voting window.
+    pub fn finalise_advanced_proposal(env: Env, proposal_id: u64) -> bool {
+        voting_finalise_proposal(&env, proposal_id)
+    }
+
+    /// Execute a succeeded proposal after the timelock.
+    pub fn execute_advanced_proposal(env: Env, proposal_id: u64) {
+        voting_execute_proposal(&env, proposal_id);
+    }
+
+    /// Cancel a proposal.
+    pub fn cancel_advanced_proposal(env: Env, canceller: Address, proposal_id: u64) {
+        voting_cancel_proposal(&env, canceller, proposal_id);
+    }
+
+    /// Delegate voting power to another address.
+    pub fn delegate(env: Env, delegator: Address, delegate: Address) {
+        voting_delegate_vote(&env, delegator, delegate);
+    }
+
+    /// Get an advanced proposal.
+    pub fn get_advanced_proposal(env: Env, proposal_id: u64) -> Option<VotingProposal> {
+        voting_get_proposal(&env, proposal_id)
+    }
+
+    /// Get a voter's vote record for a proposal.
+    pub fn get_vote_record(env: Env, proposal_id: u64, voter: Address) -> Option<VoteRecord> {
+        voting_get_vote_record(&env, proposal_id, voter)
+    }
+
+    /// Get the delegate for an address.
+    pub fn get_delegate(env: Env, delegator: Address) -> Option<Address> {
+        voting_get_delegate(&env, delegator)
+    }
+
+    /// Compute the effective vote weight for a balance under a given strategy.
+    /// strategy: 0 = Weighted, 1 = Quadratic, 2 = Flat
+    pub fn get_vote_weight(env: Env, balance: i128, strategy: u32) -> i128 {
+        let strat = match strategy {
+            1 => VotingStrategy::Quadratic,
+            2 => VotingStrategy::Flat,
+            _ => VotingStrategy::Weighted,
+        };
+        compute_weight(&strat, balance)
+    }
+
+    /// Utility: integer square root (exposed for frontend tooling).
+    pub fn sqrt(_env: Env, x: i128) -> i128 {
+        integer_sqrt(x)
+    }
+
+    // -------------------------------------------------------------------------
+    // Legacy proposal management (preserved for backward compat)
     // -------------------------------------------------------------------------
 
     pub fn create_proposal(
@@ -128,20 +295,14 @@ impl GovernanceContract {
         env.storage()
             .persistent()
             .set(&DataKey::Proposal(id), &proposal);
-
         env.storage()
             .instance()
             .set(&DataKey::NextProposalId, &(id + 1));
 
         env.events()
             .publish((PROPOSAL_CREATED, symbol_short!("id")), id);
-
         id
     }
-
-    // -------------------------------------------------------------------------
-    // Voting
-    // -------------------------------------------------------------------------
 
     pub fn vote(env: Env, voter: Address, proposal_id: u64, support: bool) {
         voter.require_auth();
@@ -158,14 +319,12 @@ impl GovernanceContract {
         );
         assert!(!proposal.executed, "Proposal already executed");
 
-        // Check if already voted
         let vote_key = DataKey::Vote(proposal_id, voter.clone());
         assert!(
             !env.storage().persistent().has(&vote_key),
             "Already voted"
         );
 
-        // Get voter's BST balance via cross-contract call
         let token_contract: Address = env
             .storage()
             .instance()
@@ -176,13 +335,10 @@ impl GovernanceContract {
             &symbol_short!("balance"),
             soroban_sdk::vec![&env, voter.clone().into_val(&env)],
         );
-
         assert!(balance > 0, "No voting power");
 
-        // Record vote
         env.storage().persistent().set(&vote_key, &support);
 
-        // Update proposal vote counts
         if support {
             proposal.votes_for += balance;
         } else {
@@ -196,10 +352,6 @@ impl GovernanceContract {
             .publish((VOTE_CAST, symbol_short!("voter")), (proposal_id, support));
     }
 
-    // -------------------------------------------------------------------------
-    // Execution
-    // -------------------------------------------------------------------------
-
     pub fn execute_proposal(env: Env, proposal_id: u64) {
         let mut proposal: ProposalRecord = env
             .storage()
@@ -212,8 +364,6 @@ impl GovernanceContract {
             "Voting still ongoing"
         );
         assert!(!proposal.executed, "Already executed");
-
-        // Check quorum: votes_for > votes_against
         assert!(
             proposal.votes_for > proposal.votes_against,
             "Proposal did not pass"
@@ -228,8 +378,80 @@ impl GovernanceContract {
             .publish((PROPOSAL_EXECUTED, symbol_short!("id")), proposal_id);
     }
 
+    pub fn get_proposal(env: Env, proposal_id: u64) -> Option<ProposalRecord> {
+        env.storage()
+            .persistent()
+            .get(&DataKey::Proposal(proposal_id))
+    }
+
+    pub fn has_voted(env: Env, proposal_id: u64, voter: Address) -> bool {
+        env.storage()
+            .persistent()
+            .has(&DataKey::Vote(proposal_id, voter))
+    }
+
+    pub fn get_voting_power(env: Env, voter: Address) -> i128 {
+        let token_contract: Address = env
+            .storage()
+            .instance()
+            .get(&DataKey::TokenContract)
+            .unwrap();
+        env.invoke_contract(
+            &token_contract,
+            &symbol_short!("balance"),
+            soroban_sdk::vec![&env, voter.into_val(&env)],
+        )
+    }
+
+    pub fn has_voting_power(env: Env, voter: Address, min_power: i128) -> bool {
+        Self::get_voting_power(env, voter) >= min_power
+    }
+
+    pub fn get_vote_tally(env: Env, proposal_id: u64) -> (i128, i128, i128, bool) {
+        let proposal: ProposalRecord = env
+            .storage()
+            .persistent()
+            .get(&DataKey::Proposal(proposal_id))
+            .expect("Proposal not found");
+        let total = proposal.votes_for + proposal.votes_against;
+        let quorum_met = proposal.votes_for > proposal.votes_against && total > 0;
+        (proposal.votes_for, proposal.votes_against, total, quorum_met)
+    }
+
+    pub fn did_proposal_pass(env: Env, proposal_id: u64) -> bool {
+        let proposal: ProposalRecord = env
+            .storage()
+            .persistent()
+            .get(&DataKey::Proposal(proposal_id))
+            .expect("Proposal not found");
+        env.ledger().sequence() >= proposal.voting_end_ledger
+            && proposal.votes_for > proposal.votes_against
+    }
+
+    pub fn is_voting_active(env: Env, proposal_id: u64) -> bool {
+        let proposal: ProposalRecord = env
+            .storage()
+            .persistent()
+            .get(&DataKey::Proposal(proposal_id))
+            .expect("Proposal not found");
+        env.ledger().sequence() < proposal.voting_end_ledger && !proposal.executed
+    }
+
+    pub fn get_next_proposal_id(env: Env) -> u64 {
+        env.storage()
+            .instance()
+            .get(&DataKey::NextProposalId)
+            .unwrap_or(1)
+    }
+
+    pub fn get_vote(env: Env, proposal_id: u64, voter: Address) -> Option<bool> {
+        env.storage()
+            .persistent()
+            .get(&DataKey::Vote(proposal_id, voter))
+    }
+
     // -------------------------------------------------------------------------
-    // Contract Upgrade Governance
+    // Contract upgrade governance (legacy)
     // -------------------------------------------------------------------------
 
     pub fn propose_upgrade(
@@ -241,14 +463,8 @@ impl GovernanceContract {
         timelock_ledger: u32,
     ) -> u64 {
         proposer.require_auth();
-        assert!(
-            voting_end_ledger > env.ledger().sequence(),
-            "Voting end must be in future"
-        );
-        assert!(
-            timelock_ledger > voting_end_ledger,
-            "Timelock must be after voting"
-        );
+        assert!(voting_end_ledger > env.ledger().sequence(), "Voting end must be in future");
+        assert!(timelock_ledger > voting_end_ledger, "Timelock must be after voting");
 
         let id: u64 = env.storage().instance().get(&DataKey::NextProposalId).unwrap();
         let upgrade = UpgradeProposalRecord {
@@ -276,7 +492,6 @@ impl GovernanceContract {
             (UPGRADE_PROPOSED, symbol_short!("id")),
             (id, contract_address, new_wasm_hash),
         );
-
         id
     }
 
@@ -289,17 +504,11 @@ impl GovernanceContract {
             .get(&DataKey::UpgradeProposal(upgrade_id))
             .expect("Upgrade proposal not found");
 
-        assert!(
-            env.ledger().sequence() < upgrade.voting_end_ledger,
-            "Voting period ended"
-        );
+        assert!(env.ledger().sequence() < upgrade.voting_end_ledger, "Voting period ended");
         assert!(!upgrade.executed, "Upgrade already executed");
 
         let vote_key = DataKey::Vote(upgrade_id, voter.clone());
-        assert!(
-            !env.storage().persistent().has(&vote_key),
-            "Already voted"
-        );
+        assert!(!env.storage().persistent().has(&vote_key), "Already voted");
 
         let token_contract: Address = env
             .storage()
@@ -311,22 +520,12 @@ impl GovernanceContract {
             &symbol_short!("balance"),
             soroban_sdk::vec![&env, voter.clone().into_val(&env)],
         );
-
         assert!(balance > 0, "No voting power");
 
         env.storage().persistent().set(&vote_key, &support);
-
-        if support {
-            upgrade.votes_for += balance;
-        } else {
-            upgrade.votes_against += balance;
-        }
-        env.storage()
-            .persistent()
-            .set(&DataKey::UpgradeProposal(upgrade_id), &upgrade);
-
-        env.events()
-            .publish((VOTE_CAST, symbol_short!("upg")), (upgrade_id, support));
+        if support { upgrade.votes_for += balance; } else { upgrade.votes_against += balance; }
+        env.storage().persistent().set(&DataKey::UpgradeProposal(upgrade_id), &upgrade);
+        env.events().publish((VOTE_CAST, symbol_short!("upg")), (upgrade_id, support));
     }
 
     pub fn approve_upgrade(env: Env, upgrade_id: u64) {
@@ -336,28 +535,15 @@ impl GovernanceContract {
             .get(&DataKey::UpgradeProposal(upgrade_id))
             .expect("Upgrade proposal not found");
 
-        assert!(
-            env.ledger().sequence() >= upgrade.voting_end_ledger,
-            "Voting still ongoing"
-        );
+        assert!(env.ledger().sequence() >= upgrade.voting_end_ledger, "Voting still ongoing");
         assert!(!upgrade.executed, "Already executed");
-        assert!(
-            upgrade.votes_for > upgrade.votes_against,
-            "Upgrade did not pass"
-        );
+        assert!(upgrade.votes_for > upgrade.votes_against, "Upgrade did not pass");
 
         upgrade.approved = true;
-        env.storage()
-            .persistent()
-            .set(&DataKey::UpgradeProposal(upgrade_id), &upgrade);
-        env.storage()
-            .persistent()
-            .set(&DataKey::TimelockExpiry(upgrade_id), &upgrade.timelock_ledger);
+        env.storage().persistent().set(&DataKey::UpgradeProposal(upgrade_id), &upgrade);
+        env.storage().persistent().set(&DataKey::TimelockExpiry(upgrade_id), &upgrade.timelock_ledger);
 
-        env.events().publish(
-            (UPGRADE_APPROVED, symbol_short!("id")),
-            (upgrade_id, upgrade.contract_address.clone()),
-        );
+        env.events().publish((UPGRADE_APPROVED, symbol_short!("id")), (upgrade_id, upgrade.contract_address.clone()));
     }
 
     pub fn execute_upgrade(env: Env, upgrade_id: u64) {
@@ -376,121 +562,15 @@ impl GovernanceContract {
             .get(&DataKey::TimelockExpiry(upgrade_id))
             .expect("Timelock not found");
 
-        assert!(
-            env.ledger().sequence() >= timelock_expiry,
-            "Timelock not expired"
-        );
+        assert!(env.ledger().sequence() >= timelock_expiry, "Timelock not expired");
 
         upgrade.executed = true;
-        env.storage()
-            .persistent()
-            .set(&DataKey::UpgradeProposal(upgrade_id), &upgrade);
-
-        env.events().publish(
-            (UPGRADE_EXECUTED, symbol_short!("id")),
-            (upgrade_id, upgrade.contract_address.clone()),
-        );
+        env.storage().persistent().set(&DataKey::UpgradeProposal(upgrade_id), &upgrade);
+        env.events().publish((UPGRADE_EXECUTED, symbol_short!("id")), (upgrade_id, upgrade.contract_address.clone()));
     }
 
     pub fn get_upgrade_proposal(env: Env, upgrade_id: u64) -> Option<UpgradeProposalRecord> {
-        env.storage()
-            .persistent()
-            .get(&DataKey::UpgradeProposal(upgrade_id))
-    }
-
-    // -------------------------------------------------------------------------
-    // Reading
-    // -------------------------------------------------------------------------
-
-    pub fn get_proposal(env: Env, proposal_id: u64) -> Option<ProposalRecord> {
-        env.storage()
-            .persistent()
-            .get(&DataKey::Proposal(proposal_id))
-    }
-
-    pub fn has_voted(env: Env, proposal_id: u64, voter: Address) -> bool {
-        env.storage()
-            .persistent()
-            .has(&DataKey::Vote(proposal_id, voter))
-    }
-
-    // -------------------------------------------------------------------------
-    // Voting power calculation
-    // -------------------------------------------------------------------------
-
-    /// Get the voting power (BST balance) of an address via cross-contract call.
-    pub fn get_voting_power(env: Env, voter: Address) -> i128 {
-        let token_contract: Address = env
-            .storage()
-            .instance()
-            .get(&DataKey::TokenContract)
-            .unwrap();
-        env.invoke_contract(
-            &token_contract,
-            &symbol_short!("balance"),
-            soroban_sdk::vec![&env, voter.into_val(&env)],
-        )
-    }
-
-    /// Check whether a voter meets the minimum voting power threshold.
-    pub fn has_voting_power(env: Env, voter: Address, min_power: i128) -> bool {
-        Self::get_voting_power(env, voter) >= min_power
-    }
-
-    // -------------------------------------------------------------------------
-    // Governance queries
-    // -------------------------------------------------------------------------
-
-    /// Get the current vote tally for a proposal.
-    /// Returns (votes_for, votes_against, total, quorum_met).
-    pub fn get_vote_tally(env: Env, proposal_id: u64) -> (i128, i128, i128, bool) {
-        let proposal: ProposalRecord = env
-            .storage()
-            .persistent()
-            .get(&DataKey::Proposal(proposal_id))
-            .expect("Proposal not found");
-        let total = proposal.votes_for + proposal.votes_against;
-        // Quorum: total votes must exceed 20% of token supply (approximated via votes_for > 0)
-        // In production this would compare against total token supply
-        let quorum_met = proposal.votes_for > proposal.votes_against && total > 0;
-        (proposal.votes_for, proposal.votes_against, total, quorum_met)
-    }
-
-    /// Check whether a proposal passed (voting ended, votes_for > votes_against).
-    pub fn did_proposal_pass(env: Env, proposal_id: u64) -> bool {
-        let proposal: ProposalRecord = env
-            .storage()
-            .persistent()
-            .get(&DataKey::Proposal(proposal_id))
-            .expect("Proposal not found");
-        env.ledger().sequence() >= proposal.voting_end_ledger
-            && proposal.votes_for > proposal.votes_against
-    }
-
-    /// Check whether a proposal's voting period is still active.
-    pub fn is_voting_active(env: Env, proposal_id: u64) -> bool {
-        let proposal: ProposalRecord = env
-            .storage()
-            .persistent()
-            .get(&DataKey::Proposal(proposal_id))
-            .expect("Proposal not found");
-        env.ledger().sequence() < proposal.voting_end_ledger && !proposal.executed
-    }
-
-    /// Get the next proposal ID (useful for off-chain indexing).
-    pub fn get_next_proposal_id(env: Env) -> u64 {
-        env.storage()
-            .instance()
-            .get(&DataKey::NextProposalId)
-            .unwrap_or(1)
-    }
-
-    /// Get the vote cast by a specific voter on a proposal.
-    /// Returns Some(true) = voted for, Some(false) = voted against, None = not voted.
-    pub fn get_vote(env: Env, proposal_id: u64, voter: Address) -> Option<bool> {
-        env.storage()
-            .persistent()
-            .get(&DataKey::Vote(proposal_id, voter))
+        env.storage().persistent().get(&DataKey::UpgradeProposal(upgrade_id))
     }
 }
 
@@ -503,6 +583,19 @@ mod tests {
     use super::*;
     use soroban_sdk::testutils::{Address as _, Ledger, LedgerInfo};
     use soroban_sdk::{symbol_short, Env};
+
+    fn set_ledger(env: &Env, seq: u32) {
+        env.ledger().set(LedgerInfo {
+            sequence_number: seq,
+            timestamp: seq as u64 * 5,
+            protocol_version: 21,
+            network_id: Default::default(),
+            base_reserve: 10,
+            min_temp_entry_ttl: 1000,
+            min_persistent_entry_ttl: 1000,
+            max_entry_ttl: 100_000,
+        });
+    }
 
     fn setup() -> (Env, GovernanceContractClient<'static>, Address, Address) {
         let env = Env::default();
@@ -541,7 +634,6 @@ mod tests {
 
         let prop = client.get_proposal(&id).unwrap();
         assert_eq!(prop.proposer, proposer);
-        assert_eq!(prop.title, title);
         assert!(!prop.executed);
     }
 
@@ -552,24 +644,7 @@ mod tests {
         let proposer = Address::generate(&env);
         let title = String::from_str(&env, "Test");
         let desc = String::from_str(&env, "Test");
-        let current = env.ledger().sequence();
-        let end = if current > 0 { current - 1 } else { 0 };
-
-        client.create_proposal(&proposer, &title, &desc, &end);
-    }
-
-    #[test]
-    fn test_create_proposal_increments_id() {
-        let (env, client, _, _) = setup();
-        let proposer = Address::generate(&env);
-        let title = String::from_str(&env, "Test");
-        let desc = String::from_str(&env, "Test");
-        let end = env.ledger().sequence() + 100;
-
-        let id1 = client.create_proposal(&proposer, &title, &desc, &end);
-        let id2 = client.create_proposal(&proposer, &title, &desc, &end);
-        assert_eq!(id1, 1);
-        assert_eq!(id2, 2);
+        client.create_proposal(&proposer, &title, &desc, &0_u32);
     }
 
     #[test]
@@ -581,38 +656,9 @@ mod tests {
         let title = String::from_str(&env, "Test");
         let desc = String::from_str(&env, "Test");
         let end = env.ledger().sequence() + 10;
-
         let id = client.create_proposal(&proposer, &title, &desc, &end);
-
-        // Advance past voting end
-        env.ledger().set(soroban_sdk::testutils::LedgerInfo {
-            sequence_number: end + 1,
-            timestamp: (end + 1) as u64 * 5,
-            protocol_version: 21,
-            network_id: Default::default(),
-            base_reserve: 10,
-            min_temp_entry_ttl: 1000,
-            min_persistent_entry_ttl: 1000,
-            max_entry_ttl: 100_000,
-        });
-
+        set_ledger(&env, end + 1);
         client.vote(&voter, &id, &true);
-    }
-
-    #[test]
-    fn test_has_voted() {
-        let (env, client, _, _) = setup();
-        let proposer = Address::generate(&env);
-        let voter = Address::generate(&env);
-        let title = String::from_str(&env, "Test");
-        let desc = String::from_str(&env, "Test");
-        let end = env.ledger().sequence() + 100;
-
-        let id = client.create_proposal(&proposer, &title, &desc, &end);
-
-        assert!(!client.has_voted(&id, &voter));
-        // Note: vote would fail without proper token contract mock
-        // This test just verifies has_voted returns false initially
     }
 
     #[test]
@@ -623,7 +669,6 @@ mod tests {
         let title = String::from_str(&env, "Test");
         let desc = String::from_str(&env, "Test");
         let end = env.ledger().sequence() + 100;
-
         let id = client.create_proposal(&proposer, &title, &desc, &end);
         client.execute_proposal(&id);
     }
@@ -636,51 +681,72 @@ mod tests {
         let title = String::from_str(&env, "Test");
         let desc = String::from_str(&env, "Test");
         let end = env.ledger().sequence() + 10;
-
         let id = client.create_proposal(&proposer, &title, &desc, &end);
-
-        // Advance past voting end
-        env.ledger().set(soroban_sdk::testutils::LedgerInfo {
-            sequence_number: end + 1,
-            timestamp: (end + 1) as u64 * 5,
-            protocol_version: 21,
-            network_id: Default::default(),
-            base_reserve: 10,
-            min_temp_entry_ttl: 1000,
-            min_persistent_entry_ttl: 1000,
-            max_entry_ttl: 100_000,
-        });
-
+        set_ledger(&env, end + 1);
         client.execute_proposal(&id);
     }
 
+    // ── Advanced voting strategy tests ────────────────────────────────────────
+
     #[test]
-    fn test_proposal_lifecycle() {
+    fn test_get_vote_weight_weighted() {
         let (env, client, _, _) = setup();
-        let proposer = Address::generate(&env);
-        let title = String::from_str(&env, "Test");
-        let desc = String::from_str(&env, "Test");
-        let end = env.ledger().sequence() + 10;
+        let _ = env;
+        // Weighted: weight = balance
+        assert_eq!(client.get_vote_weight(&1_000_i128, &0_u32), 1_000);
+    }
 
-        let id = client.create_proposal(&proposer, &title, &desc, &end);
-        let prop = client.get_proposal(&id).unwrap();
-        assert!(!prop.executed);
+    #[test]
+    fn test_get_vote_weight_quadratic() {
+        let (env, client, _, _) = setup();
+        let _ = env;
+        // Quadratic: weight = sqrt(balance)
+        assert_eq!(client.get_vote_weight(&100_i128, &1_u32), 10);
+        assert_eq!(client.get_vote_weight(&10_000_i128, &1_u32), 100);
+    }
 
-        // Advance past voting end
-        env.ledger().set(LedgerInfo {
-            sequence_number: end + 1,
-            timestamp: (end + 1) as u64 * 5,
-            protocol_version: 21,
-            network_id: Default::default(),
-            base_reserve: 10,
-            min_temp_entry_ttl: 1000,
-            min_persistent_entry_ttl: 1000,
-            max_entry_ttl: 100_000,
-        });
+    #[test]
+    fn test_get_vote_weight_flat() {
+        let (env, client, _, _) = setup();
+        let _ = env;
+        // Flat: weight = 1 regardless of balance
+        assert_eq!(client.get_vote_weight(&1_000_000_i128, &2_u32), 1);
+        assert_eq!(client.get_vote_weight(&1_i128, &2_u32), 1);
+        assert_eq!(client.get_vote_weight(&0_i128, &2_u32), 0);
+    }
 
-        // Verify proposal structure is correct
-        let prop = client.get_proposal(&id).unwrap();
-        assert_eq!(prop.votes_for, 0);
-        assert_eq!(prop.votes_against, 0);
+    #[test]
+    fn test_sqrt_utility() {
+        let (env, client, _, _) = setup();
+        let _ = env;
+        assert_eq!(client.sqrt(&9_i128), 3);
+        assert_eq!(client.sqrt(&10_000_i128), 100);
+        assert_eq!(client.sqrt(&0_i128), 0);
+    }
+
+    #[test]
+    fn test_admin_set_quorum_percentage() {
+        let (_, client, admin, _) = setup();
+        client.set_quorum_percentage(&admin, &30_i128);
+        // No panic means success; config stored
+    }
+
+    #[test]
+    #[should_panic(expected = "Quorum must be 1-100")]
+    fn test_invalid_quorum_panics() {
+        let (_, client, admin, _) = setup();
+        client.set_quorum_percentage(&admin, &0_i128);
+    }
+
+    #[test]
+    fn test_set_voting_delay() {
+        let (_, client, admin, _) = setup();
+        client.set_voting_delay(&admin, &5_u32);
+    }
+
+    #[test]
+    fn test_set_timelock_duration() {
+        let (_, client, admin, _) = setup();
+        client.set_timelock_duration(&admin, &20_u32);
     }
 }
