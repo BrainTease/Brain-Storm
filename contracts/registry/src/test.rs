@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod test {
     use crate::{RegistryContract, RegistryContractClient, VerificationLevel};
-    use soroban_sdk::{symbol_short, testutils::Address as _, Address, Env, Vec};
+    use soroban_sdk::{symbol_short, testutils::Address as _, vec, Address, Env, Vec};
 
     fn setup() -> (Env, RegistryContractClient<'static>, Address) {
         let env = Env::default();
@@ -274,5 +274,161 @@ mod test {
         assert_eq!(page2.len(), 2);
         let page3 = client.list_users_by_level(&VerificationLevel::Basic, &4, &2);
         assert_eq!(page3.len(), 0);
+    }
+
+    // ── Pausable (#663) ───────────────────────────────────────────────────────
+
+    #[test]
+    fn test_pause_and_unpause() {
+        let (_, client, admin) = setup();
+        assert!(!client.is_paused());
+        client.pause(&admin);
+        assert!(client.is_paused());
+        client.unpause(&admin);
+        assert!(!client.is_paused());
+    }
+
+    #[test]
+    #[should_panic(expected = "Only admin")]
+    fn test_non_admin_cannot_pause() {
+        let (env, client, _) = setup();
+        let rando = Address::generate(&env);
+        client.pause(&rando);
+    }
+
+    #[test]
+    #[should_panic(expected = "Only admin")]
+    fn test_non_admin_cannot_unpause() {
+        let (env, client, admin) = setup();
+        client.pause(&admin);
+        let rando = Address::generate(&env);
+        client.unpause(&rando);
+    }
+
+    #[test]
+    #[should_panic(expected = "Contract is paused")]
+    fn test_set_verification_level_blocked_when_paused() {
+        let (env, client, admin) = setup();
+        client.pause(&admin);
+        let user = Address::generate(&env);
+        client.set_verification_level(&admin, &user, &VerificationLevel::Basic);
+    }
+
+    #[test]
+    #[should_panic(expected = "Contract is paused")]
+    fn test_add_skill_blocked_when_paused() {
+        let (env, client, admin) = setup();
+        client.pause(&admin);
+        let user = Address::generate(&env);
+        client.add_certified_skill(&admin, &user, &symbol_short!("rust"), &0);
+    }
+
+    #[test]
+    #[should_panic(expected = "Contract is paused")]
+    fn test_set_specialisations_blocked_when_paused() {
+        let (env, client, admin) = setup();
+        client.pause(&admin);
+        let user = Address::generate(&env);
+        client.set_specialisations(&admin, &user, &Vec::new(&env));
+    }
+
+    #[test]
+    fn test_read_ops_allowed_when_paused() {
+        let (env, client, admin) = setup();
+        let user = Address::generate(&env);
+        client.set_verification_level(&admin, &user, &VerificationLevel::Expert);
+        client.pause(&admin);
+        // Read is always allowed
+        assert_eq!(client.get_verification_level(&user), VerificationLevel::Expert);
+    }
+
+    #[test]
+    fn test_mutations_resume_after_unpause() {
+        let (env, client, admin) = setup();
+        let user = Address::generate(&env);
+        client.pause(&admin);
+        client.unpause(&admin);
+        // Should not panic
+        client.set_verification_level(&admin, &user, &VerificationLevel::Basic);
+        assert_eq!(client.get_verification_level(&user), VerificationLevel::Basic);
+    }
+
+    // ── Batch operations (#662) ───────────────────────────────────────────────
+
+    #[test]
+    fn test_batch_register_users() {
+        let (env, client, _) = setup();
+        let u1 = Address::generate(&env);
+        let u2 = Address::generate(&env);
+        let u3 = Address::generate(&env);
+        let users = vec![&env, u1.clone(), u2.clone(), u3.clone()];
+        client.batch_register_users(&users);
+        assert_eq!(client.total_users(), 3);
+    }
+
+    #[test]
+    fn test_batch_register_idempotent() {
+        let (env, client, _) = setup();
+        let u = Address::generate(&env);
+        let users = vec![&env, u.clone()];
+        client.batch_register_users(&users);
+        client.batch_register_users(&users);
+        assert_eq!(client.total_users(), 1);
+    }
+
+    #[test]
+    #[should_panic(expected = "Contract is paused")]
+    fn test_batch_register_blocked_when_paused() {
+        let (env, client, admin) = setup();
+        client.pause(&admin);
+        let u = Address::generate(&env);
+        let users = vec![&env, u.clone()];
+        client.batch_register_users(&users);
+    }
+
+    #[test]
+    fn test_batch_set_verification_levels() {
+        let (env, client, admin) = setup();
+        let u1 = Address::generate(&env);
+        let u2 = Address::generate(&env);
+        let u3 = Address::generate(&env);
+        let users = vec![&env, u1.clone(), u2.clone(), u3.clone()];
+        client.batch_set_verification_levels(&admin, &users, &VerificationLevel::Advanced);
+        assert_eq!(client.get_verification_level(&u1), VerificationLevel::Advanced);
+        assert_eq!(client.get_verification_level(&u2), VerificationLevel::Advanced);
+        assert_eq!(client.get_verification_level(&u3), VerificationLevel::Advanced);
+    }
+
+    #[test]
+    #[should_panic(expected = "Unauthorized: admin or curator required")]
+    fn test_batch_set_levels_non_admin_rejected() {
+        let (env, client, _) = setup();
+        let rando = Address::generate(&env);
+        let u = Address::generate(&env);
+        let users = vec![&env, u.clone()];
+        client.batch_set_verification_levels(&rando, &users, &VerificationLevel::Basic);
+    }
+
+    #[test]
+    #[should_panic(expected = "Contract is paused")]
+    fn test_batch_set_levels_blocked_when_paused() {
+        let (env, client, admin) = setup();
+        client.pause(&admin);
+        let u = Address::generate(&env);
+        let users = vec![&env, u.clone()];
+        client.batch_set_verification_levels(&admin, &users, &VerificationLevel::Basic);
+    }
+
+    #[test]
+    fn test_batch_curator_can_set_levels() {
+        let (env, client, admin) = setup();
+        let curator = Address::generate(&env);
+        client.add_curator(&admin, &curator);
+        let u1 = Address::generate(&env);
+        let u2 = Address::generate(&env);
+        let users = vec![&env, u1.clone(), u2.clone()];
+        client.batch_set_verification_levels(&curator, &users, &VerificationLevel::Expert);
+        assert_eq!(client.get_verification_level(&u1), VerificationLevel::Expert);
+        assert_eq!(client.get_verification_level(&u2), VerificationLevel::Expert);
     }
 }

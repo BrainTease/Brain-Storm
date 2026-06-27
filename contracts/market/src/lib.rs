@@ -1,5 +1,7 @@
 #![no_std]
 //! Market contract — escrow, tips, protocol fees (#660) and multi-sig escrow (#658).
+//! #663: Pausable/emergency-stop mechanism.
+//! #662: Batch operations.
 
 use soroban_sdk::{
     contract, contractimpl, contracttype, symbol_short, Address, Env, Symbol, Vec,
@@ -18,7 +20,16 @@ pub enum DataKey {
     TreasuryBalance,
     Escrow(u64),
     NextEscrowId,
+    Paused, // #663
 }
+
+// ── Events ────────────────────────────────────────────────────────────────────
+const EVT_PAUSED: Symbol = symbol_short!("paused");
+const EVT_UNPAUSED: Symbol = symbol_short!("unpaused");
+const EVT_ESCROW_FUNDED: Symbol = symbol_short!("es_fund");
+const EVT_ESCROW_SETTLED: Symbol = symbol_short!("es_settl");
+const EVT_ESCROW_REFUNDED: Symbol = symbol_short!("es_refnd");
+const EVT_TIP: Symbol = symbol_short!("tip");
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -40,11 +51,15 @@ pub struct Escrow {
     pub status: EscrowStatus,
 }
 
-// ── Events ────────────────────────────────────────────────────────────────────
-const EVT_ESCROW_FUNDED: Symbol = symbol_short!("es_fund");
-const EVT_ESCROW_SETTLED: Symbol = symbol_short!("es_settl");
-const EVT_ESCROW_REFUNDED: Symbol = symbol_short!("es_refnd");
-const EVT_TIP: Symbol = symbol_short!("tip");
+// ── Batch result type (#662) ──────────────────────────────────────────────────
+
+#[contracttype]
+#[derive(Clone)]
+pub struct BatchEscrowResult {
+    pub escrow_id: u64,
+    pub net: i128,
+    pub fee: i128,
+}
 
 #[contract]
 pub struct MarketContract;
@@ -57,10 +72,35 @@ impl MarketContract {
         assert!(!env.storage().instance().has(&DataKey::Admin), "Already initialized");
         admin.require_auth();
         env.storage().instance().set(&DataKey::Admin, &admin);
+        env.storage().instance().set(&DataKey::Paused, &false);
     }
 
     pub fn get_admin(env: Env) -> Address {
         env.storage().instance().get(&DataKey::Admin).unwrap()
+    }
+
+    // ── Pausable (#663) ───────────────────────────────────────────────────────
+
+    /// Pause all mutating operations. Admin only.
+    pub fn pause(env: Env, admin: Address) {
+        admin.require_auth();
+        Self::assert_admin_addr(&env, &admin);
+        assert!(!Self::is_paused_internal(&env), "Already paused");
+        env.storage().instance().set(&DataKey::Paused, &true);
+        env.events().publish((EVT_PAUSED,), admin);
+    }
+
+    /// Resume all operations. Admin only.
+    pub fn unpause(env: Env, admin: Address) {
+        admin.require_auth();
+        Self::assert_admin_addr(&env, &admin);
+        assert!(Self::is_paused_internal(&env), "Not paused");
+        env.storage().instance().set(&DataKey::Paused, &false);
+        env.events().publish((EVT_UNPAUSED,), admin);
+    }
+
+    pub fn is_paused(env: Env) -> bool {
+        Self::is_paused_internal(&env)
     }
 
     // ── Fee configuration (#660) ──────────────────────────────────────────────
@@ -86,8 +126,9 @@ impl MarketContract {
 
     // ── Escrow (#660) ─────────────────────────────────────────────────────────
 
-    /// Fund an escrow (caller is the payer).
+    /// Fund an escrow (caller is the payer). Blocked when paused.
     pub fn fund_escrow(env: Env, payer: Address, payee: Address, amount: i128) -> u64 {
+        Self::require_not_paused(&env);
         payer.require_auth();
         assert!(amount > 0, "Amount must be positive");
 
@@ -105,8 +146,9 @@ impl MarketContract {
     }
 
     /// Settle escrow: apply fee → treasury, net → payee.
-    /// Only the payer or admin may settle.
+    /// Only the payer or admin may settle. Blocked when paused.
     pub fn settle_escrow(env: Env, caller: Address, escrow_id: u64) -> (i128, i128) {
+        Self::require_not_paused(&env);
         caller.require_auth();
 
         let mut escrow: Escrow = env
@@ -132,11 +174,11 @@ impl MarketContract {
         (net, fee)
     }
 
-    /// Refund escrow back to payer (admin-only).
+    /// Refund escrow back to payer (admin-only). Blocked when paused.
     pub fn refund_escrow(env: Env, admin: Address, escrow_id: u64) {
+        Self::require_not_paused(&env);
         admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin");
+        Self::assert_admin_addr(&env, &admin);
 
         let mut escrow: Escrow = env
             .storage()
@@ -157,8 +199,9 @@ impl MarketContract {
 
     // ── Tip (#660) ────────────────────────────────────────────────────────────
 
-    /// Send a tip: fee → treasury, net returned to caller for actual token transfer.
+    /// Send a tip: fee → treasury, net returned. Blocked when paused.
     pub fn tip(env: Env, tipper: Address, amount: i128) -> (i128, i128) {
+        Self::require_not_paused(&env);
         tipper.require_auth();
         assert!(amount > 0, "Amount must be positive");
         let fee_bps = fees::get_fee_bps(&env);
@@ -166,6 +209,65 @@ impl MarketContract {
         fees::accrue_fee(&env, fee);
         env.events().publish((EVT_TIP,), (tipper, amount, fee, net));
         (net, fee)
+    }
+
+    // ── Batch operations (#662) ───────────────────────────────────────────────
+
+    /// Settle multiple escrows in one transaction. Blocked when paused.
+    /// Caller must be admin or payer of each escrow.
+    pub fn batch_settle_escrows(
+        env: Env,
+        caller: Address,
+        escrow_ids: Vec<u64>,
+    ) -> Vec<BatchEscrowResult> {
+        Self::require_not_paused(&env);
+        caller.require_auth();
+        let admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
+        let fee_bps = fees::get_fee_bps(&env);
+
+        let mut results = Vec::new(&env);
+        for escrow_id in escrow_ids.iter() {
+            let mut escrow: Escrow = env
+                .storage()
+                .persistent()
+                .get(&DataKey::Escrow(escrow_id))
+                .expect("Escrow not found");
+
+            assert!(escrow.status == EscrowStatus::Funded, "Escrow not funded");
+            assert!(caller == escrow.payer || caller == admin, "Unauthorized");
+
+            let (fee, net) = fees::compute_fee(escrow.amount, fee_bps);
+            fees::accrue_fee(&env, fee);
+
+            escrow.status = EscrowStatus::Settled;
+            env.storage().persistent().set(&DataKey::Escrow(escrow_id), &escrow);
+            env.events()
+                .publish((EVT_ESCROW_SETTLED,), (escrow_id, escrow.payee, net, fee));
+
+            results.push_back(BatchEscrowResult { escrow_id, net, fee });
+        }
+        results
+    }
+
+    /// Refund multiple escrows in one transaction (admin-only). Blocked when paused.
+    pub fn batch_refund_escrows(env: Env, admin: Address, escrow_ids: Vec<u64>) {
+        Self::require_not_paused(&env);
+        admin.require_auth();
+        Self::assert_admin_addr(&env, &admin);
+
+        for escrow_id in escrow_ids.iter() {
+            let mut escrow: Escrow = env
+                .storage()
+                .persistent()
+                .get(&DataKey::Escrow(escrow_id))
+                .expect("Escrow not found");
+
+            assert!(escrow.status == EscrowStatus::Funded, "Escrow not funded");
+            escrow.status = EscrowStatus::Refunded;
+            env.storage().persistent().set(&DataKey::Escrow(escrow_id), &escrow);
+            env.events()
+                .publish((EVT_ESCROW_REFUNDED,), (escrow_id, escrow.payer.clone(), escrow.amount));
+        }
     }
 
     // ── Multi-sig escrow (#658) ───────────────────────────────────────────────
@@ -193,7 +295,25 @@ impl MarketContract {
     pub fn ms_get_escrow(env: Env, escrow_id: u64) -> Option<multisig_escrow::MsEscrow> {
         multisig_escrow::get_ms_escrow(&env, escrow_id)
     }
+
+    // ── Internal helpers ──────────────────────────────────────────────────────
+
+    fn is_paused_internal(env: &Env) -> bool {
+        env.storage().instance().get(&DataKey::Paused).unwrap_or(false)
+    }
+
+    fn require_not_paused(env: &Env) {
+        assert!(!Self::is_paused_internal(env), "Contract is paused");
+    }
+
+    fn assert_admin_addr(env: &Env, caller: &Address) {
+        let admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
+        assert!(*caller == admin, "Only admin");
+    }
 }
+
+#[cfg(test)]
+mod fuzz_tests;
 
 #[cfg(test)]
 mod tests {
@@ -221,7 +341,7 @@ mod tests {
     #[test]
     fn test_set_fee_bps() {
         let (_, client, admin) = setup();
-        client.set_fee_bps(&admin, &200); // 2 %
+        client.set_fee_bps(&admin, &200);
         assert_eq!(client.get_fee_bps(), 200);
     }
 
@@ -240,19 +360,90 @@ mod tests {
         client.set_fee_bps(&rando, &100);
     }
 
+    // ── Pausable (#663) ───────────────────────────────────────────────────────
+
+    #[test]
+    fn test_pause_and_unpause() {
+        let (_, client, admin) = setup();
+        assert!(!client.is_paused());
+        client.pause(&admin);
+        assert!(client.is_paused());
+        client.unpause(&admin);
+        assert!(!client.is_paused());
+    }
+
+    #[test]
+    #[should_panic(expected = "Only admin")]
+    fn test_non_admin_cannot_pause() {
+        let (env, client, _) = setup();
+        let rando = Address::generate(&env);
+        client.pause(&rando);
+    }
+
+    #[test]
+    #[should_panic(expected = "Only admin")]
+    fn test_non_admin_cannot_unpause() {
+        let (env, client, admin) = setup();
+        client.pause(&admin);
+        let rando = Address::generate(&env);
+        client.unpause(&rando);
+    }
+
+    #[test]
+    #[should_panic(expected = "Contract is paused")]
+    fn test_fund_escrow_blocked_when_paused() {
+        let (env, client, admin) = setup();
+        client.pause(&admin);
+        let payer = Address::generate(&env);
+        let payee = Address::generate(&env);
+        client.fund_escrow(&payer, &payee, &100);
+    }
+
+    #[test]
+    #[should_panic(expected = "Contract is paused")]
+    fn test_settle_escrow_blocked_when_paused() {
+        let (env, client, admin) = setup();
+        let payer = Address::generate(&env);
+        let payee = Address::generate(&env);
+        let id = client.fund_escrow(&payer, &payee, &100);
+        client.pause(&admin);
+        client.settle_escrow(&payer, &id);
+    }
+
+    #[test]
+    #[should_panic(expected = "Contract is paused")]
+    fn test_tip_blocked_when_paused() {
+        let (env, client, admin) = setup();
+        client.pause(&admin);
+        let tipper = Address::generate(&env);
+        client.tip(&tipper, &100);
+    }
+
+    #[test]
+    fn test_operations_resume_after_unpause() {
+        let (env, client, admin) = setup();
+        let payer = Address::generate(&env);
+        let payee = Address::generate(&env);
+        client.pause(&admin);
+        client.unpause(&admin);
+        // Should not panic
+        let id = client.fund_escrow(&payer, &payee, &100);
+        assert!(id > 0);
+    }
+
     // ── Escrow + fee ──────────────────────────────────────────────────────────
 
     #[test]
     fn test_settle_applies_fee() {
         let (env, client, admin) = setup();
         let treasury = Address::generate(&env);
-        client.set_fee_bps(&admin, &200); // 2 %
+        client.set_fee_bps(&admin, &200);
         client.set_treasury(&admin, &treasury);
         let payer = Address::generate(&env);
         let payee = Address::generate(&env);
         let id = client.fund_escrow(&payer, &payee, &1_000_000);
         let (net, fee) = client.settle_escrow(&payer, &id);
-        assert_eq!(fee, 20_000);   // 2 % of 1_000_000
+        assert_eq!(fee, 20_000);
         assert_eq!(net, 980_000);
         assert_eq!(client.get_treasury_balance(), 20_000);
     }
@@ -270,7 +461,6 @@ mod tests {
 
     #[test]
     fn test_settle_rounding_down() {
-        // 1 bps on 1 token = 0.0001 → rounds to 0
         let (env, client, admin) = setup();
         let treasury = Address::generate(&env);
         client.set_fee_bps(&admin, &1);
@@ -300,13 +490,82 @@ mod tests {
     fn test_tip_fee_distribution() {
         let (env, client, admin) = setup();
         let treasury = Address::generate(&env);
-        client.set_fee_bps(&admin, &500); // 5 %
+        client.set_fee_bps(&admin, &500);
         client.set_treasury(&admin, &treasury);
         let tipper = Address::generate(&env);
         let (net, fee) = client.tip(&tipper, &10_000);
         assert_eq!(fee, 500);
         assert_eq!(net, 9_500);
         assert_eq!(client.get_treasury_balance(), 500);
+    }
+
+    // ── Batch operations (#662) ───────────────────────────────────────────────
+
+    #[test]
+    fn test_batch_settle_escrows() {
+        let (env, client, admin) = setup();
+        let treasury = Address::generate(&env);
+        client.set_fee_bps(&admin, &200);
+        client.set_treasury(&admin, &treasury);
+        let payer = Address::generate(&env);
+        let payee = Address::generate(&env);
+        let id1 = client.fund_escrow(&payer, &payee, &1_000);
+        let id2 = client.fund_escrow(&payer, &payee, &2_000);
+        let ids = vec![&env, id1, id2];
+        let results = client.batch_settle_escrows(&payer, &ids);
+        assert_eq!(results.len(), 2);
+        assert_eq!(results.get(0).unwrap().fee, 20);   // 2% of 1000
+        assert_eq!(results.get(1).unwrap().fee, 40);   // 2% of 2000
+        assert_eq!(client.get_treasury_balance(), 60);
+    }
+
+    #[test]
+    fn test_batch_settle_admin_can_settle_any() {
+        let (env, client, admin) = setup();
+        let payer = Address::generate(&env);
+        let payee = Address::generate(&env);
+        let id1 = client.fund_escrow(&payer, &payee, &500);
+        let id2 = client.fund_escrow(&payer, &payee, &500);
+        let ids = vec![&env, id1, id2];
+        // admin settling payer's escrows
+        let results = client.batch_settle_escrows(&admin, &ids);
+        assert_eq!(results.len(), 2);
+    }
+
+    #[test]
+    #[should_panic(expected = "Contract is paused")]
+    fn test_batch_settle_blocked_when_paused() {
+        let (env, client, admin) = setup();
+        let payer = Address::generate(&env);
+        let payee = Address::generate(&env);
+        let id = client.fund_escrow(&payer, &payee, &100);
+        client.pause(&admin);
+        let ids = vec![&env, id];
+        client.batch_settle_escrows(&payer, &ids);
+    }
+
+    #[test]
+    fn test_batch_refund_escrows() {
+        let (env, client, admin) = setup();
+        let payer = Address::generate(&env);
+        let payee = Address::generate(&env);
+        let id1 = client.fund_escrow(&payer, &payee, &100);
+        let id2 = client.fund_escrow(&payer, &payee, &200);
+        let ids = vec![&env, id1, id2];
+        client.batch_refund_escrows(&admin, &ids);
+        assert_eq!(client.get_escrow(&id1).unwrap().status, EscrowStatus::Refunded);
+        assert_eq!(client.get_escrow(&id2).unwrap().status, EscrowStatus::Refunded);
+    }
+
+    #[test]
+    #[should_panic(expected = "Only admin")]
+    fn test_batch_refund_non_admin_rejected() {
+        let (env, client, _) = setup();
+        let payer = Address::generate(&env);
+        let payee = Address::generate(&env);
+        let id = client.fund_escrow(&payer, &payee, &100);
+        let ids = vec![&env, id];
+        client.batch_refund_escrows(&payer, &ids);
     }
 
     // ── Multi-sig escrow ──────────────────────────────────────────────────────
@@ -322,11 +581,9 @@ mod tests {
         let signers = vec![&env, s1.clone(), s2.clone(), s3.clone()];
         let id = client.ms_fund_escrow(&payer, &payee, &5_000, &signers, &2, &100);
         client.ms_approve_escrow(&id, &s1);
-        // After 1 approval, still pending
         let escrow = client.ms_get_escrow(&id).unwrap();
         assert_eq!(escrow.status, multisig_escrow::MsEscrowStatus::Pending);
         client.ms_approve_escrow(&id, &s2);
-        // After 2 approvals (threshold=2), released
         let escrow = client.ms_get_escrow(&id).unwrap();
         assert_eq!(escrow.status, multisig_escrow::MsEscrowStatus::Released);
     }
@@ -339,7 +596,6 @@ mod tests {
         let s1 = Address::generate(&env);
         let signers = vec![&env, s1.clone()];
         let id = client.ms_fund_escrow(&payer, &payee, &1_000, &signers, &1, &10);
-        // Advance ledger past expiry
         env.ledger().set_sequence_number(200);
         let refund = client.ms_timeout_escrow(&id);
         assert!(refund);
