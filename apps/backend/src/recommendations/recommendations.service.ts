@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, Optional } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
@@ -6,6 +6,7 @@ import { Cache } from 'cache-manager';
 import { Enrollment } from '../enrollments/enrollment.entity';
 import { Course } from '../courses/course.entity';
 import { Progress } from '../progress/progress.entity';
+import { RecommendationSignalsService } from './recommendation-signals.service';
 
 @Injectable()
 export class RecommendationsService {
@@ -16,6 +17,7 @@ export class RecommendationsService {
     @InjectRepository(Course) private courseRepo: Repository<Course>,
     @InjectRepository(Progress) private progressRepo: Repository<Progress>,
     @Inject(CACHE_MANAGER) private cache: Cache,
+    @Optional() private readonly signalsService?: RecommendationSignalsService,
   ) {}
 
   async getRecommendations(userId: string, limit = 10): Promise<Course[]> {
@@ -23,15 +25,19 @@ export class RecommendationsService {
     const cached = await this.cache.get<Course[]>(cacheKey);
     if (cached) return cached;
 
-    const [collaborative, contentBased] = await Promise.all([
+    // Run all three strategies in parallel
+    const [signalBased, collaborative, contentBased] = await Promise.all([
+      this.signalsService
+        ? this.signalsService.getSignalRecommendations(userId, limit)
+        : Promise.resolve([] as Course[]),
       this.collaborativeFiltering(userId, limit),
       this.contentBasedFiltering(userId, limit),
     ]);
 
-    // Merge and deduplicate, collaborative first
+    // Merge with priority: signal > collaborative > content-based
     const seen = new Set<string>();
     const merged: Course[] = [];
-    for (const c of [...collaborative, ...contentBased]) {
+    for (const c of [...signalBased, ...collaborative, ...contentBased]) {
       if (!seen.has(c.id) && merged.length < limit) {
         seen.add(c.id);
         merged.push(c);
