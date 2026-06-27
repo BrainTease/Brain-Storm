@@ -183,6 +183,16 @@ module "secrets" {
   alert_sns_arns     = var.alert_sns_arns
 }
 
+# ─── Object Storage ───────────────────────────────────────────────────────────
+
+module "storage" {
+  source                = "./modules/storage"
+  environment           = var.environment
+  account_id            = var.account_id
+  cors_allowed_origins  = var.api_gateway_cors_origins
+  backup_retention_days = var.environment == "prod" ? 30 : 7
+}
+
 # ─── Cost Analysis & Optimization ─────────────────────────────────────────────
 
 module "cost_analysis" {
