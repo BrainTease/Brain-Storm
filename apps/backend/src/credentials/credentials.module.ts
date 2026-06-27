@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Credential } from './credential.entity';
 import { CredentialsService } from './credentials.service';
 import { CredentialsController } from './credentials.controller';
+import { PublicCredentialVerificationController } from './public-credential-verification.controller';
 import { StellarModule } from '../stellar/stellar.module';
 import { KycModule } from '../kyc/kyc.module';
 import { CoursesModule } from '../courses/courses.module';
@@ -16,7 +17,7 @@ import { CertificatePdfService } from './certificate-pdf.service';
     CoursesModule,
   ],
   providers: [CredentialsService, CertificatePdfService],
-  controllers: [CredentialsController],
+  controllers: [CredentialsController, PublicCredentialVerificationController],
   exports: [CredentialsService],
 })
 export class CredentialsModule {}
