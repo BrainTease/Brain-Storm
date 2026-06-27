@@ -4,22 +4,35 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { CourseAnalytics } from './course-analytics.entity';
 import { AnalyticsEvent } from './analytics-event.entity';
 import { PlatformAnalytics } from './platform-analytics.entity';
+import { InstructorAnalytics } from './instructor-analytics.entity';
 import { Enrollment } from '../enrollments/enrollment.entity';
 import { Progress } from '../progress/progress.entity';
 import { Review } from '../courses/review.entity';
+import { Course } from '../courses/course.entity';
 import { AnalyticsService } from './analytics.service';
 import { AnalyticsController } from './analytics.controller';
 import { EventsService } from './events.service';
 import { PlatformAnalyticsService } from './platform-analytics.service';
 import { PlatformAnalyticsController } from './platform-analytics.controller';
+import { InstructorAnalyticsService } from './instructor-analytics.service';
+import { InstructorAnalyticsController } from './instructor-analytics.controller';
 
 @Module({
   imports: [
     ScheduleModule.forRoot(),
-    TypeOrmModule.forFeature([CourseAnalytics, Enrollment, Progress, Review, AnalyticsEvent, PlatformAnalytics]),
+    TypeOrmModule.forFeature([
+      CourseAnalytics,
+      Enrollment,
+      Progress,
+      Review,
+      AnalyticsEvent,
+      PlatformAnalytics,
+      InstructorAnalytics,
+      Course,
+    ]),
   ],
-  providers: [AnalyticsService, EventsService, PlatformAnalyticsService],
-  controllers: [AnalyticsController, PlatformAnalyticsController],
-  exports: [AnalyticsService, EventsService, PlatformAnalyticsService],
+  providers: [AnalyticsService, EventsService, PlatformAnalyticsService, InstructorAnalyticsService],
+  controllers: [AnalyticsController, PlatformAnalyticsController, InstructorAnalyticsController],
+  exports: [AnalyticsService, EventsService, PlatformAnalyticsService, InstructorAnalyticsService],
 })
 export class AnalyticsModule {}
