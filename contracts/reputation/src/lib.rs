@@ -3,6 +3,8 @@ use soroban_sdk::{
     contract, contractimpl, contracttype, symbol_short, Address, Env, Symbol, Vec,
 };
 
+mod reputation;
+
 #[contracttype]
 pub enum DataKey {
     Admin,
@@ -12,6 +14,7 @@ pub enum DataKey {
     DecayConfig,
     TotalReputation,
     Leaderboard,
+    AuthorizedCaller(Address), // #657: authorized Market/Escrow callers
 }
 
 #[contracttype]
@@ -66,17 +69,41 @@ impl ReputationContract {
         env.storage().instance().get(&DataKey::Admin).unwrap()
     }
 
+    // ── #657: Authorized-caller management ───────────────────────────────────
+
+    /// Grant an address (e.g. Market or Escrow contract) permission to update scores.
+    pub fn add_authorized_caller(env: Env, admin: Address, caller: Address) {
+        reputation::add_authorized_caller(&env, &admin, &caller);
+    }
+
+    /// Revoke a previously authorized caller.
+    pub fn remove_authorized_caller(env: Env, admin: Address, caller: Address) {
+        reputation::remove_authorized_caller(&env, &admin, &caller);
+    }
+
+    pub fn is_authorized_caller(env: Env, caller: Address) -> bool {
+        reputation::is_authorized(&env, &caller)
+    }
+
+    // ── #657: Slashing ───────────────────────────────────────────────────────
+
+    /// Slash `amount` from `user`'s reputation (callable by admin or authorized callers).
+    pub fn slash(env: Env, caller: Address, user: Address, amount: i128, reason: Symbol) {
+        reputation::slash(&env, &caller, &user, amount, reason);
+    }
+
+    // ── Core scoring (authorized-caller gated) ───────────────────────────────
+
     pub fn update_reputation(
         env: Env,
-        admin: Address,
+        caller: Address,
         user: Address,
         score_change: i128,
         reason: Symbol,
         course_id: Option<u64>,
     ) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can update reputation");
+        caller.require_auth();
+        assert!(reputation::is_authorized(&env, &caller), "Unauthorized caller");
 
         let current_ledger = env.ledger().sequence();
         let mut rep = env.storage().persistent()
@@ -89,13 +116,13 @@ impl ReputationContract {
                 total_updates: 0,
             });
 
-        Self::apply_decay_internal(&env, &mut rep, current_ledger);
+        reputation::apply_decay_internal(&env, &mut rep, current_ledger);
 
         rep.score = rep.score.checked_add(score_change).expect("overflow");
         rep.score = rep.score.max(0);
         rep.last_updated = current_ledger;
         rep.total_updates = rep.total_updates.checked_add(1).expect("overflow");
-        rep.level = Self::calculate_level(rep.score);
+        rep.level = reputation::calculate_level(rep.score);
 
         env.storage().persistent().set(&DataKey::Reputation(user.clone()), &rep);
 
@@ -104,7 +131,12 @@ impl ReputationContract {
             .unwrap_or(0);
         env.storage().persistent().set(
             &DataKey::ReputationHistory(user.clone(), count),
-            &ReputationUpdate { timestamp: env.ledger().timestamp(), score_change, reason: reason.clone(), course_id },
+            &ReputationUpdate {
+                timestamp: env.ledger().timestamp(),
+                score_change,
+                reason: reason.clone(),
+                course_id,
+            },
         );
         env.storage().persistent().set(&DataKey::ReputationHistoryCount(user.clone()), &(count + 1));
 
@@ -120,7 +152,7 @@ impl ReputationContract {
     pub fn get_reputation(env: Env, user: Address) -> i128 {
         match env.storage().persistent().get::<DataKey, ReputationRecord>(&DataKey::Reputation(user)) {
             Some(mut rep) => {
-                Self::apply_decay_internal(&env, &mut rep, env.ledger().sequence());
+                reputation::apply_decay_internal(&env, &mut rep, env.ledger().sequence());
                 rep.score
             }
             None => 0,
@@ -132,13 +164,12 @@ impl ReputationContract {
     }
 
     pub fn get_reputation_level(env: Env, user: Address) -> u32 {
-        Self::calculate_level(Self::get_reputation(env, user))
+        reputation::calculate_level(Self::get_reputation(env, user))
     }
 
-    pub fn apply_decay(env: Env, admin: Address, user: Address) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can apply decay");
+    pub fn apply_decay(env: Env, caller: Address, user: Address) {
+        caller.require_auth();
+        assert!(reputation::is_authorized(&env, &caller), "Unauthorized caller");
 
         let current_ledger = env.ledger().sequence();
         let mut rep: ReputationRecord = env.storage().persistent()
@@ -146,7 +177,7 @@ impl ReputationContract {
             .expect("User has no reputation record");
 
         let old_score = rep.score;
-        Self::apply_decay_internal(&env, &mut rep, current_ledger);
+        reputation::apply_decay_internal(&env, &mut rep, current_ledger);
 
         if old_score != rep.score {
             env.storage().persistent().set(&DataKey::Reputation(user.clone()), &rep);
@@ -191,7 +222,7 @@ impl ReputationContract {
 
     pub fn claim_reputation_reward(env: Env, user: Address) {
         user.require_auth();
-        let level = Self::calculate_level(Self::get_reputation(env.clone(), user.clone()));
+        let level = reputation::calculate_level(Self::get_reputation(env.clone(), user.clone()));
         let reward_amount = (level as i128) * 10;
         env.events().publish((REP_REWARD, symbol_short!("user")), (user, reward_amount));
     }
@@ -222,7 +253,6 @@ impl ReputationContract {
         env.storage().instance().get(&DataKey::TotalReputation).unwrap_or(0)
     }
 
-    /// Returns up to `limit` users sorted by score descending.
     pub fn get_leaderboard(env: Env, limit: u32) -> Vec<ReputationRecord> {
         let users: Vec<Address> = env.storage().instance()
             .get(&DataKey::Leaderboard)
@@ -235,7 +265,6 @@ impl ReputationContract {
             }
         }
 
-        // Insertion sort descending by score
         let len = records.len();
         for i in 1..len {
             let mut j = i;
@@ -259,28 +288,6 @@ impl ReputationContract {
             result.push_back(records.get(i).unwrap());
         }
         result
-    }
-
-    fn calculate_level(score: i128) -> u32 {
-        if score < 100 { 1 }
-        else if score < 400 { 2 }
-        else if score < 900 { 3 }
-        else if score < 1600 { 4 }
-        else { 5 }
-    }
-
-    fn apply_decay_internal(env: &Env, rep: &mut ReputationRecord, current_ledger: u32) {
-        let config: DecayConfig = env.storage().instance()
-            .get(&DataKey::DecayConfig)
-            .unwrap_or(DecayConfig { enabled: false, decay_rate: 0, decay_interval: 1000 });
-        if !config.enabled { return; }
-        let elapsed = current_ledger.saturating_sub(rep.last_updated);
-        if elapsed >= config.decay_interval {
-            let periods = elapsed / config.decay_interval;
-            let decay = config.decay_rate * (periods as i128);
-            rep.score = rep.score.saturating_add(decay).max(0);
-            rep.last_updated = current_ledger;
-        }
     }
 
     fn update_leaderboard(env: &Env, user: Address) {

@@ -10,9 +10,9 @@ import {
 } from './user-rate-limit.service';
 
 @ApiTags('rate-limit')
-@ApiBearerAuth()
+@ApiBearerAuth('JWT-auth')
 @UseGuards(JwtAuthGuard)
-@Controller('v1/rate-limit')
+@Controller('rate-limit')
 export class RateLimitController {
   constructor(private readonly rateLimitService: UserRateLimitService) {}
 
@@ -27,7 +27,7 @@ export class RateLimitController {
   @Roles('admin')
   @ApiOperation({ summary: 'Get rate limit configuration (admin)' })
   getConfig() {
-    return { roleLimits: ROLE_RATE_LIMITS, endpointLimits: ENDPOINT_RATE_LIMITS };
+    return { roleLimits: ROLE_RATE_LIMITS, planLimits: PLAN_RATE_LIMITS, endpointLimits: ENDPOINT_RATE_LIMITS };
   }
 
   @Delete('users/:userId/reset')

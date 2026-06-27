@@ -1,5 +1,6 @@
-import { Module } from '@nestjs/common';
+import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ShutdownMiddleware } from './health/shutdown.middleware';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CacheModule } from '@nestjs/cache-manager';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
@@ -40,6 +41,8 @@ import { AuditModule } from './audit/audit.module';
 import { RemindersModule } from './reminders/reminders.module';
 import { CertificatesModule } from './certificates/certificates.module';
 import { PayoutsModule } from './payouts/payouts.module';
+import { GdprModule } from './gdpr/gdpr.module';
+import { BookingsModule } from './bookings/bookings.module';
 import { GatewayModule } from './gateway/gateway.module';
 import { AdminModule } from './admin/admin.module';
 import { QueueModule } from './queue/queue.module';
@@ -113,6 +116,8 @@ import { validationSchema } from './config/validation.schema';
     RemindersModule,
     CertificatesModule,
     PayoutsModule,
+    GdprModule,
+    BookingsModule,
     HealthModule,
     MetricsModule,
     KycModule,
@@ -144,4 +149,8 @@ import { validationSchema } from './config/validation.schema';
     { provide: APP_INTERCEPTOR, useClass: GatewayLoggingInterceptor },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(ShutdownMiddleware).forRoutes('*');
+  }
+}

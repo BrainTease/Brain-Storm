@@ -1,0 +1,20 @@
+{
+  "name": "@brain-storm/sdk",
+  "version": "1.0.0",
+  "description": "TypeScript client SDK for Brain-Storm API (auto-generated from OpenAPI spec)",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "generate": "node ../../scripts/generate-sdk.js"
+  },
+  "peerDependencies": {
+    "axios": ">=1.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  },
+  "keywords": ["brain-storm", "sdk", "api", "stellar"],
+  "author": "Brain-Storm",
+  "license": "MIT"
+}

@@ -2,11 +2,18 @@ import { Injectable, Inject } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 
+// ─── Plan / tier definitions ──────────────────────────────────────────────────
+
+export type UserPlan = 'free' | 'pro' | 'enterprise';
 export type UserRole = 'admin' | 'instructor' | 'student' | 'guest';
 
 export interface RateLimitConfig {
+  /** Max requests per window */
   limit: number;
+  /** Window length in ms */
   windowMs: number;
+  /** Daily quota (optional; 0 = unlimited) */
+  dailyQuota: number;
 }
 
 /** Per-role default limits (configurable without redeploy via env). */
@@ -35,7 +42,7 @@ export class UserRateLimitService {
   constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {}
 
   /**
-   * Sliding window rate limit check.
+   * Sliding-window rate-limit check with daily quota tracking.
    * Returns true if the request is allowed.
    */
   async checkRateLimit(userId: string, role: string, endpoint?: string): Promise<boolean> {
@@ -50,12 +57,17 @@ export class UserRateLimitService {
     const timestamps = (await this.cacheManager.get<number[]>(key)) ?? [];
     const windowTimestamps = timestamps.filter((t) => t > windowStart);
 
-    if (windowTimestamps.length >= config.limit) {
-      return false;
+    if (windowTimestamps.length >= config.limit) return false;
+
+    // Check daily quota
+    if (config.dailyQuota > 0) {
+      const dailyCount = (await this.cacheManager.get<number>(dailyKey)) ?? 0;
+      if (dailyCount >= config.dailyQuota) return false;
+      await this.cacheManager.set(dailyKey, dailyCount + 1, this.secondsUntilMidnight() * 1000);
     }
 
     windowTimestamps.push(now);
-    await this.cacheManager.set(key, windowTimestamps, config.windowMs);
+    await this.cacheManager.set(windowKey, windowTimestamps, config.windowMs);
     return true;
   }
 
@@ -72,15 +84,29 @@ export class UserRateLimitService {
     const timestamps = (await this.cacheManager.get<number[]>(key)) ?? [];
     const windowTimestamps = timestamps.filter((t) => t > windowStart);
 
-    return {
+    const dailyRemaining = config.dailyQuota > 0
+      ? Math.max(0, config.dailyQuota - dailyUsed)
+      : -1; // -1 = unlimited
+
+    const status: RateLimitStatus = {
       limit: config.limit,
       remaining: Math.max(0, config.limit - windowTimestamps.length),
       resetTime: new Date(now + config.windowMs),
+      dailyQuota: config.dailyQuota,
+      dailyUsed,
+      dailyRemaining,
     };
+
+    if (dailyRemaining === 0) {
+      status.overagePrompt = 'You have exhausted your daily quota. Upgrade your plan for higher limits.';
+    }
+
+    return status;
   }
 
   async resetUserLimit(userId: string): Promise<void> {
     await this.cacheManager.del(`rate-limit:${userId}`);
+    await this.cacheManager.del(`quota-daily:${userId}:${this.todayKey()}`);
   }
 
   addToAllowlist(userId: string): void {

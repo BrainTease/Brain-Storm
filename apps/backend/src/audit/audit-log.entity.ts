@@ -33,10 +33,12 @@ export class AuditLog {
   @Column()
   action: string;
 
-  @Column({ nullable: true })
+  /** Encrypted at rest via AES-256-CBC */
+  @Column({ nullable: true, type: 'text' })
   ipAddress: string | null;
 
-  @Column({ nullable: true })
+  /** Encrypted at rest via AES-256-CBC */
+  @Column({ nullable: true, type: 'text' })
   userAgent: string | null;
 
   @Column({ type: 'jsonb', nullable: true })
@@ -44,6 +46,14 @@ export class AuditLog {
 
   @Column({ default: true })
   success: boolean;
+
+  /** SHA-256 hash of the previous entry — forms a tamper-evident chain */
+  @Column({ nullable: true, type: 'varchar', length: 64 })
+  prevHash: string | null;
+
+  /** SHA-256 hash of this entry's canonical fields + prevHash */
+  @Column({ nullable: true, type: 'varchar', length: 64 })
+  entryHash: string | null;
 
   @CreateDateColumn()
   createdAt: Date;
