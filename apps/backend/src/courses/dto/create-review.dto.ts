@@ -4,13 +4,13 @@ import { IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 import { StripHtmlSanitizer } from '../../common/sanitizers/strip-html.sanitizer';
 
 export class CreateReviewDto {
-  @ApiProperty({ description: 'Course rating from 1 to 5', minimum: 1, maximum: 5 })
+  @ApiProperty({ example: 5, description: 'Course rating from 1 to 5', minimum: 1, maximum: 5 })
   @IsInt()
   @Min(1)
   @Max(5)
   rating: number;
 
-  @ApiPropertyOptional({ description: 'Optional review comment' })
+  @ApiPropertyOptional({ example: 'Excellent course! Very well structured.', description: 'Optional review comment' })
   @IsOptional()
   @IsString()
   @Trim()
