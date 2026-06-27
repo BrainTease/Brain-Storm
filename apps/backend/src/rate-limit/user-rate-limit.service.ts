@@ -16,44 +16,26 @@ export interface RateLimitConfig {
   dailyQuota: number;
 }
 
-/** Per-role limits (role is the primary discriminator for authenticated users) */
-export const ROLE_RATE_LIMITS: Record<UserRole, RateLimitConfig> = {
-  admin:      { limit: 10000, windowMs: 60_000, dailyQuota: 0 },
-  instructor: { limit: 5000,  windowMs: 60_000, dailyQuota: 100_000 },
-  student:    { limit: 1000,  windowMs: 60_000, dailyQuota: 10_000 },
-  guest:      { limit: 100,   windowMs: 60_000, dailyQuota: 500 },
+/** Per-role default limits (configurable without redeploy via env). */
+export const ROLE_RATE_LIMITS: Record<string, RateLimitConfig> = {
+  admin: { limit: Number(process.env.RATE_LIMIT_ADMIN) || 10000, windowMs: 60000 },
+  instructor: { limit: Number(process.env.RATE_LIMIT_INSTRUCTOR) || 5000, windowMs: 60000 },
+  student: { limit: Number(process.env.RATE_LIMIT_STUDENT) || 1000, windowMs: 60000 },
+  guest: { limit: Number(process.env.RATE_LIMIT_GUEST) || 100, windowMs: 60000 },
 };
 
-/** Per-plan overrides — higher plan wins over role limit when more permissive */
-export const PLAN_RATE_LIMITS: Record<UserPlan, RateLimitConfig> = {
-  free:       { limit: 200,   windowMs: 60_000, dailyQuota: 1_000 },
-  pro:        { limit: 2000,  windowMs: 60_000, dailyQuota: 50_000 },
-  enterprise: { limit: 10000, windowMs: 60_000, dailyQuota: 0 },
-};
-
-/** Per-endpoint overrides (stricter limits for expensive ops) */
+/** Per-endpoint overrides (stricter limits for sensitive routes). */
 export const ENDPOINT_RATE_LIMITS: Record<string, RateLimitConfig> = {
-  'POST:/v1/auth/register': { limit: 5,   windowMs: 60_000, dailyQuota: 20 },
-  'POST:/v1/auth/login':    { limit: 10,  windowMs: 60_000, dailyQuota: 100 },
-  'POST:/v1/stellar/send':  { limit: 20,  windowMs: 60_000, dailyQuota: 200 },
+  'POST:/v1/auth/login': { limit: 10, windowMs: 60000 },
+  'POST:/v1/auth/register': { limit: 5, windowMs: 60000 },
+  'POST:/v1/auth/password-reset': { limit: 5, windowMs: 300000 },
+  'GET:/v1/courses': { limit: 200, windowMs: 60000 },
 };
 
-// Legacy export kept for backward-compat with existing imports
-export const RATE_LIMIT_CONFIGS = ROLE_RATE_LIMITS;
-
-// ─── Status DTO ───────────────────────────────────────────────────────────────
-
-export interface RateLimitStatus {
-  limit: number;
-  remaining: number;
-  resetTime: Date;
-  dailyQuota: number;
-  dailyUsed: number;
-  dailyRemaining: number;
-  overagePrompt?: string;
-}
-
-// ─── Service ──────────────────────────────────────────────────────────────────
+/** Admin allowlist: these user IDs bypass all rate limiting. */
+const ADMIN_ALLOWLIST = new Set<string>(
+  (process.env.RATE_LIMIT_ALLOWLIST || '').split(',').filter(Boolean)
+);
 
 @Injectable()
 export class UserRateLimitService {
@@ -63,17 +45,16 @@ export class UserRateLimitService {
    * Sliding-window rate-limit check with daily quota tracking.
    * Returns true if the request is allowed.
    */
-  async checkRateLimit(userId: string, role: string, endpoint?: string, plan?: string): Promise<boolean> {
-    if (role === 'admin') return true;
+  async checkRateLimit(userId: string, role: string, endpoint?: string): Promise<boolean> {
+    // Allowlist & admin bypass
+    if (role === 'admin' || ADMIN_ALLOWLIST.has(userId)) return true;
 
-    const config = this.resolveConfig(role, endpoint, plan);
-    const windowKey = endpoint ? `rate-limit:${userId}:${endpoint}` : `rate-limit:${userId}`;
-    const dailyKey = `quota-daily:${userId}:${this.todayKey()}`;
+    const config = this.resolveConfig(role, endpoint);
+    const key = endpoint ? `rate-limit:${userId}:${endpoint}` : `rate-limit:${userId}`;
 
     const now = Date.now();
     const windowStart = now - config.windowMs;
-
-    const timestamps = (await this.cacheManager.get<number[]>(windowKey)) ?? [];
+    const timestamps = (await this.cacheManager.get<number[]>(key)) ?? [];
     const windowTimestamps = timestamps.filter((t) => t > windowStart);
 
     if (windowTimestamps.length >= config.limit) return false;
@@ -90,19 +71,18 @@ export class UserRateLimitService {
     return true;
   }
 
-  async getRateLimitStatus(userId: string, role: string, endpoint?: string, plan?: string): Promise<RateLimitStatus> {
-    const config = this.resolveConfig(role, endpoint, plan);
-    const windowKey = endpoint ? `rate-limit:${userId}:${endpoint}` : `rate-limit:${userId}`;
-    const dailyKey = `quota-daily:${userId}:${this.todayKey()}`;
+  async getRateLimitStatus(
+    userId: string,
+    role: string,
+    endpoint?: string
+  ): Promise<{ limit: number; remaining: number; resetTime: Date }> {
+    const config = this.resolveConfig(role, endpoint);
+    const key = endpoint ? `rate-limit:${userId}:${endpoint}` : `rate-limit:${userId}`;
 
     const now = Date.now();
     const windowStart = now - config.windowMs;
-    const timestamps = (await this.cacheManager.get<number[]>(windowKey)) ?? [];
-    const count = timestamps.filter((t) => t > windowStart).length;
-
-    const dailyUsed = config.dailyQuota > 0
-      ? (await this.cacheManager.get<number>(dailyKey)) ?? 0
-      : 0;
+    const timestamps = (await this.cacheManager.get<number[]>(key)) ?? [];
+    const windowTimestamps = timestamps.filter((t) => t > windowStart);
 
     const dailyRemaining = config.dailyQuota > 0
       ? Math.max(0, config.dailyQuota - dailyUsed)
@@ -110,7 +90,7 @@ export class UserRateLimitService {
 
     const status: RateLimitStatus = {
       limit: config.limit,
-      remaining: Math.max(0, config.limit - count),
+      remaining: Math.max(0, config.limit - windowTimestamps.length),
       resetTime: new Date(now + config.windowMs),
       dailyQuota: config.dailyQuota,
       dailyUsed,
@@ -129,21 +109,18 @@ export class UserRateLimitService {
     await this.cacheManager.del(`quota-daily:${userId}:${this.todayKey()}`);
   }
 
-  /** Returns resolved config: endpoint override > plan override > role default */
-  resolveConfig(role: string, endpoint?: string, plan?: string): RateLimitConfig {
-    if (endpoint && ENDPOINT_RATE_LIMITS[endpoint]) return ENDPOINT_RATE_LIMITS[endpoint];
-    if (plan && PLAN_RATE_LIMITS[plan as UserPlan]) return PLAN_RATE_LIMITS[plan as UserPlan];
-    return ROLE_RATE_LIMITS[role as UserRole] ?? ROLE_RATE_LIMITS['guest'];
+  addToAllowlist(userId: string): void {
+    ADMIN_ALLOWLIST.add(userId);
   }
 
-  private todayKey(): string {
-    return new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+  removeFromAllowlist(userId: string): void {
+    ADMIN_ALLOWLIST.delete(userId);
   }
 
-  private secondsUntilMidnight(): number {
-    const now = new Date();
-    const midnight = new Date(now);
-    midnight.setUTCHours(24, 0, 0, 0);
-    return Math.ceil((midnight.getTime() - now.getTime()) / 1000);
+  private resolveConfig(role: string, endpoint?: string): RateLimitConfig {
+    if (endpoint && ENDPOINT_RATE_LIMITS[endpoint]) {
+      return ENDPOINT_RATE_LIMITS[endpoint];
+    }
+    return ROLE_RATE_LIMITS[role] ?? ROLE_RATE_LIMITS['guest'];
   }
 }
