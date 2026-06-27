@@ -9,48 +9,57 @@ export class UserRateLimitGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const response = context.switchToHttp().getResponse();
 
-    // Skip rate limiting for trusted clients
-    if (request.user?.isTrusted) {
-      return true;
-    }
-
-    // Skip if no user (public endpoints)
-    if (!request.user?.id) {
-      return true;
-    }
+    if (request.user?.isTrusted) return true;
+    if (!request.user?.id) return true;
 
     const userId = request.user.id;
-    const role = request.user.role || 'guest';
+    const role: string = request.user.role || 'guest';
+    const plan: string | undefined = request.user.plan;
     const endpoint = `${request.method}:${request.route?.path ?? request.path}`;
 
-    const allowed = await this.rateLimitService.checkRateLimit(userId, role, endpoint);
+    const allowed = await this.rateLimitService.checkRateLimit(userId, role, endpoint, plan);
 
     if (!allowed) {
-      const status = await this.rateLimitService.getRateLimitStatus(userId, role, endpoint);
-      response.set({
-        'X-RateLimit-Limit': status.limit.toString(),
-        'X-RateLimit-Remaining': '0',
-        'X-RateLimit-Reset': status.resetTime.toISOString(),
-        'Retry-After': Math.ceil((status.resetTime.getTime() - Date.now()) / 1000).toString(),
-      });
+      const status = await this.rateLimitService.getRateLimitStatus(userId, role, endpoint, plan);
+      this.setHeaders(response, status, 0);
 
       throw new HttpException(
         {
           statusCode: HttpStatus.TOO_MANY_REQUESTS,
-          message: 'Rate limit exceeded',
+          message: status.overagePrompt ?? 'Rate limit exceeded',
           retryAfter: status.resetTime,
+          dailyQuota: status.dailyQuota,
+          dailyRemaining: status.dailyRemaining,
         },
         HttpStatus.TOO_MANY_REQUESTS,
       );
     }
 
-    const status = await this.rateLimitService.getRateLimitStatus(userId, role, endpoint);
-    response.set({
-      'X-RateLimit-Limit': status.limit.toString(),
-      'X-RateLimit-Remaining': status.remaining.toString(),
-      'X-RateLimit-Reset': status.resetTime.toISOString(),
-    });
+    const status = await this.rateLimitService.getRateLimitStatus(userId, role, endpoint, plan);
+    this.setHeaders(response, status, status.remaining);
 
     return true;
+  }
+
+  private setHeaders(
+    response: any,
+    status: { limit: number; remaining: number; resetTime: Date; dailyQuota: number; dailyRemaining: number },
+    remaining: number,
+  ): void {
+    const headers: Record<string, string> = {
+      'X-RateLimit-Limit': status.limit.toString(),
+      'X-RateLimit-Remaining': remaining.toString(),
+      'X-RateLimit-Reset': status.resetTime.toISOString(),
+    };
+    if (status.dailyQuota > 0) {
+      headers['X-Quota-Limit'] = status.dailyQuota.toString();
+      headers['X-Quota-Remaining'] = status.dailyRemaining.toString();
+    }
+    if (remaining === 0) {
+      headers['Retry-After'] = Math.ceil(
+        (status.resetTime.getTime() - Date.now()) / 1000,
+      ).toString();
+    }
+    response.set(headers);
   }
 }
