@@ -29,6 +29,11 @@ const nextConfig = {
       'zustand',
       'react-hook-form',
       'zod',
+      'recharts',
+      '@stellar/stellar-sdk',
+      '@stellar/freighter-api',
+      '@dnd-kit/core',
+      '@dnd-kit/sortable',
     ],
   },
   compiler: {

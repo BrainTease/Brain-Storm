@@ -3,6 +3,12 @@ use soroban_sdk::{
     contract, contractimpl, contracttype, symbol_short, Address, Bytes, Env, String, Symbol,
 };
 
+pub mod linkage;
+pub use linkage::{
+    set_nft_contract, get_credential_nft_link, get_nft_credential, is_linked,
+    CredentialNftLink,
+};
+
 #[contracttype]
 pub enum DataKey {
     Admin,
@@ -50,6 +56,82 @@ impl CredentialMetadataContract {
         );
         admin.require_auth();
         env.storage().instance().set(&DataKey::Admin, &admin);
+    }
+
+    /// Initialise with NFT contract address for credential↔NFT linkage (Issue #635).
+    pub fn initialize_with_nft(env: Env, admin: Address, nft_contract: Address) {
+        assert!(
+            !env.storage().instance().has(&DataKey::Admin),
+            "Already initialized"
+        );
+        admin.require_auth();
+        env.storage().instance().set(&DataKey::Admin, &admin);
+        linkage::set_nft_contract(&env, nft_contract);
+    }
+
+    /// Issue a credential AND atomically mint a linked NFT (Issue #635).
+    ///
+    /// Stores the credential metadata and calls the NFT contract cross-contract.
+    /// If either operation fails the whole call is rolled back.
+    ///
+    /// # Returns
+    /// The minted NFT ID.
+    pub fn issue_with_nft(
+        env: Env,
+        admin: Address,
+        credential_id: u64,
+        course_name: String,
+        completion_date: u64,
+        expiry_timestamp: u64,
+        grade: String,
+        ipfs_hash: String,
+        owner: Address,
+        course_id: soroban_sdk::Symbol,
+        instructor: Address,
+        royalty_basis: u32,
+    ) -> u32 {
+        admin.require_auth();
+        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
+        assert!(admin == stored_admin, "Only admin can issue credentials");
+
+        // Store credential metadata first
+        let metadata = MetadataRecord {
+            credential_id,
+            course_name: course_name.clone(),
+            completion_date,
+            expiry_timestamp,
+            grade,
+            ipfs_hash,
+        };
+        env.storage().persistent().set(&DataKey::Metadata(credential_id), &metadata);
+        env.events().publish((STORE, symbol_short!("cred")), credential_id);
+
+        // Atomically mint linked NFT (rolls back everything on failure)
+        linkage::issue_and_mint_nft(
+            &env,
+            &admin,
+            credential_id,
+            owner,
+            course_id,
+            course_name,
+            instructor,
+            royalty_basis,
+        )
+    }
+
+    /// Get the NFT link for a credential (Issue #635).
+    pub fn get_credential_link(env: Env, credential_id: u64) -> Option<linkage::CredentialNftLink> {
+        linkage::get_credential_nft_link(&env, credential_id)
+    }
+
+    /// Reverse lookup: get credential ID from NFT ID (Issue #635).
+    pub fn get_nft_credential_id(env: Env, nft_id: u32) -> Option<u64> {
+        linkage::get_nft_credential(&env, nft_id)
+    }
+
+    /// Check whether a credential has a linked NFT (Issue #635).
+    pub fn credential_is_linked(env: Env, credential_id: u64) -> bool {
+        linkage::is_linked(&env, credential_id)
     }
 
     pub fn store_metadata(

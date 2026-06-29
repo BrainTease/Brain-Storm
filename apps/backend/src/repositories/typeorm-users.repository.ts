@@ -39,29 +39,45 @@ export class TypeOrmUsersRepository implements UsersRepository {
     search?: string;
   } = {}) {
     const { page = 1, limit = 10, role, isVerified, search } = options;
-    
-    const query = this.repo.createQueryBuilder('user');
-    
+
+    const query = this.repo.createQueryBuilder('user')
+      .select([
+        'user.id',
+        'user.email',
+        'user.username',
+        'user.avatar',
+        'user.role',
+        'user.isVerified',
+        'user.isBanned',
+        'user.stellarPublicKey',
+        'user.referralCode',
+        'user.createdAt',
+        'user.updatedAt',
+      ]);
+
     if (role) {
       query.andWhere('user.role = :role', { role });
     }
-    
+
     if (isVerified !== undefined) {
       query.andWhere('user.isVerified = :isVerified', { isVerified });
     }
-    
+
     if (search) {
-      query.andWhere('user.email ILIKE :search', { search: `%${search}%` });
+      query.andWhere(
+        '(user.email ILIKE :search OR user.username ILIKE :search)',
+        { search: `%${search}%` },
+      );
     }
-    
+
     query.andWhere('user.deletedAt IS NULL');
-    
+
     const [users, total] = await query
       .skip((page - 1) * limit)
       .take(limit)
       .orderBy('user.createdAt', 'DESC')
       .getManyAndCount();
-    
+
     return {
       data: users,
       meta: {

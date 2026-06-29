@@ -6,12 +6,17 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
   Unique,
+  Index,
+  UpdateDateColumn,
 } from 'typeorm';
 import { User } from '../users/user.entity';
 import { Course } from './course.entity';
 
 @Entity('reviews')
 @Unique(['userId', 'courseId'])
+@Index(['userId', 'courseId'])
+@Index(['courseId', 'rating'])
+@Index(['createdAt'])
 export class Review {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -36,6 +41,16 @@ export class Review {
   @Column({ type: 'text', nullable: true })
   comment: string | null;
 
+  // Audit columns
+  @Column({ nullable: true })
+  createdBy: string | null;
+
+  @Column({ nullable: true })
+  updatedBy: string | null;
+
   @CreateDateColumn()
   createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
 }

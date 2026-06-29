@@ -40,6 +40,10 @@ export class UsersService {
     return this.repo.save({ ...user, ...data });
   }
 
+  canUpdateUser(currentUserId: string, targetUserId: string, currentUserRole?: string): boolean {
+    return currentUserId === targetUserId || currentUserRole === 'admin';
+  }
+
   async uploadAvatar(userId: string, file: Express.Multer.File) {
     const user = await this.findById(userId);
     if (!user) throw new NotFoundException('User not found');

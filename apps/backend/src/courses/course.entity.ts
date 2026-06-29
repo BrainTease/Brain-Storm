@@ -3,9 +3,11 @@ import {
   PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
+  UpdateDateColumn,
   OneToMany,
   ManyToOne,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { CourseModule } from './course-module.entity';
 import { User } from '../users/user.entity';
@@ -18,6 +20,10 @@ export enum CourseStatus {
 }
 
 @Entity('courses')
+@Index(['isPublished', 'isDeleted', 'level'])
+@Index(['instructorId', 'isDeleted'])
+@Index(['createdAt'])
+@Index(['level', 'isPublished', 'isDeleted'])
 export class Course {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -56,6 +62,17 @@ export class Course {
   @Column({ nullable: true, type: 'timestamptz' })
   publishedAt: Date | null;
 
+  // Soft-delete timestamp
+  @Column({ nullable: true, type: 'timestamptz' })
+  deletedAt: Date | null;
+
+  // Audit columns
+  @Column({ nullable: true })
+  createdBy: string | null;
+
+  @Column({ nullable: true })
+  updatedBy: string | null;
+
   @ManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'instructorId' })
   instructor: User;
@@ -70,4 +87,7 @@ export class Course {
 
   @CreateDateColumn()
   createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
 }

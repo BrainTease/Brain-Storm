@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { useTheme } from 'next-themes';
 import { useAuth } from '@/lib/auth-context';
 import api from '@/lib/api';
@@ -8,15 +9,27 @@ import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { Badge } from '@/components/ui/Badge';
 import { Spinner } from '@/components/ui/Spinner';
-import {
-  ProgressOverTimeChart,
-  StreakHeatmapChart,
-  QuizScoreChart,
-  type ProgressDataPoint,
-  type StreakData,
-  type QuizScoreDataPoint,
-} from '@/components/analytics';
+import type { ProgressDataPoint, StreakData, QuizScoreDataPoint } from '@/components/analytics';
 import Link from 'next/link';
+
+function ChartFallback() {
+  return <div className="h-72 w-full animate-pulse rounded-xl bg-gray-100 dark:bg-gray-800" />;
+}
+
+const ProgressOverTimeChart = dynamic(
+  () => import('@/components/analytics/ProgressOverTimeChart').then((m) => ({ default: m.ProgressOverTimeChart })),
+  { loading: ChartFallback },
+);
+
+const StreakHeatmapChart = dynamic(
+  () => import('@/components/analytics/StreakHeatmapChart').then((m) => ({ default: m.StreakHeatmapChart })),
+  { loading: ChartFallback },
+);
+
+const QuizScoreChart = dynamic(
+  () => import('@/components/analytics/QuizScoreChart').then((m) => ({ default: m.QuizScoreChart })),
+  { loading: ChartFallback },
+);
 
 
 interface ProgressRecord {

@@ -3,15 +3,19 @@ import {
   PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
+  UpdateDateColumn,
   ManyToOne,
   JoinColumn,
   Unique,
+  Index,
 } from 'typeorm';
 import { User } from '../users/user.entity';
 import { Course } from '../courses/course.entity';
 
 @Entity('enrollments')
 @Unique(['userId', 'courseId'])
+@Index(['userId', 'courseId'])
+@Index(['enrolledAt'])
 export class Enrollment {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -30,9 +34,19 @@ export class Enrollment {
   @JoinColumn({ name: 'courseId' })
   course: Course;
 
+  // Audit columns
+  @Column({ nullable: true })
+  createdBy: string | null;
+
+  @Column({ nullable: true })
+  updatedBy: string | null;
+
   @CreateDateColumn()
   enrolledAt: Date;
 
-  @Column({ nullable: true, type: 'timestamp' })
+  @Column({ nullable: true, type: 'timestamptz' })
   completedAt: Date | null;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
 }

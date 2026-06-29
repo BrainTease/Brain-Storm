@@ -141,6 +141,113 @@ jobs:
           }
           echo "✅ Rollback test completed"
 
+  detect-destructive-migrations:
+    name: Flag Destructive Migrations
+    runs-on: ubuntu-latest
+    needs: validate-migrations
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for destructive operations
+        id: destructive_check
+        working-directory: apps/backend
+        run: |
+          DESTRUCTIVE_FOUND=false
+          REPORT="# ⚠️ Destructive Migration Report\n\n"
+          REPORT+="The following destructive operations were detected:\n\n"
+
+          # Get changed migration files or all if no base ref
+          if git rev-parse origin/main >/dev/null 2>&1; then
+            CHANGED_FILES=$(git diff --name-only origin/main...HEAD -- 'src/migrations/*.ts' 2>/dev/null || echo "")
+          else
+            CHANGED_FILES=$(ls src/migrations/*.ts 2>/dev/null || echo "")
+          fi
+
+          if [ -z "$CHANGED_FILES" ]; then
+            REPORT+="No migration files changed in this PR."
+          else
+            for file in $CHANGED_FILES; do
+              if [ ! -f "$file" ]; then continue; fi
+
+              filename=$(basename "$file")
+
+              # Check for DROP TABLE
+              if grep -qE "(await queryRunner\.dropTable|DROP TABLE)" "$file" 2>/dev/null; then
+                REPORT+="- **$filename**: 🗑️ Contains \`DROP TABLE\`\n"
+                DESTRUCTIVE_FOUND=true
+              fi
+
+              # Check for DROP COLUMN
+              if grep -qE "(await queryRunner\.dropColumn|ALTER TABLE.*DROP COLUMN)" "$file" 2>/dev/null; then
+                REPORT+="- **$filename**: 🗑️ Contains \`DROP COLUMN\`\n"
+                DESTRUCTIVE_FOUND=true
+              fi
+
+              # Check for ALTER COLUMN ... (SET|DROP) NOT NULL
+              if grep -qE "DROP NOT NULL|SET NOT NULL" "$file" 2>/dev/null; then
+                REPORT+="- **$filename**: ⚠️ Contains \`ALTER COLUMN ... (SET|DROP) NOT NULL\`\n"
+                DESTRUCTIVE_FOUND=true
+              fi
+
+              # Check for DROP INDEX (without IF EXISTS safety)
+              if grep -qE "await queryRunner\.dropIndex" "$file" 2>/dev/null; then
+                REPORT+="- **$filename**: ⚠️ Contains \`DROP INDEX\` — ensure it uses CONCURRENTLY and IF EXISTS\n"
+                DESTRUCTIVE_FOUND=true
+              fi
+
+              # Check for TRUNCATE
+              if grep -qE "(TRUNCATE|await queryRunner\.query.*TRUNCATE)" "$file" 2>/dev/null; then
+                REPORT+="- **$filename**: 🗑️ Contains \`TRUNCATE\` — data loss risk\n"
+                DESTRUCTIVE_FOUND=true
+              fi
+
+              # Check for RENAME COLUMN (breaking for running code)
+              if grep -qE "RENAME COLUMN" "$file" 2>/dev/null; then
+                REPORT+="- **$filename**: ⚠️ Contains \`RENAME COLUMN\` — ensure expand/contract pattern\n"
+                DESTRUCTIVE_FOUND=true
+              fi
+            done
+          fi
+
+          if [ "$DESTRUCTIVE_FOUND" = false ]; then
+            REPORT+="\n✅ No destructive operations detected."
+          else
+            REPORT+="\n\n> **Action required:** Destructive migrations must follow the expand/contract pattern documented in DATABASE_MIGRATIONS.md. Consider splitting this into multiple deployments."
+          fi
+
+          echo -e "$REPORT" > destructive-migration-report.md
+          cat destructive-migration-report.md
+
+          if [ "$DESTRUCTIVE_FOUND" = true ]; then
+            echo "has_destructive=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_destructive=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Comment destructive migration report on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('apps/backend/destructive-migration-report.md', 'utf8');
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: report
+            });
+
+      - name: Fail CI for destructive migrations (soft)
+        if: steps.destructive_check.outputs.has_destructive == 'true'
+        run: |
+          echo "⚠️ Destructive migration detected. Review the report above."
+          echo "This is a soft failure — the PR can still merge with maintainer approval."
+          exit 1
+
   generate-migration-report:
     name: Generate Migration Report
     runs-on: ubuntu-latest
