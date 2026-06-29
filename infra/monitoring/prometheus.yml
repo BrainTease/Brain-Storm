@@ -12,6 +12,8 @@ alerting:
 rule_files:
   - 'contracts/alerting-rules.yml'
   - 'alerts/application-rules.yml'
+  - 'alerts/oncall-rules.yml'
+  - 'alerts/backup-rules.yml'
 
 scrape_configs:
   - job_name: 'brain-storm-backend'

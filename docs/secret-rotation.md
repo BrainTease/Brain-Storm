@@ -46,6 +46,21 @@ Stellar keys (`STELLAR_SECRET_KEY`) should be rotated by:
 
 **Warning:** Ensure the new account is funded and has the required trustlines before switching.
 
+## SMTP Password Rotation
+
+1. Generate a new SMTP credential in your mail provider.
+2. Update the secret: `aws secretsmanager update-secret --secret-id /{env}/brain-storm/smtp-password --secret-string '<new-password>'`
+3. Restart the backend service to pick up the new value.
+4. Verify email delivery by triggering a test notification.
+
+## Admin API Key Rotation
+
+1. Generate a new key: `openssl rand -hex 32`
+2. Update the secret: `aws secretsmanager update-secret --secret-id /{env}/brain-storm/admin-api-key --secret-string '<new-key>'`
+3. Update any external integrations that use the admin API key.
+4. Restart the backend.
+5. Invalidate the old key in the `api_keys` table if it was also stored there.
+
 ## Rotation History
 
 Admins can view rotation history:

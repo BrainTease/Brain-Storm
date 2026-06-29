@@ -5,6 +5,7 @@ global:
   smtp_from: "alerts@brain-storm.example.com"
   smtp_auth_username: "${SMTP_USERNAME}"
   smtp_auth_password: "${SMTP_PASSWORD}"
+  pagerduty_url: "https://events.pagerduty.com/v2/enqueue"
 
 templates:
   - /etc/alertmanager/templates/*.tmpl
@@ -17,6 +18,15 @@ route:
   receiver: slack-default
 
   routes:
+    # On-call paging: critical alerts with oncall label go to PagerDuty first
+    - matchers:
+        - severity="critical"
+        - oncall="true"
+      receiver: pagerduty-oncall
+      repeat_interval: 30m
+      continue: true
+
+    # Escalation: critical alerts that haven't resolved in 30m also hit slack-critical
     - matchers:
         - severity="critical"
       receiver: slack-critical
@@ -33,6 +43,18 @@ route:
         - team="contracts"
       receiver: slack-contracts-warning
 
+    # Queue and indexer alerts to dedicated channel
+    - matchers:
+        - alertname=~"(Queue.*|Indexer.*)"
+      receiver: slack-platform-oncall
+      continue: true
+
+    # Backup failure alerts
+    - matchers:
+        - alertname=~"(DatabaseBackup.*|DatabaseRestoreDrill.*)"
+      receiver: slack-platform-oncall
+      continue: true
+
     - matchers:
         - alertname="DeploymentFailed"
       receiver: slack-deployments
@@ -42,6 +64,29 @@ route:
       receiver: slack-uptime
 
 receivers:
+  - name: pagerduty-oncall
+    pagerduty_configs:
+      - routing_key: "${PAGERDUTY_INTEGRATION_KEY}"
+        severity: '{{ .CommonLabels.severity }}'
+        description: '{{ .CommonAnnotations.summary }}'
+        details:
+          description: '{{ .CommonAnnotations.description }}'
+          team: '{{ .CommonLabels.team }}'
+          runbook: '{{ .CommonAnnotations.runbook_url }}'
+
+  - name: slack-platform-oncall
+    slack_configs:
+      - channel: "#platform-oncall"
+        send_resolved: true
+        color: '{{ if eq .Status "firing" }}{{ if eq .CommonLabels.severity "critical" }}danger{{ else }}warning{{ end }}{{ else }}good{{ end }}'
+        title: "{{ if eq .Status \"firing\" }}🚨{{ else }}✅{{ end }} {{ .GroupLabels.alertname }}"
+        text: |
+          {{ range .Alerts }}
+          *Summary:* {{ .Annotations.summary }}
+          *Description:* {{ .Annotations.description }}
+          *Severity:* {{ .Labels.severity }}
+          {{ end }}
+
   - name: slack-default
     slack_configs:
       - channel: "#alerts"

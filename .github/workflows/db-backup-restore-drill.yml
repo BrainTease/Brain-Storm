@@ -1,0 +1,220 @@
+name: Database Backup & Restore Drill
+
+on:
+  schedule:
+    # Daily backup at 02:00 UTC
+    - cron: '0 2 * * *'
+    # Weekly restore drill every Sunday at 03:00 UTC
+    - cron: '0 3 * * 0'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Run mode'
+        required: true
+        default: 'backup'
+        type: choice
+        options:
+          - backup
+          - restore-drill
+          - both
+
+env:
+  ENVIRONMENT: production
+
+jobs:
+  # ─── Scheduled Encrypted Backup ────────────────────────────────────────────
+  backup:
+    name: Encrypted Backup → S3
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'schedule' && github.event.schedule == '0 2 * * *' ||
+      github.event_name == 'workflow_dispatch' && (inputs.mode == 'backup' || inputs.mode == 'both')
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_BACKUP_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Run database backup
+        env:
+          DATABASE_HOST: ${{ secrets.DATABASE_HOST }}
+          DATABASE_USER: ${{ secrets.DATABASE_USER }}
+          DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+          DATABASE_NAME: ${{ secrets.DATABASE_NAME }}
+          BACKUP_S3_BUCKET: ${{ secrets.BACKUP_S3_BUCKET }}
+          BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
+          ENVIRONMENT: ${{ env.ENVIRONMENT }}
+        run: |
+          chmod +x scripts/backup/database-backup.sh
+          scripts/backup/database-backup.sh
+
+      - name: Enforce retention policy (keep 30 days)
+        env:
+          BACKUP_S3_BUCKET: ${{ secrets.BACKUP_S3_BUCKET }}
+          ENVIRONMENT: ${{ env.ENVIRONMENT }}
+        run: |
+          CUTOFF=$(date -u -d "30 days ago" +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || \
+                   date -u -v-30d +%Y-%m-%dT%H:%M:%SZ)
+          aws s3api list-objects-v2 \
+            --bucket "$BACKUP_S3_BUCKET" \
+            --prefix "database/$ENVIRONMENT/" \
+            --query "Contents[?LastModified<='$CUTOFF'].Key" \
+            --output text | tr '\t' '\n' | while read -r key; do
+              [ -z "$key" ] && continue
+              echo "Removing expired backup: $key"
+              aws s3 rm "s3://$BACKUP_S3_BUCKET/$key"
+          done
+
+      - name: Notify backup success
+        if: success()
+        run: |
+          curl -s -X POST "${{ secrets.SLACK_WEBHOOK_URL }}" \
+            -H 'Content-Type: application/json' \
+            -d '{
+              "text": "✅ *DB Backup Complete* — '"$ENVIRONMENT"' — '"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"
+            }' || true
+
+      - name: Alert on backup failure
+        if: failure()
+        run: |
+          curl -s -X POST "${{ secrets.SLACK_WEBHOOK_URL }}" \
+            -H 'Content-Type: application/json' \
+            -d '{
+              "text": "🔴 *DB Backup FAILED* — '"$ENVIRONMENT"' — '"$(date -u +%Y-%m-%dT%H:%M:%SZ)"' — check workflow logs immediately"
+            }' || true
+
+  # ─── Automated Restore Drill ───────────────────────────────────────────────
+  restore-drill:
+    name: Restore Drill (Integrity Verification)
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'schedule' && github.event.schedule == '0 3 * * 0' ||
+      github.event_name == 'workflow_dispatch' && (inputs.mode == 'restore-drill' || inputs.mode == 'both')
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: brain_storm_drill
+          POSTGRES_USER: drill_user
+          POSTGRES_PASSWORD: drill_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U drill_user"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_BACKUP_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Install PostgreSQL client
+        run: sudo apt-get install -y postgresql-client
+
+      - name: Download and restore latest backup
+        env:
+          BACKUP_S3_BUCKET: ${{ secrets.BACKUP_S3_BUCKET }}
+          BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
+          ENVIRONMENT: ${{ env.ENVIRONMENT }}
+          # Drill target — local ephemeral Postgres
+          DATABASE_HOST: localhost
+          DATABASE_USER: drill_user
+          DATABASE_PASSWORD: drill_password
+          DATABASE_NAME: brain_storm_drill
+        run: |
+          set -euo pipefail
+
+          MANIFEST_KEY="database/$ENVIRONMENT/manifest.json"
+          MANIFEST=$(aws s3 cp "s3://$BACKUP_S3_BUCKET/$MANIFEST_KEY" -)
+          LATEST_KEY=$(echo "$MANIFEST" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d[-1]['s3Key'])")
+          echo "Restoring: $LATEST_KEY"
+
+          ENCRYPTED=/tmp/drill-backup.sql.gz.enc
+          DECRYPTED=/tmp/drill-backup.sql.gz
+
+          aws s3 cp "s3://$BACKUP_S3_BUCKET/$LATEST_KEY" "$ENCRYPTED"
+
+          openssl enc -d -aes-256-cbc -pbkdf2 -iter 100000 \
+            -in "$ENCRYPTED" \
+            -out "$DECRYPTED" \
+            -pass "pass:$BACKUP_ENCRYPTION_KEY"
+
+          # Reset the drill schema
+          PGPASSWORD=drill_password psql -h localhost -U drill_user -d brain_storm_drill \
+            -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;" >/dev/null
+
+          zcat "$DECRYPTED" | PGPASSWORD=drill_password psql -h localhost -U drill_user -d brain_storm_drill
+
+          echo "LATEST_BACKUP_KEY=$LATEST_KEY" >> $GITHUB_ENV
+          rm -f "$ENCRYPTED" "$DECRYPTED"
+
+      - name: Verify restore integrity
+        run: |
+          set -euo pipefail
+          PASS=true
+
+          check() {
+            local label=$1; local query=$2; local min=${3:-0}
+            count=$(PGPASSWORD=drill_password psql -h localhost -U drill_user -d brain_storm_drill \
+              -t -c "$query" | tr -d ' ')
+            if [ "$count" -ge "$min" ]; then
+              echo "PASS [$label]: $count rows"
+            else
+              echo "FAIL [$label]: expected >=$min, got $count"
+              PASS=false
+            fi
+          }
+
+          check "tables"    "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='public'" 10
+          check "users"     "SELECT COUNT(*) FROM users" 1
+          check "courses"   "SELECT COUNT(*) FROM courses" 0
+          check "audit"     "SELECT COUNT(*) FROM audit_logs" 0
+
+          $PASS || { echo "❌ Integrity checks failed"; exit 1; }
+          echo "✅ All integrity checks passed"
+
+      - name: Notify restore drill success
+        if: success()
+        run: |
+          curl -s -X POST "${{ secrets.SLACK_WEBHOOK_URL }}" \
+            -H 'Content-Type: application/json' \
+            -d "{
+              \"text\": \"✅ *Restore Drill Passed* — backup \`${{ env.LATEST_BACKUP_KEY }}\` verified successfully on $(date -u +%Y-%m-%dT%H:%M:%SZ)\"
+            }" || true
+
+      - name: Alert on restore drill failure
+        if: failure()
+        run: |
+          curl -s -X POST "${{ secrets.SLACK_WEBHOOK_URL }}" \
+            -H 'Content-Type: application/json' \
+            -d "{
+              \"text\": \"🔴 *Restore Drill FAILED* — $ENVIRONMENT — $(date -u +%Y-%m-%dT%H:%M:%SZ) — backup \`${{ env.LATEST_BACKUP_KEY }}\` did NOT restore cleanly. Immediate action required.\"
+            }" || true
+
+          # Also push to PagerDuty if restore drill fails (backup integrity is critical)
+          curl -s -X POST "https://events.pagerduty.com/v2/enqueue" \
+            -H 'Content-Type: application/json' \
+            -d "{
+              \"routing_key\": \"${{ secrets.PAGERDUTY_INTEGRATION_KEY }}\",
+              \"event_action\": \"trigger\",
+              \"payload\": {
+                \"summary\": \"DB restore drill FAILED for $ENVIRONMENT\",
+                \"severity\": \"critical\",
+                \"source\": \"github-actions\",
+                \"custom_details\": {
+                  \"backup_key\": \"${{ env.LATEST_BACKUP_KEY }}\",
+                  \"runbook\": \"https://github.com/BrainTease/Brain-Storm/blob/main/docs/incident-runbook.md#database-issues\"
+                }
+              }
+            }" || true

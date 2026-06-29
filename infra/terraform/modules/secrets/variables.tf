@@ -32,6 +32,20 @@ variable "stellar_secret_key" {
   sensitive   = true
 }
 
+variable "smtp_password" {
+  description = "SMTP authentication password to store in Secrets Manager"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "admin_api_key" {
+  description = "Admin API key to store in Secrets Manager"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
 variable "recovery_window_days" {
   description = "Days before a deleted secret is permanently removed"
   type        = number
