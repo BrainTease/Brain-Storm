@@ -2,208 +2,308 @@ name: Load Testing
 
 on:
   schedule:
-    - cron: '0 3 * * *'
+    # Run nightly at 2 AM UTC
+    - cron: '0 2 * * *'
   workflow_dispatch:
     inputs:
-      scenario:
-        description: 'Load test scenario to run'
-        required: false
-        default: 'all'
+      environment:
+        description: 'Target environment'
+        required: true
         type: choice
         options:
-          - all
-          - user-journey
-          - high-concurrency
-          - stress-test
-          - spike-test
-      api_url:
-        description: 'Target API URL'
-        required: false
-        default: 'http://localhost:3000'
+          - staging
+          - production
+        default: staging
+      profile:
+        description: 'Load test profile'
+        required: true
+        type: choice
+        options:
+          - smoke
+          - load
+          - stress
+          - spike
+          - soak
+        default: load
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'apps/backend/**'
+      - 'packages/api/**'
+      - '.github/workflows/load-testing.yml'
 
 env:
-  K6_VERSION: '0.54.0'
+  STAGING_API_URL: https://staging-api.brain-storm.com
+  PRODUCTION_API_URL: https://api.brain-storm.com
 
 jobs:
-  load-test:
-    name: Run Load Tests
+  smoke-test:
+    name: Smoke Test (PR Only)
     runs-on: ubuntu-latest
-
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_PASSWORD: brain-storm
-          POSTGRES_USER: brain-storm
-          POSTGRES_DB: brain-storm
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
-      redis:
-        image: redis:7
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 6379:6379
+    if: github.event_name == 'pull_request'
+    timeout-minutes: 10
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
+      - name: Setup k6
+        uses: grafana/setup-k6-action@v1
+
+      - name: Run smoke tests
+        run: |
+          k6 run --env PROFILE=smoke \
+            --out json=results/smoke-test.json \
+            packages/api/load/scenarios/search-discovery.js
+        env:
+          K6_API_URL: ${{ env.STAGING_API_URL }}
+
+      - name: Parse results
+        if: always()
+        run: |
+          node scripts/parse-k6-results.js results/smoke-test.json > results/smoke-summary.json
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-test-results
+          path: results/
+          retention-days: 7
+
+  load-test:
+    name: Load Test (Nightly)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    timeout-minutes: 60
+    strategy:
+      matrix:
+        scenario:
+          - search-discovery
+          - course-browsing
+          - user-workflows
+          - auth-flows
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup k6
+        uses: grafana/setup-k6-action@v1
+
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
 
-      - name: Install k6
+      - name: Determine environment
+        id: env
         run: |
-          curl -fsSL https://github.com/grafana/k6/releases/download/v${{ env.K6_VERSION }}/k6-v${{ env.K6_VERSION }}-linux-amd64.tar.gz \
-            | tar -xz --strip-components=1 -C /usr/local/bin k6-v${{ env.K6_VERSION }}-linux-amd64/k6
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "API_URL=${{ github.event.inputs.environment == 'production' && env.PRODUCTION_API_URL || env.STAGING_API_URL }}" >> $GITHUB_OUTPUT
+            echo "PROFILE=${{ github.event.inputs.profile }}" >> $GITHUB_OUTPUT
+            echo "ENV_NAME=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
+          else
+            echo "API_URL=${{ env.STAGING_API_URL }}" >> $GITHUB_OUTPUT
+            echo "PROFILE=load" >> $GITHUB_OUTPUT
+            echo "ENV_NAME=staging" >> $GITHUB_OUTPUT
+          fi
 
-      - name: Install dependencies
-        run: npm install
-
-      - name: Build backend
-        run: npm run build --workspace=apps/backend
-
-      - name: Run migrations
-        run: npm run migration:run --workspace=apps/backend
+      - name: Run load test - ${{ matrix.scenario }}
+        id: load-test
+        run: |
+          mkdir -p results
+          k6 run --env PROFILE=${{ steps.env.outputs.PROFILE }} \
+            --out json=results/${{ matrix.scenario }}-results.json \
+            --summary-export=results/${{ matrix.scenario }}-summary.json \
+            packages/api/load/scenarios/${{ matrix.scenario }}.js
         env:
-          DATABASE_HOST: localhost
-          DATABASE_PORT: 5432
-          DATABASE_USER: brain-storm
-          DATABASE_PASSWORD: brain-storm
-          DATABASE_NAME: brain-storm
-
-      - name: Start backend
-        run: npm run start:prod --workspace=apps/backend &
-        env:
-          DATABASE_HOST: localhost
-          DATABASE_PORT: 5432
-          DATABASE_USER: brain-storm
-          DATABASE_PASSWORD: brain-storm
-          DATABASE_NAME: brain-storm
-          REDIS_HOST: localhost
-          REDIS_PORT: 6379
-          NODE_ENV: production
-
-      - name: Wait for backend
-        run: |
-          until curl -sf http://localhost:3000/health; do
-            sleep 2
-          done
-
-      - name: Create results directory
-        run: mkdir -p load-test-results
-
-      - name: Run user journey test
-        if: ${{ github.event.inputs.scenario == 'all' || github.event.inputs.scenario == 'user-journey' || github.event_name == 'schedule' }}
-        run: |
-          k6 run \
-            --out json=load-test-results/user-journey.json \
-            --env API_URL=http://localhost:3000 \
-            scripts/load-tests/user-journey.js
+          K6_API_URL: ${{ steps.env.outputs.API_URL }}
         continue-on-error: true
 
-      - name: Run high concurrency test
-        if: ${{ github.event.inputs.scenario == 'all' || github.event.inputs.scenario == 'high-concurrency' || github.event_name == 'schedule' }}
-        run: |
-          k6 run \
-            --out json=load-test-results/high-concurrency.json \
-            --env API_URL=http://localhost:3000 \
-            scripts/load-tests/high-concurrency.js
-        continue-on-error: true
-
-      - name: Run stress test
-        if: ${{ github.event.inputs.scenario == 'all' || github.event.inputs.scenario == 'stress-test' || github.event_name == 'schedule' }}
-        run: |
-          k6 run \
-            --out json=load-test-results/stress-test.json \
-            --env API_URL=http://localhost:3000 \
-            scripts/load-tests/stress-test.js
-        continue-on-error: true
-
-      - name: Run spike test
-        if: ${{ github.event.inputs.scenario == 'all' || github.event.inputs.scenario == 'spike-test' || github.event_name == 'schedule' }}
-        run: |
-          k6 run \
-            --out json=load-test-results/spike-test.json \
-            --env API_URL=http://localhost:3000 \
-            scripts/load-tests/spike-test.js
-        continue-on-error: true
-
-      - name: Compare against baselines and generate alerts
-        id: baseline-check
-        run: node scripts/load-test-baseline-comparison.js
-        env:
-          RESULTS_DIR: load-test-results
-          BASELINES_FILE: scripts/load-tests/baselines/performance-baselines.json
-        continue-on-error: true
-
-      - name: Upload load test results
-        uses: actions/upload-artifact@v4
+      - name: Parse results
         if: always()
+        run: |
+          node scripts/parse-k6-results.js results/${{ matrix.scenario }}-summary.json > results/${{ matrix.scenario }}-parsed.json
+
+      - name: Compare with baseline
+        if: always()
+        id: baseline
+        run: |
+          if [ -f "packages/api/load/baselines/${{ matrix.scenario }}-baseline.json" ]; then
+            node scripts/load-test-baseline-comparison.js \
+              results/${{ matrix.scenario }}-parsed.json \
+              packages/api/load/baselines/${{ matrix.scenario }}-baseline.json \
+              > results/${{ matrix.scenario }}-comparison.json
+            
+            # Check if regression detected
+            if grep -q '"regression": true' results/${{ matrix.scenario }}-comparison.json; then
+              echo "regression=true" >> $GITHUB_OUTPUT
+              echo "⚠️ Performance regression detected in ${{ matrix.scenario }}"
+            else
+              echo "regression=false" >> $GITHUB_OUTPUT
+              echo "✅ Performance within acceptable range"
+            fi
+          else
+            echo "baseline_missing=true" >> $GITHUB_OUTPUT
+            echo "⚠️ No baseline found for ${{ matrix.scenario }}"
+          fi
+
+      - name: Generate HTML report
+        if: always()
+        run: |
+          cat > results/${{ matrix.scenario }}-report.html << 'EOF'
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Load Test Report - ${{ matrix.scenario }}</title>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 40px; background: #f5f5f5; }
+              .container { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+              h1 { color: #333; border-bottom: 3px solid #0066cc; padding-bottom: 10px; }
+              .metric { display: inline-block; margin: 10px 20px 10px 0; padding: 15px; background: #f9f9f9; border-radius: 4px; }
+              .metric-label { font-size: 12px; color: #666; text-transform: uppercase; }
+              .metric-value { font-size: 24px; font-weight: bold; color: #0066cc; }
+              .pass { color: #28a745; }
+              .fail { color: #dc3545; }
+              .warn { color: #ffc107; }
+              table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+              th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+              th { background: #0066cc; color: white; font-weight: bold; }
+              tr:hover { background: #f5f5f5; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <h1>Load Test Report: ${{ matrix.scenario }}</h1>
+              <p><strong>Environment:</strong> ${{ steps.env.outputs.ENV_NAME }}</p>
+              <p><strong>Profile:</strong> ${{ steps.env.outputs.PROFILE }}</p>
+              <p><strong>Date:</strong> $(date -u +"%Y-%m-%d %H:%M:%S UTC")</p>
+              <p><strong>Status:</strong> <span class="${{ steps.load-test.outcome == 'success' && 'pass' || 'fail' }}">${{ steps.load-test.outcome }}</span></p>
+              <h2>Key Metrics</h2>
+              <div id="metrics"></div>
+              <h2>Detailed Results</h2>
+              <pre id="details"></pre>
+            </div>
+            <script>
+              fetch('${{ matrix.scenario }}-parsed.json')
+                .then(r => r.json())
+                .then(data => {
+                  const metrics = data.metrics;
+                  document.getElementById('metrics').innerHTML = Object.entries(metrics)
+                    .map(([key, value]) => {
+                      const displayValue = typeof value === 'number' ? value.toFixed(2) : value;
+                      return \`<div class="metric">
+                        <div class="metric-label">\${key.replace(/_/g, ' ')}</div>
+                        <div class="metric-value">\${displayValue}</div>
+                      </div>\`;
+                    }).join('');
+                  document.getElementById('details').textContent = JSON.stringify(data, null, 2);
+                });
+            </script>
+          </body>
+          </html>
+          EOF
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
-          name: load-test-results-${{ github.run_id }}
-          path: load-test-results/
+          name: load-test-results-${{ matrix.scenario }}
+          path: results/
           retention-days: 30
 
-      - name: Send Slack notification on regression
-        if: failure() && github.event_name == 'schedule' && env.SLACK_WEBHOOK_URL
-        uses: slackapi/slack-github-action@v1.24.0
-        with:
-          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
-          payload: |
-            {
-              "text": "🚨 Performance Regression Detected",
-              "blocks": [
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "*Performance Regression Detected*\n\nLoad tests detected performance degradation.\n\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>"
-                  }
-                }
-              ]
-            }
+      - name: Fail on regression
+        if: always() && steps.baseline.outputs.regression == 'true'
+        run: |
+          echo "❌ Performance regression detected!"
+          echo "Review the comparison report for details."
+          exit 1
 
-      - name: Create GitHub issue on critical regression
-        if: failure() && github.event_name == 'schedule'
+      - name: Fail on test failure
+        if: steps.load-test.outcome == 'failure'
+        run: |
+          echo "❌ Load test failed - thresholds not met"
+          exit 1
+
+  publish-results:
+    name: Publish Test Results
+    runs-on: ubuntu-latest
+    if: always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+    needs: load-test
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: all-results/
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Generate trend report
+        run: |
+          node scripts/generate-trend-report.js all-results/ > trend-report.md
+
+      - name: Create GitHub Issue on failure
+        if: failure()
         uses: actions/github-script@v7
         with:
           script: |
             const fs = require('fs');
-            const reportPath = 'load-test-results/baseline-comparison-report.json';
             
-            if (fs.existsSync(reportPath)) {
-              const report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
-              const criticalTests = report.tests.filter(t => t.regressions.length > 0);
-              
-              if (criticalTests.length > 0) {
-                const body = `## Performance Regression Detected\n\n` +
-                  `**Run**: [#${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})\n\n` +
-                  `### Affected Tests\n` +
-                  criticalTests.map(t => 
-                    `- **${t.name}**: ${t.regressions.length} regression(s)\n` +
-                    t.regressions.map(r => `  - ${r.metric}: ${r.change_percent}% (${r.severity})`).join('\n')
-                  ).join('\n') +
-                  `\n\n### Details\n\`\`\`json\n${JSON.stringify(report, null, 2)}\n\`\`\``;
-                
-                await github.rest.issues.create({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  title: '🚨 Performance Regression Detected in Load Tests',
-                  body: body,
-                  labels: ['performance', 'regression', 'load-testing']
-                });
-              }
+            let body = '## 🚨 Load Test Failure\n\n';
+            body += `**Date**: ${new Date().toISOString()}\n`;
+            body += `**Environment**: ${{ needs.load-test.result }}\n`;
+            body += `**Workflow Run**: [View Details](${context.payload.repository.html_url}/actions/runs/${context.runId})\n\n`;
+            body += '### Failed Tests\n\n';
+            body += 'One or more load tests failed to meet performance thresholds.\n\n';
+            body += '### Action Required\n\n';
+            body += '1. Review the test results in the workflow artifacts\n';
+            body += '2. Investigate performance degradation\n';
+            body += '3. Compare with baseline metrics\n';
+            body += '4. Fix identified bottlenecks\n\n';
+            body += '### Resources\n\n';
+            body += '- [Load Testing Guide](../blob/main/packages/api/load/README.md)\n';
+            body += '- [Performance Optimization](../blob/main/docs/performance-optimization.md)\n';
+            
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `[Load Test] Performance Degradation Detected - ${new Date().toISOString().split('T')[0]}`,
+              body: body,
+              labels: ['performance', 'load-testing', 'needs-investigation']
+            });
+
+      - name: Comment on commit (scheduled runs)
+        if: github.event_name == 'schedule'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let trendReport = 'No trend report generated';
+            
+            if (fs.existsSync('trend-report.md')) {
+              trendReport = fs.readFileSync('trend-report.md', 'utf8');
             }
+            
+            await github.rest.repos.createCommitComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: context.sha,
+              body: `## 📊 Nightly Load Test Results\n\n${trendReport}\n\n[View Full Results](${context.payload.repository.html_url}/actions/runs/${context.runId})`
+            });
+
+      - name: Upload trend report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trend-report
+          path: trend-report.md
+          retention-days: 90
