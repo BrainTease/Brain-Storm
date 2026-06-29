@@ -3,12 +3,15 @@ import { test, expect } from '@playwright/test';
 /**
  * Visual regression baseline tests for RTL (Arabic) layout
  * These tests capture baseline screenshots to detect layout regressions in RTL mode
+ * Ensures proper text alignment, icon mirroring, and layout direction
  */
 
 test.describe('RTL Visual Regression - Arabic (ar)', () => {
   test.beforeEach(async ({ page }) => {
     // Set locale to Arabic for RTL testing
     await page.goto('/ar');
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(500);
   });
 
   test('should render home page correctly in RTL', async ({ page }) => {
