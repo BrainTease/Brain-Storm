@@ -1,0 +1,10 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "paths": {
+      "@brain-storm/types": ["../types/src"],
+      "@brain-storm/mobile": ["../mobile/src"]
+    }
+  }
+}
