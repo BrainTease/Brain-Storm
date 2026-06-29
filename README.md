@@ -288,51 +288,14 @@ MIT — see [LICENSE](./LICENSE) for details.
 
 *Built with ❤️ on the Stellar network. Inspired by [StrellerMinds](https://github.com/StarkMindsHQ) by StarkMindsHQ.*
 
-## Development Setup
+## CI Status
 
-### Prerequisites
+[![Smart Contract CI](https://github.com/BrainTease/Brain-Storm/actions/workflows/contract.yml/badge.svg)](https://github.com/BrainTease/Brain-Storm/actions/workflows/contract.yml)
 
-- Rust stable (latest)
-- Soroban SDK v20.0.0+
-- Stellar CLI v20.0.0+
+The CI workflow runs on every push and PR, ensuring code quality and functionality.
 
-### Installation
-
-```bash
-# Install Rust
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-
-# Install Soroban CLI
-cargo install soroban-cli
-
-# Install wasm-opt (optional, for optimization)
-# macOS
-brew install binaryen
-
-# Ubuntu
-sudo apt-get install binaryen
-# Build all contracts
-cargo build --target wasm32-unknown-unknown --release
-
-# Build specific contract
-cd stellar-contract
-cargo build --target wasm32-unknown-unknown --release
-# Deploy contract
-soroban contract deploy \
-    --wasm target/wasm32-unknown-unknown/release/scavenger_contract.wasm \
-    --network testnet \
-    --source-account $DEPLOYER_SECRET
-
-# Initialize contract
-soroban contract invoke \
-    --id CONTRACT_ID \
-    --network testnet \
-    --source-account $DEPLOYER_SECRET \
-    -- initialize \
-    --admin $ADMIN_ADDRESS
-# Deploy to mainnet
-soroban contract deploy \
-    --wasm target/wasm32-unknown-unknown/release/scavenger_contract.wasm \
-    --network mainnet \
-    --source-account $DEPLOYER_SECRET
-git status
+### Workflow Steps
+1. **Lint** - `cargo fmt` and `cargo clippy`
+2. **Test** - `cargo test` with coverage
+3. **Build** - WASM compilation
+4. **Coverage** - Code coverage reporting
