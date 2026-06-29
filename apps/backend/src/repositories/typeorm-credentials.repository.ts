@@ -24,7 +24,22 @@ export class TypeOrmCredentialsRepository implements CredentialsRepository {
   }
 
   findByUser(userId: string): Promise<Credential[]> {
-    return this.repo.find({ where: { userId }, order: { issuedAt: 'DESC' } });
+    return this.repo.createQueryBuilder('credential')
+      .leftJoinAndSelect('credential.course', 'course')
+      .select([
+        'credential.id',
+        'credential.userId',
+        'credential.courseId',
+        'credential.txHash',
+        'credential.stellarPublicKey',
+        'credential.issuedAt',
+        'course.id',
+        'course.title',
+        'course.level',
+      ])
+      .where('credential.userId = :userId', { userId })
+      .orderBy('credential.issuedAt', 'DESC')
+      .getMany();
   }
 
   findByUserAndCourse(userId: string, courseId: string): Promise<Credential | null> {

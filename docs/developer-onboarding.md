@@ -87,7 +87,71 @@ npm run db:migrate
 rustup target add wasm32-unknown-unknown
 ```
 
-### 5. Start Development Servers
+### 5. Database Seeding
+
+The project includes a comprehensive seed script that creates realistic demo data for local development. The seed is **idempotent** — running it multiple times is safe (it cleans up before re-seeding).
+
+#### Basic Seed (Default: Students, Courses, Enrollments)
+
+```bash
+cd apps/backend
+npx ts-node src/database/seed.ts
+```
+
+#### Seed with Reviews
+
+```bash
+npx ts-node src/database/seed.ts --with-reviews
+```
+
+#### Seed with Sample Tips/Transactions
+
+```bash
+npx ts-node src/database/seed.ts --with-tips
+```
+
+#### Full Demo Dataset (Reviews + Tips)
+
+```bash
+npx ts-node src/database/seed.ts --with-reviews --with-tips
+```
+
+#### Custom Record Count
+
+```bash
+npx ts-node src/database/seed.ts --count=25
+```
+
+#### Seed Script Options
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--with-reviews` | Include sample course reviews | Not included |
+| `--with-tips` | Include sample BST tip transactions | Not included |
+| `--count=N` | Number of courses/students to generate | 10 |
+
+#### Environment Safety
+
+The seed script is **guarded against running in production** — it will exit immediately with an error if `NODE_ENV=production` is detected.
+
+#### What Gets Seeded
+
+| Entity | Description |
+|--------|-------------|
+| Admin | 1 admin account (`admin@brainstorm.dev`) |
+| Instructors | Up to 5 instructor profiles with Stellar keys |
+| Curators | 3 content curator accounts |
+| Students | 20 student profiles (2x count) |
+| Courses | 10 courses with realistic titles/descriptions |
+| Modules | 3-6 modules per course |
+| Lessons | 2-4 lessons per module with markdown content |
+| Enrollments | Students enrolled in 1-4 courses each |
+| Progress | Random progress records for enrollments |
+| Notifications | Enrollment and tip notifications |
+| Reviews | (Optional) Student reviews with ratings |
+| Tips | (Optional) Sample BST tip transactions |
+
+### 6. Start Development Servers
 
 **Terminal 1 - Backend:**
 ```bash

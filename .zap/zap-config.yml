@@ -1,0 +1,80 @@
+# Brain-Storm OWASP ZAP Configuration
+# Used by dast.yml workflow for dynamic scanning against staging
+
+env:
+  contexts:
+    - name: Brain-Storm API
+      url: 'https://staging.brainstorm.app'
+      includePaths:
+        - '/api/v1/.*'
+        - '/health'
+        - '/graphql'
+      excludePaths:
+        - '/api/v1/payments/stripe/webhook'
+        - '/api/v1/auth/logout'
+      authentication:
+        method: bearer
+        parameters:
+          token: '${ZAP_AUTH_TOKEN}'
+        loggedInRegex: '\Q"status":"success"\E'
+        loggedOutRegex: '\Q401\E|Unauthorized'
+
+  vars:
+    baseUrl: 'https://staging.brainstorm.app'
+
+jobs:
+  - type: spider
+    parameters:
+      maxChildren: 10
+      recurse: true
+      subtreeOnly: true
+    optional:
+      - name: ajaxSpider
+        enabled: true
+        maxDurationMinutes: 10
+        maxCrawlDepth: 5
+        numberOfBrowsers: 1
+
+  - type: passiveScan
+    parameters:
+      maxAlertsPerRule: 50
+      scanOnlyInScope: true
+      enableTags: true
+
+  - type: activeScan
+    parameters:
+      maxAlertsPerRule: 50
+      scanOnlyInScope: true
+      maxDurationMinutes: 30
+      threadPerHost: 4
+      antiCsrfTokenNames:
+        - _csrf
+        - csrf_token
+        - authenticity_token
+
+    policy:
+      defaultStrength: medium
+      defaultThreshold: medium
+      rules:
+        - id: 40012  # Cross Site Scripting (Reflected)
+          strength: high
+          threshold: medium
+        - id: 40014  # Cross Site Scripting (Persistent)
+          strength: high
+          threshold: medium
+        - id: 40018  # SQL Injection
+          strength: high
+          threshold: high
+        - id: 90019  # Server Side Code Injection
+          strength: high
+          threshold: high
+        - id: 40024  # NoSQL Injection
+          strength: high
+          threshold: high
+
+  - type: report
+    parameters:
+      template: traditional-html
+      reportDir: '${ZAP_REPORT_DIR}'
+      reportTitle: 'Brain-Storm DAST Scan Report'
+      reportDescription: 'Automated OWASP ZAP scan against staging environment'

@@ -93,9 +93,9 @@ export class UsersController {
   async update(
     @Param('id') id: string,
     @Body() dto: UpdateUserDto,
-    @Request() req: { user: { id: string } }
+    @CurrentUser() user: any
   ) {
-    if (req.user.id !== id) {
+    if (!this.usersService.canUpdateUser(user.id, id, user.role)) {
       throw new ForbiddenException('You can only update your own profile');
     }
     return this.usersService.update(id, dto);

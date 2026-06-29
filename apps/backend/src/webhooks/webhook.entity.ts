@@ -16,8 +16,17 @@ export class Webhook {
   @Column('text')
   events: string;
 
+  /** Active HMAC signing secret */
   @Column()
   secret: string;
+
+  /** Previous secret kept for a 24-h grace period during rotation */
+  @Column({ nullable: true, type: 'varchar' })
+  previousSecret: string | null;
+
+  /** When the previous secret expires (null = no rotation in progress) */
+  @Column({ nullable: true, type: 'timestamp' })
+  secretRotatedAt: Date | null;
 
   @Column({ default: true })
   isActive: boolean;

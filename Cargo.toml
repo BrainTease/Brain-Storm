@@ -1,33 +1,30 @@
 [workspace]
 members = [
-    "contracts/analytics",
-    "contracts/token",
-    "contracts/shared",
-    "contracts/certificate",
-    "contracts/governance",
-    "contracts/credential_metadata",
-    "contracts/reputation",
-    "contracts/buyback",
-    "contracts/scholarship_fund",
-    "contracts/token_restrictions",
-    "contracts/liquidity_pool",
-    "contracts/grants",
-    "contracts/badges",
-    "contracts/nft",
-    "contracts/registry",
-    "contracts/market",
-    "contracts/dispute",
+    "stellar-contract",
+    "packages/contracts/contracts/market",
 ]
-resolver = "2"
+
+[workspace.dependencies]
+# Soroban SDK - latest stable
+soroban-sdk = "20.0.0"
+soroban-cli = "20.0.0"
+
+# Common dependencies
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "1.0"
+anyhow = "1.0"
 
 [profile.release]
 opt-level = "z"
 overflow-checks = true
-debug = 0
-strip = "symbols"
-panic = "abort"
+lto = true
+debug = false
+strip = true
 codegen-units = 1
+panic = "abort"
 
-[profile.release-with-logs]
-inherits = "release"
-debug-assertions = true
+[profile.dev]
+opt-level = 0
+debug = true
+overflow-checks = true

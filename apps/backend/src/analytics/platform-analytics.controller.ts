@@ -1,20 +1,47 @@
-import { Controller, Get, Query, Res, StreamableFile } from '@nestjs/common';
+import { Controller, Get, Post, Query, Res, Body, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { UseGuards } from '@nestjs/common';
 import { PlatformAnalyticsService } from './platform-analytics.service';
 import { EventsService } from './events.service';
-import { AnalyticsEvent } from './analytics-event.entity';
+import { CORE_EVENTS } from './event-taxonomy';
+
+class TrackEventDto {
+  eventId: string;
+  eventType: string;
+  timestamp: string;
+  userId?: string;
+  sessionId: string;
+  source: 'web' | 'mobile' | 'api';
+  locale?: string;
+  payload: Record<string, unknown>;
+}
 
 @ApiTags('analytics')
-@ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
 @Controller('v1/analytics')
 export class PlatformAnalyticsController {
   constructor(
     private readonly platformAnalyticsService: PlatformAnalyticsService,
     private readonly eventsService: EventsService,
   ) {}
+
+  @Post('events')
+  @ApiOperation({ summary: 'Track an analytics event from client' })
+  async trackEvent(@Body() dto: TrackEventDto) {
+    // Validate event type
+    const validEventTypes = Object.values(CORE_EVENTS);
+    if (!validEventTypes.includes(dto.eventType as typeof CORE_EVENTS[keyof typeof CORE_EVENTS])) {
+      return { success: false, error: 'Invalid event type' };
+    }
+    
+    // Emit event for storage
+    await this.eventsService.handleEvent(dto.eventType, {
+      ...dto.payload,
+      userId: dto.userId,
+      sessionId: dto.sessionId,
+    });
+    
+    return { success: true };
+  }
 
   @Get('dashboard')
   @ApiOperation({ summary: 'Get platform dashboard analytics' })

@@ -78,4 +78,10 @@ export default () => ({
     node: process.env.ELASTICSEARCH_NODE || 'http://localhost:9200',
     apiKey: process.env.ELASTICSEARCH_API_KEY || '',
   },
+
+  stripe: {
+    secretKey: process.env.STRIPE_SECRET_KEY || '',
+    webhookSecret: process.env.STRIPE_WEBHOOK_SECRET || '',
+    publishableKey: process.env.STRIPE_PUBLISHABLE_KEY || '',
+  },
 });

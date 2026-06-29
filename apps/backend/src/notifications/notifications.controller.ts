@@ -1,5 +1,6 @@
 import { Controller, Get, Patch, Post, Delete, Param, Body, Request, UseGuards } from '@nestjs/common';
 import { NotificationsService } from './notifications.service';
+import { PushNotificationService } from './push-notification.service';
 import { ApiBearerAuth, ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { NotificationType } from './notification.entity';
@@ -25,7 +26,10 @@ class ScheduleNotificationDto {
 @Controller('notifications')
 @UseGuards(JwtAuthGuard)
 export class NotificationsController {
-  constructor(private notificationsService: NotificationsService) {}
+  constructor(
+    private notificationsService: NotificationsService,
+    private pushService: PushNotificationService,
+  ) {}
 
   @Get()
   @ApiOperation({ summary: 'Get all notifications for the current user' })
@@ -81,5 +85,15 @@ export class NotificationsController {
   @ApiResponse({ status: 404, description: 'Scheduled notification not found' })
   cancelScheduled(@Param('id') id: string) {
     return this.notificationsService.cancelScheduled(id);
+  }
+
+  // ── Mobile Push Notifications ────────────────────────────────────────────
+
+  @Post('register-device')
+  @ApiOperation({ summary: 'Register mobile device for push notifications' })
+  @ApiBody({ schema: { example: { token: 'ExponentPushToken[xxx]', platform: 'ios' } } })
+  @ApiResponse({ status: 201, description: 'Device registered' })
+  registerDevice(@Request() req, @Body() body: { token: string; platform: string }) {
+    return this.pushService.registerDevice(req.user.id, body.token, body.platform);
   }
 }

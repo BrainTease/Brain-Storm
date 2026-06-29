@@ -1,25 +1,61 @@
-import { Injectable, OnEvent } from '@nestjs/event-emitter';
+import { Injectable, Logger } from '@nestjs/common';
+import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Logger } from '@nestjs/common';
 import { AnalyticsEvent } from './analytics-event.entity';
+import { scrubPII, canSendEvent, ConsentState } from './event-taxonomy';
 
 @Injectable()
 export class EventsService {
   private readonly logger = new Logger(EventsService.name);
+  private consentStates: Map<string, ConsentState> = new Map();
 
   constructor(
     @InjectRepository(AnalyticsEvent)
     private readonly analyticsEventRepo: Repository<AnalyticsEvent>,
   ) {}
 
+  /**
+   * Set user consent for analytics
+   */
+  setConsent(userId: string, consent: ConsentState): void {
+    this.consentStates.set(userId, consent);
+  }
+
+  /**
+   * Get user consent for analytics
+   */
+  getConsent(userId: string): ConsentState {
+    return this.consentStates.get(userId) ?? { analytics: true, marketing: false };
+  }
+
+  /**
+   * Clear consent (e.g., on logout)
+   */
+  clearConsent(userId: string): void {
+    this.consentStates.delete(userId);
+  }
+
   @OnEvent('*')
   async handleEvent(event: string, payload: any): Promise<void> {
     try {
+      const userId = payload.userId;
+      
+      // Check consent if userId is provided
+      if (userId) {
+        const consent = this.getConsent(userId);
+        if (!canSendEvent(consent, event)) {
+          this.logger.debug(`Event ${event} blocked due to consent`);
+          return;
+        }
+      }
+
+      // Scrub PII from payload
+      const scrubbedPayload = scrubPII(payload);
+      
       const analyticsEvent = this.analyticsEventRepo.create({
         eventType: event,
-        payload: JSON.stringify(payload),
-        // We can try to extract userId and courseId from payload if they exist
+        payload: JSON.stringify(scrubbedPayload),
         userId: payload.userId ?? null,
         courseId: payload.courseId ?? null,
       });

@@ -74,3 +74,29 @@ export const togglePublish = (id: string, isPublished: boolean) =>
   api.patch(`/courses/${id}`, { isPublished });
 
 export const deleteCourse = (id: string) => api.delete(`/courses/${id}`);
+
+// ── Analytics ───────────────────────────────────────────────────────────────
+export interface DashboardMetrics {
+  totalUsers: number;
+  totalCourses: number;
+  totalEnrollments: number;
+  totalCompletions: number;
+  completionRate: number;
+  averageRating: number;
+  totalReviews: number;
+  activeLearnersLast30Days: number;
+  newUsersLast30Days: number;
+  newEnrollmentsLast30Days: number;
+  growth: number;
+  activeWorkers: number;
+  tipVolume: number;
+  disputeRate: number;
+}
+
+export async function fetchDashboardMetrics(params?: {
+  startDate?: string;
+  endDate?: string;
+}): Promise<DashboardMetrics> {
+  const { data } = await api.get('/admin/analytics/dashboard', { params });
+  return data;
+}

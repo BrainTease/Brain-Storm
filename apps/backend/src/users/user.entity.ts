@@ -1,6 +1,16 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  Index,
+} from 'typeorm';
 
 @Entity('users')
+@Index(['email', 'deletedAt'])
+@Index(['role', 'deletedAt'])
+@Index(['createdAt'])
 export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -32,13 +42,13 @@ export class User {
   @Column({ default: false })
   isVerified: boolean;
 
-  @Column({ nullable: true })
-  deletedAt: Date;
+  @Column({ nullable: true, type: 'timestamptz' })
+  deletedAt: Date | null;
 
   @Column({ nullable: true, type: 'varchar' })
   verificationToken: string | null;
 
-  @Column({ nullable: true, type: 'datetime' })
+  @Column({ nullable: true, type: 'timestamptz' })
   verificationTokenExpiresAt: Date | null;
 
   @Column({ default: false })
@@ -56,6 +66,16 @@ export class User {
   @Column({ nullable: true, type: 'varchar' })
   referredBy: string | null;
 
+  // Audit columns
+  @Column({ nullable: true })
+  createdBy: string | null;
+
+  @Column({ nullable: true })
+  updatedBy: string | null;
+
   @CreateDateColumn()
   createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
 }

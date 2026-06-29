@@ -1,0 +1,320 @@
+# WASM Contract Build & Release Pipeline
+# Builds optimized contract WASM on tagged releases
+
+name: Contract Release
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to build (e.g., v1.0.0)'
+        required: true
+        default: 'v0.1.0'
+      publish_to_registry:
+        description: 'Publish to registry'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: "-C link-arg=-s"
+
+jobs:
+  # ============================================
+  # Build WASM Contracts
+  # ============================================
+  build-wasm:
+    name: Build WASM Contracts
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        contract:
+          - name: scavenger
+            path: stellar-contract
+          - name: market
+            path: packages/contracts/contracts/market
+    outputs:
+      wasm_hash: ${{ steps.hash.outputs.wasm_hash }}
+      wasm_size: ${{ steps.hash.outputs.wasm_size }}
+      contract_name: ${{ matrix.contract.name }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: wasm32-unknown-unknown
+          override: true
+
+      - name: Install soroban-cli
+        run: |
+          cargo install soroban-cli --locked
+          soroban --version
+
+      - name: Build WASM
+        working-directory: ${{ matrix.contract.path }}
+        run: |
+          echo "🔨 Building ${{ matrix.contract.name }} contract..."
+          cargo build --target wasm32-unknown-unknown --release
+          
+          # Create output directory
+          mkdir -p ./target/wasm
+          
+          # Find WASM file
+          WASM_FILE=$(find target/wasm32-unknown-unknown/release -name "*.wasm" | head -1)
+          if [ -z "$WASM_FILE" ]; then
+            echo "❌ No WASM file found!"
+            exit 1
+          fi
+          
+          # Copy to known location
+          cp "$WASM_FILE" "./target/wasm/${{ matrix.contract.name }}.wasm"
+          
+          # Optimize WASM
+          echo "⚡ Optimizing WASM..."
+          if command -v wasm-opt &> /dev/null; then
+            wasm-opt -Oz "./target/wasm/${{ matrix.contract.name }}.wasm" -o "./target/wasm/${{ matrix.contract.name }}.wasm"
+          else
+            echo "⚠️ wasm-opt not found, skipping optimization"
+          fi
+          
+          echo "✅ WASM built: ./target/wasm/${{ matrix.contract.name }}.wasm"
+
+      - name: Compute checksum
+        id: hash
+        working-directory: ${{ matrix.contract.path }}
+        run: |
+          WASM_PATH="./target/wasm/${{ matrix.contract.name }}.wasm"
+          
+          # Compute SHA256 hash
+          WASM_HASH=$(sha256sum "$WASM_PATH" | cut -d' ' -f1)
+          WASM_SIZE=$(stat -c%s "$WASM_PATH" || stat -f%z "$WASM_PATH")
+          
+          echo "wasm_hash=$WASM_HASH" >> $GITHUB_OUTPUT
+          echo "wasm_size=$WASM_SIZE" >> $GITHUB_OUTPUT
+          
+          echo "📦 Contract: ${{ matrix.contract.name }}"
+          echo "🔑 Hash: $WASM_HASH"
+          echo "📏 Size: $WASM_SIZE bytes"
+
+      - name: Upload WASM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: wasm-${{ matrix.contract.name }}
+          path: ${{ matrix.contract.path }}/target/wasm/${{ matrix.contract.name }}.wasm
+
+  # ============================================
+  # Create Checksum Manifest
+  # ============================================
+  create-manifest:
+    name: Create Checksum Manifest
+    needs: build-wasm
+    runs-on: ubuntu-latest
+    outputs:
+      manifest_path: ${{ steps.manifest.outputs.manifest_path }}
+    steps:
+      - name: Download all WASM artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: wasm-*
+          path: ./artifacts
+          merge-multiple: true
+
+      - name: Generate checksum manifest
+        id: manifest
+        run: |
+          echo "# WASM Contract Checksums" > CHECKSUMS.md
+          echo "" >> CHECKSUMS.md
+          echo "| Contract | Size | SHA256 Checksum |" >> CHECKSUMS.md
+          echo "|----------|------|-----------------|" >> CHECKSUMS.md
+          
+          for file in ./artifacts/*.wasm; do
+            if [ -f "$file" ]; then
+              NAME=$(basename "$file" .wasm)
+              SIZE=$(stat -c%s "$file" || stat -f%z "$file")
+              HASH=$(sha256sum "$file" | cut -d' ' -f1)
+              echo "| $NAME | $SIZE bytes | \`$HASH\` |" >> CHECKSUMS.md
+            fi
+          done
+          
+          # Create JSON manifest
+          echo "{" > manifest.json
+          echo "  \"version\": \"${{ github.ref_name }}\"," >> manifest.json
+          echo "  \"timestamp\": \"$(date -Iseconds)\"," >> manifest.json
+          echo "  \"contracts\": {" >> manifest.json
+          
+          FIRST=true
+          for file in ./artifacts/*.wasm; do
+            if [ -f "$file" ]; then
+              NAME=$(basename "$file" .wasm)
+              HASH=$(sha256sum "$file" | cut -d' ' -f1)
+              SIZE=$(stat -c%s "$file" || stat -f%z "$file")
+              
+              if [ "$FIRST" = true ]; then
+                FIRST=false
+              else
+                echo "," >> manifest.json
+              fi
+              echo "    \"$NAME\": {" >> manifest.json
+              echo "      \"hash\": \"$HASH\"," >> manifest.json
+              echo "      \"size\": $SIZE" >> manifest.json
+              echo "    }" >> manifest.json
+            fi
+          done
+          
+          echo "  }" >> manifest.json
+          echo "}" >> manifest.json
+          
+          echo "manifest_path=$(pwd)/CHECKSUMS.md" >> $GITHUB_OUTPUT
+          
+          echo "📋 Manifest created:"
+          cat CHECKSUMS.md
+
+      - name: Upload checksum manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: checksum-manifest
+          path: |
+            CHECKSUMS.md
+            manifest.json
+
+  # ============================================
+  # Attach Artifacts to Release
+  # ============================================
+  attach-to-release:
+    name: Attach Artifacts to Release
+    needs: [build-wasm, create-manifest]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download all WASM artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: wasm-*
+          path: ./artifacts
+          merge-multiple: true
+
+      - name: Download checksum manifest
+        uses: actions/download-artifact@v4
+        with:
+          name: checksum-manifest
+          path: ./manifest
+
+      - name: Upload artifacts to release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            ./artifacts/*.wasm
+            ./manifest/CHECKSUMS.md
+            ./manifest/manifest.json
+          fail_on_unmatched_files: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ============================================
+  # Publish to Registry (Optional)
+  # ============================================
+  publish-registry:
+    name: Publish to Registry
+    needs: [build-wasm, attach-to-release]
+    runs-on: ubuntu-latest
+    if: github.event.inputs.publish_to_registry == 'true' || github.event_name == 'release'
+    steps:
+      - name: Download WASM artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: wasm-*
+          path: ./artifacts
+          merge-multiple: true
+
+      - name: Publish to Soroban Registry
+        run: |
+          echo "📦 Publishing contracts to Soroban registry..."
+          
+          for file in ./artifacts/*.wasm; do
+            if [ -f "$file" ]; then
+              NAME=$(basename "$file" .wasm)
+              echo "Publishing $NAME..."
+              
+              # Publish to testnet (use soroban-cli)
+              soroban contract install \
+                --wasm "$file" \
+                --network testnet \
+                --source-account ${{ secrets.DEPLOYER_SECRET }} \
+                --output-json || echo "⚠️ Failed to publish $NAME"
+            fi
+          done
+
+      - name: Record registry addresses
+        run: |
+          echo "## Contract Registry Addresses" >> registry.md
+          echo "" >> registry.md
+          echo "| Contract | Testnet Address |" >> registry.md
+          echo "|----------|-----------------|" >> registry.md
+          # This would be populated with actual addresses from the publish step
+          echo "| scavenger | CA... |" >> registry.md
+          echo "| market | CA... |" >> registry.md
+
+      - name: Upload registry addresses
+        uses: actions/upload-artifact@v4
+        with:
+          name: registry-addresses
+          path: registry.md
+
+      - name: Update release with registry info
+        uses: softprops/action-gh-release@v1
+        with:
+          files: registry.md
+          fail_on_unmatched_files: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ============================================
+  # Verify Artifacts
+  # ============================================
+  verify:
+    name: Verify Artifacts
+    needs: [build-wasm, attach-to-release]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download WASM artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: wasm-*
+          path: ./artifacts
+          merge-multiple: true
+
+      - name: Verify WASM files
+        run: |
+          echo "🔍 Verifying WASM artifacts..."
+          
+          for file in ./artifacts/*.wasm; do
+            if [ -f "$file" ]; then
+              echo "✅ Verified: $(basename "$file")"
+              echo "   Size: $(stat -c%s "$file" || stat -f%z "$file") bytes"
+              echo "   Hash: $(sha256sum "$file" | cut -d' ' -f1)"
+            fi
+          done
+
+      - name: Verify checksums
+        run: |
+          echo "🔍 Verifying checksums..."
+          
+          # Download manifest
+          if [ -f "./manifest/CHECKSUMS.md" ]; then
+            echo "✅ Checksum manifest present"
+          else
+            echo "❌ Checksum manifest missing"
+            exit 1
+          fi

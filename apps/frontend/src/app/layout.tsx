@@ -1,9 +1,14 @@
 import type { Metadata } from 'next';
+import dynamic from 'next/dynamic';
 import './globals.css';
-import { WalletButton } from '@/components/wallet/WalletButton';
 import NetworkStatus from '@/components/ui/NetworkStatus';
 import { TourProvider } from '@/components/ui/TourProvider';
 import { ThemeProvider } from '@/components/ThemeProvider';
+
+const WalletButton = dynamic(
+  () => import('@/components/wallet/WalletButton').then((m) => ({ default: m.WalletButton })),
+  { ssr: false, loading: () => <div className="w-28 h-9 rounded-lg animate-pulse bg-gray-200 dark:bg-gray-700" /> },
+);
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://brain-storm.app';
 

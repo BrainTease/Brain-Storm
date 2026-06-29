@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "analyze": "ANALYZE=true next build",
+    "bundle-size": "ANALYZE=true next build 2>&1 | grep 'First Load JS'",
     "postbuild": "next-sitemap",
     "start": "next start",
     "lint": "eslint src --ext .ts,.tsx",

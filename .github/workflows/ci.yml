@@ -31,6 +31,9 @@ jobs:
         run: npm run build --workspace=apps/backend
         env:
           GIT_COMMIT_SHA: ${{ github.sha }}
+      
+      - name: Check shared types
+        run: npm run type-check --workspace=packages/types
 
       - name: Run unit tests with coverage
         run: npx jest --coverage --passWithNoTests
@@ -93,10 +96,41 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Run integration tests
-        run: npm run test:integration --workspace=apps/backend
+      - name: Run integration tests with coverage
+        run: npm run test:integration -- --coverage --coverageReporters=text --coverageReporters=json-summary
+        working-directory: apps/backend
         env:
           NODE_ENV: test
+      
+      - name: Upload integration test coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-integration-coverage
+          path: apps/backend/coverage/
+          retention-days: 7
+      
+      - name: Comment PR with coverage summary
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            try {
+              const coverage = JSON.parse(fs.readFileSync('apps/backend/coverage/coverage-summary.json', 'utf8'));
+              const total = coverage.total;
+              
+              const comment = `## 🧪 Integration Test Coverage\n\n| Metric | Coverage |\n|--------|----------|\n| Lines | ${total.lines.pct}% |\n| Statements | ${total.statements.pct}% |\n| Functions | ${total.functions.pct}% |\n| Branches | ${total.branches.pct}% |`;
+              
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: comment
+              });
+            } catch (e) {
+              console.log('Coverage summary not found');
+            }
 
   backend-soroban-test:
     name: Backend - Soroban Testnet Tests
@@ -160,6 +194,41 @@ jobs:
         run: npm run build --workspace=apps/frontend
         env:
           NEXT_PUBLIC_GIT_COMMIT_SHA: ${{ github.sha }}
+
+      - name: Check bundle size budget
+        run: |
+          FIRST_LOAD_KB=$(node -e "
+            const fs = require('fs');
+            const path = 'apps/frontend/.next/build-manifest.json';
+            if (!fs.existsSync(path)) { console.log('0'); process.exit(0); }
+            const manifest = JSON.parse(fs.readFileSync(path, 'utf8'));
+            const pages = manifest.pages || {};
+            const rootChunks = pages['/'] || [];
+            let totalBytes = 0;
+            rootChunks.forEach(chunk => {
+              const chunkPath = 'apps/frontend/.next/' + chunk;
+              if (fs.existsSync(chunkPath)) totalBytes += fs.statSync(chunkPath).size;
+            });
+            console.log(Math.round(totalBytes / 1024));
+          ")
+          echo "Initial route JS budget check: ${FIRST_LOAD_KB} KB"
+          echo "### Bundle Size Report" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Root route JS chunks | ${FIRST_LOAD_KB} KB |" >> $GITHUB_STEP_SUMMARY
+          if [ "$FIRST_LOAD_KB" -gt 500 ]; then
+            echo "::warning::Initial JS bundle exceeds 500 KB (${FIRST_LOAD_KB} KB). Review dynamic imports."
+          fi
+
+      - name: Upload build stats
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: next-build-stats
+          path: |
+            apps/frontend/.next/build-manifest.json
+            apps/frontend/.next/app-build-manifest.json
+          retention-days: 30
 
       - name: Run Pact consumer tests
         run: npm run test:pact --workspace=apps/frontend

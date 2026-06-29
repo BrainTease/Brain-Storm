@@ -4,6 +4,7 @@ export enum DeliveryStatus {
   SUCCESS = 'success',
   FAILED = 'failed',
   PENDING = 'pending',
+  DLQ = 'dlq',
 }
 
 @Entity('webhook_deliveries')
@@ -21,6 +22,7 @@ export class WebhookDelivery {
   @Column('text')
   payload: string;
 
+  @Index()
   @Column({ type: 'varchar', default: DeliveryStatus.PENDING })
   status: DeliveryStatus;
 
@@ -35,6 +37,10 @@ export class WebhookDelivery {
 
   @Column({ nullable: true, type: 'timestamp' })
   nextRetryAt: Date;
+
+  /** Set when this delivery moves to the dead-letter queue */
+  @Column({ nullable: true, type: 'timestamp' })
+  deadLetteredAt: Date | null;
 
   @CreateDateColumn()
   createdAt: Date;
