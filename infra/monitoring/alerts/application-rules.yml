@@ -121,6 +121,98 @@ groups:
           summary: "Long-running database transactions detected"
           description: "Transactions exceeding 30s detected on {{ $labels.instance }}."
 
+  - name: queue_and_indexer_health
+    interval: 30s
+    rules:
+      # Alert when Bull/Redis job queue backlog exceeds threshold
+      - alert: QueueBacklogHigh
+        expr: |
+          bull_queue_waiting_total{job="brain-storm-backend"} > 500
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+          oncall: "true"
+        annotations:
+          summary: "Job queue backlog high: {{ $value }} waiting jobs on {{ $labels.queue }}"
+          description: >
+            Queue {{ $labels.queue }} has {{ $value }} waiting jobs for more than 5 minutes.
+            This may indicate a worker outage or upstream bottleneck.
+            Runbook: https://github.com/BrainTease/Brain-Storm/blob/main/docs/incident-runbook.md#queue-backlog
+
+      - alert: QueueBacklogCritical
+        expr: |
+          bull_queue_waiting_total{job="brain-storm-backend"} > 2000
+        for: 2m
+        labels:
+          severity: critical
+          team: backend
+          oncall: "true"
+        annotations:
+          summary: "Job queue backlog critical: {{ $value }} waiting jobs on {{ $labels.queue }}"
+          description: >
+            Queue {{ $labels.queue }} has {{ $value }} waiting jobs — immediate investigation required.
+            Runbook: https://github.com/BrainTease/Brain-Storm/blob/main/docs/incident-runbook.md#queue-backlog
+
+      - alert: QueueFailedJobsHigh
+        expr: |
+          rate(bull_queue_failed_total{job="brain-storm-backend"}[5m]) > 10
+        for: 3m
+        labels:
+          severity: warning
+          team: backend
+          oncall: "true"
+        annotations:
+          summary: "High queue failure rate: {{ $value | humanize }} failures/s on {{ $labels.queue }}"
+          description: >
+            Queue {{ $labels.queue }} failure rate exceeds 10/min.
+            Runbook: https://github.com/BrainTease/Brain-Storm/blob/main/docs/incident-runbook.md#queue-backlog
+
+      # Alert when Stellar/blockchain indexer falls behind
+      - alert: IndexerLagHigh
+        expr: |
+          stellar_indexer_lag_blocks{job="brain-storm-backend"} > 50
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+          oncall: "true"
+        annotations:
+          summary: "Stellar indexer lag: {{ $value }} blocks behind on {{ $labels.network }}"
+          description: >
+            The Stellar event indexer is {{ $value }} blocks behind the chain head on {{ $labels.network }}.
+            Credential issuance and progress tracking may be delayed.
+            Runbook: https://github.com/BrainTease/Brain-Storm/blob/main/docs/incident-runbook.md#indexer-lag
+
+      - alert: IndexerLagCritical
+        expr: |
+          stellar_indexer_lag_blocks{job="brain-storm-backend"} > 200
+        for: 2m
+        labels:
+          severity: critical
+          team: backend
+          oncall: "true"
+        annotations:
+          summary: "Stellar indexer critically behind: {{ $value }} blocks on {{ $labels.network }}"
+          description: >
+            Indexer is {{ $value }} blocks behind — on-chain credential/token operations are stalled.
+            Runbook: https://github.com/BrainTease/Brain-Storm/blob/main/docs/incident-runbook.md#indexer-lag
+
+      - alert: IndexerStalled
+        expr: |
+          rate(stellar_indexer_processed_ledgers_total{job="brain-storm-backend"}[10m]) == 0
+        for: 5m
+        labels:
+          severity: critical
+          team: backend
+          oncall: "true"
+        annotations:
+          summary: "Stellar indexer has stopped processing ledgers"
+          description: >
+            No ledgers processed in the last 10 minutes on {{ $labels.network }}.
+            The indexer process may have crashed.
+            Runbook: https://github.com/BrainTease/Brain-Storm/blob/main/docs/incident-runbook.md#indexer-lag
+
   - name: performance_recording_rules
     interval: 60s
     rules:
@@ -141,3 +233,9 @@ groups:
           histogram_quantile(0.99,
             rate(http_request_duration_seconds_bucket{job="brain-storm-backend"}[5m])
           )
+
+      - record: queue:backlog:total
+        expr: sum by (queue) (bull_queue_waiting_total{job="brain-storm-backend"})
+
+      - record: indexer:lag:current
+        expr: max by (network) (stellar_indexer_lag_blocks{job="brain-storm-backend"})
