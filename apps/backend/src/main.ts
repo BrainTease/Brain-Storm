@@ -13,6 +13,8 @@ import { writeFileSync } from 'fs';
 import { join } from 'path';
 import { MetricsInterceptor } from './metrics/metrics.interceptor';
 import { MetricsService } from './metrics/metrics.service';
+import helmet from 'helmet';
+import * as express from 'express';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
@@ -23,6 +25,36 @@ async function bootstrap() {
   const nodeEnv = configService.get<string>('nodeEnv');
 
   app.useLogger(app.get(WINSTON_MODULE_NEST_PROVIDER));
+
+  // ── Security headers (Helmet) ───────────────────────────────────────────────
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: ["'self'"],
+          styleSrc: ["'self'", "'unsafe-inline'"],
+          imgSrc: ["'self'", 'data:', 'https:'],
+          connectSrc: ["'self'"],
+          fontSrc: ["'self'"],
+          objectSrc: ["'none'"],
+          frameAncestors: ["'none'"],
+        },
+      },
+      crossOriginEmbedderPolicy: true,
+      crossOriginOpenerPolicy: { policy: 'same-origin' },
+      crossOriginResourcePolicy: { policy: 'same-origin' },
+      hsts: { maxAge: 31536000, includeSubDomains: true },
+      referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+      xContentTypeOptions: true,
+      xFrameOptions: { action: 'deny' },
+      xXssProtection: false, // covered by CSP
+    }),
+  );
+
+  // ── Body-size limits ────────────────────────────────────────────────────────
+  app.use(express.json({ limit: '1mb' }));
+  app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
   app.use('/v0', (req, res) => {
     res.status(410).json({
@@ -44,8 +76,16 @@ async function bootstrap() {
   const corsCredentials = configService.get<boolean>('cors.credentials') ?? false;
   const corsPreflight = configService.get<number>('cors.maxAge') ?? 86400;
 
+  // ── Strict CORS ─────────────────────────────────────────────────────────────
+  // Always apply an explicit allow-list; development uses the configured origins,
+  // never a wildcard, to prevent accidental exposure.
   app.enableCors({
-    origin: nodeEnv === 'production' ? corsOrigins : true,
+    origin: (origin, callback) => {
+      // Allow requests with no Origin header (e.g. server-to-server, curl in dev)
+      if (!origin) return callback(null, true);
+      if (corsOrigins.includes(origin)) return callback(null, true);
+      callback(new Error(`CORS: origin '${origin}' not allowed`));
+    },
     methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-API-KEY', 'X-Webhook-Signature'],
     credentials: corsCredentials,

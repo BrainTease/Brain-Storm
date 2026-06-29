@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "contracts/analytics",
+    "contracts/integration",
     "contracts/token",
     "contracts/shared",
     "contracts/certificate",
