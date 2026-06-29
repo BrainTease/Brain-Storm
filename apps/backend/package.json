@@ -90,7 +90,8 @@
     "apollo-server-express": "^3.10.4",
     "dataloader": "^2.2.2",
     "graphql-depth-limit": "^1.1.0",
-    "graphql-query-complexity": "^0.8.0"
+    "graphql-query-complexity": "^0.8.0",
+    "compression": "^1.7.4"
   },
   "devDependencies": {
     "@eslint/js": "^8.56.0",
@@ -101,6 +102,7 @@
     "@pact-foundation/pact": "^16.3.0",
     "@testcontainers/postgresql": "^10.0.0",
     "@types/adm-zip": "^0.5.7",
+    "@types/compression": "^1.7.5",
     "@types/jest": "^29.0.0",
     "@types/multer": "^1.4.12",
     "@types/node": "^20.0.0",

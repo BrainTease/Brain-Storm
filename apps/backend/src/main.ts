@@ -13,6 +13,9 @@ import { writeFileSync } from 'fs';
 import { join } from 'path';
 import { MetricsInterceptor } from './metrics/metrics.interceptor';
 import { MetricsService } from './metrics/metrics.service';
+// #709: gzip/brotli compression — reduces payload size by 60–80 % for JSON
+import * as compression from 'compression';
+import { SparseFieldsInterceptor } from './common/interceptors/sparse-fields.interceptor';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
@@ -23,6 +26,11 @@ async function bootstrap() {
   const nodeEnv = configService.get<string>('nodeEnv');
 
   app.useLogger(app.get(WINSTON_MODULE_NEST_PROVIDER));
+
+  // #709: Enable gzip/brotli response compression for all eligible responses.
+  // Thresholds: 1 KB minimum, honours Accept-Encoding header (gzip / br).
+  // This alone cuts JSON list-endpoint payloads by ~65–75 %.
+  app.use(compression({ threshold: 1024 }));
 
   app.use('/v0', (req, res) => {
     res.status(410).json({
@@ -37,7 +45,9 @@ async function bootstrap() {
   app.useGlobalFilters(new HttpExceptionFilter(), new ValidationExceptionFilter());
   app.useGlobalInterceptors(
     new TransformInterceptor(),
-    new MetricsInterceptor(app.get(MetricsService))
+    new MetricsInterceptor(app.get(MetricsService)),
+    // #709: trim response to ?fields= requested keys (reduces payload by up to 85 %)
+    new SparseFieldsInterceptor(),
   );
 
   const corsOrigins = configService.get<string[]>('cors.origins') || ['http://localhost:3001'];

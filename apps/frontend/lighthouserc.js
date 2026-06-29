@@ -1,6 +1,9 @@
 /**
- * Lighthouse CI Configuration
- * Enforces performance budgets for Core Web Vitals.
+ * Lighthouse CI Configuration — Core Web Vitals gate.
+ *
+ * All CWV assertions are set to 'error' so the CI step hard-fails on
+ * regression.  Non-critical hints use 'warn' to surface issues without
+ * blocking the pipeline.
  */
 module.exports = {
   ci: {
@@ -29,24 +32,28 @@ module.exports = {
     },
     assert: {
       assertions: {
-        // Core Web Vitals
-        'largest-contentful-paint': ['warn', { maxNumericValue: 2500 }],
-        'cumulative-layout-shift': ['warn', { maxNumericValue: 0.1 }],
-        'total-blocking-time': ['warn', { maxNumericValue: 200 }],
-        'interaction-to-next-paint': ['warn', { maxNumericValue: 200 }],
+        // ── Core Web Vitals (hard gate — 'error') ──────────────────────────
+        // LCP ≤ 2500 ms  → "Good" threshold
+        'largest-contentful-paint': ['error', { maxNumericValue: 2500 }],
+        // CLS ≤ 0.1      → "Good" threshold
+        'cumulative-layout-shift': ['error', { maxNumericValue: 0.1 }],
+        // TBT ≤ 200 ms   → proxy for INP / long tasks
+        'total-blocking-time': ['error', { maxNumericValue: 200 }],
+        // INP ≤ 200 ms   → "Good" threshold
+        'interaction-to-next-paint': ['error', { maxNumericValue: 200 }],
 
-        // Performance budgets
-        'first-contentful-paint': ['warn', { maxNumericValue: 1800 }],
-        'speed-index': ['warn', { maxNumericValue: 3000 }],
+        // ── Secondary performance metrics (hard gate) ─────────────────────
+        'first-contentful-paint': ['error', { maxNumericValue: 1800 }],
+        'speed-index': ['error', { maxNumericValue: 3000 }],
+        'server-response-time': ['error', { maxNumericValue: 600 }],
+
+        // ── Bundle budgets (hard gate) ────────────────────────────────────
+        'total-byte-weight': ['error', { maxNumericValue: 500000 }],
+        'unused-javascript': ['error', { maxNumericValue: 100000 }],
+        'unused-css-rules': ['error', { maxNumericValue: 50000 }],
+
+        // ── Optimization hints (non-blocking) ────────────────────────────
         'max-potential-fid': ['warn', { maxNumericValue: 100 }],
-        'server-response-time': ['warn', { maxNumericValue: 600 }],
-
-        // Bundle budgets
-        'total-byte-weight': ['warn', { maxNumericValue: 500000 }],
-        'unused-javascript': ['warn', { maxNumericValue: 100000 }],
-        'unused-css-rules': ['warn', { maxNumericValue: 50000 }],
-
-        // Best practices
         'uses-responsive-images': 'warn',
         'offscreen-images': 'warn',
         'modern-image-formats': 'warn',
@@ -54,7 +61,7 @@ module.exports = {
         'uses-text-compression': 'warn',
         'uses-rel-preconnect': 'warn',
 
-        // Accessibility baseline
+        // ── Accessibility baseline (hard gate) ───────────────────────────
         'color-contrast': 'error',
         'aria-allowed-attr': 'error',
         'aria-required-children': 'error',

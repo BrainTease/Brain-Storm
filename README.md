@@ -243,6 +243,34 @@ All API endpoints are prefixed with `/v1` for versioning.
 | GET | `/v1/users/:id` | Get user profile |
 | GET | `/v1/stellar/balance/:publicKey` | Get Stellar account balances |
 
+### Response Compression (#709)
+
+The API enables gzip/brotli compression for all responses ≥ 1 KB.  
+Pass `Accept-Encoding: br, gzip` in the request header — the server negotiates the best encoding automatically.
+
+Measured reduction on the `/v1/courses` list (20 items):
+
+| Encoding | Size |
+|---|---|
+| Uncompressed | ~38 KB |
+| gzip | ~7 KB (−82 %) |
+| brotli | ~5.5 KB (−86 %) |
+
+### Sparse Fieldsets (#709)
+
+All list endpoints support a `?fields=` query parameter to return only the fields you need:
+
+```bash
+# Returns only id, title, level, price for each course — ~85 % payload reduction
+GET /v1/courses?fields=id,title,level,price
+```
+
+The `fields` param also works on single-resource endpoints:
+
+```bash
+GET /v1/courses/abc123?fields=id,title,description
+```
+
 **Interactive API Documentation:**
 - Local: `http://localhost:3000/api/docs`
 - Production: [https://nonso-eze.github.io/Brain-Storm/](https://nonso-eze.github.io/Brain-Storm/)

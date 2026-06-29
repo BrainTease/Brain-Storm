@@ -53,6 +53,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="apple-mobile-web-app-title" content="Brain-Storm" />
         <link rel="icon" href="/favicon.ico" />
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+        {/* Preconnect to API origin — reduces TTFB for first data fetch (INP) */}
+        <link rel="preconnect" href={process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'} />
+        {/* Preconnect to avatar CDN to unblock LCP image on profile/dashboard */}
+        <link rel="preconnect" href="https://lh3.googleusercontent.com" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://www.gravatar.com" crossOrigin="anonymous" />
       </head>
       <body className="antialiased">
         <ThemeProvider>
