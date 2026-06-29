@@ -1,0 +1,63 @@
+---
+# Backup Monitoring Alert Rules
+# Fires when scheduled backups are overdue or restore drills fail.
+# Runbook: https://github.com/BrainTease/Brain-Storm/blob/main/docs/incident-runbook.md#database-issues
+
+groups:
+  - name: backup_health
+    interval: 60s
+    rules:
+      # Alert when no successful backup has been recorded in the last 26 hours
+      # (daily schedule at 02:00 UTC + 2h tolerance)
+      - alert: DatabaseBackupOverdue
+        expr: |
+          (time() - brain_storm_last_successful_backup_timestamp_seconds) > 93600
+        for: 10m
+        labels:
+          severity: critical
+          team: devops
+          oncall: "true"
+        annotations:
+          summary: "Database backup overdue — last success > 26 hours ago"
+          description: >
+            The last successful database backup was more than 26 hours ago.
+            The scheduled backup workflow may have failed.
+            Check: https://github.com/BrainTease/Brain-Storm/actions/workflows/db-backup-restore-drill.yml
+          runbook_url: "https://github.com/BrainTease/Brain-Storm/blob/main/docs/incident-runbook.md#database-issues"
+
+      # Alert when the most recent restore drill failed
+      - alert: DatabaseRestoreDrillFailed
+        expr: |
+          brain_storm_last_restore_drill_success == 0
+        for: 5m
+        labels:
+          severity: critical
+          team: devops
+          oncall: "true"
+        annotations:
+          summary: "Database restore drill failed — backup may be unrecoverable"
+          description: >
+            The most recent automated restore drill did not pass integrity checks.
+            The latest backup may not be restorable. Investigate immediately.
+          runbook_url: "https://github.com/BrainTease/Brain-Storm/blob/main/docs/incident-runbook.md#database-issues"
+
+      # Alert when restore drill hasn't run in more than 8 days
+      - alert: DatabaseRestoreDrillOverdue
+        expr: |
+          (time() - brain_storm_last_restore_drill_timestamp_seconds) > 691200
+        for: 10m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "Database restore drill overdue — last run > 8 days ago"
+          description: >
+            The weekly restore drill has not run in the last 8 days.
+            Verify the Sunday 03:00 UTC workflow schedule is active.
+
+  - name: backup_recording_rules
+    interval: 60s
+    rules:
+      - record: backup:age_hours
+        expr: |
+          (time() - brain_storm_last_successful_backup_timestamp_seconds) / 3600

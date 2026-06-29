@@ -49,6 +49,12 @@ route:
       receiver: slack-platform-oncall
       continue: true
 
+    # Backup failure alerts
+    - matchers:
+        - alertname=~"(DatabaseBackup.*|DatabaseRestoreDrill.*)"
+      receiver: slack-platform-oncall
+      continue: true
+
     - matchers:
         - alertname="DeploymentFailed"
       receiver: slack-deployments
