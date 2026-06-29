@@ -5,3 +5,5 @@
 
 export * from './auth';
 export * from './cache';
+export * from './wallet';
+export * from './notifications';

@@ -10,4 +10,5 @@ export interface CoursesRepository extends BaseRepository<Course> {
     limit: number;
   }>;
   findByIdWithDeleted(id: string): Promise<Course | null>;
+  findManyByIds(ids: string[]): Promise<Course[]>;
 }

@@ -1,13 +1,18 @@
 'use client';
 
 import { useState } from 'react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useNotifications } from '@/hooks/useNotifications';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
-import { WalletButton } from '@/components/wallet/WalletButton';
+
+const WalletButton = dynamic(
+  () => import('@/components/wallet/WalletButton').then((m) => ({ default: m.WalletButton })),
+  { ssr: false, loading: () => <div className="w-28 h-9 rounded-lg animate-pulse bg-gray-200 dark:bg-gray-700" /> },
+);
 
 export function Navbar() {
   const pathname = usePathname();

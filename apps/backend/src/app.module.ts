@@ -56,6 +56,7 @@ import * as redisStore from 'cache-manager-redis-store';
 import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
 import configuration from './config/configuration';
 import { validationSchema } from './config/validation.schema';
+import { DatabaseModule } from './database/database.module';
 
 @Module({
   imports: [
@@ -82,6 +83,13 @@ import { validationSchema } from './config/validation.schema';
         database: config.get<string>('database.name'),
         autoLoadEntities: true,
         synchronize: config.get<string>('nodeEnv') !== 'production',
+        extra: {
+          max: parseInt(process.env.DB_POOL_MAX || '20'),
+          min: parseInt(process.env.DB_POOL_MIN || '5'),
+          connectionTimeoutMillis: parseInt(process.env.DB_ACQUIRE_TIMEOUT || '30000'),
+          idleTimeoutMillis: parseInt(process.env.DB_IDLE_TIMEOUT || '10000'),
+        },
+        maxQueryExecutionTime: 5000,
       }),
     }),
     CacheModule.registerAsync({
@@ -148,6 +156,7 @@ import { validationSchema } from './config/validation.schema';
     WsGatewayModule,
     AppGraphQLModule,
     PaymentsModule,
+    DatabaseModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

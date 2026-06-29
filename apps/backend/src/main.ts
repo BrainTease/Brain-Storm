@@ -54,8 +54,16 @@ async function bootstrap() {
   const corsCredentials = configService.get<boolean>('cors.credentials') ?? false;
   const corsPreflight = configService.get<number>('cors.maxAge') ?? 86400;
 
+  // ── Strict CORS ─────────────────────────────────────────────────────────────
+  // Always apply an explicit allow-list; development uses the configured origins,
+  // never a wildcard, to prevent accidental exposure.
   app.enableCors({
-    origin: nodeEnv === 'production' ? corsOrigins : true,
+    origin: (origin, callback) => {
+      // Allow requests with no Origin header (e.g. server-to-server, curl in dev)
+      if (!origin) return callback(null, true);
+      if (corsOrigins.includes(origin)) return callback(null, true);
+      callback(new Error(`CORS: origin '${origin}' not allowed`));
+    },
     methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-API-KEY', 'X-Webhook-Signature'],
     credentials: corsCredentials,

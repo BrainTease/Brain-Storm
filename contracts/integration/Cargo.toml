@@ -1,0 +1,10 @@
+[package]
+name = "brain-storm-integration"
+version = "0.1.0"
+edition = "2021"
+
+[dev-dependencies]
+soroban-sdk = { version = "21.0.0", features = ["testutils"] }
+brain-storm-analytics = { path = "../analytics" }
+brain-storm-token = { path = "../token" }
+brain-storm-shared = { path = "../shared" }

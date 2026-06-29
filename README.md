@@ -315,3 +315,15 @@ MIT — see [LICENSE](./LICENSE) for details.
 ---
 
 *Built with ❤️ on the Stellar network. Inspired by [StrellerMinds](https://github.com/StarkMindsHQ) by StarkMindsHQ.*
+
+## CI Status
+
+[![Smart Contract CI](https://github.com/BrainTease/Brain-Storm/actions/workflows/contract.yml/badge.svg)](https://github.com/BrainTease/Brain-Storm/actions/workflows/contract.yml)
+
+The CI workflow runs on every push and PR, ensuring code quality and functionality.
+
+### Workflow Steps
+1. **Lint** - `cargo fmt` and `cargo clippy`
+2. **Test** - `cargo test` with coverage
+3. **Build** - WASM compilation
+4. **Coverage** - Code coverage reporting

@@ -10,6 +10,7 @@ import { Review } from '../courses/review.entity';
 import { Notification } from '../notifications/notification.entity';
 import { SeedService } from './seed.service';
 import { SoftDeletePurgeService } from './soft-delete-purge.service';
+import { ReadReplicaService } from './read-replica.service';
 
 @Module({
   imports: [
@@ -24,7 +25,7 @@ import { SoftDeletePurgeService } from './soft-delete-purge.service';
       Notification,
     ]),
   ],
-  providers: [SeedService, SoftDeletePurgeService],
-  exports: [SeedService, SoftDeletePurgeService],
+  providers: [SeedService, SoftDeletePurgeService, ReadReplicaService],
+  exports: [SeedService, SoftDeletePurgeService, ReadReplicaService],
 })
 export class DatabaseModule {}
