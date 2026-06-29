@@ -11,6 +11,29 @@ Brain-Storm stores all sensitive credentials in **AWS Secrets Manager**. Every a
 | `/{env}/brain-storm/db-password` | RDS master password |
 | `/{env}/brain-storm/jwt-secret` | JWT signing secret |
 | `/{env}/brain-storm/stellar-secret-key` | Stellar signing key |
+| `/{env}/brain-storm/smtp-password` | SMTP authentication password |
+| `/{env}/brain-storm/admin-api-key` | Admin API key |
+
+## Runtime Injection
+
+Secrets are **never committed** to source code or `.env` files. At container startup, `scripts/inject-secrets.sh` pulls all secrets from AWS Secrets Manager and exports them as environment variables before the Node process starts:
+
+```bash
+# Entrypoint: inject secrets then start the app
+scripts/inject-secrets.sh node dist/main.js
+```
+
+The script requires an IAM role with `secretsmanager:GetSecretValue` on the relevant secret ARNs. In ECS/Kubernetes this is provided via the task/pod IAM role — no credentials are stored in the container image.
+
+## CI Secret Scanning
+
+All pushes and pull requests are scanned for leaked secrets by `.github/workflows/secret-scanning.yml`, which runs:
+
+- **Gitleaks** — detects known secret patterns across the full git history
+- **TruffleHog** — high-entropy credential detection (verified only)
+- **dotenv-guard** — blocks committed `.env` files and inline password patterns
+
+Any detection fails the workflow and alerts the security team via Slack.
 
 ## Rotation
 

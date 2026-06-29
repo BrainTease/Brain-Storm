@@ -46,6 +46,34 @@ resource "aws_secretsmanager_secret_version" "stellar_key" {
   secret_string = var.stellar_secret_key
 }
 
+resource "aws_secretsmanager_secret" "smtp_password" {
+  count                   = var.smtp_password != "" ? 1 : 0
+  name                    = "/${var.environment}/brain-storm/smtp-password"
+  description             = "Brain-Storm SMTP authentication password"
+  recovery_window_in_days = var.recovery_window_days
+  tags = { Environment = var.environment, ManagedBy = "terraform" }
+}
+
+resource "aws_secretsmanager_secret_version" "smtp_password" {
+  count         = var.smtp_password != "" ? 1 : 0
+  secret_id     = aws_secretsmanager_secret.smtp_password[0].id
+  secret_string = var.smtp_password
+}
+
+resource "aws_secretsmanager_secret" "admin_api_key" {
+  count                   = var.admin_api_key != "" ? 1 : 0
+  name                    = "/${var.environment}/brain-storm/admin-api-key"
+  description             = "Brain-Storm admin API key"
+  recovery_window_in_days = var.recovery_window_days
+  tags = { Environment = var.environment, ManagedBy = "terraform" }
+}
+
+resource "aws_secretsmanager_secret_version" "admin_api_key" {
+  count         = var.admin_api_key != "" ? 1 : 0
+  secret_id     = aws_secretsmanager_secret.admin_api_key[0].id
+  secret_string = var.admin_api_key
+}
+
 # Automatic rotation for database password every 90 days
 resource "aws_secretsmanager_secret_rotation" "db_password" {
   count               = var.enable_rotation ? 1 : 0
