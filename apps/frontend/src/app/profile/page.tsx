@@ -35,7 +35,24 @@ export default function ProfilePage() {
   }, []);
 
   if (!user)
-    return <main className="max-w-2xl mx-auto p-8 text-gray-900 dark:text-gray-100">Loading…</main>;
+    return (
+      <main className="max-w-2xl mx-auto p-8 space-y-6" aria-busy="true" aria-label="Loading profile">
+        {/* Skeleton sized to match real content — prevents CLS */}
+        <div className="flex items-center gap-4">
+          <div className="w-16 h-16 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse" style={{ width: 64, height: 64, flexShrink: 0 }} />
+          <div className="space-y-2">
+            <div className="h-6 w-40 rounded bg-gray-200 dark:bg-gray-700 animate-pulse" />
+            <div className="h-4 w-56 rounded bg-gray-200 dark:bg-gray-700 animate-pulse" />
+          </div>
+        </div>
+        <div className="space-y-3">
+          <div className="h-8 w-32 rounded bg-gray-200 dark:bg-gray-700 animate-pulse" />
+          <div className="h-10 w-full rounded bg-gray-200 dark:bg-gray-700 animate-pulse" />
+          <div className="h-20 w-full rounded bg-gray-200 dark:bg-gray-700 animate-pulse" />
+          <div className="h-10 w-full rounded bg-gray-200 dark:bg-gray-700 animate-pulse" />
+        </div>
+      </main>
+    );
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,6 +70,7 @@ export default function ProfilePage() {
   return (
     <main className="max-w-2xl mx-auto p-8 space-y-8">
       <div className="flex items-center gap-4">
+        {/* LCP element — explicit dimensions on both branches prevent CLS */}
         {user.avatarUrl ? (
           <Image
             src={user.avatarUrl}
@@ -63,7 +81,11 @@ export default function ProfilePage() {
             priority
           />
         ) : (
-          <div className="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-2xl font-bold text-blue-600 dark:text-blue-300">
+          <div
+            className="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-2xl font-bold text-blue-600 dark:text-blue-300"
+            style={{ width: 64, height: 64, flexShrink: 0 }}
+            aria-label="Avatar placeholder"
+          >
             {user.username[0]?.toUpperCase()}
           </div>
         )}

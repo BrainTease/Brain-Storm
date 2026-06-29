@@ -9,6 +9,9 @@ import { CourseGrid } from '@/components/courses/CourseGrid';
 import { useCourseSearch } from '@/hooks/useCourseSearch';
 import { useSearchAnalytics } from '@/hooks/useSearchAnalytics';
 
+// Stable minimum height prevents CLS while content loads
+const GRID_PLACEHOLDER_HEIGHT = 'min-h-[480px]';
+
 function BackToTopButton() {
   const [visible, setVisible] = useState(false);
 
@@ -40,7 +43,15 @@ function BackToTopButton() {
       className="fixed bottom-8 right-8 bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-lg transition-colors z-50"
       aria-label="Back to top"
     >
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <svg
+        className="w-5 h-5"
+        width="20"
+        height="20"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        aria-hidden="true"
+      >
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
       </svg>
     </button>
@@ -94,6 +105,7 @@ export default function CoursesPage() {
 
   return (
     <ProtectedRoute>
+      {/* LCP element: heading is above-the-fold, font-display:swap handled by Tailwind/Next.js */}
       <main className="max-w-5xl mx-auto p-8 space-y-6">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Courses</h1>
 
@@ -110,15 +122,18 @@ export default function CoursesPage() {
           onClearAll={clearAll}
         />
 
-        <CourseGrid
-          courses={courses}
-          total={total}
-          isLoading={isLoading}
-          isLoadingMore={isLoadingMore}
-          hasMore={hasMore}
-          onLoadMore={loadMore}
-          error={error}
-        />
+        {/* Stable container height prevents CLS while the grid hydrates */}
+        <div className={GRID_PLACEHOLDER_HEIGHT}>
+          <CourseGrid
+            courses={courses}
+            total={total}
+            isLoading={isLoading}
+            isLoadingMore={isLoadingMore}
+            hasMore={hasMore}
+            onLoadMore={loadMore}
+            error={error}
+          />
+        </div>
       </main>
       <CompareBar />
       <BackToTopButton />

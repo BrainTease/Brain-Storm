@@ -1,6 +1,7 @@
 import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ShutdownMiddleware } from './health/shutdown.middleware';
+import { CacheHeadersMiddleware } from './common/middleware/cache-headers.middleware';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CacheModule } from '@nestjs/cache-manager';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
@@ -167,5 +168,7 @@ import { DatabaseModule } from './database/database.module';
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer.apply(ShutdownMiddleware).forRoutes('*');
+    // #707: attach cache-control / ETag headers on all routes
+    consumer.apply(CacheHeadersMiddleware).forRoutes('*');
   }
 }
