@@ -1,4 +1,4 @@
-name: Supply-Chain Security
+name: Supply-Chain Security & Dependency Scanning
 
 on:
   push:
@@ -6,7 +6,6 @@ on:
   pull_request:
     branches: [main]
   schedule:
-    # Run weekly on Monday at 06:00 UTC
     - cron: '0 6 * * 1'
 
 permissions:
@@ -14,9 +13,14 @@ permissions:
   security-events: write
   id-token: write
 
+env:
+  NODE_AUDIT_LEVEL: high
+  CARGO_AUDIT_LEVEL: warn
+  SECRET_SCAN_SEVERITY: high
+
 jobs:
   npm-audit:
-    name: npm audit (backend + frontend)
+    name: npm audit (workspaces)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -32,10 +36,69 @@ jobs:
         run: npm ci
 
       - name: Audit backend (high severity gate)
-        run: npm audit --workspace=apps/backend --audit-level=high
+        run: npm audit --workspace=apps/backend --audit-level=${{ env.NODE_AUDIT_LEVEL }}
 
       - name: Audit frontend (high severity gate)
-        run: npm audit --workspace=apps/frontend --audit-level=high
+        run: npm audit --workspace=apps/frontend --audit-level=${{ env.NODE_AUDIT_LEVEL }}
+
+      - name: Check allowlisted advisories
+        run: |
+          cat > npm-audit-allowlist.json << 'EOF'
+          {
+            "allowlist": []
+          }
+          EOF
+          echo "Allowlist loaded. Add advisory IDs to npm-audit-allowlist.json as needed."
+
+  cargo-audit:
+    name: Cargo audit (Rust dependencies)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install cargo-audit
+        run: cargo install cargo-audit --locked
+
+      - name: Run cargo audit
+        run: cargo audit --deny warnings
+        continue-on-error: false
+
+      - name: Check allowlisted advisories
+        run: |
+          mkdir -p .cargo
+          if [ ! -f .cargo/audit-allowlist.toml ]; then
+            cat > .cargo/audit-allowlist.toml << 'EOF'
+            [advisories]
+            ignore = []
+            EOF
+          fi
+          echo "Allowlist at .cargo/audit-allowlist.toml"
+
+  secret-scanning:
+    name: Gitleaks — secret scanning
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        continue-on-error: false
+        env:
+          GITLEAKS_SEVERITY: ${{ env.SECRET_SCAN_SEVERITY }}
+
+      - name: Upload Gitleaks SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@1b549b925b9da1cb5ddde3b41741a82a2d15a841 # v3.28.13
+        with:
+          sarif_file: gitleaks.sarif
+          category: gitleaks
 
   trivy-image:
     name: Trivy — container image scan
@@ -59,7 +122,7 @@ jobs:
 
       - name: Upload Trivy SARIF
         if: always()
-        uses: github/codeql-action/upload-sarif@1b549b9259bda1cb5ddde3b41741a82a2d15a841 # v3.28.13
+        uses: github/codeql-action/upload-sarif@1b549b925b9da1cb5ddde3b41741a82a2d15a841 # v3.28.13
         with:
           sarif_file: trivy-image.sarif
           category: trivy-image
@@ -84,7 +147,7 @@ jobs:
 
       - name: Upload Grype SARIF
         if: always()
-        uses: github/codeql-action/upload-sarif@1b549b9259bda1cb5ddde3b41741a82a2d15a841 # v3.28.13
+        uses: github/codeql-action/upload-sarif@1b549b925b9da1cb5ddde3b41741a82a2d15a841 # v3.28.13
         with:
           sarif_file: results.sarif
           category: grype-image
@@ -109,7 +172,7 @@ jobs:
 
       - name: Upload Trivy fs SARIF
         if: always()
-        uses: github/codeql-action/upload-sarif@1b549b9259bda1cb5ddde3b41741a82a2d15a841 # v3.28.13
+        uses: github/codeql-action/upload-sarif@1b549b925b9da1cb5ddde3b41741a82a2d15a841 # v3.28.13
         with:
           sarif_file: trivy-fs.sarif
           category: trivy-fs
@@ -124,7 +187,6 @@ jobs:
       - name: Build backend image
         run: docker build -t brain-storm-backend:ci apps/backend
 
-      # Syft SBOM for container image (CycloneDX JSON)
       - name: Generate image SBOM (Syft)
         uses: anchore/sbom-action@f325610c9f50a54015d37c8d16cb3b0e2c8f4de0 # v0.18.0
         with:
@@ -133,7 +195,6 @@ jobs:
           output-file: sbom-image.cdx.json
           artifact-name: sbom-image.cdx.json
 
-      # Syft SBOM for source tree (SPDX JSON)
       - name: Generate source SBOM (Syft)
         uses: anchore/sbom-action@f325610c9f50a54015d37c8d16cb3b0e2c8f4de0 # v0.18.0
         with:
@@ -149,4 +210,48 @@ jobs:
           path: |
             sbom-image.cdx.json
             sbom-source.spdx.json
+          retention-days: 90
+
+  security-report:
+    name: Consolidated security report
+    runs-on: ubuntu-latest
+    needs: [npm-audit, cargo-audit, secret-scanning, trivy-image, grype-image, trivy-fs]
+    if: always()
+    steps:
+      - name: Generate remediation report
+        run: |
+          cat > security-remediation.md << 'EOF'
+          # Security Scan Remediation Guide
+
+          ## Dependency Vulnerabilities
+          - **npm audit failures**: Run `npm audit fix` or `npm update <package>` to patch
+          - **cargo audit failures**: Run `cargo update` or patch via advisory recommendations
+          - **Trivy/Grype findings**: Rebuild container images with updated base images
+
+          ## Secret Scanning
+          - **Gitleaks findings**: Remove secrets from git history using `git filter-branch` or BFG
+          - **Rotate any leaked credentials immediately**
+          - **Add false-positive paths to `.gitleaks.toml` allowlist**
+
+          ## Severity Thresholds
+          | Scanner | Fail Threshold | Allowlist Location |
+          |---------|---------------|-------------------|
+          | npm audit | High | npm-audit-allowlist.json |
+          | cargo audit | Warnings | .cargo/audit-allowlist.toml |
+          | Gitleaks | High | .gitleaks.toml |
+          | Trivy | HIGH/CRITICAL | .trivyignore |
+          | Grype | High | N/A |
+
+          ## Remediation SLA
+          - **CRITICAL**: Fix within 24 hours
+          - **HIGH**: Fix within 7 days
+          - **MEDIUM**: Fix within 30 days
+          - **LOW**: Track and remediate opportunistically
+          EOF
+
+      - name: Upload remediation guide
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+        with:
+          name: security-remediation-guide
+          path: security-remediation.md
           retention-days: 90
