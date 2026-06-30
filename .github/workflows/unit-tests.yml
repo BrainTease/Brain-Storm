@@ -1,0 +1,233 @@
+name: Unit Tests
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'apps/frontend/src/**'
+      - 'apps/frontend/__tests__/**'
+      - 'apps/frontend/package.json'
+      - 'apps/frontend/vitest.config.ts'
+      - '.github/workflows/unit-tests.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run unit tests
+        run: npm run test:unit --workspace=apps/frontend
+        env:
+          CI: true
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-results
+          path: apps/frontend/test-results/
+          retention-days: 7
+
+  coverage:
+    name: Coverage Report
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run tests with coverage
+        run: npm run test:coverage --workspace=apps/frontend
+        env:
+          CI: true
+
+      - name: Check coverage thresholds
+        run: |
+          npm run test:ci --workspace=apps/frontend
+        continue-on-error: false
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./apps/frontend/coverage/lcov.info
+          flags: frontend-unit
+          name: frontend-unit-tests
+          fail_ci_if_error: false
+
+      - name: Generate coverage summary
+        if: always()
+        run: |
+          if [ -f "apps/frontend/coverage/coverage-summary.json" ]; then
+            node -e "
+              const fs = require('fs');
+              const summary = JSON.parse(fs.readFileSync('apps/frontend/coverage/coverage-summary.json', 'utf8'));
+              const total = summary.total;
+              
+              console.log('## Coverage Summary\n');
+              console.log('| Metric | Coverage | Status |');
+              console.log('|--------|----------|--------|');
+              
+              const metrics = ['lines', 'statements', 'functions', 'branches'];
+              const thresholds = { lines: 70, statements: 70, functions: 70, branches: 65 };
+              
+              metrics.forEach(metric => {
+                const pct = total[metric].pct;
+                const threshold = thresholds[metric];
+                const status = pct >= threshold ? '✅ Pass' : '❌ Fail';
+                console.log(\`| \${metric.charAt(0).toUpperCase() + metric.slice(1)} | \${pct}% | \${status} |\`);
+              });
+            " > coverage-summary.md
+            cat coverage-summary.md
+          fi
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: |
+            apps/frontend/coverage/
+            coverage-summary.md
+          retention-days: 30
+
+      - name: Comment PR with coverage
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            let body = '## 📊 Unit Test Coverage Report\n\n';
+            
+            if (fs.existsSync('apps/frontend/coverage/coverage-summary.json')) {
+              const summary = JSON.parse(fs.readFileSync('apps/frontend/coverage/coverage-summary.json', 'utf8'));
+              const total = summary.total;
+              
+              body += '### Coverage Summary\n\n';
+              body += '| Metric | Coverage | Threshold | Status |\n';
+              body += '|--------|----------|-----------|--------|\n';
+              
+              const metrics = [
+                { name: 'Lines', key: 'lines', threshold: 70 },
+                { name: 'Statements', key: 'statements', threshold: 70 },
+                { name: 'Functions', key: 'functions', threshold: 70 },
+                { name: 'Branches', key: 'branches', threshold: 65 }
+              ];
+              
+              let allPassing = true;
+              
+              metrics.forEach(({ name, key, threshold }) => {
+                const pct = total[key].pct;
+                const status = pct >= threshold ? '✅ Pass' : '❌ Fail';
+                if (pct < threshold) allPassing = false;
+                
+                body += `| ${name} | ${pct}% | ${threshold}% | ${status} |\n`;
+              });
+              
+              body += '\n';
+              
+              if (!allPassing) {
+                body += '### ⚠️ Coverage Below Threshold\n\n';
+                body += 'Some coverage metrics are below the required thresholds. Please add tests to improve coverage.\n\n';
+                body += '#### How to Fix\n\n';
+                body += '1. Run `npm run test:coverage --workspace=apps/frontend` locally\n';
+                body += '2. Check the HTML coverage report at `apps/frontend/coverage/index.html`\n';
+                body += '3. Add tests for uncovered lines\n';
+                body += '4. Focus on critical paths and edge cases\n\n';
+              } else {
+                body += '### ✅ All Coverage Thresholds Met\n\n';
+                body += 'Great job maintaining test coverage! 🎉\n\n';
+              }
+              
+              body += '---\n\n';
+              body += `[📥 Download Full Coverage Report](${context.payload.repository.html_url}/actions/runs/${context.runId})\n`;
+              body += '📚 [Testing Guide](../blob/main/apps/frontend/TESTING.md)\n';
+              
+            } else {
+              body += '⚠️ Coverage report not generated. Check the workflow logs for errors.\n';
+            }
+            
+            // Post or update comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            const botComment = comments.find(comment => 
+              comment.user.type === 'Bot' && 
+              comment.body.includes('📊 Unit Test Coverage Report')
+            );
+            
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: body
+              });
+            }
+
+  test-matrix:
+    name: Test on Node ${{ matrix.node-version }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      matrix:
+        node-version: ['18', '20', '21']
+      fail-fast: false
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run tests
+        run: npm run test:unit --workspace=apps/frontend
+        env:
+          CI: true
