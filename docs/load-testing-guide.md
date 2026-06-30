@@ -1,6 +1,22 @@
 # Load Testing Guide
 
-This guide covers load testing for Brain-Storm using k6, including realistic user journey scenarios and performance analysis.
+This guide covers load testing for Brain-Storm using k6, including realistic user journey scenarios, performance analysis, and automated CI/CD integration.
+
+## 📋 Table of Contents
+
+- [Overview](#overview)
+- [Prerequisites](#prerequisites)
+- [Running Load Tests](#running-load-tests)
+- [Test Scenarios](#test-scenarios)
+- [Performance Metrics](#performance-metrics)
+- [CI/CD Integration](#cicd-integration)
+- [Performance Baselines](#performance-baselines)
+- [Analysis & Troubleshooting](#analysis--troubleshooting)
+- [Best Practices](#best-practices)
+
+## Overview
+
+Load testing ensures the Brain-Storm platform can handle expected (and unexpected) traffic loads while maintaining acceptable performance. We use k6 for load testing with automated nightly runs against staging and on-demand tests for production.
 
 ## Prerequisites
 

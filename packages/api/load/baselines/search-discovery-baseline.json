@@ -1,0 +1,15 @@
+{
+  "timestamp": "2026-06-29T00:00:00.000Z",
+  "environment": "staging",
+  "scenario": "search-discovery",
+  "metrics": {
+    "p95_response_time": 280.5,
+    "p99_response_time": 485.3,
+    "avg_response_time": 165.2,
+    "error_rate": 0.8,
+    "throughput": 95.3,
+    "total_requests": 12000,
+    "total_errors": 96
+  },
+  "notes": "Initial baseline based on 10 test runs average"
+}
