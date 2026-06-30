@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'apps/frontend/**'
+      - 'packages/app/**'
       - '.github/workflows/visual-regression-testing.yml'
 
 jobs:
@@ -16,6 +17,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch all history for proper baseline comparison
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -27,58 +30,137 @@ jobs:
         run: npm install
 
       - name: Install Playwright browsers
-        run: npx playwright install --with-deps
+        run: npx playwright install --with-deps chromium firefox webkit
         working-directory: apps/frontend
 
       - name: Build frontend
         run: npm run build --workspace=apps/frontend
+        env:
+          NODE_ENV: production
 
       - name: Run visual regression tests
-        run: npx playwright test --config=playwright-visual.config.ts
+        id: visual-tests
+        run: |
+          npx playwright test --config=playwright-visual.config.ts --reporter=html,json
         working-directory: apps/frontend
+        continue-on-error: true
+
+      - name: Generate visual diff summary
+        if: always()
+        run: |
+          echo "## Visual Regression Test Summary" > visual-summary.md
+          if [ -f "apps/frontend/test-results-visual.json" ]; then
+            node -e "
+              const results = require('./apps/frontend/test-results-visual.json');
+              const stats = results.stats || {};
+              console.log('- **Total Tests**: ' + (stats.expected || 0));
+              console.log('- **Passed**: ' + (stats.passed || 0));
+              console.log('- **Failed**: ' + (stats.failed || 0));
+              console.log('- **Skipped**: ' + (stats.skipped || 0));
+            " >> visual-summary.md
+          fi
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: visual-regression-results
+          name: visual-regression-results-${{ github.run_number }}
           path: |
             apps/frontend/test-results-visual/
             apps/frontend/playwright-report-visual/
+            apps/frontend/test-results-visual.json
           retention-days: 30
 
       - name: Upload visual diff artifacts
         uses: actions/upload-artifact@v4
-        if: failure()
+        if: failure() || steps.visual-tests.outcome == 'failure'
         with:
-          name: visual-diff-artifacts
+          name: visual-diff-artifacts-${{ github.run_number }}
           path: |
             apps/frontend/test-results-visual/
             apps/frontend/playwright-report-visual/
           retention-days: 7
 
       - name: Comment PR with visual diff results
-        if: failure() && github.event_name == 'pull_request'
+        if: always() && github.event_name == 'pull_request'
         uses: actions/github-script@v7
         with:
           script: |
             const fs = require('fs');
             const path = require('path');
             
-            const reportPath = 'apps/frontend/playwright-report-visual/index.html';
-            if (fs.existsSync(reportPath)) {
-              github.rest.issues.createComment({
-                issue_number: context.issue.number,
+            let body = '## 📸 Visual Regression Test Results\n\n';
+            
+            // Read test results
+            const resultsPath = 'apps/frontend/test-results-visual.json';
+            if (fs.existsSync(resultsPath)) {
+              try {
+                const results = JSON.parse(fs.readFileSync(resultsPath, 'utf8'));
+                const stats = results.stats || {};
+                
+                body += '### Test Summary\n\n';
+                body += `- ✅ **Passed**: ${stats.passed || 0}\n`;
+                body += `- ❌ **Failed**: ${stats.failed || 0}\n`;
+                body += `- ⏭️ **Skipped**: ${stats.skipped || 0}\n`;
+                body += `- 📊 **Total**: ${stats.expected || 0}\n\n`;
+                
+                if (stats.failed > 0) {
+                  body += '### ⚠️ Visual Changes Detected\n\n';
+                  body += 'Visual regression tests have detected changes. Please review the differences:\n\n';
+                  body += '1. Download the `visual-diff-artifacts-${{ github.run_number }}` from the workflow run\n';
+                  body += '2. Extract and open `playwright-report-visual/index.html` in a browser\n';
+                  body += '3. Review each visual difference carefully\n';
+                  body += '4. If changes are intentional:\n';
+                  body += '   ```bash\n';
+                  body += '   npm run test:visual:update --workspace=apps/frontend\n';
+                  body += '   git add apps/frontend/e2e/visual/**/*-snapshots/\n';
+                  body += '   git commit -m "chore: update visual regression baselines"\n';
+                  body += '   git push\n';
+                  body += '   ```\n\n';
+                  body += `[📥 Download Visual Diff Artifacts](${context.payload.repository.html_url}/actions/runs/${context.runId})\n\n`;
+                } else {
+                  body += '### ✅ All Visual Tests Passed\n\n';
+                  body += 'No visual regressions detected. All screenshots match their baselines.\n\n';
+                }
+                
+                body += '---\n\n';
+                body += '📚 **Documentation**: See [Visual Regression Testing Workflow](../blob/main/packages/app/visual/WORKFLOW.md) for details.\n';
+                
+              } catch (err) {
+                body += '⚠️ Unable to parse test results. Check the workflow logs for details.\n';
+              }
+            } else {
+              body += '⚠️ Test results file not found. The tests may not have run successfully.\n';
+            }
+            
+            // Post or update comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            const botComment = comments.find(comment => 
+              comment.user.type === 'Bot' && 
+              comment.body.includes('📸 Visual Regression Test Results')
+            );
+            
+            if (botComment) {
+              await github.rest.issues.updateComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                body: `## 📸 Visual Regression Test Results
-                
-                Visual regression tests have detected changes. Please review the differences:
-                
-                - Download the \`visual-diff-artifacts\` from the workflow run
-                - Review the visual differences in the Playwright report
-                - Update baselines if changes are intentional
-                
-                [View detailed report in workflow artifacts](${context.payload.pull_request.html_url}/checks)`
+                comment_id: botComment.id,
+                body: body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: body
               });
             }
+      
+      - name: Set job status
+        if: steps.visual-tests.outcome == 'failure'
+        run: exit 1
