@@ -30,7 +30,6 @@ const nextConfig = {
       'react-hook-form',
       'zod',
       'recharts',
-      '@stellar/stellar-sdk',
       '@stellar/freighter-api',
       '@dnd-kit/core',
       '@dnd-kit/sortable',
