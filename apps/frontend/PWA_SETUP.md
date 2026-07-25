@@ -16,13 +16,7 @@ This document describes the PWA implementation for Brain-Storm, enabling offline
 ### Configuration Changes
 
 #### next.config.js
-- Added `next-pwa` integration with Workbox
-- Configured service worker generation
 - Added security header for service worker
-
-#### package.json
-- Added `next-pwa@^5.6.0`
-- Added `workbox-window@^8.0.0`
 
 #### src/app/layout.tsx
 - Added PWA meta tags (theme color, mobile app capable)
@@ -197,6 +191,5 @@ Service worker serves cached responses when offline, maintaining app functionali
 ## References
 
 - [MDN: Progressive Web Apps](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps)
-- [next-pwa Documentation](https://github.com/shadowwalker/next-pwa)
-- [Workbox Documentation](https://developers.google.com/web/tools/workbox)
+- [Service Worker API](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API)
 - [Web Manifest Specification](https://www.w3.org/TR/appmanifest/)
