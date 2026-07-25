@@ -40,7 +40,7 @@ export default function AdminDashboard() {
       const response = await adminApi.get(`/admin/analytics/dashboard?${params}`);
       setMetrics(response.data);
     } catch (error) {
-      console.error('Failed to fetch dashboard metrics:', error);
+      // Failed to fetch dashboard metrics
     } finally {
       setLoading(false);
     }
@@ -65,7 +65,7 @@ export default function AdminDashboard() {
       link.click();
       link.remove();
     } catch (error) {
-      console.error('Failed to export metrics:', error);
+      // Failed to export metrics
     } finally {
       setExporting(false);
     }

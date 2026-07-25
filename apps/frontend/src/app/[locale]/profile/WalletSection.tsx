@@ -65,7 +65,7 @@ export default function WalletSection({ userId, stellarPublicKey, onLinked, onUn
 
       onLinked(publicKey);
     } catch (error: any) {
-      console.error('Wallet linking error:', error);
+      // Wallet linking error
       if (error?.response?.status === 400) {
         // Challenge or signature verification failed
         setFreighterMissing(true);

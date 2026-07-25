@@ -177,7 +177,7 @@ export async function trackEvent(
       keepalive: true,
     });
   } catch (error) {
-    console.debug('Analytics event failed:', error);
+    // Analytics event failed silently
   }
 }
 

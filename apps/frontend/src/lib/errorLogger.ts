@@ -10,9 +10,9 @@ interface LogContext {
 export function logError(error: unknown, context: LogContext = {}): void {
   const err = error instanceof Error ? error : new Error(String(error));
 
-  if (process.env.NODE_ENV !== 'production') {
-    // eslint-disable-next-line no-console
-    console.error('[errorLogger]', context.source ?? 'app', err, context.extra);
+  // Removed console logging
+// Removed console logging
+    // console.error('[errorLogger]', context.source ?? 'app', err, context.extra);
   }
 
   Sentry.captureException(err, {

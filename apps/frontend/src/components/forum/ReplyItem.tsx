@@ -39,7 +39,7 @@ export function ReplyItem({
       onAnswerMarked?.();
       setShowMenu(false);
     } catch (err) {
-      console.error('Failed to mark as answer:', err);
+      // Failed to mark as answer
     }
   };
 
@@ -48,7 +48,7 @@ export function ReplyItem({
     try {
       await deleteReply(reply.id);
     } catch (err) {
-      console.error('Failed to delete reply:', err);
+      // Failed to delete reply
     }
   };
 
@@ -60,7 +60,7 @@ export function ReplyItem({
       alert('Reply flagged for review. Thank you!');
       setShowMenu(false);
     } catch (err) {
-      console.error('Failed to flag reply:', err);
+      // Failed to flag reply
     }
   };
 
