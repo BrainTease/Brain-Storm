@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { reviewsApi } from '@/lib/reviewsApi';
+import { TextArea } from '@/components/ui/form';
 
 const MAX_REPLY_CHARS = 500;
 
@@ -59,16 +60,19 @@ export function InstructorReply({ courseId, reviewId, existingReply, isInstructo
 
   return (
     <form onSubmit={handleSubmit} className="mt-3 space-y-2">
-      <textarea
-        className="w-full border rounded-lg p-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+      <TextArea
+        id="instructor-reply"
+        size="sm"
         rows={3}
         maxLength={MAX_REPLY_CHARS}
         value={replyText}
         onChange={(e) => setReplyText(e.target.value)}
         placeholder="Write your response..."
+        aria-label="Instructor response"
+        helperText={`${MAX_REPLY_CHARS - replyText.length} characters remaining`}
+        error={error ?? undefined}
+        className="resize-none"
       />
-      <p className="text-xs text-gray-400">{MAX_REPLY_CHARS - replyText.length} characters remaining</p>
-      {error && <p className="text-red-600 text-sm">{error}</p>}
       <div className="flex gap-2">
         <Button type="submit" disabled={loading || !replyText.trim()}>
           {loading ? 'Submitting…' : 'Submit Response'}
