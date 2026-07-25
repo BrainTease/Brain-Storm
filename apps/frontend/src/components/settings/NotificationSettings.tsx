@@ -1,6 +1,7 @@
 'use client';
 
 import { useNotifications, TYPE_LABELS, NotificationType } from '@/hooks/useNotifications';
+import { Checkbox } from '@/components/ui/form';
 
 const ORDER: NotificationType[] = [
   'enrollment',
@@ -29,20 +30,14 @@ export function NotificationSettings() {
 
       <div className="space-y-3 max-w-md">
         {ORDER.map((type) => (
-          <label
+          <Checkbox
             key={type}
-            className="flex items-center justify-between px-4 py-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
-          >
-            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-              {TYPE_LABELS[type]}
-            </span>
-            <input
-              type="checkbox"
-              checked={preferences[type]}
-              onChange={(e) => updatePreferences({ [type]: e.target.checked })}
-              className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
-            />
-          </label>
+            id={`notification-${type}`}
+            variant="row"
+            label={TYPE_LABELS[type]}
+            checked={preferences[type]}
+            onChange={(e) => updatePreferences({ [type]: e.target.checked })}
+          />
         ))}
       </div>
 
