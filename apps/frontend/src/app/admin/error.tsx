@@ -2,9 +2,9 @@
 
 import { RouteError } from '@/components/ui/RouteError';
 
-export default function CoursesError(props: {
+export default function AdminError(props: {
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  return <RouteError boundary="courses" {...props} />;
+  return <RouteError boundary="admin" {...props} />;
 }
