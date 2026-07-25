@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useTheme } from 'next-themes';
-import { useAuth } from '@/lib/auth-context';
+import { useAuth } from '@/hooks/useAuth';
 import api from '@/lib/api';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { ProgressBar } from '@/components/ui/ProgressBar';
@@ -201,7 +201,7 @@ function generateMockQuizData(setData: (data: QuizScoreDataPoint[]) => void) {
 
 
 export default function StudentDashboardPage() {
-  const { state } = useAuth();
+  const { user: authUser, token, isLoading: isAuthLoading } = useAuth();
   const { resolvedTheme } = useTheme();
   const [progress, setProgress] = useState<ProgressRecord[]>([]);
   const [courses, setCourses] = useState<Record<string, CourseData>>({});
@@ -216,11 +216,11 @@ export default function StudentDashboardPage() {
   const [streakData, setStreakData] = useState<StreakData[]>([]);
   const [quizScoreData, setQuizScoreData] = useState<QuizScoreDataPoint[]>([]);
 
-  const userId = state.user?.id;
+  const userId = authUser?.id;
   const isDarkMode = resolvedTheme === 'dark';
 
   useEffect(() => {
-    if (state.isLoading || !userId) return;
+    if (isAuthLoading || !userId) return;
 
     async function load() {
       try {
@@ -278,7 +278,7 @@ export default function StudentDashboardPage() {
     }
 
     load();
-  }, [state.isLoading, userId]);
+  }, [isAuthLoading, userId]);
 
   // Real-time progress updates via WebSocket (lazy loaded)
   useEffect(() => {
@@ -287,7 +287,7 @@ export default function StudentDashboardPage() {
 
     import('socket.io-client').then(({ io }) => {
       socket = io(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000', {
-        auth: { token: state.token },
+        auth: { token },
         transports: ['websocket'],
       });
 
@@ -301,7 +301,7 @@ export default function StudentDashboardPage() {
     });
 
     return () => { socket?.disconnect(); };
-  }, [userId, state.token]);
+  }, [userId, token]);
 
   const enrolledCourses = useMemo(() => {
     return progress.map((r) => ({
@@ -337,7 +337,7 @@ export default function StudentDashboardPage() {
             <Skeleton className="h-8 w-56" />
           ) : (
             <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-              Welcome back, {state.user?.username ?? state.user?.email ?? 'Student'} 👋
+              Welcome back, {authUser?.username ?? authUser?.email ?? 'Student'} 👋
             </h1>
           )}
         </div>

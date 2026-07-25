@@ -2,10 +2,10 @@
 
 import { useState } from 'react';
 import api from '@/lib/api';
-import { useAuth } from '@/lib/auth-context';
+import { useAuth } from '@/hooks/useAuth';
 
 export function PrivacySettings() {
-  const { state } = useAuth();
+  const { user } = useAuth();
   const [exporting, setExporting] = useState(false);
   const [exportReady, setExportReady] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState('');
@@ -21,7 +21,7 @@ export function PrivacySettings() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `brain-storm-data-export-${state.user?.username ?? 'user'}.json`;
+      a.download = `brain-storm-data-export-${user?.username ?? 'user'}.json`;
       a.click();
       URL.revokeObjectURL(url);
       setExportReady(true);

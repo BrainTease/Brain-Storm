@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useAuth } from '@/lib/auth-context';
+import { useAuth } from '@/hooks/useAuth';
 import api from '@/lib/api';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { CircularProgress } from '@/components/ui/CircularProgress';
@@ -37,10 +37,10 @@ function SkeletonItem({ width = 'w-full', height = 'h-6' }: { width?: string; he
 }
 
 export default function DashboardPage() {
-  const { state } = useAuth();
+  const { user: authUser, token, isLoading: isAuthLoading } = useAuth();
   const [user, setUser] = useState<UserData | null>(
-    state.user
-      ? { id: state.user.id, username: state.user.username, email: state.user.email }
+    authUser
+      ? { id: authUser.id, username: authUser.username, email: authUser.email }
       : null
   );
   const [tokenBalance, setTokenBalance] = useState<number | null>(null);
@@ -53,7 +53,7 @@ export default function DashboardPage() {
   useEffect(() => {
     async function loadDashboard() {
       try {
-        if (!state.token && !state.isLoading) {
+        if (!token && !isAuthLoading) {
           // ProtectedRoute will handle redirect; do not fetch yet.
           return;
         }
@@ -123,8 +123,8 @@ export default function DashboardPage() {
       }
     }
 
-    if (!state.isLoading) loadDashboard();
-  }, [state.isLoading, state.token, user]);
+    if (!isAuthLoading) loadDashboard();
+  }, [isAuthLoading, token, user]);
 
   const enrolledCourses = useMemo(() => {
     return progress.map((record) => ({

@@ -36,7 +36,8 @@ interface CourseFiltersProps {
 
 export function CourseFilters({ level, category, duration, language, price, sort, onFilterChange }: CourseFiltersProps) {
   return (
-    <div className="flex flex-wrap gap-3">
+    <fieldset className="flex flex-wrap gap-3 border-0 p-0 m-0">
+      <legend className="sr-only">Filter and sort courses</legend>
       <select
         value={level}
         onChange={(e) => onFilterChange('level', e.target.value)}
@@ -119,7 +120,7 @@ export function CourseFilters({ level, category, duration, language, price, sort
           </option>
         ))}
       </select>
-    </div>
+    </fieldset>
   );
 }
 

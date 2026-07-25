@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { Badge } from '@/components/ui/Badge';
+import type { ReactNode } from 'react';
 
 export interface CourseCardProps {
   id: string;
@@ -15,6 +15,18 @@ export interface CourseCardProps {
   imageUrl?: string;
   enrollmentCount?: number;
   category?: string;
+  /** Optional control rendered in the card footer, e.g. a compare toggle. */
+  compareControl?: ReactNode;
+  /**
+   * Wiring supplied by a roving-focus container (see `useRovingFocus`). Applied
+   * to the course title link so arrow keys can move between cards while only
+   * the active card stays in the tab sequence.
+   */
+  linkFocusProps?: {
+    ref?: (el: HTMLAnchorElement | null) => void;
+    tabIndex?: number;
+    onFocus?: () => void;
+  };
 }
 
 const LEVEL_COLORS: Record<string, string> = {
@@ -25,7 +37,9 @@ const LEVEL_COLORS: Record<string, string> = {
 
 function StarRating({ rating }: { rating: number }) {
   return (
-    <span className="flex items-center gap-0.5" aria-label={`Rating: ${rating} out of 5`}>
+    // role="img" makes the label authoritative: assistive tech reads the
+    // rating instead of announcing five unlabelled decorative stars.
+    <span className="flex items-center gap-0.5" role="img" aria-label={`Rating: ${rating} out of 5`}>
       {Array.from({ length: 5 }).map((_, i) => (
         <svg
           key={i}
@@ -54,10 +68,14 @@ export function CourseCard({
   imageUrl,
   enrollmentCount,
   category,
+  compareControl,
+  linkFocusProps,
 }: CourseCardProps) {
+  const titleId = `course-title-${id}`;
+
   return (
     <article
-      className="group flex flex-col bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 focus-within:ring-2 focus-within:ring-blue-500"
+      className="group h-full flex flex-col bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 focus-within:ring-2 focus-within:ring-blue-500"
       aria-label={`Course: ${title}`}
     >
       {/* Thumbnail */}
@@ -79,6 +97,7 @@ export function CourseCard({
         )}
         {category && (
           <span className="absolute top-2 left-2 bg-blue-600 text-white text-xs font-medium px-2 py-0.5 rounded">
+            <span className="sr-only">Category: </span>
             {category}
           </span>
         )}
@@ -90,14 +109,19 @@ export function CourseCard({
         <span
           className={`self-start text-xs font-semibold px-2 py-0.5 rounded capitalize ${LEVEL_COLORS[level] ?? LEVEL_COLORS.beginner}`}
         >
+          <span className="sr-only">Level: </span>
           {level}
         </span>
 
         {/* Title */}
-        <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-base leading-snug line-clamp-2">
+        <h3
+          id={titleId}
+          className="font-semibold text-gray-900 dark:text-gray-100 text-base leading-snug line-clamp-2"
+        >
           <Link
             href={`/courses/${id}`}
-            className="hover:text-blue-600 dark:hover:text-blue-400 focus:outline-none focus:underline"
+            className="rounded hover:text-blue-600 dark:hover:text-blue-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            {...linkFocusProps}
           >
             {title}
           </Link>
@@ -117,28 +141,36 @@ export function CourseCard({
         {/* Rating */}
         <div className="flex items-center gap-1.5">
           <StarRating rating={rating} />
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300" aria-hidden="true">
             {rating.toFixed(1)}
           </span>
           {reviewCount !== undefined && (
-            <span className="text-xs text-gray-400">({reviewCount.toLocaleString()})</span>
+            <span className="text-xs text-gray-400">
+              <span className="sr-only">Based on {reviewCount.toLocaleString()} reviews</span>
+              <span aria-hidden="true">({reviewCount.toLocaleString()})</span>
+            </span>
           )}
         </div>
 
         {/* Footer: duration, enrollments, price */}
         <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-700 mt-auto">
           <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
-            <span aria-label={`Duration: ${durationHours} hours`}>⏱ {durationHours}h</span>
+            <span role="img" aria-label={`Duration: ${durationHours} hours`}>
+              ⏱ {durationHours}h
+            </span>
             {enrollmentCount !== undefined && (
-              <span aria-label={`${enrollmentCount} students enrolled`}>
+              <span role="img" aria-label={`${enrollmentCount} students enrolled`}>
                 👥 {enrollmentCount.toLocaleString()}
               </span>
             )}
           </div>
           <span className="font-bold text-blue-700 dark:text-blue-400 text-sm">
+            <span className="sr-only">Price: </span>
             {price === 0 || price === undefined ? 'Free' : `$${price.toFixed(2)}`}
           </span>
         </div>
+
+        {compareControl && <div className="pt-2">{compareControl}</div>}
       </div>
     </article>
   );
