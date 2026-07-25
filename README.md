@@ -289,6 +289,14 @@ GitHub Actions workflows in `.github/workflows/` run on every push and PR:
 
 ---
 
+## Documentation
+
+- **[docs/README.md](./docs/README.md)** — full documentation index
+- **[docs/development-setup.md](./docs/development-setup.md)** — complete local setup guide covering `contracts/`, `apps/backend`, `apps/frontend`, and every `packages/*` directory (workspace linking, build order, troubleshooting)
+- **[docs/adr/README.md](./docs/adr/README.md)** — Architecture Decision Records, including why `contracts/` is split into 19 separate crates instead of a monolith
+- **[docs/contract-interfaces.md](./docs/contract-interfaces.md)** — public interface reference for every Soroban contract, cross-contract call conventions, and worked examples
+- **[docs/api/README.md](./docs/api/README.md)** — REST API route reference and how to regenerate the OpenAPI spec
+
 ## Contributing
 
 1. Fork the repository
