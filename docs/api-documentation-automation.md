@@ -182,7 +182,9 @@ The pipeline automatically detects breaking changes:
 
 ### TypeScript SDK
 
-Generated automatically and available in `packages/sdk-typescript/`
+Lives in **`packages/sdk`** (not `packages/sdk-typescript/`).
+
+> **Only the spec is generated, not the client.** `scripts/generate-sdk.sh` builds the backend, exports its OpenAPI spec and copies `openapi.json` into the package. It does **not** write `packages/sdk/src/index.ts`, which is hand-maintained. See [Keeping the surface honest](./api/sdk-versioning.md#keeping-the-surface-honest).
 
 **Installation**:
 ```bash
@@ -191,28 +193,17 @@ npm install @brain-storm/sdk
 
 **Usage**:
 ```typescript
-import { CoursesApi } from '@brain-storm/sdk';
+import { BrainStormClient } from '@brain-storm/sdk';
 
-const api = new CoursesApi();
-const courses = await api.getCourses();
+const client = new BrainStormClient({ baseURL: 'https://api.brain-storm.com' });
+const { data: courses } = await client.courses.list();
 ```
+
+There is no `CoursesApi` export — the API is grouped into namespaces on a single `BrainStormClient`. Full surface: [`api/sdk-reference.md`](./api/sdk-reference.md). Versioning: [`api/sdk-versioning.md`](./api/sdk-versioning.md).
 
 ### Python SDK
 
-Generated automatically and available in `packages/sdk-python/`
-
-**Installation**:
-```bash
-pip install brain-storm-sdk
-```
-
-**Usage**:
-```python
-from brain_storm_sdk import CoursesApi
-
-api = CoursesApi()
-courses = api.get_courses()
-```
+Not implemented. There is no `packages/sdk-python/` and no `brain-storm-sdk` package on PyPI.
 
 ## Documentation Versioning
 
