@@ -107,16 +107,3 @@ export const createActionCommands = (): Command[] => [
     keywords: ['shortcuts', 'help', 'keyboard'],
   },
 ];
-
-export const createCourseCommands = (courses: any[]): Command[] =>
-  courses.slice(0, 5).map(course => ({
-    id: `course-${course.id}`,
-    title: course.title,
-    description: `${course.level} • ${course.durationHours}h`,
-    category: 'courses',
-    icon: '📖',
-    onSelect: () => {
-      // Router will be called in component
-    },
-    keywords: [course.title.toLowerCase(), course.level, course.description?.toLowerCase() || ''],
-  }));
