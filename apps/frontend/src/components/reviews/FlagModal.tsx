@@ -19,18 +19,18 @@ interface FlagModalProps {
 }
 
 export function FlagModal({ onConfirm, onCancel }: FlagModalProps) {
-  const [reason, setReason] = useState(FLAG_REASONS[0]);
+  const [reason, setReason] = useState<FlagReason>(createInitialDisputeState().reason as FlagReason);
   const [customReason, setCustomReason] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const effectiveReason = reason === 'Other' ? customReason.trim() : reason;
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!effectiveReason) return;
+  async function handleSubmit() {
+    const effectiveReason = getEffectiveReason(reason, customReason);
     setLoading(true);
-    await onConfirm(effectiveReason);
-    setLoading(false);
+    try {
+      await onConfirm(effectiveReason);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (

@@ -77,21 +77,8 @@ export function TransactionModal({ xdr, description, onClose, onSuccess }: Trans
     const ac = new AbortController();
     try {
       setStep('sign');
-      let signedXdr: string;
-
-      if (walletType === 'freighter') {
-        const { signWithFreighter } = await import('@/lib/walletApi');
-        const network = process.env.NEXT_PUBLIC_STELLAR_NETWORK === 'mainnet' ? 'MAINNET' : 'TESTNET';
-        signedXdr = await signWithFreighter(xdr, network);
-      } else if (walletType === 'albedo') {
-        const { signWithAlbedo } = await import('@/lib/walletAdapters');
-        signedXdr = await signWithAlbedo(xdr);
-      } else if (walletType === 'xbull') {
-        const { signWithXbull } = await import('@/lib/walletAdapters');
-        signedXdr = await signWithXbull(xdr);
-      } else {
-        throw new Error('No wallet connected.');
-      }
+      const { signTransaction } = await import('@/services/walletSigningService');
+      const { signedXdr } = await signTransaction(xdr, walletType);
 
       setStep('submit');
       const hash = await submitToHorizon(signedXdr);

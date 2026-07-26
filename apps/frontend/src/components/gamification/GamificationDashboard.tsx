@@ -1,8 +1,7 @@
 'use client';
 
 import { useGamification } from '@/hooks/useGamification';
-import { XpProgress } from './XpProgress';
-import { StreakIndicator } from './StreakIndicator';
+import { ReputationScoreWidget } from './ReputationScoreWidget';
 import { BadgeGrid } from './BadgeGrid';
 
 interface GamificationDashboardProps {
@@ -44,19 +43,13 @@ export function GamificationDashboard({ userId }: GamificationDashboardProps) {
 
   return (
     <div className="space-y-8">
-      <section aria-label="XP and level">
-        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-          Level Progress
-        </h3>
-        <XpProgress xp={data.xp} level={data.level} xpForNextLevel={data.xpForNextLevel} />
-      </section>
-
-      <section aria-label="Streak">
-        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-          Learning Streak
-        </h3>
-        <StreakIndicator streak={data.streak} longestStreak={data.longestStreak} />
-      </section>
+      <ReputationScoreWidget
+        level={data.level}
+        xp={data.xp}
+        xpForNextLevel={data.xpForNextLevel}
+        streak={data.streak}
+        longestStreak={data.longestStreak}
+      />
 
       <section aria-label="Badges">
         <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
