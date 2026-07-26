@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
+import { RadioGroup, TextArea } from '@/components/ui/form';
 
 const FLAG_REASONS = [
   'Spam or advertising',
@@ -10,24 +11,26 @@ const FLAG_REASONS = [
   'Other',
 ];
 
+const REASON_OPTIONS = FLAG_REASONS.map((reason) => ({ value: reason, label: reason }));
+
 interface FlagModalProps {
   onConfirm: (reason: string) => Promise<void>;
   onCancel: () => void;
 }
 
 export function FlagModal({ onConfirm, onCancel }: FlagModalProps) {
-  const [reason, setReason] = useState(FLAG_REASONS[0]);
+  const [reason, setReason] = useState<FlagReason>(createInitialDisputeState().reason as FlagReason);
   const [customReason, setCustomReason] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const effectiveReason = reason === 'Other' ? customReason.trim() : reason;
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!effectiveReason) return;
+  async function handleSubmit() {
+    const effectiveReason = getEffectiveReason(reason, customReason);
     setLoading(true);
-    await onConfirm(effectiveReason);
-    setLoading(false);
+    try {
+      await onConfirm(effectiveReason);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -49,34 +52,27 @@ export function FlagModal({ onConfirm, onCancel }: FlagModalProps) {
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-3">
-          <fieldset>
-            <legend className="sr-only">Reason for flagging</legend>
-            <div className="space-y-2">
-              {FLAG_REASONS.map((r) => (
-                <label key={r} className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="flag-reason"
-                    value={r}
-                    checked={reason === r}
-                    onChange={() => setReason(r)}
-                    className="accent-blue-600"
-                  />
-                  {r}
-                </label>
-              ))}
-            </div>
-          </fieldset>
+          <RadioGroup
+            id="flag-reason"
+            name="flag-reason"
+            label="Reason for flagging"
+            labelHidden
+            options={REASON_OPTIONS}
+            value={reason}
+            onValueChange={setReason}
+          />
 
           {reason === 'Other' && (
-            <textarea
-              className="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2 text-sm resize-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            <TextArea
+              id="flag-custom-reason"
+              size="sm"
               rows={2}
               maxLength={200}
               value={customReason}
               onChange={(e) => setCustomReason(e.target.value)}
               placeholder="Please describe your reason…"
               aria-label="Custom flag reason"
+              className="resize-none"
             />
           )}
 

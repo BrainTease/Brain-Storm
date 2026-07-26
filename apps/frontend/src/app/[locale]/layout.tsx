@@ -8,6 +8,7 @@ import { WalletProvider } from '@/lib/wallet';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { GlobalShortcuts } from '@/components/GlobalShortcuts';
+import { Toaster } from '@/components/ui/Toaster';
 import '../globals.css';
 
 export const metadata: Metadata = {
@@ -47,6 +48,8 @@ export default async function LocaleLayout({
                 {children}
               </div>
               <Footer />
+              {/* Renders the queue that `lib/toast` writes to; without it toasts never appear. */}
+              <Toaster />
             </WalletProvider>
           </ThemeProvider>
         </NextIntlClientProvider>

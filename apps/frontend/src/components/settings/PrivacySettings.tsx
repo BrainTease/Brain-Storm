@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import api from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
+import { TextInput } from '@/components/ui/form';
 
 export function PrivacySettings() {
   const { user } = useAuth();
@@ -83,15 +84,16 @@ export function PrivacySettings() {
           Your credentials and certificates on the Stellar blockchain will remain due to the
           immutable nature of the ledger.
         </p>
-        <div className="flex items-center gap-3">
-          <input
-            type="text"
-            value={deleteConfirm}
-            onChange={(e) => setDeleteConfirm(e.target.value)}
-            placeholder="Type DELETE to confirm"
-            className="flex-1 rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-red-500"
-            aria-label="Type DELETE to confirm account deletion"
-          />
+        <div className="flex items-start gap-3">
+          <div className="flex-1">
+            <TextInput
+              id="delete-confirm"
+              value={deleteConfirm}
+              onChange={(e) => setDeleteConfirm(e.target.value)}
+              placeholder="Type DELETE to confirm"
+              aria-label="Type DELETE to confirm account deletion"
+            />
+          </div>
           <button
             type="button"
             onClick={handleDeleteAccount}
