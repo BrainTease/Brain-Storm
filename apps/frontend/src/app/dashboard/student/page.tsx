@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import { useTheme } from 'next-themes';
-import { useAuth } from '@/lib/auth-context';
+import { useAuth } from '@/hooks/useAuth';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import {
   CourseListControls,
@@ -32,20 +32,20 @@ import {
  * sections under `components/dashboard`.
  */
 export default function StudentDashboardPage() {
-  const { state } = useAuth();
+  const { user: authUser, token } = useAuth();
   const { resolvedTheme } = useTheme();
   const [sort, setSort] = useState<CourseSortKey>('progress');
   const [filter, setFilter] = useState<CourseFilterKey>('all');
 
   const { user, tokenBalance, enrolledCourses, credentials, stats, isLoading, error, patchProgress } =
     useDashboardData();
-  const analytics = useLearningAnalytics(state.user?.id);
+  const analytics = useLearningAnalytics(authUser?.id);
 
   const handleProgressUpdate = useCallback(
     (update: ProgressUpdate) => patchProgress((records) => applyProgressUpdate(records, update)),
     [patchProgress]
   );
-  useProgressSocket(state.user?.id, state.token, handleProgressUpdate);
+  useProgressSocket(authUser?.id, token, handleProgressUpdate);
 
   const visibleCourses = useMemo(
     () => filterAndSortCourses(enrolledCourses, filter, sort),

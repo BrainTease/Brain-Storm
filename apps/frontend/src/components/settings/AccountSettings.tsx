@@ -1,13 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { useAuth } from '@/lib/auth-context';
+import { useAuth } from '@/hooks/useAuth';
 import api from '@/lib/api';
 import { TextInput } from '@/components/ui/form';
 
 export function AccountSettings() {
-  const { state, dispatch } = useAuth();
-  const [username, setUsername] = useState(state.user?.username ?? '');
+  const { user, setUser } = useAuth();
+  const [username, setUsername] = useState(user?.username ?? '');
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -17,7 +17,7 @@ export function AccountSettings() {
     setMessage(null);
     try {
       const { data } = await api.patch('/users/me', { username });
-      dispatch({ type: 'SET_USER', payload: data });
+      setUser(data);
       setMessage({ type: 'success', text: 'Account updated successfully.' });
     } catch {
       setMessage({ type: 'error', text: 'Failed to update account. Please try again.' });
@@ -42,7 +42,7 @@ export function AccountSettings() {
           id="settings-email"
           label="Email"
           type="email"
-          value={state.user?.email ?? ''}
+          value={user?.email ?? ''}
           disabled
           readOnly
           helperText="Email cannot be changed. Contact support for assistance."
@@ -61,7 +61,7 @@ export function AccountSettings() {
         <TextInput
           id="settings-role"
           label="Role"
-          value={state.user?.role ?? ''}
+          value={user?.role ?? ''}
           disabled
           readOnly
         />

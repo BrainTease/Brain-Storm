@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useWallet } from '@/hooks/useWallet';
+import { SUPPORTED_WALLETS, useWallet } from '@/lib/wallet';
 import { WalletMenu } from './WalletMenu';
 import { WalletSelectModal } from './WalletSelectModal';
 
@@ -35,6 +35,11 @@ export function WalletButton() {
     );
   }
 
+  const notInstalledAdapter =
+    error?.code === 'NOT_INSTALLED' && error.walletId
+      ? SUPPORTED_WALLETS.find((w) => w.id === error.walletId)
+      : undefined;
+
   return (
     <div>
       <button
@@ -56,21 +61,21 @@ export function WalletButton() {
         )}
       </button>
       {error && (
-        <p className="text-xs text-red-600 mt-1">
-          {error === 'FREIGHTER_NOT_INSTALLED' ? (
+        <p className="text-xs text-red-600 mt-1" role="alert">
+          {notInstalledAdapter ? (
             <>
-              Freighter not found.{' '}
+              {notInstalledAdapter.name} not found.{' '}
               <a
-                href="https://www.freighter.app/"
+                href={notInstalledAdapter.installUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="underline"
               >
-                Install Freighter
+                Install {notInstalledAdapter.name}
               </a>{' '}
             </>
           ) : (
-            error
+            error.message
           )}{' '}
           <button className="underline" onClick={clearError}>
             Dismiss

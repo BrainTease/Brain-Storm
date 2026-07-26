@@ -31,7 +31,7 @@ export function FacetedSearch({
   onClearAll,
 }: FacetedSearchProps) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" role="search" aria-label="Course search and filters">
       <SearchInput value={query} onChange={onQueryChange} />
       <CourseFilters
         level={level}

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { useWallet } from '@/hooks/useWallet';
+import { useWallet } from '@/lib/wallet';
 
 interface WalletMenuProps {
   onClose: () => void;
