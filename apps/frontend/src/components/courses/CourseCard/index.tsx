@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { CourseCardHeader } from './CourseCardHeader';
 import { CourseCardImage } from './CourseCardImage';
 import { CourseCardActions } from './CourseCardActions';
@@ -22,7 +23,7 @@ export interface CourseCardProps {
   category?: string;
 }
 
-export function CourseCard({
+export const CourseCard = memo(function CourseCard({
   id,
   title,
   description,
@@ -61,4 +62,4 @@ export function CourseCard({
       </div>
     </article>
   );
-}
+});
