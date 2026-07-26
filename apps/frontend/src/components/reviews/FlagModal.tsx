@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { RadioGroup, TextArea } from '@/components/ui/form';
 
@@ -34,19 +35,8 @@ export function FlagModal({ onConfirm, onCancel }: FlagModalProps) {
   }
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="flag-modal-title"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
-    >
-      <div className="w-full max-w-sm bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 space-y-4">
-        <h2
-          id="flag-modal-title"
-          className="text-lg font-semibold text-gray-900 dark:text-white"
-        >
-          Flag Review
-        </h2>
+    <Modal isOpen onClose={onCancel} title="Flag Review" size="sm">
+      <div className="space-y-4">
         <p className="text-sm text-gray-600 dark:text-gray-400">
           Help us keep reviews helpful and relevant. Select a reason for flagging this review.
         </p>
@@ -96,6 +86,6 @@ export function FlagModal({ onConfirm, onCancel }: FlagModalProps) {
           </div>
         </form>
       </div>
-    </div>
+    </Modal>
   );
 }

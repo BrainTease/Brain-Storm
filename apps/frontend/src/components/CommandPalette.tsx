@@ -3,8 +3,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { fuzzySearch } from '@/lib/fuzzy-search';
-import { createNavigationCommands, createActionCommands, createCourseCommands, Command } from '@/lib/command-palette-items';
-import { useCoursesStore } from '@/store/courses.store';
+import { createNavigationCommands, createActionCommands, Command } from '@/lib/command-palette-items';
 
 interface CommandPaletteProps {
   isOpen: boolean;
@@ -17,15 +16,13 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
   const listRef = useRef<HTMLUListElement>(null);
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const { courses } = useCoursesStore();
 
   const allCommands = useMemo(() => {
     const nav = createNavigationCommands(router);
     const actions = createActionCommands();
-    const courseCommands = createCourseCommands(courses);
-    
-    return [...nav, ...actions, ...courseCommands];
-  }, [router, courses]);
+
+    return [...nav, ...actions];
+  }, [router]);
 
   const filteredCommands = useMemo(() => {
     if (!query.trim()) {

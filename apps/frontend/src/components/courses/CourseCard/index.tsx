@@ -35,7 +35,7 @@ export interface CourseCardProps {
   };
 }
 
-export function CourseCard({
+export const CourseCard = memo(function CourseCard({
   id,
   title,
   description,
@@ -79,4 +79,4 @@ export function CourseCard({
       </div>
     </article>
   );
-}
+});

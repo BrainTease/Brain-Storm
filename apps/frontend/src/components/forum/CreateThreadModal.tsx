@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useCreatePost } from '@/hooks/useForum';
+import { Modal } from '@/components/ui/Modal';
 import { MarkdownEditor } from './MarkdownEditor';
 
 interface CreateThreadModalProps {
@@ -52,24 +53,10 @@ export function CreateThreadModal({
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="sticky top-0 border-b bg-white px-6 py-4 flex items-center justify-between">
-          <h2 className="text-xl font-bold text-gray-900">Start a New Discussion</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
-          >
-            ×
-          </button>
-        </div>
-
+    <Modal isOpen={isOpen} onClose={onClose} title="Start a New Discussion" size="lg">
         {/* Content */}
-        <form onSubmit={handleSubmit} className="p-6">
+        <form onSubmit={handleSubmit}>
           {error && (
             <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
               {error}
@@ -137,7 +124,6 @@ export function CreateThreadModal({
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </Modal>
   );
 }

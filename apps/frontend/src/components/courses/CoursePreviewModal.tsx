@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X } from 'lucide-react';
+import { Modal } from '@/components/ui/Modal';
 
 interface Lesson {
   id: string;
@@ -42,72 +42,85 @@ export const CoursePreviewModal: React.FC<CoursePreviewModalProps> = ({
   const [activeTab, setActiveTab] = useState<'preview' | 'syllabus' | 'instructor'>('preview');
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
 
-  if (!isOpen) return null;
-
   const previewLessons = course.syllabus.filter(lesson => lesson.isPreview);
 
-  return (
-    <div
-      className="fixed inset-0 z-50 overflow-y-auto"
-      aria-labelledby="modal-title"
-      role="dialog"
-      aria-modal="true"
-    >
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
-        onClick={onClose}
-        aria-hidden="true"
-      />
+  const header = (
+    <>
+      <div className="flex items-center justify-between p-6 border-b dark:border-gray-700">
+        <div>
+          <h2 id="modal-title" className="text-2xl font-bold text-gray-900 dark:text-white">
+            {course.title}
+          </h2>
+          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+            Course Preview
+          </p>
+        </div>
+        <button
+          onClick={onClose}
+          className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+          aria-label="Close modal"
+        >
+          ✕
+        </button>
+      </div>
 
-      {/* Modal */}
-      <div className="flex min-h-screen items-center justify-center p-4">
-        <div className="relative w-full max-w-5xl bg-white dark:bg-gray-800 rounded-lg shadow-xl transform transition-all">
-          {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b dark:border-gray-700">
-            <div>
-              <h2 id="modal-title" className="text-2xl font-bold text-gray-900 dark:text-white">
-                {course.title}
-              </h2>
-              <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                Course Preview
-              </p>
-            </div>
+      <div className="border-b dark:border-gray-700">
+        <nav className="flex space-x-8 px-6" aria-label="Tabs">
+          {[
+            { id: 'preview', label: 'Preview Lessons' },
+            { id: 'syllabus', label: 'Full Syllabus' },
+            { id: 'instructor', label: 'Instructor' },
+          ].map(tab => (
             <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-              aria-label="Close modal"
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)}
+              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                activeTab === tab.id
+                  ? 'border-blue-600 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+              }`}
+              aria-current={activeTab === tab.id ? 'page' : undefined}
             >
-              <X className="w-6 h-6" />
+              {tab.label}
             </button>
-          </div>
+          ))}
+        </nav>
+      </div>
+    </>
+  );
 
-          {/* Tabs */}
-          <div className="border-b dark:border-gray-700">
-            <nav className="flex space-x-8 px-6" aria-label="Tabs">
-              {[
-                { id: 'preview', label: 'Preview Lessons' },
-                { id: 'syllabus', label: 'Full Syllabus' },
-                { id: 'instructor', label: 'Instructor' },
-              ].map(tab => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id as any)}
-                  className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                    activeTab === tab.id
-                      ? 'border-blue-600 text-blue-600 dark:text-blue-400'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                  }`}
-                  aria-current={activeTab === tab.id ? 'page' : undefined}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </nav>
-          </div>
+  const footer = (
+    <div className="flex items-center justify-between p-6 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+      <div>
+        {course.price !== undefined && (
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">
+            ${course.price}
+          </p>
+        )}
+      </div>
+      <div className="flex space-x-3">
+        <button
+          onClick={onClose}
+          className="px-6 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+        >
+          Close
+        </button>
+        <button
+          onClick={() => {
+            onEnroll();
+            onClose();
+          }}
+          className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+        >
+          Enroll Now
+        </button>
+      </div>
+    </div>
+  );
 
-          {/* Content */}
-          <div className="p-6 max-h-[60vh] overflow-y-auto">
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} header={header} footer={footer} size="xl">
+      <div className="max-h-[60vh] overflow-y-auto">
             {activeTab === 'preview' && (
               <div className="space-y-4">
                 <p className="text-gray-600 dark:text-gray-400 mb-6">
@@ -266,36 +279,6 @@ export const CoursePreviewModal: React.FC<CoursePreviewModalProps> = ({
               </div>
             )}
           </div>
-
-          {/* Footer */}
-          <div className="flex items-center justify-between p-6 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
-            <div>
-              {course.price !== undefined && (
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  ${course.price}
-                </p>
-              )}
-            </div>
-            <div className="flex space-x-3">
-              <button
-                onClick={onClose}
-                className="px-6 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-              >
-                Close
-              </button>
-              <button
-                onClick={() => {
-                  onEnroll();
-                  onClose();
-                }}
-                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
-              >
-                Enroll Now
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    </Modal>
   );
 };
