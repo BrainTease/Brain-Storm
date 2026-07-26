@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useWallet } from '@/hooks/useWallet';
+import { Modal } from '@/components/ui/Modal';
 import { toast } from '@/lib/toast';
 
 type TxStep = 'build' | 'sign' | 'submit' | 'confirmed' | 'failed';
@@ -65,14 +66,6 @@ export function TransactionModal({ xdr, description, onClose, onSuccess }: Trans
   const [txHash, setTxHash] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && step === 'build') onClose();
-    };
-    document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
-  }, [onClose, step]);
-
   const run = useCallback(async () => {
     const ac = new AbortController();
     try {
@@ -100,28 +93,15 @@ export function TransactionModal({ xdr, description, onClose, onSuccess }: Trans
   const isInProgress = step === 'sign' || step === 'submit';
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Transaction"
+    <Modal
+      isOpen
+      onClose={onClose}
+      title={STEP_LABELS[step]}
+      showCloseButton={!isInProgress}
+      closeOnBackdrop={step === 'build'}
+      closeOnEscape={step === 'build'}
     >
-      <div className="fixed inset-0 bg-black/50" onClick={step === 'build' ? onClose : undefined} aria-hidden="true" />
-      <div className="relative bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md mx-4 p-6 space-y-5">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">{STEP_LABELS[step]}</h2>
-          {!isInProgress && (
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-              aria-label="Close"
-            >
-              ✕
-            </button>
-          )}
-        </div>
-
+      <div className="space-y-5">
         {/* Step progress */}
         <StepIndicator current={step} />
 
@@ -199,7 +179,7 @@ export function TransactionModal({ xdr, description, onClose, onSuccess }: Trans
           </div>
         )}
       </div>
-    </div>
+    </Modal>
   );
 }
 
