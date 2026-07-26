@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Badge } from '@/components/ui/Badge';
 import { Card } from '@/components/ui/Card';
 import { Proposal } from '@/store/governanceStore';
+import { formatTimeRemaining } from '@/lib/date-utils';
 
 export interface ProposalCardProps {
   proposal: Proposal;
@@ -23,14 +24,6 @@ export function ProposalCard({ proposal }: ProposalCardProps) {
   const quorumReached = votesTotal >= proposal.quorumRequired;
   const timeRemaining = new Date(proposal.votingDeadline).getTime() - Date.now();
   const isExpired = timeRemaining <= 0;
-
-  const formatTimeRemaining = () => {
-    if (isExpired) return 'Voting ended';
-    const days = Math.floor(timeRemaining / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    if (days > 0) return `${days}d ${hours}h remaining`;
-    return `${hours}h remaining`;
-  };
 
   return (
     <Link href={`/governance/proposals/${proposal.id}`}>
@@ -104,7 +97,7 @@ export function ProposalCard({ proposal }: ProposalCardProps) {
         {/* Footer */}
         <div className="pt-2 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
           <span className="text-xs text-gray-500 dark:text-gray-500">
-            {formatTimeRemaining()}
+            {isExpired ? 'Voting ended' : formatTimeRemaining(proposal.votingDeadline)}
           </span>
           <span className="text-xs font-medium text-blue-600 dark:text-blue-400">
             View Details →
