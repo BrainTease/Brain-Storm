@@ -2,9 +2,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { TransactionModal } from '@/components/wallet/TransactionModal';
 
-// Stub the wallet hook
-vi.mock('@/hooks/useWallet', () => ({
-  useWallet: () => ({ walletType: 'freighter', address: 'GABC1234' }),
+// Stub only the hook; the modal still uses the module's real network config.
+vi.mock('@/lib/wallet', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/wallet')>()),
+  useWallet: () => ({ address: 'GABC1234', signTransaction: vi.fn() }),
 }));
 
 // Stub toast

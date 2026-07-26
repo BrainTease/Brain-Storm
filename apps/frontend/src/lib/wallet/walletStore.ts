@@ -1,8 +1,12 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import type { WalletErrorState, WalletType } from './types';
 
-export type WalletType = 'freighter' | 'albedo' | 'xbull' | 'walletconnect';
-
+/**
+ * Pure state container for the wallet. It holds values and setters only —
+ * connection orchestration lives in `WalletProvider`, so this stays trivially
+ * testable and usable outside React (e.g. `useWalletStore.getState()`).
+ */
 interface WalletState {
   address: string | null;
   network: string | null;
@@ -10,7 +14,7 @@ interface WalletState {
   bstBalance: string | null;
   walletType: WalletType | null;
   isConnecting: boolean;
-  error: string | null;
+  error: WalletErrorState | null;
   balanceError: boolean;
   setAddress: (address: string | null) => void;
   setNetwork: (network: string | null) => void;
@@ -18,8 +22,14 @@ interface WalletState {
   setBstBalance: (balance: string | null) => void;
   setWalletType: (type: WalletType | null) => void;
   setIsConnecting: (v: boolean) => void;
-  setError: (error: string | null) => void;
+  setError: (error: WalletErrorState | null) => void;
   setBalanceError: (v: boolean) => void;
+  /** Applies a completed connection in one update to avoid intermediate renders. */
+  applyConnection: (connection: {
+    address: string;
+    network: string;
+    walletType: WalletType;
+  }) => void;
   disconnect: () => void;
 }
 
@@ -42,6 +52,8 @@ export const useWalletStore = create<WalletState>()(
       setIsConnecting: (isConnecting) => set({ isConnecting }),
       setError: (error) => set({ error }),
       setBalanceError: (balanceError) => set({ balanceError }),
+      applyConnection: ({ address, network, walletType }) =>
+        set({ address, network, walletType, error: null }),
       disconnect: () =>
         set({
           address: null,

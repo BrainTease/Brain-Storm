@@ -14,7 +14,7 @@ const mockAdmin = { ...mockUser, id: 'admin-1', role: 'admin' };
 
 beforeEach(() => {
   // Reset store state between tests
-  useAuthStore.setState({ user: null, token: null });
+  useAuthStore.setState({ user: null, token: null, hasHydrated: true });
 });
 
 describe('useAuth', () => {
@@ -51,6 +51,15 @@ describe('useAuth', () => {
     const { result } = renderHook(() => useAuth());
     act(() => result.current.login('tok', mockAdmin));
     expect(result.current.isAdmin).toBe(true);
+  });
+
+  it('reports loading until the persisted session has hydrated', () => {
+    useAuthStore.setState({ hasHydrated: false });
+    const { result } = renderHook(() => useAuth());
+    expect(result.current.isLoading).toBe(true);
+
+    act(() => useAuthStore.setState({ hasHydrated: true }));
+    expect(result.current.isLoading).toBe(false);
   });
 
   it('setUser updates user without changing token', () => {

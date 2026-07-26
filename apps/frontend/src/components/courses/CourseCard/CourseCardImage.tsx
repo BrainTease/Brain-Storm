@@ -26,6 +26,7 @@ export function CourseCardImage({ title, imageUrl, category }: CourseCardImagePr
       )}
       {category && (
         <span className="absolute top-2 left-2 bg-blue-600 text-white text-xs font-medium px-2 py-0.5 rounded">
+          <span className="sr-only">Category: </span>
           {category}
         </span>
       )}

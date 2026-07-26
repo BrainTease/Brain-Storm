@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import api from '@/lib/api';
-import { useAuth } from '@/lib/auth-context';
+import { useAuth } from '@/hooks/useAuth';
 import {
   computeStats,
   courseIdsFromProgress,
@@ -43,8 +43,8 @@ const LOAD_ERROR = 'Unable to load dashboard information. Please refresh.';
  * `components/dashboard` receive its output as props and never call the API.
  */
 export function useDashboardData(): DashboardData {
-  const { state } = useAuth();
-  const [user, setUser] = useState<DashboardUser | null>(() => toDashboardUser(state.user));
+  const { user: authUser, token, isLoading: isAuthLoading } = useAuth();
+  const [user, setUser] = useState<DashboardUser | null>(() => toDashboardUser(authUser));
   const [tokenBalance, setTokenBalance] = useState<number | null>(null);
   const [progress, setProgress] = useState<ProgressRecord[]>([]);
   const [courses, setCourses] = useState<Record<string, CourseData>>({});
@@ -52,18 +52,16 @@ export function useDashboardData(): DashboardData {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const authUser = state.user;
-
-  // Keep in step with the auth context once it resolves (login, refresh, ...).
+  // Keep in step with the auth store once it resolves (login, refresh, ...).
   useEffect(() => {
     const next = toDashboardUser(authUser);
     if (next) setUser(next);
   }, [authUser]);
 
   useEffect(() => {
-    if (state.isLoading) return;
+    if (isAuthLoading) return;
     // Unauthenticated: ProtectedRoute handles the redirect, so don't fetch.
-    if (!state.token) {
+    if (!token) {
       setIsLoading(false);
       return;
     }
@@ -116,7 +114,7 @@ export function useDashboardData(): DashboardData {
     // greeting in step, and re-running the whole fetch on every auth-object
     // identity change would loop.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.isLoading, state.token]);
+  }, [isAuthLoading, token]);
 
   const enrolledCourses = useMemo(() => joinCourses(progress, courses), [progress, courses]);
 
@@ -142,7 +140,7 @@ export function useDashboardData(): DashboardData {
   };
 }
 
-/** Narrows the auth context's user to the fields the dashboard needs. */
+/** Narrows the auth store's user to the fields the dashboard needs. */
 function toDashboardUser(
   authUser: { id: string; username: string; email: string } | null | undefined
 ): DashboardUser | null {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useWalletStore } from '@/store/walletStore';
+import { useWalletStore } from '@/lib/wallet';
 import { useGovernance } from '@/hooks/useGovernance';
 import { ProposalList, VotingPowerCard } from '@/components/governance';
 

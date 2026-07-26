@@ -66,7 +66,8 @@ export function CourseFilters({
   }
 
   return (
-    <div className="flex flex-wrap gap-3">
+    <fieldset className="flex flex-wrap gap-3 border-0 p-0 m-0">
+      <legend className="sr-only">Filter and sort courses</legend>
       <SelectInput
         {...filterProps('level', level, 'Filter by level')}
         placeholderOption={{ value: '', label: 'All Levels' }}
@@ -93,7 +94,7 @@ export function CourseFilters({
         options={PRICE_OPTIONS}
       />
       <SelectInput {...filterProps('sort', sort, 'Sort courses')} options={SORT_OPTIONS} />
-    </div>
+    </fieldset>
   );
 }
 

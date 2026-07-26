@@ -1,9 +1,7 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
-import { useWallet } from '@/hooks/useWallet';
-import { SUPPORTED_WALLETS } from '@/lib/walletAdapters';
-import type { WalletType } from '@/store/walletStore';
+import { useEffect } from 'react';
+import { SUPPORTED_WALLETS, useWallet, type WalletType } from '@/lib/wallet';
 
 interface WalletSelectModalProps {
   onClose: () => void;
@@ -11,7 +9,6 @@ interface WalletSelectModalProps {
 
 export function WalletSelectModal({ onClose }: WalletSelectModalProps) {
   const { connect, isConnecting } = useWallet();
-  const overlayRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -33,12 +30,7 @@ export function WalletSelectModal({ onClose }: WalletSelectModalProps) {
       aria-modal="true"
       aria-label="Select wallet"
     >
-      <div
-        ref={overlayRef}
-        className="fixed inset-0 bg-black/50"
-        onClick={onClose}
-        aria-hidden="true"
-      />
+      <div className="fixed inset-0 bg-black/50" onClick={onClose} aria-hidden="true" />
       <div className="relative bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-sm mx-4 p-6">
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-lg font-semibold">Select Wallet</h2>
@@ -53,12 +45,12 @@ export function WalletSelectModal({ onClose }: WalletSelectModalProps) {
         <ul className="space-y-2" role="list">
           {SUPPORTED_WALLETS.map((wallet) => {
             const installed = wallet.isInstalled();
-            const comingSoon = wallet.id === 'walletconnect';
+            const comingSoon = !wallet.enabled;
             return (
               <li key={wallet.id}>
                 <button
                   className="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-left"
-                  onClick={() => handleSelect(wallet.id as WalletType)}
+                  onClick={() => handleSelect(wallet.id)}
                   disabled={isConnecting || comingSoon}
                   aria-disabled={comingSoon}
                 >

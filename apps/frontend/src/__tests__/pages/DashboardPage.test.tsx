@@ -18,14 +18,16 @@ vi.mock('next/link', () => ({
   ),
 }));
 
-vi.mock('@/lib/auth-context', () => ({
+vi.mock('@/hooks/useAuth', () => ({
   useAuth: () => ({
-    state: {
-      user: { id: 'user-1', username: 'testuser', email: 'test@example.com' },
-      token: 'fake-token',
-      isLoading: false,
-    },
-    dispatch: vi.fn(),
+    user: { id: 'user-1', username: 'testuser', email: 'test@example.com' },
+    token: 'fake-token',
+    isAuthenticated: true,
+    isAdmin: false,
+    isLoading: false,
+    login: vi.fn(),
+    logout: vi.fn(),
+    setUser: vi.fn(),
   }),
 }));
 

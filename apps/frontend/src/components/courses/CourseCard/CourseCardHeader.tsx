@@ -8,6 +8,16 @@ export interface CourseCardHeaderProps {
   rating: number;
   reviewCount?: number;
   level: 'beginner' | 'intermediate' | 'advanced';
+  /**
+   * Wiring supplied by a roving-focus container (see `useRovingFocus`). Applied
+   * to the course title link so arrow keys can move between cards while only
+   * the active card stays in the tab sequence.
+   */
+  linkFocusProps?: {
+    ref?: (el: HTMLAnchorElement | null) => void;
+    tabIndex?: number;
+    onFocus?: () => void;
+  };
 }
 
 const LEVEL_COLORS: Record<string, string> = {
@@ -18,7 +28,9 @@ const LEVEL_COLORS: Record<string, string> = {
 
 function StarRating({ rating }: { rating: number }) {
   return (
-    <span className="flex items-center gap-0.5" aria-label={`Rating: ${rating} out of 5`}>
+    // role="img" makes the label authoritative: assistive tech reads the
+    // rating instead of announcing five unlabelled decorative stars.
+    <span className="flex items-center gap-0.5" role="img" aria-label={`Rating: ${rating} out of 5`}>
       {Array.from({ length: 5 }).map((_, i) => (
         <svg
           key={i}
@@ -42,21 +54,29 @@ export function CourseCardHeader({
   rating,
   reviewCount,
   level,
+  linkFocusProps,
 }: CourseCardHeaderProps) {
+  const titleId = `course-title-${id}`;
+
   return (
     <>
       {/* Level badge */}
       <span
         className={`self-start text-xs font-semibold px-2 py-0.5 rounded capitalize ${LEVEL_COLORS[level] ?? LEVEL_COLORS.beginner}`}
       >
+        <span className="sr-only">Level: </span>
         {level}
       </span>
 
       {/* Title */}
-      <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-base leading-snug line-clamp-2">
+      <h3
+        id={titleId}
+        className="font-semibold text-gray-900 dark:text-gray-100 text-base leading-snug line-clamp-2"
+      >
         <Link
           href={`/courses/${id}`}
-          className="hover:text-blue-600 dark:hover:text-blue-400 focus:outline-none focus:underline"
+          className="rounded hover:text-blue-600 dark:hover:text-blue-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+          {...linkFocusProps}
         >
           {title}
         </Link>
@@ -76,11 +96,14 @@ export function CourseCardHeader({
       {/* Rating */}
       <div className="flex items-center gap-1.5">
         <StarRating rating={rating} />
-        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+        <span className="text-sm font-medium text-gray-700 dark:text-gray-300" aria-hidden="true">
           {rating.toFixed(1)}
         </span>
         {reviewCount !== undefined && (
-          <span className="text-xs text-gray-400">({reviewCount.toLocaleString()})</span>
+          <span className="text-xs text-gray-400">
+            <span className="sr-only">Based on {reviewCount.toLocaleString()} reviews</span>
+            <span aria-hidden="true">({reviewCount.toLocaleString()})</span>
+          </span>
         )}
       </div>
     </>

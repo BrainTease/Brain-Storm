@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useWalletStore } from '@/store/walletStore';
+import { useWalletStore } from '@/lib/wallet';
 import { useGovernance } from '@/hooks/useGovernance';
 import { ProposalDetail } from '@/components/governance';
 import { toast } from '@/lib/toast';

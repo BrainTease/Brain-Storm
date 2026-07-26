@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useWallet } from '@/hooks/useWallet';
+import { HORIZON_URL, explorerTxUrl, useWallet } from '@/lib/wallet';
 import { toast } from '@/lib/toast';
 
 type TxStep = 'build' | 'sign' | 'submit' | 'confirmed' | 'failed';
@@ -13,16 +13,6 @@ interface TransactionModalProps {
   onSuccess?: (txHash: string) => void;
 }
 
-const HORIZON_BASE =
-  process.env.NEXT_PUBLIC_STELLAR_NETWORK === 'mainnet'
-    ? 'https://horizon.stellar.org'
-    : 'https://horizon-testnet.stellar.org';
-
-const EXPLORER_BASE =
-  process.env.NEXT_PUBLIC_STELLAR_NETWORK === 'mainnet'
-    ? 'https://stellar.expert/explorer/public/tx'
-    : 'https://stellar.expert/explorer/testnet/tx';
-
 const STEP_LABELS: Record<TxStep, string> = {
   build: 'Review Transaction',
   sign: 'Signing…',
@@ -33,7 +23,7 @@ const STEP_LABELS: Record<TxStep, string> = {
 
 async function submitToHorizon(signedXdr: string): Promise<string> {
   const body = new URLSearchParams({ tx: signedXdr });
-  const res = await fetch(`${HORIZON_BASE}/transactions`, {
+  const res = await fetch(`${HORIZON_URL}/transactions`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body,
@@ -52,7 +42,7 @@ async function pollForConfirmation(txHash: string, signal: AbortSignal): Promise
   const deadline = Date.now() + 30_000;
   while (Date.now() < deadline) {
     if (signal.aborted) throw new Error('Cancelled.');
-    const res = await fetch(`${HORIZON_BASE}/transactions/${txHash}`);
+    const res = await fetch(`${HORIZON_URL}/transactions/${txHash}`);
     if (res.ok) return;
     await new Promise((r) => setTimeout(r, 2000));
   }
@@ -60,7 +50,7 @@ async function pollForConfirmation(txHash: string, signal: AbortSignal): Promise
 }
 
 export function TransactionModal({ xdr, description, onClose, onSuccess }: TransactionModalProps) {
-  const { walletType, address } = useWallet();
+  const { address, signTransaction } = useWallet();
   const [step, setStep] = useState<TxStep>('build');
   const [txHash, setTxHash] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -77,8 +67,7 @@ export function TransactionModal({ xdr, description, onClose, onSuccess }: Trans
     const ac = new AbortController();
     try {
       setStep('sign');
-      const { signTransaction } = await import('@/services/walletSigningService');
-      const { signedXdr } = await signTransaction(xdr, walletType);
+      const signedXdr = await signTransaction(xdr);
 
       setStep('submit');
       const hash = await submitToHorizon(signedXdr);
@@ -95,7 +84,7 @@ export function TransactionModal({ xdr, description, onClose, onSuccess }: Trans
       toast.error(msg);
     }
     return () => ac.abort();
-  }, [walletType, xdr, onSuccess]);
+  }, [signTransaction, xdr, onSuccess]);
 
   const isInProgress = step === 'sign' || step === 'submit';
 
@@ -163,7 +152,7 @@ export function TransactionModal({ xdr, description, onClose, onSuccess }: Trans
           <div className="space-y-3 text-center">
             <p className="text-green-600 font-medium">Transaction confirmed!</p>
             <a
-              href={`${EXPLORER_BASE}/${txHash}`}
+              href={explorerTxUrl(txHash)}
               target="_blank"
               rel="noopener noreferrer"
               className="text-sm text-blue-600 underline"
