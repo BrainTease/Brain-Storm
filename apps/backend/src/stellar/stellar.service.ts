@@ -215,7 +215,7 @@ export class StellarService {
       throw new Error('TOKEN_CONTRACT_ID not configured');
     }
     return this.retryWithBackoff(() =>
-      this.invokeContract(this.tokenContractId, 'mint_reward', [
+      this.invokeContract(this.tokenContractId, 'mint', [
         new Address(recipientPublicKey).toScVal(),
         nativeToScVal(amount, { type: 'i128' }),
       ])

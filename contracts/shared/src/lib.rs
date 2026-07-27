@@ -8,6 +8,8 @@ use soroban_sdk::{contract, contractimpl, contracttype, symbol_short, Address, B
 
 pub mod pausable;
 
+pub mod math;
+
 #[contracttype]
 #[derive(Clone, PartialEq)]
 pub enum Role {
