@@ -6,6 +6,7 @@ use soroban_sdk::{
 use brain_storm_shared::access;
 
 pub mod linkage;
+pub mod validation;
 pub use linkage::{
     set_nft_contract, get_credential_nft_link, get_nft_credential, is_linked,
     CredentialNftLink,
@@ -92,7 +93,8 @@ impl CredentialMetadataContract {
         instructor: Address,
         royalty_basis: u32,
     ) -> u32 {
-        access::require_admin(&env, &admin, &DataKey::Admin);
+        admin.require_auth();
+        validation::validate_admin(&env, &admin);
 
         // Store credential metadata first
         let metadata = MetadataRecord {
@@ -144,7 +146,8 @@ impl CredentialMetadataContract {
         grade: String,
         ipfs_hash: String,
     ) {
-        access::require_admin(&env, &admin, &DataKey::Admin);
+        admin.require_auth();
+        validation::validate_admin(&env, &admin);
 
         let metadata = MetadataRecord {
             credential_id,
@@ -170,13 +173,10 @@ impl CredentialMetadataContract {
         course_name: String,
         grade: String,
     ) {
-        access::require_admin(&env, &admin, &DataKey::Admin);
+        admin.require_auth();
+        validation::validate_admin(&env, &admin);
 
-        let mut metadata: MetadataRecord = env
-            .storage()
-            .persistent()
-            .get(&DataKey::Metadata(credential_id))
-            .expect("Metadata not found");
+        let mut metadata: MetadataRecord = validation::get_metadata_or_panic(&env, credential_id);
 
         let history_count: u32 = env
             .storage()
@@ -233,14 +233,7 @@ impl CredentialMetadataContract {
     }
 
     pub fn can_renew(env: Env, credential_id: u64) -> bool {
-        let metadata = Self::get_metadata(env.clone(), credential_id);
-        match metadata {
-            Some(record) => {
-                let current_time = env.ledger().timestamp();
-                current_time <= record.expiry_timestamp + GRACE_PERIOD_SECONDS
-            },
-            None => false,
-        }
+        validation::is_renewable(&env, credential_id, GRACE_PERIOD_SECONDS)
     }
 
     pub fn renew_credential(
@@ -249,23 +242,17 @@ impl CredentialMetadataContract {
         credential_id: u64,
         new_expiry_timestamp: u64,
     ) {
-        access::require_admin(&env, &admin, &DataKey::Admin);
+        admin.require_auth();
+        validation::validate_admin(&env, &admin);
 
-        let mut metadata: MetadataRecord = env
-            .storage()
-            .persistent()
-            .get(&DataKey::Metadata(credential_id))
-            .expect("Credential not found");
+        let mut metadata: MetadataRecord = validation::get_metadata_or_panic(&env, credential_id);
 
         assert!(
             Self::can_renew(env.clone(), credential_id),
             "Credential not eligible for renewal"
         );
 
-        assert!(
-            new_expiry_timestamp > env.ledger().timestamp(),
-            "New expiry must be in the future"
-        );
+        validation::validate_future_timestamp(&env, new_expiry_timestamp);
 
         metadata.expiry_timestamp = new_expiry_timestamp;
 
@@ -283,7 +270,8 @@ impl CredentialMetadataContract {
     }
 
     pub fn store_metadata_hash(env: Env, admin: Address, credential_id: u64, hash: Bytes) {
-        access::require_admin(&env, &admin, &DataKey::Admin);
+        admin.require_auth();
+        validation::validate_admin(&env, &admin);
 
         env.storage()
             .persistent()
