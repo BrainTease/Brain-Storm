@@ -214,7 +214,7 @@ impl BuybackContract {
 
         let available_for_buyback = reserve_balance - config.min_reserve_balance;
         let max_buyback_xlm =
-            available_for_buyback.min(config.max_buyback_amount * bst_price / 1_000_000);
+            Self::calculate_xlm_from_available(&config, available_for_buyback);
 
         if max_buyback_xlm <= 0 {
             return;
@@ -367,6 +367,30 @@ impl BuybackContract {
     // Internal helpers
     // -------------------------------------------------------------------------
 
+    /// Calculates the maximum XLM amount available for buyback based on reserve and config.
+    /// Extracted to eliminate duplicated pricing logic.
+    fn calculate_xlm_from_available(config: &BuybackConfig, available: i128) -> i128 {
+        available.min(config.max_buyback_amount)
+    }
+
+    /// Calculates the BST amount that can be purchased with the given XLM amount at the given price.
+    /// Formula: (xlm_amount * 1_000_000) / bst_price
+    fn calculate_bst_from_xlm(xlm_amount: i128, bst_price: i128) -> i128 {
+        if bst_price == 0 {
+            return 0;
+        }
+        (xlm_amount.checked_mul(1_000_000).unwrap_or(xlm_amount)) / bst_price
+    }
+
+    /// Calculates the XLM cost for a given BST amount at the given price.
+    /// Formula: (bst_amount * bst_price) / 1_000_000
+    fn calculate_xlm_from_bst(bst_amount: i128, bst_price: i128) -> i128 {
+        if bst_price == 0 {
+            return 0;
+        }
+        (bst_amount.checked_mul(bst_price).unwrap_or(bst_amount)) / 1_000_000
+    }
+
     fn get_bst_price(env: &Env) -> i128 {
         // Calls oracle contract; returns mock price for now
         let _oracle_contract: Address = env
@@ -384,7 +408,8 @@ impl BuybackContract {
             .get(&DataKey::BuybackConfig)
             .unwrap();
 
-        let estimated_bst_amount = (xlm_amount * 1_000_000) / bst_price;
+        // Use extracted helper function to calculate BST amount
+        let estimated_bst_amount = Self::calculate_bst_from_xlm(xlm_amount, bst_price);
         let bst_to_buy = estimated_bst_amount.min(config.max_buyback_amount);
 
         let mut reserve_balance: i128 = env
