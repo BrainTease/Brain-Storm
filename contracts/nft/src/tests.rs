@@ -63,7 +63,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Only admin can mint")]
+    #[should_panic(expected = "Unauthorized: admin required")]
     fn test_non_admin_cannot_mint() {
         let (env, client, _) = setup();
         let rando = Address::generate(&env);
@@ -128,7 +128,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Not NFT owner")]
+    #[should_panic(expected = "Unauthorized: owner required")]
     fn test_transfer_by_non_owner_panics() {
         let (env, client, admin) = setup();
         let owner = Address::generate(&env);

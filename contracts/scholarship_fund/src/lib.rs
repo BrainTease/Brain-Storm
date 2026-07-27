@@ -3,19 +3,8 @@ use soroban_sdk::{
     contract, contractimpl, contracttype, symbol_short, Address, Env, Symbol, Vec,
 };
 
-// ---- Type-safe application status enum ----
-/// Application status using enum instead of u8 for better type safety.
-/// This prevents invalid status values and makes code more maintainable.
-#[contracttype]
-#[derive(Clone, Copy, PartialEq, Eq)]
-pub enum ApplicationStatus {
-    Pending = 0,
-    Approved = 1,
-    Rejected = 2,
-    Distributed = 3,
-}
+use brain_storm_shared::access;
 
-// ---- Improved storage key naming for clarity ----
 #[contracttype]
 pub enum DataKey {
     /// Contract administrator address
@@ -144,9 +133,7 @@ impl ScholarshipFundContract {
     // ---- Access controls ----
 
     pub fn approve_application(env: Env, admin: Address, app_id: u64) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can approve");
+        access::require_admin(&env, &admin, &DataKey::Admin);
 
         let mut app: ScholarshipApplication = env
             .storage()
@@ -169,9 +156,7 @@ impl ScholarshipFundContract {
     }
 
     pub fn reject_application(env: Env, admin: Address, app_id: u64) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can reject");
+        access::require_admin(&env, &admin, &DataKey::Admin);
 
         let mut app: ScholarshipApplication = env
             .storage()
@@ -191,9 +176,7 @@ impl ScholarshipFundContract {
     }
 
     pub fn distribute_scholarship(env: Env, admin: Address, app_id: u64) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can distribute");
+        access::require_admin(&env, &admin, &DataKey::Admin);
 
         let mut app: ScholarshipApplication = env
             .storage()

@@ -3,6 +3,8 @@ use soroban_sdk::{
     contract, contractimpl, contracttype, symbol_short, Address, Env, Symbol,
 };
 
+use brain_storm_shared::access;
+
 #[contracttype]
 pub enum DataKey {
     Admin,
@@ -57,9 +59,7 @@ impl RoyaltyDistributionContract {
         contributor_pct: u32,
         platform_pct: u32,
     ) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can set splits");
+        access::require_admin(&env, &admin, &DataKey::Admin);
         assert!(
             creator_pct + contributor_pct + platform_pct == 100,
             "Percentages must sum to 100"
@@ -86,9 +86,7 @@ impl RoyaltyDistributionContract {
         course_id: u64,
         recipient: Address,
     ) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can add recipients");
+        access::require_admin(&env, &admin, &DataKey::Admin);
 
         let count: u32 = env
             .storage()
@@ -111,9 +109,7 @@ impl RoyaltyDistributionContract {
         course_id: u64,
         total_amount: i128,
     ) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can distribute");
+        access::require_admin(&env, &admin, &DataKey::Admin);
         assert!(total_amount > 0, "Amount must be positive");
 
         let split: RoyaltySplit = env

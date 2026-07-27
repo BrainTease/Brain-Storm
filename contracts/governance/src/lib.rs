@@ -3,6 +3,8 @@ use soroban_sdk::{
     contract, contractimpl, contracttype, symbol_short, Address, Env, IntoVal, String, Symbol,
 };
 
+use brain_storm_shared::access;
+
 pub mod voting;
 
 use voting::{
@@ -126,27 +128,21 @@ impl GovernanceContract {
     // -------------------------------------------------------------------------
 
     pub fn set_voting_delay(env: Env, admin: Address, delay: u32) {
-        admin.require_auth();
-        let stored: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored, "Only admin");
+        access::require_admin(&env, &admin, &DataKey::Admin);
         env.storage()
             .instance()
             .set(&GovernanceKey::VotingDelay, &delay);
     }
 
     pub fn set_timelock_duration(env: Env, admin: Address, duration: u32) {
-        admin.require_auth();
-        let stored: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored, "Only admin");
+        access::require_admin(&env, &admin, &DataKey::Admin);
         env.storage()
             .instance()
             .set(&GovernanceKey::TimelockDuration, &duration);
     }
 
     pub fn set_quorum_percentage(env: Env, admin: Address, percentage: i128) {
-        admin.require_auth();
-        let stored: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored, "Only admin");
+        access::require_admin(&env, &admin, &DataKey::Admin);
         assert!(percentage > 0 && percentage <= 100, "Quorum must be 1-100");
         env.storage()
             .instance()
@@ -154,9 +150,7 @@ impl GovernanceContract {
     }
 
     pub fn set_total_supply_snapshot(env: Env, admin: Address, supply: i128) {
-        admin.require_auth();
-        let stored: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored, "Only admin");
+        access::require_admin(&env, &admin, &DataKey::Admin);
         env.storage()
             .instance()
             .set(&GovernanceKey::TotalSupply, &supply);

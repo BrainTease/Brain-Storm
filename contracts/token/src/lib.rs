@@ -1,4 +1,5 @@
 #![no_std]
+use brain_storm_shared::access;
 use brain_storm_shared::math::{checked_add_i128, checked_sub_i128};
 use soroban_sdk::{contract, contractimpl, contracttype, Address, Env, String};
 
@@ -527,9 +528,7 @@ impl TokenContract {
         cliff_ledger: u32,
         end_ledger: u32,
     ) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can create vesting");
+        access::require_admin(&env, &admin, &DataKey::Admin);
         assert!(total_amount > 0, "Amount must be positive");
 
         let start_ledger = env.ledger().sequence();
@@ -608,9 +607,7 @@ impl TokenContract {
         vesting_type: u8, // 0 = linear, 1 = step
         step_count: u32,
     ) -> u32 {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can create vesting");
+        access::require_admin(&env, &admin, &DataKey::Admin);
         assert!(total_amount > 0, "Amount must be positive");
         assert!(vesting_type <= 1, "Invalid vesting type");
 
@@ -704,9 +701,7 @@ impl TokenContract {
         schedule_id: u32,
         new_end_ledger: u32,
     ) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can modify vesting");
+        access::require_admin(&env, &admin, &DataKey::Admin);
 
         let key = DataKey::VestingV2(beneficiary.clone(), schedule_id);
         let mut schedule: VestingScheduleV2 = env
@@ -779,9 +774,7 @@ impl TokenContract {
     /// Configure the staking reward rate (admin only). Rate is in basis points per ledger
     /// e.g. 500 = 0.005% per ledger.
     pub fn set_reward_rate(env: Env, admin: Address, rate: i128) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can set reward rate");
+        access::require_admin(&env, &admin, &DataKey::Admin);
         assert!(rate >= 0, "Rate must be non-negative");
         env.storage()
             .instance()
@@ -790,9 +783,7 @@ impl TokenContract {
 
     /// Configure the early withdrawal penalty (admin only). Penalty in basis points.
     pub fn set_early_withdrawal_penalty(env: Env, admin: Address, penalty: i128) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can set penalty");
+        access::require_admin(&env, &admin, &DataKey::Admin);
         assert!(penalty >= 0 && penalty <= 10_000, "Penalty must be 0-10000 bps");
         env.storage()
             .instance()
@@ -828,9 +819,7 @@ impl TokenContract {
 
     /// Emergency withdrawal: admin can force-return staked tokens to a staker (no rewards, no penalty).
     pub fn emergency_withdraw(env: Env, admin: Address, staker: Address) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can emergency withdraw");
+        access::require_admin(&env, &admin, &DataKey::Admin);
 
         let record = staking::get_stake(&env, staker.clone())
             .expect("No stake found for staker");
@@ -879,9 +868,7 @@ impl TokenContract {
     pub fn mint_reward(env: Env, caller: Address, recipient: Address, amount: i128) {
         acquire_lock(&env);
 
-        caller.require_auth();
-        let admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(caller == admin, "Only admin can mint");
+        access::require_admin(&env, &caller, &DataKey::Admin);
         assert!(amount > 0, "Amount must be positive");
 
         Self::add_balance(&env, &recipient, amount);
@@ -1222,7 +1209,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Only admin can create vesting")]
+    #[should_panic(expected = "Unauthorized: admin required")]
     fn test_only_admin_can_create_vesting() {
         let (env, client, _) = setup();
         let instructor = Address::generate(&env);
@@ -1491,7 +1478,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Only admin can modify vesting")]
+    #[should_panic(expected = "Unauthorized: admin required")]
     fn test_non_admin_cannot_modify_vesting() {
         let (env, client, admin) = setup();
         let instructor = Address::generate(&env);

@@ -52,7 +52,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Only admin can update config")]
+    #[should_panic(expected = "Unauthorized: admin required")]
     fn test_non_admin_cannot_update_config() {
         let (env, client, _) = setup();
         let rando = Address::generate(&env);

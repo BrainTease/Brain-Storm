@@ -12,6 +12,8 @@ use soroban_sdk::{
     contract, contractimpl, contracttype, symbol_short, Address, BytesN, Env, Symbol,
 };
 
+use brain_storm_shared::access;
+
 // ── Storage keys ──────────────────────────────────────────────────────────────
 
 #[contracttype]
@@ -81,7 +83,7 @@ impl DisputeContract {
 
     /// Admin can update the arbiter.
     pub fn set_arbiter(env: Env, admin: Address, arbiter: Address) {
-        Self::require_admin(&env, &admin);
+        access::require_admin(&env, &admin, &DataKey::Admin);
         env.storage().instance().set(&DataKey::Arbiter, &arbiter);
     }
 
@@ -143,7 +145,7 @@ impl DisputeContract {
 
     /// Arbiter records their decision (moves to Decision phase).
     pub fn record_decision(env: Env, arbiter: Address, dispute_id: u64, outcome: Outcome) {
-        Self::require_arbiter(&env, &arbiter);
+        access::require_authority(&env, &arbiter, &DataKey::Arbiter);
 
         let mut dispute: Dispute = env
             .storage()
@@ -170,7 +172,7 @@ impl DisputeContract {
     /// Enforce settlement: compute payouts based on outcome, mark as Settled.
     /// Returns (claimant_amount, respondent_amount).
     pub fn settle(env: Env, arbiter: Address, dispute_id: u64) -> (i128, i128) {
-        Self::require_arbiter(&env, &arbiter);
+        access::require_authority(&env, &arbiter, &DataKey::Arbiter);
 
         let mut dispute: Dispute = env
             .storage()
@@ -305,7 +307,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Only arbiter")]
+    #[should_panic(expected = "Unauthorized: authority required")]
     fn test_non_arbiter_cannot_decide() {
         let (env, client, _, _) = setup();
         let claimant = Address::generate(&env);

@@ -3,6 +3,8 @@ use soroban_sdk::{
     contract, contractimpl, contracttype, symbol_short, Address, Env, String, Symbol, Vec,
 };
 
+use brain_storm_shared::access;
+
 // =============================================================================
 // Storage keys
 // =============================================================================
@@ -82,9 +84,7 @@ impl BadgesContract {
         badge_type: Symbol,
         description: String,
     ) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can create badge types");
+        access::require_admin(&env, &admin, &DataKey::Admin);
         assert!(
             !env.storage()
                 .instance()
@@ -112,9 +112,7 @@ impl BadgesContract {
     // -------------------------------------------------------------------------
 
     pub fn mint_badge(env: Env, admin: Address, recipient: Address, badge_type: Symbol) -> u64 {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can mint");
+        access::require_admin(&env, &admin, &DataKey::Admin);
         assert!(
             env.storage()
                 .instance()
@@ -216,9 +214,7 @@ impl BadgesContract {
     // -------------------------------------------------------------------------
 
     pub fn burn_badge(env: Env, admin: Address, id: u64) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can burn");
+        access::require_admin(&env, &admin, &DataKey::Admin);
         assert!(
             !env.storage().persistent().get::<DataKey, bool>(&DataKey::BurnedBadge(id)).unwrap_or(false),
             "Badge already burned"
@@ -303,7 +299,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Only admin can create badge types")]
+    #[should_panic(expected = "Unauthorized: admin required")]
     fn test_non_admin_cannot_create_badge_type() {
         let (env, client, _) = setup();
         let rando = Address::generate(&env);
@@ -340,7 +336,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Only admin can mint")]
+    #[should_panic(expected = "Unauthorized: admin required")]
     fn test_non_admin_cannot_mint() {
         let (env, client, admin) = setup();
         let rando = Address::generate(&env);

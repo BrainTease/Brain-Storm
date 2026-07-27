@@ -557,6 +557,19 @@ Whitelist/blacklist, per-account transfer limits, and an emergency-override swit
 
 Role-based access control library used by other contracts for cross-contract authorization checks.
 
+The crate serves two roles. `SharedContract` (behind the default-on `contract` Cargo feature) is the deployable RBAC contract. The rest of the crate is a plain library that other contracts link against with `default-features = false`:
+
+| Module | Provides |
+|---|---|
+| `access` | Admin/authority/owner checks — see [Auth conventions](#auth-conventions) |
+| `math` | Overflow-checked `i128`/`u32` arithmetic, including `checked_mul_div_i128` for proportional-share formulas |
+| `validation` | Positive-amount, percentage-bound, and future-timestamp guards |
+| `pausable` | Pause flag with auto-unpause |
+| `reentrancy` | Reentrancy lock |
+| `multisig` | N-of-M proposal flow |
+| `upgrade` | Timelocked WASM upgrade flow |
+| `errors` | `SharedError` — defined, not yet consumed (see issue #822) |
+
 ---
 
 ## `contracts/integration` — Not a Contract
@@ -574,6 +587,9 @@ Verified by grepping every `contracts/*/src/*.rs` for `invoke_contract` and `#[c
 - Every state-mutating function takes the acting party's `Address` as an explicit parameter and calls `<address>.require_auth()` as its first statement (e.g. `admin.require_auth()`, `payer.require_auth()`, `nft_owner.require_auth()`). There is no implicit `msg.sender`-style caller identity — the caller is always passed explicitly and Soroban verifies the corresponding signature was authorized for this invocation.
 - Read-only query functions (`get_*`, `is_*`, `has_*`, `list_*`) take no auth and require no `require_auth()` call.
 - Admin-gated functions additionally compare the passed address against a stored `Admin` (or, in `registry`, `Admin`-or-curator-set) value **after** calling `require_auth()`: `require_auth()` proves the caller controls that address; the storage comparison proves that address is *allowed* to perform the action. Both checks are required — `require_auth()` alone does not enforce authorization.
+- Since issue #825 both halves live in [`contracts/shared/src/access.rs`](../contracts/shared/src/access.rs) rather than being copied inline. Use `access::require_admin(&env, &caller, &DataKey::Admin)` in new code; it takes the storage key as a generic parameter so each contract keeps its own `DataKey` enum. The other helpers are `require_authority` (a non-admin authority slot such as `dispute`'s arbiter), `require_admin_or` (admin *or* a named party, e.g. an escrow payer), `require_owner` (per-resource ownership), `is_admin` (predicate, no auth and no panic — for building compound checks), and `read_authority` (the raw read, with a `"Not initialized"` message instead of a bare `.unwrap()`).
+- Admin-check failures panic with `"Unauthorized: admin required"`, authority-slot failures with `"Unauthorized: authority required"`, and ownership failures with `"Unauthorized: owner required"`. `registry` and `reputation` keep their own compound messages.
+- Depend on `brain-storm-shared` with `default-features = false`. Its `contract` feature compiles `SharedContract`'s `#[contractimpl]` block, which — if linked into another contract's wasm — would export `assign_role`, `upgrade`, and `pause_contract` from that contract, acting on its storage.
 - `market`, `registry`, and `shared` each implement their own local `pause`/`unpause`/`is_paused` — there is no shared on-chain pause registry. See [ADR-007](./adr/ADR-007-shared-crate-for-common-code.md) for why this pattern is currently copied per-contract rather than centralized.
 
 ### Error propagation across contract boundaries
