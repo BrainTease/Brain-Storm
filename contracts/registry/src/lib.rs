@@ -37,10 +37,6 @@ fn level_ord(level: &VerificationLevel) -> u32 {
     }
 }
 
-fn level_to_u32(level: &VerificationLevel) -> u32 {
-    level_ord(level)
-}
-
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 /// Numeric verification tier (0 = unverified … 3 = fully verified).
@@ -142,7 +138,7 @@ impl RegistryContract {
             .persistent()
             .set(&DataKey::VerificationLevel(user.clone()), &level);
         env.events()
-            .publish((EVT_VL_SET, symbol_short!("user")), (user, level_to_u32(&level)));
+            .publish((EVT_VL_SET, symbol_short!("user")), (user, level_ord(&level)));
     }
 
     pub fn get_verification_level(env: Env, user: Address) -> VerificationLevel {
@@ -303,7 +299,7 @@ impl RegistryContract {
         setter.require_auth();
         Self::assert_admin_or_curator(&env, &setter);
 
-        let level_u32 = level_to_u32(&level);
+        let level_u32 = level_ord(&level);
 
         for user in users.iter() {
             env.storage()
