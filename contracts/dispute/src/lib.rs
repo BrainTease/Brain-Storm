@@ -1,6 +1,12 @@
 #![no_std]
 //! Dispute resolution contract (#659).
 //! Lifecycle: Open → Evidence → Decision → Settled.
+//!
+//! State Transition Safety:
+//! - Explicit authorization checks for all mutations
+//! - Only arbiter can transition to Decision or Settled states
+//! - Only parties can submit evidence
+//! - Once settled, no further state changes allowed
 
 use soroban_sdk::{
     contract, contractimpl, contracttype, symbol_short, Address, BytesN, Env, Symbol,
@@ -122,6 +128,9 @@ impl DisputeContract {
             .get(&DataKey::Dispute(dispute_id))
             .expect("Dispute not found");
 
+        // Prevent modifications to settled disputes
+        Self::assert_not_settled(&dispute);
+
         assert!(dispute.status == DisputeStatus::Open, "Must be in Open status");
         assert!(
             caller == dispute.claimant || caller == dispute.respondent,
@@ -143,6 +152,9 @@ impl DisputeContract {
             .persistent()
             .get(&DataKey::Dispute(dispute_id))
             .expect("Dispute not found");
+
+        // Prevent modifications to settled disputes
+        Self::assert_not_settled(&dispute);
 
         assert!(
             dispute.status == DisputeStatus::Evidence
@@ -189,6 +201,36 @@ impl DisputeContract {
 
     pub fn get_dispute(env: Env, dispute_id: u64) -> Option<Dispute> {
         env.storage().persistent().get(&DataKey::Dispute(dispute_id))
+    }
+
+    // ── Internal helpers ──────────────────────────────────────────────────────
+
+    /// Verifies admin authorization (used for admin-only operations).
+    /// Extracted helper to ensure consistent authorization checks across the contract.
+    fn require_admin(env: &Env, caller: &Address) {
+        caller.require_auth();
+        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
+        assert!(caller == &stored_admin, "Only admin can perform this action");
+    }
+
+    /// Verifies arbiter authorization (used for arbiter-only operations).
+    /// Extracted helper to ensure consistent authorization checks and prevent unauthorized state transitions.
+    fn require_arbiter(env: &Env, caller: &Address) {
+        caller.require_auth();
+        let stored_arbiter: Address = env.storage().instance().get(&DataKey::Arbiter).unwrap();
+        assert!(
+            caller == &stored_arbiter,
+            "Only arbiter can perform this action"
+        );
+    }
+
+    /// Validates that a dispute has not already been settled.
+    /// Prevents unauthorized state transitions on settled disputes.
+    fn assert_not_settled(dispute: &Dispute) {
+        assert!(
+            dispute.status != DisputeStatus::Settled,
+            "Dispute already settled; no further modifications allowed"
+        );
     }
 }
 
