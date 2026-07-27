@@ -1,12 +1,16 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, Index } from 'typeorm';
 
 export enum NotificationType {
   ENROLLMENT = 'enrollment',
   COMPLETION = 'completion',
   CREDENTIAL_ISSUED = 'credential_issued',
+  COURSE_PUBLISHED = 'course_published',
 }
 
 @Entity('notifications')
+@Index(['userId', 'createdAt'])
+@Index(['userId', 'isRead'])
+@Index(['createdAt'])
 export class Notification {
   @PrimaryGeneratedColumn('uuid')
   id: string;

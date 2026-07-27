@@ -1,0 +1,17 @@
+apiVersion: v2
+name: brain-storm
+description: Brain-Storm — Stellar blockchain education platform (API + frontend + supporting services)
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+maintainers:
+  - name: BrainTease
+    url: https://github.com/BrainTease
+keywords:
+  - stellar
+  - blockchain
+  - education
+  - soroban
+home: https://github.com/BrainTease/Brain-Storm
+sources:
+  - https://github.com/BrainTease/Brain-Storm

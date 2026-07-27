@@ -2,6 +2,12 @@
 
 > A blockchain education platform built on the **Stellar network**, delivering verifiable on-chain credentials and token-based learning incentives.
 
+[![CI](https://github.com/BrainTease/Brain-Storm/actions/workflows/ci.yml/badge.svg)](https://github.com/BrainTease/Brain-Storm/actions/workflows/ci.yml)
+[![Contracts](https://github.com/BrainTease/Brain-Storm/actions/workflows/contracts.yml/badge.svg)](https://github.com/BrainTease/Brain-Storm/actions/workflows/contracts.yml)
+[![Security Scanning](https://github.com/BrainTease/Brain-Storm/actions/workflows/security-scanning.yml/badge.svg)](https://github.com/BrainTease/Brain-Storm/actions/workflows/security-scanning.yml)
+[![Code Quality Gates](https://github.com/BrainTease/Brain-Storm/actions/workflows/code-quality-gates.yml/badge.svg)](https://github.com/BrainTease/Brain-Storm/actions/workflows/code-quality-gates.yml)
+[![Performance Regression Testing](https://github.com/BrainTease/Brain-Storm/actions/workflows/performance-regression-testing.yml/badge.svg)](https://github.com/BrainTease/Brain-Storm/actions/workflows/performance-regression-testing.yml)
+
 ---
 
 ## Overview
@@ -9,6 +15,12 @@
 Brain-Storm is a full-stack, monorepo education platform that leverages the Stellar blockchain to issue tamper-proof credentials when learners complete courses. It is a rebranded and extended fork of the StrellerMinds project by [StarkMindsHQ](https://github.com/StarkMindsHQ), adapted for a broader brain-storm and vocational training audience.
 
 The platform combines a modern web frontend, a scalable REST API backend, and a suite of Soroban smart contracts — all living in a single monorepo for streamlined development and deployment.
+
+## Architecture
+
+![Brain-Storm System Architecture](./docs/architecture.svg)
+
+> Full diagram with data-flow annotations: [`docs/architecture.md`](./docs/architecture.md)
 
 ---
 
@@ -25,6 +37,10 @@ brain-storm/
 │   └── shared/            # RBAC & shared utilities (Rust/Soroban)
 ├── scripts/               # Build and deploy scripts
 ├── docs/                  # Extended documentation
+│   ├── api-rate-limiting.md
+│   ├── community-moderation.md
+│   ├── catastrophic-recovery.md
+│   └── kyc-verification.md
 ├── .github/workflows/     # CI/CD pipelines
 ├── Cargo.toml             # Rust workspace
 ├── package.json           # Node.js workspace root
@@ -216,28 +232,70 @@ See `.env.example` for the full list. Key variables:
 
 ## API Endpoints
 
+All API endpoints are prefixed with `/v1` for versioning.
+
 | Method | Path | Description |
 |---|---|---|
-| POST | `/auth/register` | Register a new user |
-| POST | `/auth/login` | Login and receive JWT |
-| GET | `/courses` | List all published courses |
-| GET | `/courses/:id` | Get a single course |
-| GET | `/users/:id` | Get user profile |
-| GET | `/stellar/balance/:publicKey` | Get Stellar account balances |
+| POST | `/v1/auth/register` | Register a new user |
+| POST | `/v1/auth/login` | Login and receive JWT |
+| GET | `/v1/courses` | List all published courses |
+| GET | `/v1/courses/:id` | Get a single course |
+| GET | `/v1/users/:id` | Get user profile |
+| GET | `/v1/stellar/balance/:publicKey` | Get Stellar account balances |
 
-Full interactive docs: `http://localhost:3000/api/docs`
+### Response Compression (#709)
+
+The API enables gzip/brotli compression for all responses ≥ 1 KB.  
+Pass `Accept-Encoding: br, gzip` in the request header — the server negotiates the best encoding automatically.
+
+Measured reduction on the `/v1/courses` list (20 items):
+
+| Encoding | Size |
+|---|---|
+| Uncompressed | ~38 KB |
+| gzip | ~7 KB (−82 %) |
+| brotli | ~5.5 KB (−86 %) |
+
+### Sparse Fieldsets (#709)
+
+All list endpoints support a `?fields=` query parameter to return only the fields you need:
+
+```bash
+# Returns only id, title, level, price for each course — ~85 % payload reduction
+GET /v1/courses?fields=id,title,level,price
+```
+
+The `fields` param also works on single-resource endpoints:
+
+```bash
+GET /v1/courses/abc123?fields=id,title,description
+```
+
+**Interactive API Documentation:**
+- Local: `http://localhost:3000/api/docs`
+- Production: [https://nonso-eze.github.io/Brain-Storm/](https://nonso-eze.github.io/Brain-Storm/)
 
 ---
 
 ## CI/CD
 
-GitHub Actions workflows in `.github/workflows/ci.yml` run on every push and PR:
+GitHub Actions workflows in `.github/workflows/` run on every push and PR:
 
-- **Backend**: install → build → test
-- **Frontend**: install → build
+- **Backend**: install → build → test → lint
+- **Frontend**: install → build → lint
 - **Contracts**: `cargo test` → `cargo fmt --check` → `cargo clippy`
+- **API Docs**: auto-deploy Swagger UI to GitHub Pages on push to `main`
+- **Release**: semantic versioning via release-please, auto-generated `CHANGELOG.md`
 
 ---
+
+## Documentation
+
+- **[docs/README.md](./docs/README.md)** — full documentation index
+- **[docs/development-setup.md](./docs/development-setup.md)** — complete local setup guide covering `contracts/`, `apps/backend`, `apps/frontend`, and every `packages/*` directory (workspace linking, build order, troubleshooting)
+- **[docs/adr/README.md](./docs/adr/README.md)** — Architecture Decision Records, including why `contracts/` is split into 19 separate crates instead of a monolith
+- **[docs/contract-interfaces.md](./docs/contract-interfaces.md)** — public interface reference for every Soroban contract, cross-contract call conventions, and worked examples
+- **[docs/api/README.md](./docs/api/README.md)** — REST API route reference and how to regenerate the OpenAPI spec
 
 ## Contributing
 
@@ -251,10 +309,10 @@ GitHub Actions workflows in `.github/workflows/ci.yml` run on every push and PR:
 
 ## Stellar & Soroban Resources
 
-- [Stellar Documentation](https://developers.stellar.org)
-- [Soroban Smart Contracts](https://soroban.stellar.org)
-- [Stellar Laboratory](https://laboratory.stellar.org)
-- [Stellar Discord](https://discord.gg/stellardev)
+- [Stellar Documentation](https://developers.stellar.org),
+- [Soroban Smart Contracts](https://soroban.stellar.org),
+- [Stellar Laboratory](https://laboratory.stellar.org),
+- [Stellar Discord](https://discord.gg/stellardev).
 
 ---
 
@@ -265,3 +323,15 @@ MIT — see [LICENSE](./LICENSE) for details.
 ---
 
 *Built with ❤️ on the Stellar network. Inspired by [StrellerMinds](https://github.com/StarkMindsHQ) by StarkMindsHQ.*
+
+## CI Status
+
+[![Smart Contract CI](https://github.com/BrainTease/Brain-Storm/actions/workflows/contract.yml/badge.svg)](https://github.com/BrainTease/Brain-Storm/actions/workflows/contract.yml)
+
+The CI workflow runs on every push and PR, ensuring code quality and functionality.
+
+### Workflow Steps
+1. **Lint** - `cargo fmt` and `cargo clippy`
+2. **Test** - `cargo test` with coverage
+3. **Build** - WASM compilation
+4. **Coverage** - Code coverage reporting

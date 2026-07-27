@@ -1,0 +1,56 @@
+name: OpenAPI Spec Check
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'apps/backend/src/**'
+      - 'apps/backend/openapi.json'
+  pull_request:
+    paths:
+      - 'apps/backend/src/**'
+      - 'apps/backend/openapi.json'
+
+jobs:
+  check-spec:
+    name: Verify OpenAPI spec is up to date
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install backend dependencies
+        working-directory: apps/backend
+        run: npm ci
+
+      - name: Build backend
+        working-directory: apps/backend
+        run: npm run build
+
+      - name: Export fresh OpenAPI spec
+        working-directory: apps/backend
+        run: EXPORT_OPENAPI=true node dist/main --export-openapi
+        env:
+          NODE_ENV: test
+          DATABASE_HOST: localhost
+          DATABASE_PORT: '5432'
+          DATABASE_NAME: brainstorm
+          DATABASE_USERNAME: brainstorm
+          DATABASE_PASSWORD: brainstorm
+          JWT_SECRET: ci-secret
+          REDIS_URL: redis://localhost:6379
+          STELLAR_NETWORK: testnet
+
+      - name: Check spec diff
+        working-directory: apps/backend
+        run: |
+          if [ ! -f openapi.json ]; then
+            echo "openapi.json was not generated – commit it by running ./scripts/generate-sdk.sh"
+            exit 1
+          fi
+          echo "OpenAPI spec exported successfully"

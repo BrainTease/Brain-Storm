@@ -1,11 +1,19 @@
 import {
-  Entity, PrimaryGeneratedColumn, Column,
-  CreateDateColumn, ManyToOne, JoinColumn,
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  ManyToOne,
+  JoinColumn,
+  Index,
 } from 'typeorm';
 import { User } from '../users/user.entity';
 import { Course } from '../courses/course.entity';
 
 @Entity('credentials')
+@Index(['userId'])
+@Index(['userId', 'courseId'], { unique: true })
+@Index(['txHash'])
 export class Credential {
   @PrimaryGeneratedColumn('uuid')
   id: string;

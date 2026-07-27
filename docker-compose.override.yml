@@ -1,15 +1,29 @@
 version: '3.8'
 
+# Development overrides — applied automatically alongside docker-compose.yml
+# Adds hot-reload mounts and relaxes resource limits for local development.
+
 services:
   backend:
+    build:
+      context: ./apps/backend
+      dockerfile: Dockerfile
+      target: builder
     volumes:
-      - ./apps/backend/src:/app/src:ro
+      - ./apps/backend/src:/app/src
+    command: npm run start:dev
     environment:
       NODE_ENV: development
-    command: npm run start:dev
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_started
 
+  frontend:
+    build:
+      context: .
+      dockerfile: apps/frontend/Dockerfile
+      target: builder
+    volumes:
+      - ./apps/frontend/src:/app/apps/frontend/src
+      - ./apps/frontend/public:/app/apps/frontend/public
+    command: sh -c "cd apps/frontend && npm run dev -- -p 3001"
+    environment:
+      NODE_ENV: development
+      NEXT_TELEMETRY_DISABLED: '1'

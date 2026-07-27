@@ -1,0 +1,7 @@
+# Brain-Storm Clippy configuration
+# Run: cargo clippy --workspace -- -D warnings
+
+# Disallow integer arithmetic that doesn't use checked/saturating/wrapping variants
+# (enforced manually; use checked_add, checked_sub, etc.)
+
+msrv = "1.70.0"

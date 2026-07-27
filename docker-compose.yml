@@ -14,6 +14,12 @@ services:
       - '5432:5432'
     networks:
       - brain-storm
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U brain-storm -d brain-storm']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   redis:
     image: redis:7-alpine
@@ -24,6 +30,11 @@ services:
       - '6379:6379'
     networks:
       - brain-storm
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 3s
+      retries: 5
 
   backend:
     build:
@@ -43,12 +54,53 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
     volumes:
-      - /app/node_modules  # Prevent host node_modules override
+      - /app/node_modules
     depends_on:
       postgres:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
+    networks:
+      - brain-storm
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:3000/v1/health/readiness || exit 1']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  frontend:
+    build:
+      context: .
+      dockerfile: apps/frontend/Dockerfile
+    restart: unless-stopped
+    ports:
+      - '3001:3001'
+    env_file:
+      - .env
+    environment:
+      NEXT_PUBLIC_API_URL: http://backend:3000
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - brain-storm
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:3001/api/health || exit 1']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  contracts-builder:
+    build:
+      context: .
+      dockerfile: contracts/Dockerfile
+      target: builder
+    profiles:
+      - contracts
+    volumes:
+      - wasm_artifacts:/contracts/contracts
     networks:
       - brain-storm
 
@@ -56,6 +108,8 @@ volumes:
   postgres_data:
     driver: local
   redis_data:
+    driver: local
+  wasm_artifacts:
     driver: local
 
 networks:

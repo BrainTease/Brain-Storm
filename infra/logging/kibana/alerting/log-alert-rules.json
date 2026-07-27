@@ -1,0 +1,79 @@
+{
+  "rules": [
+    {
+      "name": "High Error Rate Alert",
+      "rule_type_id": ".es-query",
+      "schedule": { "interval": "5m" },
+      "params": {
+        "index": ["brain-storm-errors-*"],
+        "timeField": "@timestamp",
+        "timeWindowSize": 5,
+        "timeWindowUnit": "m",
+        "threshold": [50],
+        "thresholdComparator": ">",
+        "size": 100,
+        "esQuery": "{\"query\":{\"match\":{\"log_level\":\"ERROR\"}}}",
+        "aggType": "count"
+      },
+      "actions": [
+        {
+          "group": "query matched",
+          "id": "slack-connector",
+          "params": {
+            "message": "Alert: More than 50 errors in the last 5 minutes on {{context.environment}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Slow Request Alert",
+      "rule_type_id": ".es-query",
+      "schedule": { "interval": "5m" },
+      "params": {
+        "index": ["brain-storm-logs-*"],
+        "timeField": "@timestamp",
+        "timeWindowSize": 5,
+        "timeWindowUnit": "m",
+        "threshold": [20],
+        "thresholdComparator": ">",
+        "size": 100,
+        "esQuery": "{\"query\":{\"bool\":{\"must\":[{\"term\":{\"tags\":\"slow_request\"}}]}}}",
+        "aggType": "count"
+      },
+      "actions": [
+        {
+          "group": "query matched",
+          "id": "slack-connector",
+          "params": {
+            "message": "Alert: More than 20 slow requests (>1s) in the last 5 minutes"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Critical Log Level Alert",
+      "rule_type_id": ".es-query",
+      "schedule": { "interval": "1m" },
+      "params": {
+        "index": ["brain-storm-logs-*"],
+        "timeField": "@timestamp",
+        "timeWindowSize": 1,
+        "timeWindowUnit": "m",
+        "threshold": [1],
+        "thresholdComparator": ">=",
+        "size": 10,
+        "esQuery": "{\"query\":{\"match\":{\"log_level\":\"FATAL\"}}}",
+        "aggType": "count"
+      },
+      "actions": [
+        {
+          "group": "query matched",
+          "id": "slack-connector",
+          "params": {
+            "message": "CRITICAL: Fatal error detected in brain-storm application logs"
+          }
+        }
+      ]
+    }
+  ]
+}

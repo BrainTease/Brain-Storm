@@ -1,11 +1,19 @@
 import {
-  Entity, PrimaryGeneratedColumn, Column,
-  CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn,
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
+  Index,
 } from 'typeorm';
 import { User } from '../users/user.entity';
 import { Course } from '../courses/course.entity';
 
 @Entity('progress')
+@Index(['userId', 'courseId'])
+@Index(['userId', 'updatedAt'])
 export class Progress {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -30,11 +38,21 @@ export class Progress {
   @Column({ type: 'int', default: 0 })
   progressPct: number;
 
-  @Column({ nullable: true, type: 'timestamp' })
-  completedAt: Date;
+  @Column({ nullable: true, type: 'timestamptz' })
+  completedAt: Date | null;
 
   @Column({ nullable: true })
   txHash: string;
+
+  // Audit columns
+  @Column({ nullable: true })
+  createdBy: string | null;
+
+  @Column({ nullable: true })
+  updatedBy: string | null;
+
+  @CreateDateColumn()
+  createdAt: Date;
 
   @UpdateDateColumn()
   updatedAt: Date;

@@ -1,0 +1,48 @@
+{
+  "index_patterns": ["brain-storm-logs-*", "brain-storm-errors-*"],
+  "template": {
+    "settings": {
+      "number_of_shards": 1,
+      "number_of_replicas": 1,
+      "index.lifecycle.name": "brain-storm-logs-policy",
+      "index.lifecycle.rollover_alias": "brain-storm-logs",
+      "index.refresh_interval": "5s"
+    },
+    "mappings": {
+      "dynamic_templates": [
+        {
+          "strings_as_keywords": {
+            "match_mapping_type": "string",
+            "mapping": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            }
+          }
+        }
+      ],
+      "properties": {
+        "@timestamp":       { "type": "date" },
+        "app_timestamp":    { "type": "date" },
+        "log_level":        { "type": "keyword" },
+        "message":          { "type": "text" },
+        "context":          { "type": "keyword" },
+        "trace_id":         { "type": "keyword" },
+        "service_name":     { "type": "keyword" },
+        "environment":      { "type": "keyword" },
+        "client_ip":        { "type": "ip", "ignore_malformed": true },
+        "method":           { "type": "keyword" },
+        "request_path":     { "type": "keyword" },
+        "status_code":      { "type": "integer" },
+        "response_bytes":   { "type": "long" },
+        "response_time_ms": { "type": "float" },
+        "user_agent":       { "type": "text" },
+        "tags":             { "type": "keyword" }
+      }
+    }
+  }
+}

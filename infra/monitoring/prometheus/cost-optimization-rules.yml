@@ -1,0 +1,134 @@
+# ─── Cost Monitoring Dashboard for Prometheus ─────────────────────────────────
+# This module creates Prometheus recording rules and dashboards for cost monitoring
+
+groups:
+  - name: cost_optimization_metrics
+    interval: 30s
+    rules:
+      # ─── Container Metrics ────────────────────────────────────────────────────
+
+      - record: brain_storm:container:cpu_utilization:avg5m
+        expr: |
+          avg(rate(container_cpu_usage_seconds_total[5m])) by (pod_name, container_name) * 100
+
+      - record: brain_storm:container:memory_utilization:avg5m
+        expr: |
+          avg(container_memory_usage_bytes) by (pod_name, container_name) / container_spec_memory_limit_bytes * 100
+
+      - record: brain_storm:container:cpu_allocation_efficiency
+        expr: |
+          avg(rate(container_cpu_usage_seconds_total[5m])) by (pod_name) / 
+          (container_spec_cpu_quota / container_spec_cpu_period) * 100
+
+      - record: brain_storm:container:memory_allocation_efficiency
+        expr: |
+          avg(container_memory_usage_bytes) by (pod_name) / 
+          container_spec_memory_limit_bytes * 100
+
+      # ─── Node Metrics ─────────────────────────────────────────────────────────
+
+      - record: brain_storm:node:cpu_utilization:avg5m
+        expr: |
+          100 - (avg(rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
+
+      - record: brain_storm:node:memory_utilization:avg5m
+        expr: |
+          (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100
+
+      - record: brain_storm:node:disk_utilization:avg5m
+        expr: |
+          (1 - (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"})) * 100
+
+      # ─── Database Metrics ────────────────────────────────────────────────────
+
+      - record: brain_storm:rds:cpu_utilization:avg5m
+        expr: |
+          aws_rds_cpu_utilization{job="aws"} 
+
+      - record: brain_storm:rds:database_connections:avg5m
+        expr: |
+          avg(aws_rds_database_connections{job="aws"}) by (db_instance_identifier)
+
+      - record: brain_storm:rds:storage_used_percent:avg5m
+        expr: |
+          (aws_rds_allocated_storage_bytes{job="aws"} - aws_rds_free_storage_space_bytes{job="aws"}) / 
+          aws_rds_allocated_storage_bytes{job="aws"} * 100
+
+      # ─── Cache Metrics ───────────────────────────────────────────────────────
+
+      - record: brain_storm:elasticache:cpu_utilization:avg5m
+        expr: |
+          aws_elasticache_engine_cpu_utilization{job="aws"}
+
+      - record: brain_storm:elasticache:network_bytes_in:sum5m
+        expr: |
+          sum(rate(aws_elasticache_network_bytes_in_total{job="aws"}[5m])) by (cache_node_type)
+
+      - record: brain_storm:elasticache:network_bytes_out:sum5m
+        expr: |
+          sum(rate(aws_elasticache_network_bytes_out_total{job="aws"}[5m])) by (cache_node_type)
+
+      # ─── Cost Estimation Metrics ──────────────────────────────────────────────
+
+      - record: brain_storm:estimated:hourly_compute_cost
+        expr: |
+          (count(kube_node_status_allocatable{resource="cpu"}) * 0.05) +
+          (sum(container_spec_memory_limit_bytes) / 1024 / 1024 / 1024 * 0.01)
+
+      - record: brain_storm:estimated:monthly_compute_cost
+        expr: |
+          brain_storm:estimated:hourly_compute_cost * 730
+
+      - record: brain_storm:resource:underutilized_pods
+        expr: |
+          count(
+            brain_storm:container:cpu_allocation_efficiency < 20 
+            and brain_storm:container:memory_allocation_efficiency < 20
+          )
+
+  - name: cost_optimization_alerts
+    interval: 60s
+    rules:
+      - alert: HighContainerResourceWaste
+        expr: |
+          (
+            brain_storm:container:cpu_allocation_efficiency < 10
+            and on() brain_storm:container:memory_allocation_efficiency < 10
+          )
+        for: 30m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "Container {{ $labels.pod_name }} has low resource utilization"
+          description: "Pod {{ $labels.pod_name }} is using less than 10% of allocated CPU and memory. Consider right-sizing resource requests."
+
+      - alert: DatabaseHighUtilization
+        expr: brain_storm:rds:cpu_utilization:avg5m > 80
+        for: 10m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "RDS instance {{ $labels.db_instance_identifier }} CPU above 80%"
+          description: "Consider upgrading instance or optimizing queries."
+
+      - alert: CacheHighUtilization
+        expr: brain_storm:elasticache:cpu_utilization:avg5m > 75
+        for: 10m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "ElastiCache node {{ $labels.cache_node_id }} CPU above 75%"
+          description: "Consider scaling up or reducing cache misses."
+
+      - alert: UnderutilizedInfrastructure
+        expr: brain_storm:resource:underutilized_pods > 5
+        for: 1h
+        labels:
+          severity: info
+          team: devops
+        annotations:
+          summary: "{{ $value | humanize }} underutilized pods detected"
+          description: "Multiple pods are allocated more resources than they need. Review and right-size requests."

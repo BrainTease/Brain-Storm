@@ -1,0 +1,60 @@
+name: Contract Integration Tests
+
+on:
+  push:
+    branches: ['**']
+    paths:
+      - 'contracts/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - '.github/workflows/contract-integration.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'contracts/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+
+jobs:
+  contract-integration:
+    name: Contract Integration Tests (Soroban sandbox)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+          components: rustfmt, clippy
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: contracts
+
+      - name: Build all WASM contracts
+        run: ./scripts/build.sh
+
+      - name: Run contract integration tests
+        run: cargo test --test integration -- --test-threads=1
+        working-directory: contracts/integration
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: contract-integration-results
+          path: contracts/integration/target/
+          retention-days: 7
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Contract Integration Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "- End-to-end flow (register → progress → reward): tested" >> $GITHUB_STEP_SUMMARY
+          echo "- Unauthorized caller rejection: tested" >> $GITHUB_STEP_SUMMARY
+          echo "- Cross-contract oracle flow: tested" >> $GITHUB_STEP_SUMMARY
+          echo "- Vesting claim after cliff: tested" >> $GITHUB_STEP_SUMMARY
+          echo "- TTL extension after write: tested" >> $GITHUB_STEP_SUMMARY

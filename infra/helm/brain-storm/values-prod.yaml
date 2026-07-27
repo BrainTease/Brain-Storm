@@ -1,0 +1,45 @@
+# Production overrides — apply with: helm upgrade --install brain-storm . -f values-prod.yaml
+backend:
+  image:
+    tag: "1.0.0"
+  replicaCount: 2
+  autoscaling:
+    minReplicas: 2
+    maxReplicas: 10
+  env:
+    NODE_ENV: production
+    STELLAR_NETWORK: mainnet
+
+frontend:
+  image:
+    tag: "1.0.0"
+  replicaCount: 2
+  autoscaling:
+    minReplicas: 2
+    maxReplicas: 6
+  env:
+    NODE_ENV: production
+    NEXT_PUBLIC_STELLAR_NETWORK: mainnet
+
+postgresql:
+  primary:
+    persistence:
+      size: 20Gi
+
+ingress:
+  hosts:
+    - host: brain-storm.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+          service: frontend
+    - host: api.brain-storm.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+          service: backend
+  tls:
+    - secretName: brain-storm-prod-tls
+      hosts:
+        - brain-storm.example.com
+        - api.brain-storm.example.com

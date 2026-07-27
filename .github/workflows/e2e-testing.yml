@@ -1,0 +1,142 @@
+name: End-to-End Testing
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'apps/frontend/**'
+      - 'apps/backend/**'
+      - '.github/workflows/e2e-testing.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'apps/frontend/**'
+      - 'apps/backend/**'
+
+jobs:
+  e2e-tests:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: brain-storm-test
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build backend
+        run: npm run build --workspace=apps/backend
+      
+      - name: Start backend
+        run: npm run start:dev --workspace=apps/backend &
+        env:
+          DATABASE_HOST: localhost
+          DATABASE_PORT: 5432
+          DATABASE_NAME: brain-storm-test
+          DATABASE_USERNAME: test
+          DATABASE_PASSWORD: test
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
+          JWT_SECRET: test-secret-key
+          STELLAR_NETWORK: testnet
+      
+      - name: Wait for backend
+        run: sleep 10
+      
+      - name: Build frontend
+        run: npm run build --workspace=apps/frontend
+      
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+        working-directory: apps/frontend
+      
+      - name: Run E2E tests (headless)
+        run: npm run test:e2e:ci --workspace=apps/frontend
+        env:
+          PLAYWRIGHT_BASE_URL: http://localhost:3001
+          NEXT_PUBLIC_API_URL: http://localhost:3000
+          CI: true
+      
+      - name: Upload test results (always)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-test-results
+          path: apps/frontend/test-results/
+          retention-days: 7
+      
+      - name: Upload Playwright HTML report (always)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: apps/frontend/playwright-report/
+          retention-days: 7
+      
+      - name: Upload trace files on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces
+          path: apps/frontend/test-results/**/*.zip
+          retention-days: 14
+      
+      - name: Comment PR with test results
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const resultsPath = 'apps/frontend/test-results';
+            
+            let comment = '## 🎭 E2E Test Results\n\n';
+            
+            if (fs.existsSync(resultsPath)) {
+              const files = fs.readdirSync(resultsPath);
+              const traceFiles = files.filter(f => f.endsWith('.zip'));
+              
+              if (traceFiles.length > 0) {
+                comment += `⚠️ **${traceFiles.length} test(s) failed** - traces uploaded as artifacts\n\n`;
+                comment += `[Download trace files](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})\n\n`;
+                comment += `View traces locally: \`npx playwright show-trace <trace-file.zip>\`\n`;
+              } else {
+                comment += '✅ All E2E tests passed!\n';
+              }
+            }
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });

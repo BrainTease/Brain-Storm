@@ -1,0 +1,158 @@
+{
+  "id": null,
+  "uid": "brain-storm-contracts",
+  "title": "Brain-Storm — Contract Monitoring",
+  "description": "Event monitoring, transaction tracking, performance metrics and anomaly detection for all Soroban smart contracts.",
+  "tags": ["contracts", "soroban", "stellar"],
+  "timezone": "browser",
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "time": { "from": "now-1h", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "name": "contract",
+        "label": "Contract",
+        "type": "query",
+        "datasource": { "type": "prometheus" },
+        "query": "label_values(contract_events_total, contract)",
+        "multi": true,
+        "includeAll": true,
+        "current": { "text": "All", "value": "$__all" }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Contract Event Rate (events/s)",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "rate(contract_events_total{contract=~\"$contract\"}[5m])",
+          "legendFormat": "{{contract}} / {{event}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "short", "color": { "mode": "palette-classic" } }
+      }
+    },
+    {
+      "id": 2,
+      "title": "Transaction Success vs Error Rate",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "rate(contract_transactions_total{contract=~\"$contract\",status=\"success\"}[5m])",
+          "legendFormat": "{{contract}} success"
+        },
+        {
+          "expr": "rate(contract_transaction_errors_total{contract=~\"$contract\"}[5m])",
+          "legendFormat": "{{contract}} errors"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "reqps" },
+        "overrides": [
+          {
+            "matcher": { "id": "byRegexp", "options": ".*errors.*" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }]
+          }
+        ]
+      }
+    },
+    {
+      "id": 3,
+      "title": "Transaction Latency (p50 / p95 / p99)",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "contract:transaction_duration_p50{contract=~\"$contract\"}",
+          "legendFormat": "{{contract}} p50"
+        },
+        {
+          "expr": "contract:transaction_duration_p95{contract=~\"$contract\"}",
+          "legendFormat": "{{contract}} p95"
+        },
+        {
+          "expr": "contract:transaction_duration_p99{contract=~\"$contract\"}",
+          "legendFormat": "{{contract}} p99"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "s" }
+      }
+    },
+    {
+      "id": 4,
+      "title": "Analytics — Progress Updates (24h)",
+      "type": "stat",
+      "gridPos": { "x": 12, "y": 8, "w": 6, "h": 4 },
+      "targets": [
+        {
+          "expr": "increase(contract_events_total{contract=\"analytics\",event=\"prog_upd\"}[24h])",
+          "legendFormat": "Progress Updates"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "short", "thresholds": {
+          "steps": [
+            { "color": "red", "value": null },
+            { "color": "yellow", "value": 10 },
+            { "color": "green", "value": 100 }
+          ]
+        }}
+      }
+    },
+    {
+      "id": 5,
+      "title": "Certificates Minted (24h)",
+      "type": "stat",
+      "gridPos": { "x": 18, "y": 8, "w": 6, "h": 4 },
+      "targets": [
+        {
+          "expr": "increase(contract_events_total{contract=\"certificate\",event=\"mint\"}[24h])",
+          "legendFormat": "Certs Minted"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "short", "color": { "fixedColor": "green", "mode": "fixed" } }
+      }
+    },
+    {
+      "id": 6,
+      "title": "Active Alerts",
+      "type": "alertlist",
+      "gridPos": { "x": 0, "y": 16, "w": 24, "h": 6 },
+      "options": {
+        "alertInstanceLabelFilter": "team=\"contracts\"",
+        "dashboardAlerts": false,
+        "maxItems": 20,
+        "sortOrder": 1,
+        "stateFilter": { "firing": true, "pending": true }
+      }
+    },
+    {
+      "id": 7,
+      "title": "Event Anomaly Detection — Rate vs Baseline",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 22, "w": 24, "h": 8 },
+      "targets": [
+        {
+          "expr": "contract:event_rate_5m{contract=~\"$contract\"}",
+          "legendFormat": "{{contract}} current rate"
+        },
+        {
+          "expr": "avg_over_time(contract:event_rate_5m{contract=~\"$contract\"}[1h])",
+          "legendFormat": "{{contract}} 1h baseline"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "short" }
+      }
+    }
+  ]
+}

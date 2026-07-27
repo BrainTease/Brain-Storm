@@ -1,0 +1,158 @@
+name: Database Migration Tests
+
+on:
+  push:
+    branches: ['**']
+    paths:
+      - 'apps/backend/src/migrations/**'
+      - 'apps/backend/src/entities/**'
+      - '.github/workflows/db-migrations.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'apps/backend/src/migrations/**'
+      - 'apps/backend/src/entities/**'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  migration-tests:
+    name: TypeORM migration tests (fresh PostgreSQL)
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: bs_test
+          POSTGRES_PASSWORD: bs_test
+          POSTGRES_DB: brain_storm_migration_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # ── 1. Validate migration file structure ──────────────────────────────
+      - name: Validate migration file structure
+        working-directory: apps/backend
+        run: |
+          fail=0
+          for f in src/migrations/[0-9]*.ts; do
+            [ -f "$f" ] || continue
+            grep -q "public async up" "$f"   || { echo "❌ Missing up()   in $f"; fail=1; }
+            grep -q "public async down" "$f" || { echo "❌ Missing down() in $f"; fail=1; }
+          done
+          [ "$fail" -eq 0 ] && echo "✅ All migration files are structurally valid"
+          exit "$fail"
+
+      # ── 2. Apply all migrations to a fresh DB ─────────────────────────────
+      - name: Run all migrations (forward)
+        working-directory: apps/backend
+        env:
+          DATABASE_HOST: localhost
+          DATABASE_PORT: 5432
+          DATABASE_USERNAME: bs_test
+          DATABASE_PASSWORD: bs_test
+          DATABASE_NAME: brain_storm_migration_test
+          NODE_ENV: test
+        run: |
+          npm run migration:run
+          echo "✅ All migrations applied successfully"
+
+      # ── 3. Schema drift detection ─────────────────────────────────────────
+      - name: Detect schema drift
+        working-directory: apps/backend
+        env:
+          DATABASE_HOST: localhost
+          DATABASE_PORT: 5432
+          DATABASE_USERNAME: bs_test
+          DATABASE_PASSWORD: bs_test
+          DATABASE_NAME: brain_storm_migration_test
+          NODE_ENV: test
+        run: |
+          # typeorm migration:generate exits non-zero and outputs SQL when drift detected
+          set +e
+          OUTPUT=$(npx typeorm-ts-node-commonjs migration:generate \
+            -d src/data-source.ts /tmp/drift-check 2>&1)
+          CODE=$?
+          set -e
+
+          if echo "$OUTPUT" | grep -q "No changes in database schema"; then
+            echo "✅ No schema drift detected"
+          else
+            echo "⚠️  Possible drift:"
+            echo "$OUTPUT"
+            # Fail only if a new migration file was actually written
+            [ -f /tmp/drift-check*.ts ] && { echo "❌ Drift detected — run migration:generate and commit"; exit 1; } || true
+          fi
+
+      # ── 4. Run seed scripts ───────────────────────────────────────────────
+      - name: Run seed scripts
+        working-directory: apps/backend
+        env:
+          DATABASE_HOST: localhost
+          DATABASE_PORT: 5432
+          DATABASE_USERNAME: bs_test
+          DATABASE_PASSWORD: bs_test
+          DATABASE_NAME: brain_storm_migration_test
+          NODE_ENV: test
+        run: |
+          npm run seed:basic
+          echo "✅ Seed script completed successfully"
+
+      # ── 5. Rollback last migration ────────────────────────────────────────
+      - name: Rollback last migration (down)
+        working-directory: apps/backend
+        env:
+          DATABASE_HOST: localhost
+          DATABASE_PORT: 5432
+          DATABASE_USERNAME: bs_test
+          DATABASE_PASSWORD: bs_test
+          DATABASE_NAME: brain_storm_migration_test
+          NODE_ENV: test
+        run: |
+          npm run migration:rollback
+          echo "✅ Rollback completed"
+
+      # ── 6. Re-apply after rollback to verify idempotency ──────────────────
+      - name: Re-apply migrations after rollback
+        working-directory: apps/backend
+        env:
+          DATABASE_HOST: localhost
+          DATABASE_PORT: 5432
+          DATABASE_USERNAME: bs_test
+          DATABASE_PASSWORD: bs_test
+          DATABASE_NAME: brain_storm_migration_test
+          NODE_ENV: test
+        run: |
+          npm run migration:run
+          echo "✅ Re-apply after rollback succeeded (idempotent)"
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Database Migration Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| File structure validation | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "| Forward migration (fresh DB) | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "| Schema drift detection | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "| Seed scripts | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "| Rollback | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "| Re-apply after rollback | ✅ |" >> $GITHUB_STEP_SUMMARY

@@ -1,8 +1,5 @@
-import {
-  Body, Controller, Delete, Get, Param,
-  Patch, Post, UseGuards,
-} from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
@@ -16,12 +13,19 @@ import { CreateLessonDto } from './dto/create-lesson.dto';
 export class ModulesController {
   constructor(
     private modulesService: ModulesService,
-    private lessonsService: LessonsService,
+    private lessonsService: LessonsService
   ) {}
 
   // ── Modules ──────────────────────────────────────────────────────────────
 
   @Get('courses/:courseId/modules')
+  @ApiOperation({ summary: 'Get all modules for a course' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of modules',
+    schema: { example: [{ id: 'uuid', title: 'Module 1', order: 1 }] },
+  })
+  @ApiResponse({ status: 404, description: 'Course not found' })
   getModules(@Param('courseId') courseId: string) {
     return this.modulesService.findByCourse(courseId);
   }
@@ -30,10 +34,16 @@ export class ModulesController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('instructor', 'admin')
   @Post('courses/:courseId/modules')
-  createModule(
-    @Param('courseId') courseId: string,
-    @Body() dto: CreateModuleDto,
-  ) {
+  @ApiOperation({ summary: 'Create a module in a course' })
+  @ApiBody({ schema: { example: { title: 'Module 1', description: 'Intro module', order: 1 } } })
+  @ApiResponse({
+    status: 201,
+    description: 'Module created',
+    schema: { example: { id: 'uuid', title: 'Module 1' } },
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  createModule(@Param('courseId') courseId: string, @Body() dto: CreateModuleDto) {
     return this.modulesService.create(courseId, dto);
   }
 
@@ -41,6 +51,12 @@ export class ModulesController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('instructor', 'admin')
   @Patch('modules/:id')
+  @ApiOperation({ summary: 'Update a module' })
+  @ApiBody({ schema: { example: { title: 'Updated title', order: 2 } } })
+  @ApiResponse({ status: 200, description: 'Module updated' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 404, description: 'Module not found' })
   updateModule(@Param('id') id: string, @Body() dto: Partial<CreateModuleDto>) {
     return this.modulesService.update(id, dto);
   }
@@ -49,6 +65,11 @@ export class ModulesController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('instructor', 'admin')
   @Delete('modules/:id')
+  @ApiOperation({ summary: 'Delete a module' })
+  @ApiResponse({ status: 200, description: 'Module deleted' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 404, description: 'Module not found' })
   deleteModule(@Param('id') id: string) {
     return this.modulesService.remove(id);
   }
@@ -56,6 +77,13 @@ export class ModulesController {
   // ── Lessons ───────────────────────────────────────────────────────────────
 
   @Get('modules/:moduleId/lessons')
+  @ApiOperation({ summary: 'Get all lessons for a module' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of lessons',
+    schema: { example: [{ id: 'uuid', title: 'Lesson 1', order: 1 }] },
+  })
+  @ApiResponse({ status: 404, description: 'Module not found' })
   getLessons(@Param('moduleId') moduleId: string) {
     return this.lessonsService.findByModule(moduleId);
   }
@@ -64,10 +92,16 @@ export class ModulesController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('instructor', 'admin')
   @Post('modules/:moduleId/lessons')
-  createLesson(
-    @Param('moduleId') moduleId: string,
-    @Body() dto: CreateLessonDto,
-  ) {
+  @ApiOperation({ summary: 'Create a lesson in a module' })
+  @ApiBody({ schema: { example: { title: 'Lesson 1', content: 'Content here', order: 1 } } })
+  @ApiResponse({
+    status: 201,
+    description: 'Lesson created',
+    schema: { example: { id: 'uuid', title: 'Lesson 1' } },
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  createLesson(@Param('moduleId') moduleId: string, @Body() dto: CreateLessonDto) {
     return this.lessonsService.create(moduleId, dto);
   }
 
@@ -75,6 +109,12 @@ export class ModulesController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('instructor', 'admin')
   @Patch('lessons/:id')
+  @ApiOperation({ summary: 'Update a lesson' })
+  @ApiBody({ schema: { example: { title: 'Updated title', content: 'New content' } } })
+  @ApiResponse({ status: 200, description: 'Lesson updated' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 404, description: 'Lesson not found' })
   updateLesson(@Param('id') id: string, @Body() dto: Partial<CreateLessonDto>) {
     return this.lessonsService.update(id, dto);
   }
@@ -83,6 +123,11 @@ export class ModulesController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('instructor', 'admin')
   @Delete('lessons/:id')
+  @ApiOperation({ summary: 'Delete a lesson' })
+  @ApiResponse({ status: 200, description: 'Lesson deleted' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 404, description: 'Lesson not found' })
   deleteLesson(@Param('id') id: string) {
     return this.lessonsService.remove(id);
   }

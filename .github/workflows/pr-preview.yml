@@ -1,0 +1,279 @@
+name: PR Preview Environment
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+    branches: [main, develop]
+
+env:
+  REGISTRY: ghcr.io
+  BACKEND_IMAGE: ${{ github.repository }}/backend
+  FRONTEND_IMAGE: ${{ github.repository }}/frontend
+  PR_NUM: ${{ github.event.pull_request.number }}
+
+permissions:
+  contents: read
+  packages: write
+  pull-requests: write
+
+jobs:
+  # ─── Deploy Preview ────────────────────────────────────────────────────────
+  deploy-preview:
+    name: Deploy Preview Environment
+    runs-on: ubuntu-latest
+    if: github.event.action != 'closed'
+
+    environment:
+      name: preview-pr-${{ github.event.pull_request.number }}
+      url: ${{ steps.urls.outputs.frontend_url }}
+
+    outputs:
+      frontend_url: ${{ steps.urls.outputs.frontend_url }}
+      backend_url: ${{ steps.urls.outputs.backend_url }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compute preview URLs and ports
+        id: urls
+        run: |
+          # Each PR gets a deterministic port range: backend=3100+PR, frontend=3200+PR
+          BACKEND_PORT=$((3100 + $PR_NUM))
+          FRONTEND_PORT=$((3200 + $PR_NUM))
+          DB_PORT=$((5500 + $PR_NUM))
+
+          PREVIEW_HOST="${{ secrets.PREVIEW_HOST }}"
+          echo "backend_port=$BACKEND_PORT"   >> $GITHUB_OUTPUT
+          echo "frontend_port=$FRONTEND_PORT" >> $GITHUB_OUTPUT
+          echo "db_port=$DB_PORT"             >> $GITHUB_OUTPUT
+          echo "backend_url=http://$PREVIEW_HOST:$BACKEND_PORT"   >> $GITHUB_OUTPUT
+          echo "frontend_url=http://$PREVIEW_HOST:$FRONTEND_PORT" >> $GITHUB_OUTPUT
+          echo "compose_project=brain-storm-pr-$PR_NUM"           >> $GITHUB_OUTPUT
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push backend preview image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: apps/backend/Dockerfile
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE }}:pr-${{ env.PR_NUM }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: NODE_ENV=staging
+
+      - name: Build and push frontend preview image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: apps/frontend/Dockerfile
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE }}:pr-${{ env.PR_NUM }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            NEXT_PUBLIC_API_URL=${{ steps.urls.outputs.backend_url }}
+
+      - name: Deploy preview stack on preview server
+        uses: appleboy/ssh-action@v1.0.0
+        env:
+          COMPOSE_PROJECT: ${{ steps.urls.outputs.compose_project }}
+          BACKEND_PORT: ${{ steps.urls.outputs.backend_port }}
+          FRONTEND_PORT: ${{ steps.urls.outputs.frontend_port }}
+          DB_PORT: ${{ steps.urls.outputs.db_port }}
+          BACKEND_TAG: ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE }}:pr-${{ env.PR_NUM }}
+          FRONTEND_TAG: ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE }}:pr-${{ env.PR_NUM }}
+          PREVIEW_JWT_SECRET: ${{ secrets.PREVIEW_JWT_SECRET }}
+          GITHUB_TOKEN_VAL: ${{ secrets.GITHUB_TOKEN }}
+          REGISTRY: ${{ env.REGISTRY }}
+          ACTOR: ${{ github.actor }}
+        with:
+          host: ${{ secrets.PREVIEW_HOST }}
+          username: ${{ secrets.PREVIEW_SSH_USER }}
+          key: ${{ secrets.PREVIEW_SSH_KEY }}
+          envs: COMPOSE_PROJECT,BACKEND_PORT,FRONTEND_PORT,DB_PORT,BACKEND_TAG,FRONTEND_TAG,PREVIEW_JWT_SECRET,GITHUB_TOKEN_VAL,REGISTRY,ACTOR
+          script: |
+            set -euo pipefail
+
+            # Authenticate with GHCR
+            echo "$GITHUB_TOKEN_VAL" | docker login "$REGISTRY" -u "$ACTOR" --password-stdin
+
+            PREVIEW_DIR="/opt/brain-storm/previews/$COMPOSE_PROJECT"
+            mkdir -p "$PREVIEW_DIR"
+
+            # Write a per-PR compose file
+            cat > "$PREVIEW_DIR/docker-compose.yml" <<EOF
+            version: '3.8'
+            services:
+              postgres:
+                image: postgres:15-alpine
+                environment:
+                  POSTGRES_DB: brain_storm_preview
+                  POSTGRES_USER: preview
+                  POSTGRES_PASSWORD: preview
+                ports:
+                  - "$DB_PORT:5432"
+                volumes:
+                  - pgdata:/var/lib/postgresql/data
+                healthcheck:
+                  test: ["CMD", "pg_isready", "-U", "preview"]
+                  interval: 5s
+                  retries: 10
+
+              backend:
+                image: $BACKEND_TAG
+                depends_on:
+                  postgres:
+                    condition: service_healthy
+                ports:
+                  - "$BACKEND_PORT:3000"
+                environment:
+                  NODE_ENV: staging
+                  DATABASE_HOST: postgres
+                  DATABASE_PORT: 5432
+                  DATABASE_USER: preview
+                  DATABASE_PASSWORD: preview
+                  DATABASE_NAME: brain_storm_preview
+                  JWT_SECRET: $PREVIEW_JWT_SECRET
+                  STELLAR_NETWORK: testnet
+                  REDIS_HOST: ""
+
+              frontend:
+                image: $FRONTEND_TAG
+                depends_on: [backend]
+                ports:
+                  - "$FRONTEND_PORT:3001"
+                environment:
+                  NEXT_PUBLIC_API_URL: http://$PREVIEW_HOST:$BACKEND_PORT
+
+            volumes:
+              pgdata:
+            EOF
+
+            docker compose -p "$COMPOSE_PROJECT" -f "$PREVIEW_DIR/docker-compose.yml" pull
+            docker compose -p "$COMPOSE_PROJECT" -f "$PREVIEW_DIR/docker-compose.yml" up -d --remove-orphans
+
+      - name: Wait for preview to be healthy
+        run: |
+          BACKEND_URL="${{ steps.urls.outputs.backend_url }}"
+          echo "Waiting for $BACKEND_URL/health ..."
+          for i in $(seq 1 24); do
+            if curl -sf "$BACKEND_URL/health" >/dev/null 2>&1; then
+              echo "✅ Preview is healthy"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "⚠️ Preview health check timed out (may still be starting)"
+        continue-on-error: true
+
+      - name: Post preview URL as PR comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const frontendUrl = '${{ steps.urls.outputs.frontend_url }}';
+            const backendUrl  = '${{ steps.urls.outputs.backend_url }}';
+            const sha         = '${{ github.event.pull_request.head.sha }}'.slice(0, 7);
+
+            // Find and update existing preview comment, or create a new one
+            const marker = '<!-- brain-storm-preview -->';
+            const body = `${marker}
+            ## 🚀 Preview Environment
+
+            | Service | URL |
+            |---|---|
+            | **Frontend** | [${frontendUrl}](${frontendUrl}) |
+            | **Backend API** | [${backendUrl}/api/docs](${backendUrl}/api/docs) |
+
+            **Commit:** \`${sha}\`
+            **Updated:** ${new Date().toUTCString()}
+
+            _This environment will be torn down automatically when the PR is closed._`;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const existing = comments.find(c => c.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+
+  # ─── Tear Down Preview ─────────────────────────────────────────────────────
+  teardown-preview:
+    name: Tear Down Preview Environment
+    runs-on: ubuntu-latest
+    if: github.event.action == 'closed'
+
+    steps:
+      - name: Tear down preview stack
+        uses: appleboy/ssh-action@v1.0.0
+        env:
+          COMPOSE_PROJECT: brain-storm-pr-${{ env.PR_NUM }}
+        with:
+          host: ${{ secrets.PREVIEW_HOST }}
+          username: ${{ secrets.PREVIEW_SSH_USER }}
+          key: ${{ secrets.PREVIEW_SSH_KEY }}
+          envs: COMPOSE_PROJECT
+          script: |
+            PREVIEW_DIR="/opt/brain-storm/previews/$COMPOSE_PROJECT"
+            if [ -f "$PREVIEW_DIR/docker-compose.yml" ]; then
+              docker compose -p "$COMPOSE_PROJECT" -f "$PREVIEW_DIR/docker-compose.yml" down -v --remove-orphans
+              rm -rf "$PREVIEW_DIR"
+              echo "✅ Preview environment $COMPOSE_PROJECT torn down"
+            else
+              echo "No preview found for $COMPOSE_PROJECT — nothing to do"
+            fi
+
+            # Remove preview images to reclaim disk space
+            docker image rm "${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE }}:pr-${{ env.PR_NUM }}" 2>/dev/null || true
+            docker image rm "${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE }}:pr-${{ env.PR_NUM }}" 2>/dev/null || true
+
+      - name: Post teardown comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const marker = '<!-- brain-storm-preview -->';
+            const body = `${marker}
+            ## ~~🚀 Preview Environment~~
+
+            This preview environment has been **torn down** (PR closed).`;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const existing = comments.find(c => c.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            }
