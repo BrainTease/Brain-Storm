@@ -6,6 +6,8 @@
 //! Rationale for this crate's existence and how it relates to other contracts: [ADR-007](../../../docs/adr/ADR-007-shared-crate-for-common-code.md).
 use soroban_sdk::{contract, contractimpl, contracttype, symbol_short, Address, BytesN, Env, Symbol};
 
+pub mod admin;
+
 pub mod pausable;
 
 pub mod math;
