@@ -3,6 +3,8 @@ use soroban_sdk::{
     contract, contractimpl, contracttype, symbol_short, Address, BytesN, Env, Symbol, Vec,
 };
 
+use brain_storm_shared::access;
+
 // =============================================================================
 // Storage keys
 // =============================================================================
@@ -139,9 +141,7 @@ impl BuybackContract {
         min_reserve_balance: Option<i128>,
         buyback_interval: Option<u32>,
     ) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can update config");
+        access::require_admin(&env, &admin, &DataKey::Admin);
 
         let mut config: BuybackConfig =
             env.storage().instance().get(&DataKey::BuybackConfig).unwrap();
@@ -229,9 +229,7 @@ impl BuybackContract {
     }
 
     pub fn manual_buyback(env: Env, admin: Address, max_xlm_amount: i128) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can execute manual buyback");
+        access::require_admin(&env, &admin, &DataKey::Admin);
 
         let config: BuybackConfig = env
             .storage()

@@ -3,6 +3,8 @@ use soroban_sdk::{
     contract, contractimpl, contracttype, symbol_short, Address, Env, Symbol, Vec,
 };
 
+use brain_storm_shared::access;
+
 #[contracttype]
 pub enum DataKey {
     Admin,
@@ -131,9 +133,7 @@ impl ScholarshipFundContract {
     // -------------------------------------------------------------------------
 
     pub fn approve_application(env: Env, admin: Address, app_id: u64) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can approve");
+        access::require_admin(&env, &admin, &DataKey::Admin);
 
         let mut app: ScholarshipApplication = env
             .storage()
@@ -153,9 +153,7 @@ impl ScholarshipFundContract {
     }
 
     pub fn reject_application(env: Env, admin: Address, app_id: u64) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can reject");
+        access::require_admin(&env, &admin, &DataKey::Admin);
 
         let mut app: ScholarshipApplication = env
             .storage()
@@ -172,9 +170,7 @@ impl ScholarshipFundContract {
     }
 
     pub fn distribute_scholarship(env: Env, admin: Address, app_id: u64) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can distribute");
+        access::require_admin(&env, &admin, &DataKey::Admin);
 
         let mut app: ScholarshipApplication = env
             .storage()

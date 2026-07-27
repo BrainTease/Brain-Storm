@@ -38,7 +38,7 @@ fn test_assign_student_role() {
 }
 
 #[test]
-#[should_panic(expected = "Only admin can assign roles")]
+#[should_panic(expected = "Unauthorized: admin required")]
 fn test_non_admin_cannot_assign_role() {
     let (env, _, client) = setup();
     let rando = Address::generate(&env);
@@ -100,7 +100,7 @@ fn test_unassigned_address_has_no_permissions() {
 // ── upgrade (Issue 4) ─────────────────────────────────────────────────────────
 
 #[test]
-#[should_panic(expected = "Only admin can upgrade")]
+#[should_panic(expected = "Unauthorized: admin required")]
 fn test_non_admin_cannot_upgrade() {
     use soroban_sdk::BytesN;
     let (env, _, client) = setup();
@@ -126,7 +126,7 @@ fn test_double_initialize_rejected() {
 // ── assign_role: only admin ───────────────────────────────────────────────────
 
 #[test]
-#[should_panic(expected = "Only admin can assign roles")]
+#[should_panic(expected = "Unauthorized: admin required")]
 fn test_non_admin_cannot_assign_admin_role() {
     let (env, _, client) = setup();
     let rando = Address::generate(&env);
@@ -135,7 +135,7 @@ fn test_non_admin_cannot_assign_admin_role() {
 }
 
 #[test]
-#[should_panic(expected = "Only admin can assign roles")]
+#[should_panic(expected = "Unauthorized: admin required")]
 fn test_non_admin_cannot_assign_instructor_role() {
     let (env, _, client) = setup();
     let rando = Address::generate(&env);
@@ -189,7 +189,7 @@ fn test_instructor_lacks_privileged_permissions() {
 // ── authorize_caller: auth guard ─────────────────────────────────────────────
 
 #[test]
-#[should_panic(expected = "Only admin can authorize")]
+#[should_panic(expected = "Unauthorized: admin required")]
 fn test_non_admin_cannot_authorize_caller() {
     let (env, _, client) = setup();
     let rando = Address::generate(&env);
@@ -229,7 +229,7 @@ fn test_call_contract_rejects_unauthorized_caller() {
 // ── upgrade: auth guard ───────────────────────────────────────────────────────
 
 #[test]
-#[should_panic(expected = "Only admin can upgrade")]
+#[should_panic(expected = "Unauthorized: admin required")]
 fn test_non_admin_cannot_upgrade_contract() {
     use soroban_sdk::BytesN;
     let (env, _, client) = setup();
@@ -241,7 +241,7 @@ fn test_non_admin_cannot_upgrade_contract() {
 // ── schedule_upgrade: auth guard ─────────────────────────────────────────────
 
 #[test]
-#[should_panic(expected = "Only admin can schedule upgrades")]
+#[should_panic(expected = "Unauthorized: admin required")]
 fn test_non_admin_cannot_schedule_upgrade() {
     use soroban_sdk::BytesN;
     let (env, _, client) = setup();
@@ -251,7 +251,7 @@ fn test_non_admin_cannot_schedule_upgrade() {
 }
 
 #[test]
-#[should_panic(expected = "Only admin can cancel upgrades")]
+#[should_panic(expected = "Unauthorized: admin required")]
 fn test_non_admin_cannot_cancel_upgrade() {
     use soroban_sdk::BytesN;
     let (env, admin, client) = setup();

@@ -48,7 +48,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Only admin can store metadata")]
+    #[should_panic(expected = "Unauthorized: admin required")]
     fn test_non_admin_cannot_store() {
         let (env, client, _) = setup();
         let rando = Address::generate(&env);

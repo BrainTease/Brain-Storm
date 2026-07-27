@@ -44,7 +44,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Only admin can set splits")]
+    #[should_panic(expected = "Unauthorized: admin required")]
     fn test_non_admin_cannot_set_split() {
         let (env, client, _) = setup();
         let rando = Address::generate(&env);
@@ -60,7 +60,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Only admin can add recipients")]
+    #[should_panic(expected = "Unauthorized: admin required")]
     fn test_non_admin_cannot_add_recipient() {
         let (env, client, admin) = setup();
         let rando = Address::generate(&env);

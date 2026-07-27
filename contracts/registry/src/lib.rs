@@ -14,6 +14,8 @@ use soroban_sdk::{
     contract, contractimpl, contracttype, symbol_short, Address, Env, Symbol, Vec,
 };
 
+use brain_storm_shared::access;
+
 // ── Storage keys ──────────────────────────────────────────────────────────────
 
 #[contracttype]
@@ -414,18 +416,19 @@ impl RegistryContract {
     }
 
     fn assert_admin(env: &Env, caller: &Address) {
-        let admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(*caller == admin, "Only admin");
+        assert!(access::is_admin(env, caller, &DataKey::Admin), "Only admin");
     }
 
     fn assert_admin_or_curator(env: &Env, caller: &Address) {
-        let admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
         let is_curator = env
             .storage()
             .instance()
             .get::<DataKey, bool>(&DataKey::Curator(caller.clone()))
             .unwrap_or(false);
-        assert!(*caller == admin || is_curator, "Unauthorized: admin or curator required");
+        assert!(
+            is_curator || access::is_admin(env, caller, &DataKey::Admin),
+            "Unauthorized: admin or curator required"
+        );
     }
 }
 

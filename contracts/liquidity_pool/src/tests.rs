@@ -134,10 +134,98 @@ mod tests {
 
     // Security: zero-liquidity pool cannot be swapped against
     #[test]
-    #[should_panic]
+    #[should_panic(expected = "Insufficient liquidity")]
     fn test_swap_against_empty_pool_panics() {
         let (env, client, _) = setup();
         let user = Address::generate(&env);
         client.swap(&user, &symbol_short!("bst"), &1_000, &0);
+    }
+
+    // ── Arithmetic safety (#823) ──────────────────────────────────────────────
+
+    #[test]
+    #[should_panic(expected = "Desired amounts must be positive")]
+    fn test_add_liquidity_rejects_zero_amount() {
+        let (env, client, _) = setup();
+        let provider = Address::generate(&env);
+        client.add_liquidity(&provider, &0, &10_000, &0, &0);
+    }
+
+    #[test]
+    #[should_panic(expected = "Desired amounts must be positive")]
+    fn test_add_liquidity_rejects_negative_amount() {
+        let (env, client, _) = setup();
+        let provider = Address::generate(&env);
+        client.add_liquidity(&provider, &10_000, &-1, &0, &0);
+    }
+
+    #[test]
+    #[should_panic(expected = "Initial liquidity below minimum")]
+    fn test_first_provision_below_minimum_liquidity_panics() {
+        let (env, client, _) = setup();
+        let provider = Address::generate(&env);
+        // sqrt(10 * 10) == 10, which is under MINIMUM_LIQUIDITY (1000).
+        client.add_liquidity(&provider, &10, &10, &0, &0);
+    }
+
+    #[test]
+    #[should_panic(expected = "math: i128 multiplication overflow")]
+    fn test_add_liquidity_overflow_is_reported_not_wrapped() {
+        let (env, client, _) = setup();
+        let provider = Address::generate(&env);
+        // amount_a * amount_b overflows i128 before sqrt() ever sees it.
+        client.add_liquidity(&provider, &i128::MAX, &i128::MAX, &0, &0);
+    }
+
+    #[test]
+    #[should_panic(expected = "Liquidity must be positive")]
+    fn test_remove_zero_liquidity_panics() {
+        let (env, client, _) = setup();
+        let provider = Address::generate(&env);
+        client.add_liquidity(&provider, &10_000, &10_000, &0, &0);
+        client.remove_liquidity(&provider, &0);
+    }
+
+    #[test]
+    #[should_panic(expected = "math: i128 multiplication overflow")]
+    fn test_swap_overflow_is_reported_not_wrapped() {
+        let (env, client, _) = setup();
+        let provider = Address::generate(&env);
+        client.add_liquidity(&provider, &100_000, &100_000, &0, &0);
+
+        let user = Address::generate(&env);
+        // amount_in * (fee_denominator - fee_numerator) overflows i128.
+        client.swap(&user, &symbol_short!("bst"), &i128::MAX, &0);
+    }
+
+    #[test]
+    fn test_remove_liquidity_is_proportional() {
+        let (env, client, _) = setup();
+        let provider = Address::generate(&env);
+        // sqrt(10_000 * 10_000) - MINIMUM_LIQUIDITY == 10_000 - 1_000 == 9_000
+        let minted = client.add_liquidity(&provider, &10_000, &10_000, &0, &0);
+        assert_eq!(minted, 9_000);
+
+        let (amount_a, amount_b) = client.remove_liquidity(&provider, &4_500);
+        // 4_500 * 10_000 / 9_000 == 5_000
+        assert_eq!(amount_a, 5_000);
+        assert_eq!(amount_b, 5_000);
+
+        let stats = client.get_pool_stats();
+        assert_eq!(stats.reserve_a, 5_000);
+        assert_eq!(stats.total_liquidity, 4_500);
+    }
+
+    #[test]
+    fn test_swap_history_pagination_does_not_overflow() {
+        let (env, client, _) = setup();
+        let provider = Address::generate(&env);
+        client.add_liquidity(&provider, &100_000, &100_000, &0, &0);
+        let user = Address::generate(&env);
+        client.swap(&user, &symbol_short!("bst"), &1_000, &0);
+
+        // start_index + limit would wrap u32; the view saturates instead.
+        let history = client.get_swap_history(&u32::MAX, &10);
+        assert_eq!(history.len(), 0);
     }
 }

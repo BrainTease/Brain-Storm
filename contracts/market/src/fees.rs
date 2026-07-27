@@ -2,6 +2,8 @@
 
 use soroban_sdk::{symbol_short, Address, Env, Symbol};
 
+use brain_storm_shared::access;
+
 use crate::DataKey;
 
 pub const MAX_FEE_BPS: u32 = 1_000; // 10 %
@@ -10,9 +12,7 @@ const EVT_FEE_DIST: Symbol = symbol_short!("fee_dist");
 
 /// Configure the protocol fee in basis points (admin-only).
 pub fn set_fee_bps(env: &Env, admin: &Address, fee_bps: u32) {
-    admin.require_auth();
-    let stored: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-    assert!(*admin == stored, "Only admin");
+    access::require_admin(env, admin, &DataKey::Admin);
     assert!(fee_bps <= MAX_FEE_BPS, "Fee exceeds max (1000 bps)");
     env.storage().instance().set(&DataKey::FeeBps, &fee_bps);
     env.events().publish((EVT_FEE_SET,), fee_bps);
@@ -27,9 +27,7 @@ pub fn get_fee_bps(env: &Env) -> u32 {
 
 /// Configure the treasury address (admin-only).
 pub fn set_treasury(env: &Env, admin: &Address, treasury: Address) {
-    admin.require_auth();
-    let stored: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-    assert!(*admin == stored, "Only admin");
+    access::require_admin(env, admin, &DataKey::Admin);
     env.storage().instance().set(&DataKey::Treasury, &treasury);
 }
 

@@ -1,8 +1,9 @@
 #![no_std]
-#![no_std]
 use soroban_sdk::{
     contract, contractimpl, contracttype, symbol_short, Address, Env, String, Symbol, Vec,
 };
+
+use brain_storm_shared::access;
 
 #[contracttype]
 pub enum DataKey {
@@ -77,9 +78,7 @@ impl NFTContract {
         purchase_price: i128,
         royalty_basis: u32,
     ) -> u32 {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can mint");
+        access::require_admin(&env, &admin, &DataKey::Admin);
         assert!(royalty_basis <= 10000, "Royalty basis must be <= 10000");
 
         let nft_id_key = DataKey::NextNFTId;
@@ -135,15 +134,13 @@ impl NFTContract {
     }
 
     pub fn transfer_nft(env: Env, from: Address, to: Address, nft_id: u32) {
-        from.require_auth();
-
         let owner_key = DataKey::NFTOwner(nft_id);
         let current_owner: Address = env
             .storage()
             .instance()
             .get(&owner_key)
             .expect("NFT not found");
-        assert!(current_owner == from, "Not NFT owner");
+        access::require_owner(&from, &current_owner);
 
         // Update owner
         env.storage().instance().set(&owner_key, &to);
@@ -188,15 +185,13 @@ impl NFTContract {
     }
 
     pub fn grant_access(env: Env, nft_owner: Address, nft_id: u32, holder: Address) {
-        nft_owner.require_auth();
-
         let owner_key = DataKey::NFTOwner(nft_id);
         let current_owner: Address = env
             .storage()
             .instance()
             .get(&owner_key)
             .expect("NFT not found");
-        assert!(current_owner == nft_owner, "Not NFT owner");
+        access::require_owner(&nft_owner, &current_owner);
 
         env.storage()
             .instance()
@@ -209,15 +204,13 @@ impl NFTContract {
     }
 
     pub fn revoke_access(env: Env, nft_owner: Address, nft_id: u32, holder: Address) {
-        nft_owner.require_auth();
-
         let owner_key = DataKey::NFTOwner(nft_id);
         let current_owner: Address = env
             .storage()
             .instance()
             .get(&owner_key)
             .expect("NFT not found");
-        assert!(current_owner == nft_owner, "Not NFT owner");
+        access::require_owner(&nft_owner, &current_owner);
 
         env.storage()
             .instance()
@@ -276,14 +269,12 @@ impl NFTContract {
     // -------------------------------------------------------------------------
 
     pub fn burn_nft(env: Env, owner: Address, nft_id: u32) {
-        owner.require_auth();
-
         let current_owner: Address = env
             .storage()
             .instance()
             .get(&DataKey::NFTOwner(nft_id))
             .expect("NFT not found");
-        assert!(current_owner == owner, "Not NFT owner");
+        access::require_owner(&owner, &current_owner);
         assert!(
             !env.storage().instance().get::<DataKey, bool>(&DataKey::BurnedNFT(nft_id)).unwrap_or(false),
             "Already burned"
@@ -317,7 +308,6 @@ impl NFTContract {
     // -------------------------------------------------------------------------
 
     pub fn list_nft(env: Env, seller: Address, nft_id: u32, price: i128) {
-        seller.require_auth();
         assert!(price > 0, "Price must be positive");
 
         let current_owner: Address = env
@@ -325,7 +315,7 @@ impl NFTContract {
             .instance()
             .get(&DataKey::NFTOwner(nft_id))
             .expect("NFT not found");
-        assert!(current_owner == seller, "Not NFT owner");
+        access::require_owner(&seller, &current_owner);
         assert!(
             !env.storage().instance().has(&DataKey::Listing(nft_id)),
             "Already listed"
@@ -346,14 +336,12 @@ impl NFTContract {
     }
 
     pub fn delist_nft(env: Env, seller: Address, nft_id: u32) {
-        seller.require_auth();
-
         let listing: Listing = env
             .storage()
             .instance()
             .get(&DataKey::Listing(nft_id))
             .expect("Not listed");
-        assert!(listing.seller == seller, "Not the seller");
+        access::require_owner(&seller, &listing.seller);
 
         env.storage().instance().remove(&DataKey::Listing(nft_id));
 

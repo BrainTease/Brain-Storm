@@ -2,6 +2,11 @@
 
 **Status:** Accepted
 
+> **Superseded in part by issue #825 (2026-07-27).** The sections below describing
+> "no production contract depends on `brain-storm-shared`" record the state as of
+> 2026-07-25 and are no longer accurate. See [§ Update: compile-time reuse landed](#update-compile-time-reuse-landed-2026-07-27-issue-825)
+> at the end of this document.
+
 **Date:** 2026-07-25
 
 **Author(s):** Brain-Storm maintainers
@@ -72,8 +77,58 @@ Adding `brain-storm-shared` as a path dependency to, say, `market`'s `Cargo.toml
 - [ADR-006: Contract-Per-Domain Architecture](./ADR-006-contract-per-domain-architecture.md)
 - [Issue #762](https://github.com/BrainTease/Brain-Storm/issues/762)
 
+## Update: compile-time reuse landed (2026-07-27, issue #825)
+
+Alternative 2 above — "make `brain-storm-shared` a real compile-time dependency"
+— has now been adopted for access-control checks, in the *library* form rather
+than the cross-contract-call form. The gas objection raised against it does not
+apply: the helpers are ordinary Rust functions linked into each contract's own
+wasm, so an admin check is still a single local storage read, not an
+`invoke_contract`.
+
+What changed:
+
+- **`contracts/shared/src/access.rs`** is the canonical implementation of the
+  `require_auth` → read stored admin → compare triplet that all 18 contracts had
+  copied inline. It takes the storage key as a generic parameter, so each
+  contract keeps its own `DataKey` while sharing the check.
+- **Sixteen contracts now carry `brain-storm-shared` as a path dependency** and
+  call `access::require_admin` / `require_authority` / `require_admin_or` /
+  `require_owner` / `is_admin` instead of hand-rolling the comparison.
+- **Panic messages are unified.** Admin failures now report
+  `"Unauthorized: admin required"` everywhere instead of ~30 distinct
+  `"Only admin can <verb>"` strings. Two contracts keep bespoke messages because
+  their checks are genuinely compound: `registry`
+  (`"Unauthorized: admin or curator required"`) and `reputation`
+  (`"Unauthorized caller"`), both of which now call `access::is_admin` for the
+  admin half.
+- **`SharedContract` is feature-gated.** The dependency is declared
+  `default-features = false` everywhere. Without this, linking a crate that
+  contains a `#[contractimpl]` block into another contract's wasm would export
+  `SharedContract`'s entry points — `assign_role`, `upgrade`, `pause_contract` —
+  from *that* contract, operating on its storage. Since `SharedContract`'s
+  `DataKey::Admin` serialises identically to every other contract's
+  `DataKey::Admin`, that would have been directly exploitable. The
+  `contract` feature is on by default so the crate still builds as a standalone
+  deployable wasm.
+
+The "Negative" consequence above — that a fix to `contracts/shared` does not
+propagate to the inline copies — is now resolved **for access-control checks
+only**. It still holds for `pausable.rs`, `reentrancy.rs`, `multisig.rs`, and
+`upgrade.rs`, which remain copied per contract.
+
+### Not addressed
+
+The deployed `SharedContract`'s `authorize_caller` / `call_contract` /
+`relay_event` registry is still unused by production contracts, and the RBAC
+`Role`/`Permission` model is still not consulted by any contract's admin gate —
+contracts compare against their own stored `Admin` address, not against
+`SharedContract`'s role table. Consolidating those is a separate decision.
+
+
 ## Revision History
 
 | Date | Author | Change |
 |------|--------|--------|
 | 2026-07-25 | Brain-Storm maintainers | Initial proposal, derived from dependency analysis of `contracts/*/Cargo.toml` for issue #762 |
+| 2026-07-27 | Brain-Storm maintainers | Added § Update: compile-time reuse landed — `access.rs` extracted and adopted by 16 contracts (issue #825) |

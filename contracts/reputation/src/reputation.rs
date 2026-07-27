@@ -3,6 +3,8 @@
 
 use soroban_sdk::{contracttype, symbol_short, Address, Env, Symbol};
 
+use brain_storm_shared::access;
+
 use crate::{DataKey, DecayConfig, ReputationRecord};
 
 // ── Events ───────────────────────────────────────────────────────────────────
@@ -17,8 +19,7 @@ pub const LEVEL_THRESHOLDS: [i128; 5] = [0, 100, 400, 900, 1600];
 
 /// Returns true if `caller` is the stored admin or an authorized caller.
 pub fn is_authorized(env: &Env, caller: &Address) -> bool {
-    let admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-    if *caller == admin {
+    if access::is_admin(env, caller, &DataKey::Admin) {
         return true;
     }
     env.storage()
@@ -121,6 +122,8 @@ pub fn apply_decay_internal(env: &Env, rep: &mut ReputationRecord, current_ledge
 // ── Internal assertion ────────────────────────────────────────────────────────
 
 fn assert_admin(env: &Env, caller: &Address) {
-    let admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-    assert!(*caller == admin, "Only admin can perform this action");
+    assert!(
+        access::is_admin(env, caller, &DataKey::Admin),
+        "Only admin can perform this action"
+    );
 }
