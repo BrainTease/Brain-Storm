@@ -50,7 +50,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Only admin can manage whitelist")]
+    #[should_panic(expected = "Unauthorized: admin required")]
     fn test_non_admin_cannot_whitelist() {
         let (env, client, _) = setup();
         let rando = Address::generate(&env);
@@ -83,7 +83,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Only admin can manage blacklist")]
+    #[should_panic(expected = "Unauthorized: admin required")]
     fn test_non_admin_cannot_blacklist() {
         let (env, client, _) = setup();
         let rando = Address::generate(&env);
@@ -107,7 +107,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Only admin can set limits")]
+    #[should_panic(expected = "Unauthorized: admin required")]
     fn test_non_admin_cannot_set_limit() {
         let (env, client, _) = setup();
         let rando = Address::generate(&env);

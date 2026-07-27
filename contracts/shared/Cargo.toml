@@ -6,6 +6,14 @@ edition = "2021"
 [lib]
 crate-type = ["cdylib", "rlib"]
 
+[features]
+# Compiles `SharedContract` (the deployable RBAC contract). On by default so
+# this crate still builds as a standalone wasm. Contracts that depend on this
+# crate purely for its helper modules must use `default-features = false`, or
+# `SharedContract`'s entry points get exported from their wasm too.
+default = ["contract"]
+contract = []
+
 [dependencies]
 soroban-sdk = { version = "21.0.0", features = ["alloc"] }
 

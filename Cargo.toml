@@ -1,4 +1,10 @@
 [workspace]
+# Resolver 2 keeps dev-dependency features out of non-test builds. Without it a
+# workspace-wide `cargo build --target wasm32-unknown-unknown` unifies
+# `brain-storm-integration`'s dev-dependency on `brain-storm-shared` (default
+# features, i.e. `contract`) into every other contract's copy, re-exporting
+# `SharedContract`'s entry points from each contract's wasm.
+resolver = "2"
 members = [
     "contracts/analytics",
     "contracts/integration",
@@ -18,6 +24,7 @@ members = [
     "contracts/registry",
     "contracts/market",
     "contracts/dispute",
+    "contracts/royalty_distribution",
 ]
 
 [workspace.dependencies]

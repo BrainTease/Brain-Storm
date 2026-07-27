@@ -7,6 +7,8 @@ use soroban_sdk::{
     contract, contractimpl, contracttype, symbol_short, Address, Env, Symbol, Vec,
 };
 
+use brain_storm_shared::access;
+
 pub mod fees;
 pub mod multisig_escrow;
 
@@ -159,7 +161,7 @@ impl MarketContract {
 
         assert!(escrow.status == EscrowStatus::Funded, "Escrow not funded");
 
-        let admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
+        let admin = access::read_authority(&env, &DataKey::Admin);
         assert!(caller == escrow.payer || caller == admin, "Unauthorized");
 
         let fee_bps = fees::get_fee_bps(&env);
@@ -222,7 +224,8 @@ impl MarketContract {
     ) -> Vec<BatchEscrowResult> {
         Self::require_not_paused(&env);
         caller.require_auth();
-        let admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
+        // Hoisted out of the loop: one storage read for the whole batch.
+        let admin = access::read_authority(&env, &DataKey::Admin);
         let fee_bps = fees::get_fee_bps(&env);
 
         let mut results = Vec::new(&env);
@@ -307,8 +310,7 @@ impl MarketContract {
     }
 
     fn assert_admin_addr(env: &Env, caller: &Address) {
-        let admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(*caller == admin, "Only admin");
+        assert!(access::is_admin(env, caller, &DataKey::Admin), "Only admin");
     }
 }
 
@@ -353,7 +355,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Only admin")]
+    #[should_panic(expected = "Unauthorized: admin required")]
     fn test_non_admin_cannot_set_fee() {
         let (env, client, _) = setup();
         let rando = Address::generate(&env);

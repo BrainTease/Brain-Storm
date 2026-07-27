@@ -4,6 +4,8 @@ use soroban_sdk::{
     Symbol, Vec,
 };
 
+use brain_storm_shared::access;
+
 const TTL_THRESHOLD: u32 = 100;
 const TTL_EXTEND_TO: u32 = 500;
 
@@ -154,9 +156,7 @@ impl GrantsContract {
     // -------------------------------------------------------------------------
 
     pub fn approve_grant(env: Env, admin: Address, grant_id: u64) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can approve grants");
+        access::require_admin(&env, &admin, &DataKey::Admin);
 
         let mut grant: GrantRecord = env
             .storage()
@@ -182,9 +182,7 @@ impl GrantsContract {
     }
 
     pub fn reject_grant(env: Env, admin: Address, grant_id: u64) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can reject grants");
+        access::require_admin(&env, &admin, &DataKey::Admin);
 
         let mut grant: GrantRecord = env
             .storage()
@@ -217,9 +215,7 @@ impl GrantsContract {
         description: String,
         amount: i128,
     ) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can set milestones");
+        access::require_admin(&env, &admin, &DataKey::Admin);
 
         let grant: GrantRecord = env
             .storage()
@@ -252,9 +248,7 @@ impl GrantsContract {
     }
 
     pub fn release_milestone_funds(env: Env, admin: Address, grant_id: u64, milestone_idx: u32) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can release funds");
+        access::require_admin(&env, &admin, &DataKey::Admin);
 
         let grant: GrantRecord = env
             .storage()

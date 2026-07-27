@@ -3,6 +3,8 @@ use soroban_sdk::{
     contract, contractimpl, contracttype, symbol_short, vec, Address, Env, Symbol, Vec,
 };
 
+use brain_storm_shared::access;
+
 // TTL thresholds (in ledgers)
 const TTL_THRESHOLD: u32 = 100;
 const TTL_EXTEND_TO: u32 = 500;
@@ -98,7 +100,8 @@ impl AnalyticsContract {
     }
 
     pub fn set_admin(env: Env, new_admin: Address) {
-        let admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
+        // The *current* admin authorizes the handover.
+        let admin = access::read_authority(&env, &DataKey::Admin);
         admin.require_auth();
         env.storage().instance().set(&DataKey::Admin, &new_admin);
     }
@@ -113,9 +116,7 @@ impl AnalyticsContract {
 
     /// Grant a contract/address permission to record progress on behalf of students.
     pub fn authorize_caller(env: Env, admin: Address, caller: Address) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can authorize callers");
+        access::require_admin(&env, &admin, &DataKey::Admin);
         env.storage()
             .instance()
             .set(&DataKey::AuthorizedCaller(caller.clone()), &true);
@@ -127,9 +128,7 @@ impl AnalyticsContract {
 
     /// Revoke a previously authorized caller.
     pub fn revoke_caller(env: Env, admin: Address, caller: Address) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can revoke callers");
+        access::require_admin(&env, &admin, &DataKey::Admin);
         env.storage()
             .instance()
             .remove(&DataKey::AuthorizedCaller(caller.clone()));
@@ -161,7 +160,7 @@ impl AnalyticsContract {
         progress_pct: u32,
     ) {
         caller.require_auth();
-        let admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
+        let admin = access::read_authority(&env, &DataKey::Admin);
         let is_authorized: bool = env
             .storage()
             .instance()
@@ -237,9 +236,7 @@ impl AnalyticsContract {
 
     /// Reset a student's progress for a specific course (admin only).
     pub fn reset_progress(env: Env, admin: Address, student: Address, course_id: Symbol) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can reset progress");
+        access::require_admin(&env, &admin, &DataKey::Admin);
 
         let progress_key = DataKey::Progress(student.clone(), course_id.clone());
         env.storage().persistent().remove(&progress_key);
@@ -434,9 +431,7 @@ impl AnalyticsContract {
     }
 
     pub fn update_aggregates(env: Env, admin: Address) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can update aggregates");
+        access::require_admin(&env, &admin, &DataKey::Admin);
 
         // Update completion stats
         let stats = CompletionStats {
@@ -942,7 +937,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Only admin can reset progress")]
+    #[should_panic(expected = "Unauthorized: admin required")]
     fn test_non_admin_cannot_reset_progress() {
         let (env, client, _, student) = setup();
         let rando = Address::generate(&env);

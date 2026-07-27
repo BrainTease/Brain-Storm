@@ -162,7 +162,7 @@ fn test_revoked_caller_is_rejected() {
 }
 
 #[test]
-#[should_panic(expected = "Only admin can authorize")]
+#[should_panic(expected = "Unauthorized: admin required")]
 fn test_non_admin_cannot_authorize_caller() {
     let (env, _admin, client) = setup_with_admin();
     let rando = Address::generate(&env);
@@ -171,7 +171,7 @@ fn test_non_admin_cannot_authorize_caller() {
 }
 
 #[test]
-#[should_panic(expected = "Only admin can authorize callers")]
+#[should_panic(expected = "Unauthorized: admin required")]
 fn test_non_admin_cannot_revoke_caller() {
     let (env, admin, client) = setup_with_admin();
     let rando = Address::generate(&env);

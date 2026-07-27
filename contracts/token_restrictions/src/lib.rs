@@ -3,6 +3,8 @@ use soroban_sdk::{
     contract, contractimpl, contracttype, symbol_short, Address, Env, Symbol,
 };
 
+use brain_storm_shared::access;
+
 #[contracttype]
 pub enum DataKey {
     Admin,
@@ -45,9 +47,7 @@ impl TokenRestrictionsContract {
     }
 
     pub fn add_to_whitelist(env: Env, admin: Address, account: Address) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can manage whitelist");
+        access::require_admin(&env, &admin, &DataKey::Admin);
 
         env.storage()
             .instance()
@@ -58,9 +58,7 @@ impl TokenRestrictionsContract {
     }
 
     pub fn remove_from_whitelist(env: Env, admin: Address, account: Address) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can manage whitelist");
+        access::require_admin(&env, &admin, &DataKey::Admin);
 
         env.storage()
             .instance()
@@ -78,9 +76,7 @@ impl TokenRestrictionsContract {
     }
 
     pub fn add_to_blacklist(env: Env, admin: Address, account: Address) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can manage blacklist");
+        access::require_admin(&env, &admin, &DataKey::Admin);
 
         env.storage()
             .instance()
@@ -91,9 +87,7 @@ impl TokenRestrictionsContract {
     }
 
     pub fn remove_from_blacklist(env: Env, admin: Address, account: Address) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can manage blacklist");
+        access::require_admin(&env, &admin, &DataKey::Admin);
 
         env.storage()
             .instance()
@@ -111,9 +105,7 @@ impl TokenRestrictionsContract {
     }
 
     pub fn set_transfer_limit(env: Env, admin: Address, account: Address, limit: i128) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can set limits");
+        access::require_admin(&env, &admin, &DataKey::Admin);
         assert!(limit > 0, "Limit must be positive");
 
         env.storage()
@@ -153,9 +145,7 @@ impl TokenRestrictionsContract {
     /// Admin approval to allow a transfer from `from` to `to`.
     /// Clears the pending approval flag, allowing transfers between these addresses.
     pub fn approve_transfer(env: Env, admin: Address, from: Address, to: Address) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can approve transfers");
+        access::require_admin(&env, &admin, &DataKey::Admin);
 
         env.storage()
             .instance()
@@ -173,9 +163,7 @@ impl TokenRestrictionsContract {
     }
 
     pub fn activate_emergency_override(env: Env, admin: Address) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can activate override");
+        access::require_admin(&env, &admin, &DataKey::Admin);
 
         env.storage()
             .instance()
@@ -187,9 +175,7 @@ impl TokenRestrictionsContract {
     }
 
     pub fn deactivate_emergency_override(env: Env, admin: Address) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can deactivate override");
+        access::require_admin(&env, &admin, &DataKey::Admin);
 
         env.storage()
             .instance()

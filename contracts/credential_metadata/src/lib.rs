@@ -3,6 +3,8 @@ use soroban_sdk::{
     contract, contractimpl, contracttype, symbol_short, Address, Bytes, Env, String, Symbol,
 };
 
+use brain_storm_shared::access;
+
 pub mod linkage;
 pub mod validation;
 pub use linkage::{
