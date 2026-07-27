@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use crate::{ScholarshipFundContract, ScholarshipFundContractClient};
+    use crate::{ApplicationStatus, ScholarshipFundContract, ScholarshipFundContractClient};
     use soroban_sdk::{testutils::Address as _, Address, Env};
 
     fn setup() -> (Env, ScholarshipFundContractClient<'static>, Address) {
@@ -77,7 +77,7 @@ mod tests {
         let app = client.get_application(&app_id).unwrap();
         assert_eq!(app.student, student);
         assert_eq!(app.amount_requested, 1000);
-        assert_eq!(app.status, 0); // pending
+        assert_eq!(app.status, ApplicationStatus::Pending);
     }
 
     #[test]
@@ -99,7 +99,7 @@ mod tests {
         client.approve_application(&admin, &app_id);
 
         let app = client.get_application(&app_id).unwrap();
-        assert_eq!(app.status, 1); // approved
+        assert_eq!(app.status, ApplicationStatus::Approved);
     }
 
     #[test]
@@ -110,7 +110,7 @@ mod tests {
         client.reject_application(&admin, &app_id);
 
         let app = client.get_application(&app_id).unwrap();
-        assert_eq!(app.status, 2); // rejected
+        assert_eq!(app.status, ApplicationStatus::Rejected);
     }
 
     #[test]

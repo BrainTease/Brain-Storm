@@ -3,12 +3,30 @@ use soroban_sdk::{
     contract, contractimpl, contracttype, symbol_short, Address, Env, Symbol, Vec,
 };
 
+// ---- Type-safe application status enum ----
+/// Application status using enum instead of u8 for better type safety.
+/// This prevents invalid status values and makes code more maintainable.
+#[contracttype]
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum ApplicationStatus {
+    Pending = 0,
+    Approved = 1,
+    Rejected = 2,
+    Distributed = 3,
+}
+
+// ---- Improved storage key naming for clarity ----
 #[contracttype]
 pub enum DataKey {
+    /// Contract administrator address
     Admin,
+    /// Current fund balance
     FundBalance,
+    /// Individual scholarship application by ID
     Application(u64),
+    /// Total number of applications submitted
     ApplicationCount,
+    /// Total amount donated by address
     DonorTotal(Address),
 }
 
@@ -18,7 +36,8 @@ pub struct ScholarshipApplication {
     pub id: u64,
     pub student: Address,
     pub amount_requested: i128,
-    pub status: u8, // 0=pending, 1=approved, 2=rejected, 3=distributed
+    /// Status using type-safe enum instead of u8
+    pub status: ApplicationStatus,
     pub applied_at: u64,
 }
 
@@ -59,9 +78,7 @@ impl ScholarshipFundContract {
             .set(&DataKey::ApplicationCount, &0_u64);
     }
 
-    // -------------------------------------------------------------------------
-    // Fund deposits
-    // -------------------------------------------------------------------------
+    // ---- Fund deposits ----
 
     pub fn donate(env: Env, donor: Address, amount: i128) {
         donor.require_auth();
@@ -91,9 +108,7 @@ impl ScholarshipFundContract {
             .publish((DONATE, symbol_short!("fund")), (donor, amount));
     }
 
-    // -------------------------------------------------------------------------
-    // Fund distribution
-    // -------------------------------------------------------------------------
+    // ---- Fund distribution ----
 
     pub fn apply_for_scholarship(env: Env, student: Address, amount_requested: i128) -> u64 {
         student.require_auth();
@@ -109,7 +124,7 @@ impl ScholarshipFundContract {
             id: app_id,
             student: student.clone(),
             amount_requested,
-            status: 0,
+            status: ApplicationStatus::Pending,
             applied_at: env.ledger().timestamp(),
         };
 
@@ -126,9 +141,7 @@ impl ScholarshipFundContract {
         app_id
     }
 
-    // -------------------------------------------------------------------------
-    // Access controls
-    // -------------------------------------------------------------------------
+    // ---- Access controls ----
 
     pub fn approve_application(env: Env, admin: Address, app_id: u64) {
         admin.require_auth();
@@ -141,8 +154,11 @@ impl ScholarshipFundContract {
             .get(&DataKey::Application(app_id))
             .expect("Application not found");
 
-        assert!(app.status == 0, "Application already processed");
-        app.status = 1;
+        assert!(
+            app.status == ApplicationStatus::Pending,
+            "Application already processed"
+        );
+        app.status = ApplicationStatus::Approved;
 
         env.storage()
             .persistent()
@@ -163,8 +179,11 @@ impl ScholarshipFundContract {
             .get(&DataKey::Application(app_id))
             .expect("Application not found");
 
-        assert!(app.status == 0, "Application already processed");
-        app.status = 2;
+        assert!(
+            app.status == ApplicationStatus::Pending,
+            "Application already processed"
+        );
+        app.status = ApplicationStatus::Rejected;
 
         env.storage()
             .persistent()
@@ -182,7 +201,10 @@ impl ScholarshipFundContract {
             .get(&DataKey::Application(app_id))
             .expect("Application not found");
 
-        assert!(app.status == 1, "Application not approved");
+        assert!(
+            app.status == ApplicationStatus::Approved,
+            "Application not approved"
+        );
 
         let mut balance: i128 = env
             .storage()
@@ -196,7 +218,7 @@ impl ScholarshipFundContract {
             .instance()
             .set(&DataKey::FundBalance, &balance);
 
-        app.status = 3;
+        app.status = ApplicationStatus::Distributed;
         env.storage()
             .persistent()
             .set(&DataKey::Application(app_id), &app);
@@ -207,9 +229,7 @@ impl ScholarshipFundContract {
         );
     }
 
-    // -------------------------------------------------------------------------
-    // Fund queries
-    // -------------------------------------------------------------------------
+    // ---- Fund queries ----
 
     pub fn get_fund_balance(env: Env) -> i128 {
         env.storage()
@@ -264,9 +284,7 @@ impl ScholarshipFundContract {
         result
     }
 
-    // -------------------------------------------------------------------------
-    // Fund reporting
-    // -------------------------------------------------------------------------
+    // ---- Fund reporting ----
 
     /// Returns a summary report of the fund's current state.
     pub fn get_fund_report(env: Env) -> FundReport {
@@ -294,14 +312,13 @@ impl ScholarshipFundContract {
                 .get::<DataKey, ScholarshipApplication>(&DataKey::Application(i))
             {
                 match app.status {
-                    0 => pending_count += 1,
-                    1 => approved_count += 1,
-                    2 => rejected_count += 1,
-                    3 => {
+                    ApplicationStatus::Pending => pending_count += 1,
+                    ApplicationStatus::Approved => approved_count += 1,
+                    ApplicationStatus::Rejected => rejected_count += 1,
+                    ApplicationStatus::Distributed => {
                         distributed_count += 1;
                         total_distributed += app.amount_requested;
                     }
-                    _ => {}
                 }
             }
         }
