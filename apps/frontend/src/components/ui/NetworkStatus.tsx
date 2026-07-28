@@ -27,7 +27,7 @@ const NetworkStatus: React.FC = () => {
       const response = await api.get('/stellar/network-status');
       setData(response.data);
     } catch (error) {
-      console.error('Failed to fetch network status', error);
+      // Failed to fetch network status
     } finally {
       setLoading(false);
     }
