@@ -309,3 +309,6 @@ impl CredentialMetadataContract {
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod validation_tests;

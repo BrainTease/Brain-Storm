@@ -372,6 +372,9 @@ impl CertificateContract {
 mod fuzz_tests;
 
 #[cfg(test)]
+mod tests_ext;
+
+#[cfg(test)]
 mod tests {
     use super::*;
     use soroban_sdk::testutils::Address as _;
