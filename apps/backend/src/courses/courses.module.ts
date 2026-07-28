@@ -22,15 +22,32 @@ import { PrerequisitesService } from './prerequisites.service';
 import { PrerequisitesController } from './prerequisites.controller';
 import { CourseSchedulerService } from './course-scheduler.service';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { CacheManagementModule } from '../cache/cache-management.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Course, CourseModule, Lesson, Review, Enrollment, CourseVersion, CoursePrerequisite]),
     SearchModule,
     NotificationsModule,
+    CacheManagementModule,
   ],
-  providers: [CoursesService, CoursesBusinessService, ModulesService, LessonsService, ReviewsService, CourseVersioningService, PrerequisitesService, CourseSchedulerService],
-  controllers: [CoursesController, ModulesController, ReviewsController, CourseVersioningController, PrerequisitesController],
+  providers: [
+    CoursesService,
+    CoursesBusinessService,
+    ModulesService,
+    LessonsService,
+    ReviewsService,
+    CourseVersioningService,
+    PrerequisitesService,
+    CourseSchedulerService,
+  ],
+  controllers: [
+    CoursesController,
+    ModulesController,
+    ReviewsController,
+    CourseVersioningController,
+    PrerequisitesController,
+  ],
   exports: [CoursesService, CoursesBusinessService, PrerequisitesService],
 })
 export class CoursesModule {}

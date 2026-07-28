@@ -1,11 +1,13 @@
 import { EventSubscriber, EntitySubscriberInterface, InsertEvent, UpdateEvent, RemoveEvent } from 'typeorm';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { AuditService } from './audit.service';
 import { AuditAction } from './audit-log.entity';
 
 @Injectable()
 @EventSubscriber()
 export class AuditSubscriber implements EntitySubscriberInterface {
+  private readonly logger = new Logger(AuditSubscriber.name);
+
   constructor(private readonly auditService: AuditService) {}
 
   /**
@@ -58,7 +60,7 @@ export class AuditSubscriber implements EntitySubscriberInterface {
       );
     } catch (err) {
       // Don't let audit logging errors break the main operation
-      console.error('Failed to log audit entry:', err);
+      this.logger.error('Failed to log audit entry:', err);
     }
   }
 
