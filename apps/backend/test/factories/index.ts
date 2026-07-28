@@ -1,76 +1,26 @@
-import { faker } from '@faker-js/faker';
+/**
+ * Test factories for apps/backend/test (e2e & integration tests).
+ *
+ * All factory implementations now live in the shared
+ * packages/types/src/test-utils module so that every workspace package
+ * can import them from a single canonical location.
+ *
+ * Closes #861 — consolidate duplicate test fixtures into a shared
+ * packages/types test-utils module.
+ */
+export {
+  UserFactory,
+  CourseFactory,
+  EnrollmentFactory,
+  QuizFactory,
+} from '@brain-storm/types/test-utils';
 
-export class UserFactory {
-  static create(overrides?: Partial<any>) {
-    return {
-      id: faker.string.uuid(),
-      email: faker.internet.email(),
-      name: faker.person.fullName(),
-      password: faker.internet.password(),
-      role: 'student',
-      createdAt: faker.date.past(),
-      updatedAt: faker.date.recent(),
-      ...overrides,
-    };
-  }
-
-  static createMany(count: number, overrides?: Partial<any>) {
-    return Array.from({ length: count }, () => this.create(overrides));
-  }
-}
-
-export class CourseFactory {
-  static create(overrides?: Partial<any>) {
-    return {
-      id: faker.string.uuid(),
-      title: faker.lorem.words(3),
-      description: faker.lorem.paragraph(),
-      instructorId: faker.string.uuid(),
-      status: 'published',
-      createdAt: faker.date.past(),
-      updatedAt: faker.date.recent(),
-      ...overrides,
-    };
-  }
-
-  static createMany(count: number, overrides?: Partial<any>) {
-    return Array.from({ length: count }, () => this.create(overrides));
-  }
-}
-
-export class EnrollmentFactory {
-  static create(overrides?: Partial<any>) {
-    return {
-      id: faker.string.uuid(),
-      userId: faker.string.uuid(),
-      courseId: faker.string.uuid(),
-      status: 'active',
-      progress: faker.number.int({ min: 0, max: 100 }),
-      enrolledAt: faker.date.past(),
-      completedAt: null,
-      ...overrides,
-    };
-  }
-
-  static createMany(count: number, overrides?: Partial<any>) {
-    return Array.from({ length: count }, () => this.create(overrides));
-  }
-}
-
-export class QuizFactory {
-  static create(overrides?: Partial<any>) {
-    return {
-      id: faker.string.uuid(),
-      courseId: faker.string.uuid(),
-      title: faker.lorem.words(2),
-      questions: faker.number.int({ min: 5, max: 20 }),
-      passingScore: 70,
-      createdAt: faker.date.past(),
-      ...overrides,
-    };
-  }
-
-  static createMany(count: number, overrides?: Partial<any>) {
-    return Array.from({ length: count }, () => this.create(overrides));
-  }
-}
+export type {
+  TestUser,
+  TestCourse,
+  TestEnrollment,
+  TestQuiz,
+  UserRole,
+  EnrollmentStatus,
+  CourseStatus,
+} from '@brain-storm/types/test-utils';

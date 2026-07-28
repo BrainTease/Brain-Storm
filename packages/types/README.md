@@ -70,6 +70,61 @@ export class CreateUserDto {
 }
 ```
 
+## Test Utilities (`test-utils` subpath)
+
+The package ships a separate subpath export for test helpers so that factory
+code is never bundled into production builds.
+
+### Import
+
+```typescript
+import {
+  UserFactory,
+  CourseFactory,
+  EnrollmentFactory,
+  QuizFactory,
+} from '@brain-storm/types/test-utils';
+```
+
+The subpath is declared in `package.json` under `exports["./test-utils"]` and
+resolves directly to `src/test-utils/index.ts` (no build step needed in Jest).
+
+### Available Factories
+
+| Factory | Default shape | Key override fields |
+|---|---|---|
+| `UserFactory` | student, active | `role`, `email`, `firstName`, `lastName` |
+| `CourseFactory` | published | `status`, `instructor`, `instructorId` |
+| `EnrollmentFactory` | active, progress 0–100 | `status`, `progress`, `completedAt` |
+| `QuizFactory` | 70 % passing score | `passingScore`, `questions` |
+
+### Usage examples
+
+```typescript
+// Single object with defaults
+const student = UserFactory.create();
+
+// Override specific fields
+const admin = UserFactory.create({ role: 'admin' });
+
+// Batch creation
+const courses = CourseFactory.createMany(5, { status: 'draft' });
+
+// Completed enrollment
+const done = EnrollmentFactory.create({ status: 'completed', progress: 100 });
+```
+
+### All factories accept an optional `overrides` argument
+
+```typescript
+static create(overrides?: Partial<TestUser>): TestUser
+static createMany(count: number, overrides?: Partial<TestUser>): TestUser[]
+```
+
+The returned objects are **plain in-memory values** — no database, TypeORM, or
+faker dependency. Tests that need ORM-specific fields (e.g. `passwordHash`,
+`stellarPublicKey`) can spread the factory result and add those fields manually.
+
 ## Contributing
 
 When adding new types:
