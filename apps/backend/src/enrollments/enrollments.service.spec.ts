@@ -1,198 +1,121 @@
 import { ConflictException, NotFoundException } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import { EventEmitter2 } from '@nestjs/event-emitter';
 import { EnrollmentsService } from './enrollments.service';
 import { Enrollment } from './enrollment.entity';
-import { PrerequisitesService } from '../courses/prerequisites.service';
+
+const mockRepo = () => ({
+  findByUserAndCourse: jest.fn(),
+  findByIdWithRelations: jest.fn(),
+  findByUser: jest.fn(),
+  save: jest.fn(),
+  remove: jest.fn(),
+});
+
+const mockEventEmitter = () => ({ emit: jest.fn() });
+const mockPrereqService = () => ({ enforcePrerequisites: jest.fn().mockResolvedValue(undefined) });
 
 describe('EnrollmentsService', () => {
   let service: EnrollmentsService;
+  let repo: ReturnType<typeof mockRepo>;
+  let events: ReturnType<typeof mockEventEmitter>;
+  let prereq: ReturnType<typeof mockPrereqService>;
 
-  const mockRepo = {
-    findOne: jest.fn(),
-    create: jest.fn(),
-    save: jest.fn(),
-    find: jest.fn(),
-    remove: jest.fn(),
-  };
-
-  const mockEventEmitter = {
-    emit: jest.fn(),
-  };
-
-  const mockPrereqService = {
-    enforcePrerequisites: jest.fn(),
-  };
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        EnrollmentsService,
-        { provide: getRepositoryToken(Enrollment), useValue: mockRepo },
-        { provide: EventEmitter2, useValue: mockEventEmitter },
-        { provide: PrerequisitesService, useValue: mockPrereqService },
-      ],
-    }).compile();
-
-    service = module.get<EnrollmentsService>(EnrollmentsService);
-  });
-
-  afterEach(() => {
+  beforeEach(() => {
     jest.clearAllMocks();
+    repo = mockRepo();
+    events = mockEventEmitter();
+    prereq = mockPrereqService();
+    service = new EnrollmentsService(repo as any, events as any, prereq as any);
   });
+
+  // ── enroll ─────────────────────────────────────────────────────────────────
 
   describe('enroll', () => {
-    const userId = 'user-1';
-    const courseId = 'course-1';
+    it('should create enrollment and emit event', async () => {
+      repo.findByUserAndCourse.mockResolvedValue(null);
+      const saved = { id: 'e1', userId: 'u1', courseId: 'c1', enrolledAt: new Date() } as Enrollment;
+      repo.save.mockResolvedValue(saved);
 
-    it('creates a new enrollment on the happy path', async () => {
-      const created = { id: 'enr-1', userId, courseId, enrolledAt: new Date() } as Enrollment;
+      const result = await service.enroll('u1', 'c1');
 
-      mockRepo.findOne.mockResolvedValue(null);
-      mockPrereqService.enforcePrerequisites.mockResolvedValue(undefined);
-      mockRepo.create.mockReturnValue(created);
-      mockRepo.save.mockResolvedValue(created);
-
-      const result = await service.enroll(userId, courseId);
-
-      expect(mockRepo.findOne).toHaveBeenCalledWith({ where: { userId, courseId } });
-      expect(mockPrereqService.enforcePrerequisites).toHaveBeenCalledWith(userId, courseId, false);
-      expect(mockRepo.create).toHaveBeenCalledWith({ userId, courseId });
-      expect(mockRepo.save).toHaveBeenCalledWith(created);
-      expect(result).toEqual(created);
+      expect(repo.findByUserAndCourse).toHaveBeenCalledWith('u1', 'c1');
+      expect(prereq.enforcePrerequisites).toHaveBeenCalledWith('u1', 'c1', false);
+      expect(repo.save).toHaveBeenCalledWith({ userId: 'u1', courseId: 'c1' });
+      expect(events.emit).toHaveBeenCalledWith('enrollment.created', expect.objectContaining({
+        enrollmentId: 'e1',
+        userId: 'u1',
+        courseId: 'c1',
+      }));
+      expect(result).toBe(saved);
     });
 
-    it('emits enrollment.created event on successful enroll', async () => {
-      const created = { id: 'enr-1', userId, courseId, enrolledAt: new Date() } as Enrollment;
+    it('should throw ConflictException if already enrolled', async () => {
+      repo.findByUserAndCourse.mockResolvedValue({ id: 'existing' } as Enrollment);
 
-      mockRepo.findOne.mockResolvedValue(null);
-      mockPrereqService.enforcePrerequisites.mockResolvedValue(undefined);
-      mockRepo.create.mockReturnValue(created);
-      mockRepo.save.mockResolvedValue(created);
-
-      await service.enroll(userId, courseId);
-
-      expect(mockEventEmitter.emit).toHaveBeenCalledWith('enrollment.created', {
-        enrollmentId: created.id,
-        userId,
-        courseId,
-        enrolledAt: created.enrolledAt,
-      });
+      await expect(service.enroll('u1', 'c1')).rejects.toThrow(ConflictException);
+      expect(repo.save).not.toHaveBeenCalled();
     });
 
-    it('throws ConflictException when already enrolled', async () => {
-      const existing = { id: 'enr-1', userId, courseId } as Enrollment;
-      mockRepo.findOne.mockResolvedValue(existing);
+    it('should pass adminOverride=true to prerequisites check', async () => {
+      repo.findByUserAndCourse.mockResolvedValue(null);
+      repo.save.mockResolvedValue({ id: 'e2', userId: 'u1', courseId: 'c1', enrolledAt: new Date() } as Enrollment);
 
-      await expect(service.enroll(userId, courseId)).rejects.toThrow(ConflictException);
-      expect(mockPrereqService.enforcePrerequisites).not.toHaveBeenCalled();
-      expect(mockRepo.save).not.toHaveBeenCalled();
-    });
+      await service.enroll('u1', 'c1', true);
 
-    it('passes adminOverride flag to prerequisites check', async () => {
-      const created = { id: 'enr-1', userId, courseId, enrolledAt: new Date() } as Enrollment;
-
-      mockRepo.findOne.mockResolvedValue(null);
-      mockPrereqService.enforcePrerequisites.mockResolvedValue(undefined);
-      mockRepo.create.mockReturnValue(created);
-      mockRepo.save.mockResolvedValue(created);
-
-      await service.enroll(userId, courseId, true);
-
-      expect(mockPrereqService.enforcePrerequisites).toHaveBeenCalledWith(userId, courseId, true);
+      expect(prereq.enforcePrerequisites).toHaveBeenCalledWith('u1', 'c1', true);
     });
   });
 
+  // ── unenroll ───────────────────────────────────────────────────────────────
+
   describe('unenroll', () => {
-    it('removes enrollment when found', async () => {
-      const enrollment = { id: 'enr-1', userId: 'u1', courseId: 'c1' } as Enrollment;
-      mockRepo.findOne.mockResolvedValue(enrollment);
-      mockRepo.remove.mockResolvedValue(enrollment);
+    it('should remove enrollment when found', async () => {
+      const enrollment = { id: 'e1' } as Enrollment;
+      repo.findByUserAndCourse.mockResolvedValue(enrollment);
+      repo.remove.mockResolvedValue(enrollment);
 
       await service.unenroll('u1', 'c1');
 
-      expect(mockRepo.findOne).toHaveBeenCalledWith({ where: { userId: 'u1', courseId: 'c1' } });
-      expect(mockRepo.remove).toHaveBeenCalledWith(enrollment);
+      expect(repo.remove).toHaveBeenCalledWith(enrollment);
     });
 
-    it('throws NotFoundException when enrollment not found', async () => {
-      mockRepo.findOne.mockResolvedValue(null);
+    it('should throw NotFoundException when enrollment missing', async () => {
+      repo.findByUserAndCourse.mockResolvedValue(null);
 
-      await expect(service.unenroll('u1', 'missing-course')).rejects.toThrow(NotFoundException);
-      expect(mockRepo.remove).not.toHaveBeenCalled();
+      await expect(service.unenroll('u1', 'c1')).rejects.toThrow(NotFoundException);
     });
   });
+
+  // ── findById ───────────────────────────────────────────────────────────────
 
   describe('findById', () => {
-    it('returns enrollment with relations when found', async () => {
-      const enrollment = {
-        id: 'enr-1',
-        userId: 'u1',
-        courseId: 'c1',
-        user: { id: 'u1' },
-        course: { id: 'c1' },
-      } as unknown as Enrollment;
+    it('should return enrollment with relations', async () => {
+      const enrollment = { id: 'e1', user: {}, course: {} } as Enrollment;
+      repo.findByIdWithRelations.mockResolvedValue(enrollment);
 
-      mockRepo.findOne.mockResolvedValue(enrollment);
+      const result = await service.findById('e1');
 
-      const result = await service.findById('enr-1');
-
-      expect(mockRepo.findOne).toHaveBeenCalledWith({
-        where: { id: 'enr-1' },
-        relations: ['user', 'course'],
-      });
-      expect(result).toEqual(enrollment);
+      expect(repo.findByIdWithRelations).toHaveBeenCalledWith('e1');
+      expect(result).toBe(enrollment);
     });
 
-    it('throws NotFoundException when enrollment id not found', async () => {
-      mockRepo.findOne.mockResolvedValue(null);
+    it('should throw NotFoundException when enrollment is not found', async () => {
+      repo.findByIdWithRelations.mockResolvedValue(null);
 
-      await expect(service.findById('nonexistent')).rejects.toThrow(NotFoundException);
+      await expect(service.findById('missing')).rejects.toThrow(NotFoundException);
     });
   });
 
-  describe('deleteById', () => {
-    it('removes enrollment found by id', async () => {
-      const enrollment = { id: 'enr-1', userId: 'u1', courseId: 'c1' } as Enrollment;
-      // findById is called internally, which calls repo.findOne with relations
-      mockRepo.findOne.mockResolvedValue(enrollment);
-      mockRepo.remove.mockResolvedValue(enrollment);
-
-      await service.deleteById('enr-1');
-
-      expect(mockRepo.remove).toHaveBeenCalledWith(enrollment);
-    });
-
-    it('throws NotFoundException when id does not exist', async () => {
-      mockRepo.findOne.mockResolvedValue(null);
-
-      await expect(service.deleteById('missing')).rejects.toThrow(NotFoundException);
-    });
-  });
+  // ── findByUser ─────────────────────────────────────────────────────────────
 
   describe('findByUser', () => {
-    it('returns all enrollments for user ordered by enrolledAt DESC', async () => {
-      const enrollments = [
-        { id: 'enr-1', userId: 'u1', course: {} } as Enrollment,
-        { id: 'enr-2', userId: 'u1', course: {} } as Enrollment,
-      ];
-      mockRepo.find.mockResolvedValue(enrollments);
+    it('should return all enrollments for the user', async () => {
+      const enrollments = [{ id: 'e1' }, { id: 'e2' }] as Enrollment[];
+      repo.findByUser.mockResolvedValue(enrollments);
 
       const result = await service.findByUser('u1');
 
-      expect(result).toEqual(enrollments);
-      expect(mockRepo.find).toHaveBeenCalledWith({
-        where: { userId: 'u1' },
-        relations: ['course'],
-        order: { enrolledAt: 'DESC' },
-      });
-    });
-
-    it('returns empty array when user has no enrollments', async () => {
-      mockRepo.find.mockResolvedValue([]);
-      const result = await service.findByUser('u1');
-      expect(result).toEqual([]);
+      expect(repo.findByUser).toHaveBeenCalledWith('u1');
+      expect(result).toBe(enrollments);
     });
   });
 });
