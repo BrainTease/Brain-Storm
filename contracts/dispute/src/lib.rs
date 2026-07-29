@@ -237,7 +237,7 @@ impl DisputeContract {
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 #[cfg(test)]
-mod tests_ext;
+mod tests_extra;
 
 #[cfg(test)]
 mod tests {
