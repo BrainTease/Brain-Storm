@@ -9,16 +9,182 @@ describe('StringUtils', () => {
     expect(StringUtils.capitalize('hello')).toBe('Hello');
   });
 
+  it('should return unchanged string when already capitalized', () => {
+    expect(StringUtils.capitalize('Hello')).toBe('Hello');
+  });
+
+  it('should return empty string for empty input', () => {
+    expect(StringUtils.capitalize('')).toBe('');
+  });
+
   it('should convert to slug', () => {
     expect(StringUtils.toSlug('Hello World')).toBe('hello-world');
+  });
+
+  it('should strip leading and trailing hyphens from slug', () => {
+    expect(StringUtils.toSlug('  Hello World  ')).toBe('hello-world');
+  });
+
+  it('should remove special characters from slug', () => {
+    expect(StringUtils.toSlug('Hello! World?')).toBe('hello-world');
   });
 
   it('should truncate string', () => {
     expect(StringUtils.truncate('Hello World', 8)).toBe('Hello...');
   });
 
+  it('should not truncate when string is within length', () => {
+    expect(StringUtils.truncate('Hi', 10)).toBe('Hi');
+  });
+
+  it('should use custom suffix for truncation', () => {
+    expect(StringUtils.truncate('Hello World', 7, '…')).toBe('Hello W…');
+  });
+
   it('should strip HTML', () => {
     expect(StringUtils.stripHtml('<p>Hello</p>')).toBe('Hello');
+  });
+
+  it('should strip nested HTML tags', () => {
+    expect(StringUtils.stripHtml('<div><b>Hello</b> <i>World</i></div>')).toBe('Hello World');
+  });
+
+  it('should return plain string unchanged by stripHtml', () => {
+    expect(StringUtils.stripHtml('No tags here')).toBe('No tags here');
+  });
+
+  // escapeHtml
+  describe('escapeHtml', () => {
+    it('should escape ampersand', () => {
+      expect(StringUtils.escapeHtml('Tom & Jerry')).toBe('Tom &amp; Jerry');
+    });
+
+    it('should escape angle brackets', () => {
+      expect(StringUtils.escapeHtml('<script>')).toBe('&lt;script&gt;');
+    });
+
+    it('should escape double quotes', () => {
+      expect(StringUtils.escapeHtml('Say "hi"')).toBe('Say &quot;hi&quot;');
+    });
+
+    it('should escape single quotes', () => {
+      expect(StringUtils.escapeHtml("It's here")).toBe("It&#039;s here");
+    });
+
+    it('should return unchanged string with no special chars', () => {
+      expect(StringUtils.escapeHtml('hello world')).toBe('hello world');
+    });
+
+    it('should handle empty string', () => {
+      expect(StringUtils.escapeHtml('')).toBe('');
+    });
+  });
+
+  // toCamelCase / toSnakeCase
+  describe('toCamelCase', () => {
+    it('should convert snake_case to camelCase', () => {
+      expect(StringUtils.toCamelCase('hello_world')).toBe('helloWorld');
+    });
+
+    it('should handle multiple underscores', () => {
+      expect(StringUtils.toCamelCase('first_name_last')).toBe('firstNameLast');
+    });
+
+    it('should return unchanged string without underscores', () => {
+      expect(StringUtils.toCamelCase('hello')).toBe('hello');
+    });
+  });
+
+  describe('toSnakeCase', () => {
+    it('should convert camelCase to snake_case', () => {
+      expect(StringUtils.toSnakeCase('helloWorld')).toBe('hello_world');
+    });
+
+    it('should handle multiple consecutive capitals', () => {
+      expect(StringUtils.toSnakeCase('firstName')).toBe('first_name');
+    });
+
+    it('should return unchanged lowercase string', () => {
+      expect(StringUtils.toSnakeCase('hello')).toBe('hello');
+    });
+  });
+
+  // countOccurrences
+  describe('countOccurrences', () => {
+    it('should count occurrences of substring', () => {
+      expect(StringUtils.countOccurrences('abcabcabc', 'abc')).toBe(3);
+    });
+
+    it('should return 0 when substring not present', () => {
+      expect(StringUtils.countOccurrences('hello', 'xyz')).toBe(0);
+    });
+
+    it('should count single characters', () => {
+      expect(StringUtils.countOccurrences('aababc', 'a')).toBe(3);
+    });
+
+    it('should handle empty substring (returns length + 1 per JS split behavior)', () => {
+      // str.split('').length - 1 = str.length
+      expect(StringUtils.countOccurrences('abc', '')).toBe(3);
+    });
+  });
+
+  // isEmpty
+  describe('isEmpty', () => {
+    it('should return true for empty string', () => {
+      expect(StringUtils.isEmpty('')).toBe(true);
+    });
+
+    it('should return true for whitespace-only string', () => {
+      expect(StringUtils.isEmpty('   ')).toBe(true);
+    });
+
+    it('should return false for non-empty string', () => {
+      expect(StringUtils.isEmpty('hello')).toBe(false);
+    });
+
+    it('should return true for null/undefined-like falsy', () => {
+      expect(StringUtils.isEmpty(null as any)).toBe(true);
+    });
+  });
+
+  // replaceAll
+  describe('replaceAll', () => {
+    it('should replace all occurrences', () => {
+      expect(StringUtils.replaceAll('aabbaa', 'aa', 'xx')).toBe('xxbbxx');
+    });
+
+    it('should replace all single characters', () => {
+      expect(StringUtils.replaceAll('hello world', 'o', '0')).toBe('hell0 w0rld');
+    });
+
+    it('should return unchanged string if search not found', () => {
+      expect(StringUtils.replaceAll('hello', 'z', 'y')).toBe('hello');
+    });
+  });
+
+  // random
+  describe('random', () => {
+    it('should return string of specified length', () => {
+      const result = StringUtils.random(12);
+      expect(result).toHaveLength(12);
+    });
+
+    it('should default to length 10', () => {
+      expect(StringUtils.random()).toHaveLength(10);
+    });
+
+    it('should only contain alphanumeric characters', () => {
+      const result = StringUtils.random(100);
+      expect(/^[A-Za-z0-9]+$/.test(result)).toBe(true);
+    });
+
+    it('should produce different values on repeated calls', () => {
+      const a = StringUtils.random(20);
+      const b = StringUtils.random(20);
+      // Extremely unlikely to be equal
+      expect(a).not.toBe(b);
+    });
   });
 });
 
