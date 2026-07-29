@@ -57,6 +57,7 @@ import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis'
 import configuration from './config/configuration';
 import { validationSchema } from './config/validation.schema';
 import { DatabaseModule } from './database/database.module';
+import { GovernanceModule } from './governance/governance.module';
 
 @Module({
   imports: [
@@ -157,6 +158,7 @@ import { DatabaseModule } from './database/database.module';
     AppGraphQLModule,
     PaymentsModule,
     DatabaseModule,
+    GovernanceModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

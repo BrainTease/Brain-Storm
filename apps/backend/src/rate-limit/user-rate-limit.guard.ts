@@ -1,65 +1,74 @@
-import { Injectable, CanActivate, ExecutionContext, HttpException, HttpStatus } from '@nestjs/common';
-import { UserRateLimitService } from './user-rate-limit.service';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common';
+import { UserRateLimitService, RateLimitStatus } from './user-rate-limit.service';
 
+/**
+ * UserRateLimitGuard
+ *
+ * NestJS guard variant of rate-limit enforcement — used at the controller /
+ * handler level via @UseGuards().
+ *
+ * The actual allow/deny decision is fully delegated to UserRateLimitService.
+ * Header-setting is kept in a private helper so the same logic is reused
+ * without importing the middleware class.
+ */
 @Injectable()
 export class UserRateLimitGuard implements CanActivate {
-  constructor(private rateLimitService: UserRateLimitService) {}
+  constructor(private readonly rateLimitService: UserRateLimitService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest();
+    const request  = context.switchToHttp().getRequest();
     const response = context.switchToHttp().getResponse();
 
     if (request.user?.isTrusted) return true;
     if (!request.user?.id) return true;
 
-    const userId = request.user.id;
-    const role: string = request.user.role || 'guest';
+    const userId: string           = request.user.id;
+    const role: string             = request.user.role ?? 'guest';
     const plan: string | undefined = request.user.plan;
     const endpoint = `${request.method}:${request.route?.path ?? request.path}`;
 
     const allowed = await this.rateLimitService.checkRateLimit(userId, role, endpoint, plan);
+    const status  = await this.rateLimitService.getRateLimitStatus(userId, role, endpoint, plan);
+
+    this.setHeaders(response, status, allowed ? status.remaining : 0);
 
     if (!allowed) {
-      const status = await this.rateLimitService.getRateLimitStatus(userId, role, endpoint, plan);
-      this.setHeaders(response, status, 0);
-
       throw new HttpException(
         {
-          statusCode: HttpStatus.TOO_MANY_REQUESTS,
-          message: status.overagePrompt ?? 'Rate limit exceeded',
-          retryAfter: status.resetTime,
-          dailyQuota: status.dailyQuota,
+          statusCode:     HttpStatus.TOO_MANY_REQUESTS,
+          message:        status.overagePrompt ?? 'Rate limit exceeded',
+          retryAfter:     status.resetTime,
+          dailyQuota:     status.dailyQuota,
           dailyRemaining: status.dailyRemaining,
         },
         HttpStatus.TOO_MANY_REQUESTS,
       );
     }
 
-    const status = await this.rateLimitService.getRateLimitStatus(userId, role, endpoint, plan);
-    this.setHeaders(response, status, status.remaining);
-
     return true;
   }
 
-  private setHeaders(
-    response: any,
-    status: { limit: number; remaining: number; resetTime: Date; dailyQuota: number; dailyRemaining: number },
-    remaining: number,
-  ): void {
-    const headers: Record<string, string> = {
-      'X-RateLimit-Limit': status.limit.toString(),
-      'X-RateLimit-Remaining': remaining.toString(),
-      'X-RateLimit-Reset': status.resetTime.toISOString(),
-    };
+  private setHeaders(res: any, status: RateLimitStatus, remaining: number): void {
+    res.set('X-RateLimit-Limit',     String(status.limit));
+    res.set('X-RateLimit-Remaining', String(remaining));
+    res.set('X-RateLimit-Reset',     status.resetTime.toISOString());
+
     if (status.dailyQuota > 0) {
-      headers['X-Quota-Limit'] = status.dailyQuota.toString();
-      headers['X-Quota-Remaining'] = status.dailyRemaining.toString();
+      res.set('X-Quota-Limit',     String(status.dailyQuota));
+      res.set('X-Quota-Remaining', String(status.dailyRemaining));
     }
+
     if (remaining === 0) {
-      headers['Retry-After'] = Math.ceil(
+      const retryAfterSecs = Math.ceil(
         (status.resetTime.getTime() - Date.now()) / 1000,
-      ).toString();
+      );
+      res.set('Retry-After', String(retryAfterSecs));
     }
-    response.set(headers);
   }
 }

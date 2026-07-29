@@ -4,6 +4,8 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User } from './user.entity';
 import { ImportJob, ImportJobStatus, ImportJobType } from '../import-export/import-job.entity';
+import { UserQueryDto } from './dto/user-query.dto';
+import { PaginatedResponseDto } from '../common/dto/api-response.dto';
 
 @Injectable()
 export class UsersService {
@@ -57,15 +59,9 @@ export class UsersService {
   }
 
   async findAll(
-    options: {
-      page?: number;
-      limit?: number;
-      role?: string;
-      isVerified?: boolean;
-      search?: string;
-    } = {}
-  ) {
-    const { page = 1, limit = 10, role, isVerified, search } = options;
+    options: UserQueryDto = {}
+  ): Promise<PaginatedResponseDto<User>> {
+    const { page = 1, limit = 20, role, isVerified, search } = options;
 
     const query = this.repo.createQueryBuilder('user');
 
@@ -89,15 +85,7 @@ export class UsersService {
       .orderBy('user.createdAt', 'DESC')
       .getManyAndCount();
 
-    return {
-      data: users,
-      meta: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
-      },
-    };
+    return new PaginatedResponseDto(users, 200, page, limit, total);
   }
 
   async banUser(id: string, isBanned: boolean) {
