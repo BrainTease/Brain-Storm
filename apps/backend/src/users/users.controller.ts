@@ -27,6 +27,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UserQueryDto } from './dto/user-query.dto';
 import { StellarService } from '../stellar/stellar.service';
 import { CurrentUser } from '../auth/current-user.decorator';
 
@@ -131,29 +132,21 @@ export class UsersController {
   @Get()
   @UseGuards(RolesGuard)
   @Roles('admin')
-  @ApiOperation({ summary: 'Search users with filtering' })
+  @ApiOperation({ summary: 'Search users with filtering and pagination' })
   @ApiResponse({
     status: 200,
-    description: 'List of users',
+    description: 'Paginated list of users',
     schema: {
       example: {
         data: [{ id: 'uuid', email: 'user@example.com' }],
-        meta: { total: 1, page: 1, limit: 10 },
+        pagination: { total: 1, page: 1, limit: 20, totalPages: 1 },
+        statusCode: 200,
+        timestamp: '2025-01-01T00:00:00.000Z',
       },
     },
   })
-  searchUsers(
-    @Query('search') search?: string,
-    @Query('page') page?: number,
-    @Query('limit') limit?: number,
-    @Query('role') role?: string
-  ) {
-    return this.usersService.findAll({
-      search,
-      page: page ? Number(page) : 1,
-      limit: limit ? Number(limit) : 10,
-      role,
-    });
+  searchUsers(@Query() query: UserQueryDto) {
+    return this.usersService.findAll(query);
   }
 
   @Get(':id/token-balance')
