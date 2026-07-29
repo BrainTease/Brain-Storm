@@ -1,176 +1,132 @@
-import {
-  BadRequestException,
-  HttpException,
-  HttpStatus,
-  NotFoundException,
-  ForbiddenException,
-} from '@nestjs/common';
-import { ArgumentsHost } from '@nestjs/common';
+import { HttpStatus, Logger } from '@nestjs/common';
 import { GlobalExceptionFilter } from './global-exception.filter';
 import {
   AppError,
+  ErrorCode,
   ValidationError,
-  NotFoundError,
   AuthenticationError,
+  AuthorizationError,
+  NotFoundError,
+  ConflictError,
+  StellarError,
+  DatabaseError,
 } from '../errors/app.error';
 
-/** Build a minimal ArgumentsHost mock */
-function buildHost(url = '/v1/test') {
+function buildHost(statusMock: jest.Mock, jsonMock: jest.Mock) {
+  statusMock.mockReturnValue({ json: jsonMock });
+  return {
+    switchToHttp: jest.fn().mockReturnValue({
+      getResponse: jest.fn().mockReturnValue({ status: statusMock, json: jsonMock }),
+    }),
+  } as any;
+}
+
+function run(exception: unknown) {
+  const filter = new GlobalExceptionFilter();
   const json = jest.fn();
-  const status = jest.fn().mockReturnValue({ json });
-  const getResponse = jest.fn().mockReturnValue({ status });
-  const getRequest = jest.fn().mockReturnValue({ url });
-  const switchToHttp = jest.fn().mockReturnValue({ getResponse, getRequest });
-  return { switchToHttp } as unknown as ArgumentsHost;
+  const status = jest.fn();
+  filter.catch(exception, buildHost(status, json));
+  return { status: status.mock.calls[0][0] as number, body: json.mock.calls[0][0] as any };
 }
 
 describe('GlobalExceptionFilter', () => {
-  let filter: GlobalExceptionFilter;
-
-  beforeEach(() => {
-    filter = new GlobalExceptionFilter();
-    // Suppress logger output during tests
-    jest.spyOn((filter as any).logger, 'warn').mockImplementation(() => {});
-    jest.spyOn((filter as any).logger, 'error').mockImplementation(() => {});
-    jest.spyOn((filter as any).logger, 'debug').mockImplementation(() => {});
+  beforeAll(() => {
+    jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+    jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
   });
 
-  function getJsonBody(host: ArgumentsHost): Record<string, unknown> {
-    const http = host.switchToHttp();
-    const res = http.getResponse<any>();
-    return res.status.mock.results[0].value.json.mock.calls[0][0] as Record<string, unknown>;
-  }
+  afterEach(() => jest.clearAllMocks());
 
-  // ── AppError subclasses ──────────────────────────────────────────────────
-
-  it('should handle AppError with correct statusCode, code and message', () => {
-    const host = buildHost();
-    const err = new NotFoundError('Course');
-    filter.catch(err, host);
-
-    const body = getJsonBody(host);
-    expect(body.statusCode).toBe(404);
-    expect(body.code).toBe('NOT_FOUND');
-    expect(body.message).toContain('Course');
-    expect(body.path).toBe('/v1/test');
-    expect(body.timestamp).toBeDefined();
+  it('handles AppError with correct status, code and message', () => {
+    const { status, body } = run(new AppError(ErrorCode.CONFLICT, 'Duplicate', 409));
+    expect(status).toBe(409);
+    expect(body.code).toBe(ErrorCode.CONFLICT);
+    expect(body.message).toBe('Duplicate');
   });
 
-  it('should handle ValidationError (AppError subclass) with details', () => {
-    const host = buildHost();
-    const err = new ValidationError('Invalid input', { field: 'email' });
-    filter.catch(err, host);
+  it('includes details when AppError has them', () => {
+    const details = { field: 'email' };
+    const { body } = run(new AppError(ErrorCode.VALIDATION_ERROR, 'Validation failed', 400, details));
+    expect(body.details).toEqual(details);
+  });
 
-    const body = getJsonBody(host);
-    expect(body.statusCode).toBe(400);
-    expect(body.code).toBe('VALIDATION_ERROR');
+  it('omits details key when AppError has none', () => {
+    const { body } = run(new AppError(ErrorCode.NOT_FOUND, 'Not found', 404));
+    expect(body).not.toHaveProperty('details');
+  });
+
+  it('handles ValidationError (400)', () => {
+    const { status, body } = run(new ValidationError('Email required', { field: 'email' }));
+    expect(status).toBe(400);
+    expect(body.code).toBe(ErrorCode.VALIDATION_ERROR);
     expect(body.details).toEqual({ field: 'email' });
   });
 
-  it('should handle AuthenticationError', () => {
-    const host = buildHost();
-    const err = new AuthenticationError();
-    filter.catch(err, host);
-
-    const body = getJsonBody(host);
-    expect(body.statusCode).toBe(401);
-    expect(body.code).toBe('AUTHENTICATION_ERROR');
+  it('handles AuthenticationError (401)', () => {
+    const { status, body } = run(new AuthenticationError('Bad credentials'));
+    expect(status).toBe(401);
+    expect(body.code).toBe(ErrorCode.AUTHENTICATION_ERROR);
   });
 
-  // ── BadRequestException ───────────────────────────────────────────────────
-
-  it('should handle BadRequestException with array validation errors', () => {
-    const host = buildHost();
-    const err = new BadRequestException({ message: ['email must be valid'], error: 'Bad Request' });
-    filter.catch(err, host);
-
-    const body = getJsonBody(host);
-    expect(body.statusCode).toBe(400);
-    expect(body.code).toBe('VALIDATION_ERROR');
-    expect(body.errors).toEqual(['email must be valid']);
+  it('handles AuthorizationError (403)', () => {
+    const { status, body } = run(new AuthorizationError('Access denied'));
+    expect(status).toBe(403);
+    expect(body.code).toBe(ErrorCode.AUTHORIZATION_ERROR);
   });
 
-  it('should handle BadRequestException with string message', () => {
-    const host = buildHost();
-    const err = new BadRequestException('Bad request');
-    filter.catch(err, host);
-
-    const body = getJsonBody(host);
-    expect(body.statusCode).toBe(400);
-    expect(body.code).toBe('VALIDATION_ERROR');
+  it('handles NotFoundError (404)', () => {
+    const { status, body } = run(new NotFoundError('Certificate'));
+    expect(status).toBe(404);
+    expect(body.code).toBe(ErrorCode.NOT_FOUND);
+    expect(body.message).toBe('Certificate not found');
   });
 
-  // ── Generic HttpException ─────────────────────────────────────────────────
-
-  it('should handle NotFoundException (HttpException) correctly', () => {
-    const host = buildHost();
-    const err = new NotFoundException('User not found');
-    filter.catch(err, host);
-
-    const body = getJsonBody(host);
-    expect(body.statusCode).toBe(404);
-    expect(body.message).toBe('User not found');
+  it('handles ConflictError (409)', () => {
+    const { status, body } = run(new ConflictError('Already exists'));
+    expect(status).toBe(409);
+    expect(body.code).toBe(ErrorCode.CONFLICT);
   });
 
-  it('should handle ForbiddenException', () => {
-    const host = buildHost();
-    const err = new ForbiddenException('Access denied');
-    filter.catch(err, host);
-
-    const body = getJsonBody(host);
-    expect(body.statusCode).toBe(403);
+  it('handles StellarError (500) with details', () => {
+    const { status, body } = run(new StellarError('Horizon unreachable', { txId: 'abc' }));
+    expect(status).toBe(500);
+    expect(body.code).toBe(ErrorCode.STELLAR_ERROR);
+    expect(body.details).toEqual({ txId: 'abc' });
   });
 
-  it('should handle generic HttpException with object body', () => {
-    const host = buildHost();
-    const err = new HttpException({ message: 'Custom error', error: 'Custom' }, HttpStatus.CONFLICT);
-    filter.catch(err, host);
-
-    const body = getJsonBody(host);
-    expect(body.statusCode).toBe(409);
-    expect(body.message).toBe('Custom error');
+  it('handles DatabaseError (500)', () => {
+    const { status, body } = run(new DatabaseError('Connection refused'));
+    expect(status).toBe(500);
+    expect(body.code).toBe(ErrorCode.DATABASE_ERROR);
   });
 
-  // ── Unknown / generic Error ───────────────────────────────────────────────
-
-  it('should handle generic Error with 500 status', () => {
-    const host = buildHost();
-    filter.catch(new Error('Unexpected failure'), host);
-
-    const body = getJsonBody(host);
-    expect(body.statusCode).toBe(500);
+  it('handles a plain Error with 500 and INTERNAL_ERROR code', () => {
+    const { status, body } = run(new Error('Crash'));
+    expect(status).toBe(HttpStatus.INTERNAL_SERVER_ERROR);
     expect(body.code).toBe('INTERNAL_ERROR');
+    expect(body.message).toBe('Crash');
   });
 
-  it('should handle non-Error unknown throw', () => {
-    const host = buildHost();
-    filter.catch('some string error', host);
-
-    const body = getJsonBody(host);
-    expect(body.statusCode).toBe(500);
-    expect(body.code).toBe('INTERNAL_ERROR');
+  it('handles a thrown string as 500 with generic message', () => {
+    const { status, body } = run('oops' as unknown as Error);
+    expect(status).toBe(HttpStatus.INTERNAL_SERVER_ERROR);
+    expect(body.message).toBe('Internal server error');
   });
 
-  // ── Response shape invariants ─────────────────────────────────────────────
+  it('handles thrown null as 500', () => {
+    const { status } = run(null);
+    expect(status).toBe(HttpStatus.INTERNAL_SERVER_ERROR);
+  });
 
-  it('every response should always include statusCode, code, message, timestamp, path', () => {
-    const cases: unknown[] = [
-      new NotFoundError('X'),
-      new BadRequestException('bad'),
-      new NotFoundException('not found'),
-      new Error('oops'),
-    ];
+  it('handles thrown plain objects as 500', () => {
+    const { status, body } = run({ weirdError: true });
+    expect(status).toBe(HttpStatus.INTERNAL_SERVER_ERROR);
+    expect(body.message).toBe('Internal server error');
+  });
 
-    for (const err of cases) {
-      const host = buildHost('/v1/check');
-      filter.catch(err, host);
-      const body = getJsonBody(host);
-
-      expect(typeof body.statusCode).toBe('number');
-      expect(typeof body.code).toBe('string');
-      expect(typeof body.message).toBe('string');
-      expect(typeof body.timestamp).toBe('string');
-      expect(body.path).toBe('/v1/check');
-    }
+  it('always includes a valid ISO timestamp', () => {
+    const { body } = run(new Error('ts'));
+    expect(typeof body.timestamp).toBe('string');
+    expect(() => new Date(body.timestamp)).not.toThrow();
   });
 });

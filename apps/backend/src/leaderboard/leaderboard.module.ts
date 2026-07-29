@@ -8,11 +8,13 @@ import { LeaderboardController } from './leaderboard.controller';
 import { LeaderboardService } from './leaderboard.service';
 import { RedisLeaderboardService } from './redis-leaderboard.service';
 import { RedisLeaderboardController } from './redis-leaderboard.controller';
+import { CacheManagementModule } from '../cache/cache-management.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([User, Progress, Enrollment]),
     StellarModule,
+    CacheManagementModule,
   ],
   providers: [LeaderboardService, RedisLeaderboardService],
   controllers: [LeaderboardController, RedisLeaderboardController],

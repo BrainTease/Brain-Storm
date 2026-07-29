@@ -65,7 +65,7 @@ export default function ProfilePage() {
         });
       } catch (err) {
         setError(t('loadError'));
-        console.error('Failed to fetch user:', err);
+        // Failed to load user
       } finally {
         setLoading(false);
       }
@@ -99,7 +99,7 @@ export default function ProfilePage() {
         savedTimeoutRef.current = setTimeout(() => setSaved(false), 2000);
       } catch (err) {
         setError(t('saveError'));
-        console.error('Failed to save profile:', err);
+        // Failed to save profile
       } finally {
         setSaving(false);
       }
@@ -132,7 +132,7 @@ export default function ProfilePage() {
         setForm((prev) => ({ ...prev, avatarUrl: newUrl }));
       } catch (err) {
         setError('Failed to upload avatar. Please try again.');
-        console.error('Avatar upload failed:', err);
+        // Avatar upload failed
       } finally {
         setAvatarUploading(false);
         // Reset file input so the same file can be re-selected

@@ -5,6 +5,7 @@ import { StellarController, CredentialsController } from './stellar.controller';
 import { NetworkMonitorService } from './network-monitor.service';
 import { StellarIndexerService } from './stellar-indexer.service';
 import { StellarTransactionLog } from './stellar-transaction-log.entity';
+import { SorobanRpcClientService } from './soroban-rpc-client.service';
 import { CredentialsModule } from '../credentials/credentials.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { UsersModule } from '../users/users.module';
@@ -16,8 +17,13 @@ import { UsersModule } from '../users/users.module';
     NotificationsModule,
     forwardRef(() => UsersModule),
   ],
-  providers: [StellarService, NetworkMonitorService, StellarIndexerService],
+  providers: [
+    SorobanRpcClientService,
+    StellarService,
+    NetworkMonitorService,
+    StellarIndexerService,
+  ],
   controllers: [StellarController, CredentialsController],
-  exports: [StellarService, NetworkMonitorService],
+  exports: [StellarService, SorobanRpcClientService, NetworkMonitorService],
 })
 export class StellarModule {}

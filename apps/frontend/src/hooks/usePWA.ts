@@ -58,7 +58,7 @@ export function usePWA(config: PWAConfig = {}) {
         // Check for updates periodically
         const checkForUpdates = () => {
           registration.update().catch(err => {
-            console.debug('Service worker update check failed:', err);
+            // Silent fail - update checks are best-effort
           });
         };
 
@@ -96,7 +96,7 @@ export function usePWA(config: PWAConfig = {}) {
           navigator.serviceWorker.removeEventListener('controllerchange', handleControllerChange);
         };
       } catch (error) {
-        console.error('Service worker registration failed:', error);
+        // Service worker registration failed silently
       }
     };
 
@@ -118,7 +118,7 @@ export function usePWA(config: PWAConfig = {}) {
 
       return outcome === 'accepted';
     } catch (error) {
-      console.error('Install prompt failed:', error);
+      // Install prompt failed silently
       return false;
     }
   }, []);
