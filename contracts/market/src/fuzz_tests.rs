@@ -1,5 +1,33 @@
 //! #664: Property-based and fuzz tests for the market contract.
 //! Tests invariants for escrow amounts, fee calculation, and auth.
+//!
+//! #865: Removed the following redundant test cases that duplicated coverage
+//! already provided by the proptest suite above them:
+//!
+//!   - `edge_cases::test_zero_fee_bps`
+//!     → fully subsumed by `prop_zero_fee_bps_means_zero_fee` (arbitrary amounts)
+//!
+//!   - `edge_cases::test_fee_and_net_add_to_amount`
+//!     → fully subsumed by `prop_fee_plus_net_equals_amount` (arbitrary amounts × bps)
+//!
+//!   - `edge_cases::test_max_fee_bps_10_percent`
+//!     → the 10 % cap is asserted over all amounts by `prop_max_fee_bps_bounded`;
+//!       a single fixed point adds no independent coverage
+//!
+//!   - `prop_batch_fee_summation`
+//!     → the assertion `total_fee == individual_sum` is a tautology: both sides
+//!       compute the identical expression, so the test can never fail regardless
+//!       of the implementation
+//!
+//! Retained (unique value):
+//!   - `edge_cases::test_rounding_down_one_stroop`
+//!     → pins the concrete rounding behaviour at the smallest possible input
+//!       (amount=1, fee_bps=1 → fee=0) which the property tests cannot guarantee
+//!       because `arb_amount()` starts at 1 but `arb_fee_bps()` can be 0.
+//!
+//!   - `edge_cases::test_large_amount_no_overflow`
+//!     → pins a concrete near-maximum i128 value; `prop_no_overflow_in_fee_math`
+//!       tests arbitrary valid inputs but never exercises `i128::MAX / 10_001`.
 
 #![cfg(test)]
 
@@ -66,19 +94,6 @@ proptest! {
         prop_assert!(amount <= 0);
     }
 
-    /// Batch settle: sum of individual fees equals total treasury accrual.
-    #[test]
-    fn prop_batch_fee_summation(
-        amounts in prop::collection::vec(arb_amount(), 1..10),
-        fee_bps in arb_fee_bps(),
-    ) {
-        let total_fee: i128 = amounts.iter().map(|&a| compute_fee(a, fee_bps).0).sum();
-        let individual_sum: i128 = amounts.iter()
-            .map(|&a| compute_fee(a, fee_bps).0)
-            .sum();
-        prop_assert_eq!(total_fee, individual_sum);
-    }
-
     /// Overflow safety: checked arithmetic on escrow amounts.
     #[test]
     fn prop_no_overflow_in_fee_math(amount in arb_amount(), fee_bps in arb_fee_bps()) {
@@ -88,41 +103,24 @@ proptest! {
     }
 }
 
+// ── Concrete edge cases (unique coverage not covered by proptest above) ───────
+
 #[cfg(test)]
 mod edge_cases {
     use super::*;
 
-    #[test]
-    fn test_zero_fee_bps() {
-        let (fee, net) = compute_fee(1_000_000, 0);
-        assert_eq!(fee, 0);
-        assert_eq!(net, 1_000_000);
-    }
-
-    #[test]
-    fn test_max_fee_bps_10_percent() {
-        let (fee, net) = compute_fee(1_000_000, 1_000);
-        assert_eq!(fee, 100_000);
-        assert_eq!(net, 900_000);
-    }
-
+    /// Integer division truncates: 1 unit × 1 bps = 0.0001 stroops → rounds to 0.
+    /// This pins the exact rounding boundary that the property tests never
+    /// guarantee at this specific (amount=1, bps=1) input.
     #[test]
     fn test_rounding_down_one_stroop() {
-        // 1 bps on 1 unit: 1 * 1 / 10_000 = 0
         let (fee, net) = compute_fee(1, 1);
-        assert_eq!(fee, 0);
+        assert_eq!(fee, 0, "fee should round down to 0 for 1 unit @ 1 bps");
         assert_eq!(net, 1);
     }
 
-    #[test]
-    fn test_fee_and_net_add_to_amount() {
-        for bps in [0u32, 1, 50, 100, 500, 1_000] {
-            let amount = 999_999i128;
-            let (fee, net) = compute_fee(amount, bps);
-            assert_eq!(fee + net, amount, "bps={bps}");
-        }
-    }
-
+    /// Near-maximum i128 value: verifies no overflow at a concrete extreme
+    /// that proptest's bounded strategy (`arb_amount`) never reaches.
     #[test]
     fn test_large_amount_no_overflow() {
         let amount = i128::MAX / 10_001;
