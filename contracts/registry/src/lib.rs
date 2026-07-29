@@ -426,3 +426,7 @@ mod fuzz_tests;
 
 #[cfg(test)]
 mod test;
+
+// #862 — lookup-function unit tests
+#[cfg(test)]
+mod lookup_tests;
