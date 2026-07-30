@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { notFound } from 'next/navigation';
-import { routing, RTL_LOCALES, isRTLLocale } from '@/i18n/routing';
+import { routing, isRTLLocale } from '@/i18n/routing';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { WalletProvider } from '@/lib/wallet';
 import { Navbar } from '@/components/layout/Navbar';
