@@ -1,7 +1,7 @@
 [advisories]
-# Ignore advisories for dependencies that have no fix available yet.
-# Format: ["RUSTSEC-YYYY-NNNN"]
 ignore = []
+severity_threshold = "high"
 
 [output]
-deny = ["unmaintained", "unsound", "vulnerability"]
+quiet = false
+deny = ["unmaintained", "unsound", "yanked"]
