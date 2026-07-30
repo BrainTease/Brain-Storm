@@ -54,6 +54,7 @@ pub struct NFTContract;
 
 #[contractimpl]
 impl NFTContract {
+    #[allow(clippy::too_many_arguments)]
     pub fn initialize(env: Env, admin: Address) {
         assert!(
             !env.storage().instance().has(&DataKey::Admin),
@@ -68,6 +69,7 @@ impl NFTContract {
         env.storage().instance().get(&DataKey::Admin).unwrap()
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn mint_course_nft(
         env: Env,
         admin: Address,

@@ -30,7 +30,8 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   if (!course) return { title: 'Course Not Found | Brain-Storm', robots: { index: false } };
 
   const title = `${course.title} | Brain-Storm`;
-  const description = course.description?.slice(0, 160) || 'Learn blockchain development on Stellar.';
+  const description =
+    course.description?.slice(0, 160) || 'Learn blockchain development on Stellar.';
   const canonical = `${SITE_URL}/courses/${course.id}`;
 
   return {

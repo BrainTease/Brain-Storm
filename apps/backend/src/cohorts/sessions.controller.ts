@@ -14,7 +14,7 @@ export class SessionsController {
   async createSession(
     @Param('cohortId') cohortId: string,
     @CurrentUser() user: any,
-    @Body() dto: CreateSessionDto,
+    @Body() dto: CreateSessionDto
   ) {
     return this.sessionsService.createSession(cohortId, user.id, dto);
   }
@@ -38,7 +38,7 @@ export class SessionsController {
   async recordAttendance(
     @Param('sessionId') sessionId: string,
     @CurrentUser() user: any,
-    @Query('status') status: AttendanceStatus = AttendanceStatus.PRESENT,
+    @Query('status') status: AttendanceStatus = AttendanceStatus.PRESENT
   ) {
     return this.sessionsService.recordAttendance(sessionId, user.id, status);
   }

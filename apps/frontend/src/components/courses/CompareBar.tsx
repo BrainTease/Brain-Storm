@@ -26,18 +26,28 @@ function CompareView({ courses, onClose }: { courses: ComparableCourse[]; onClos
       <div className="relative bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-auto">
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 sticky top-0 bg-white dark:bg-gray-900 z-10">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Compare Courses</h2>
-          <button onClick={onClose} aria-label="Close comparison" className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-xl leading-none">✕</button>
+          <button
+            onClick={onClose}
+            aria-label="Close comparison"
+            className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-xl leading-none"
+          >
+            ✕
+          </button>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-200 dark:border-gray-700">
-                <th className="text-left p-4 text-gray-500 dark:text-gray-400 font-medium w-28">Attribute</th>
+                <th className="text-left p-4 text-gray-500 dark:text-gray-400 font-medium w-28">
+                  Attribute
+                </th>
                 {courses.map((c) => (
                   <th key={c.id} className="p-4 text-left">
                     <p className="font-semibold text-gray-900 dark:text-white">{c.title}</p>
                     {c.description && (
-                      <p className="text-xs text-gray-500 dark:text-gray-400 font-normal mt-1 line-clamp-2">{c.description}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 font-normal mt-1 line-clamp-2">
+                        {c.description}
+                      </p>
                     )}
                   </th>
                 ))}
@@ -45,11 +55,14 @@ function CompareView({ courses, onClose }: { courses: ComparableCourse[]; onClos
             </thead>
             <tbody>
               {rows.map(({ label, key, format }) => (
-                <tr key={key} className={`border-b border-gray-100 dark:border-gray-800 ${differs(key) ? 'bg-yellow-50 dark:bg-yellow-900/10' : ''}`}>
+                <tr
+                  key={key}
+                  className={`border-b border-gray-100 dark:border-gray-800 ${differs(key) ? 'bg-yellow-50 dark:bg-yellow-900/10' : ''}`}
+                >
                   <td className="p-4 text-gray-500 dark:text-gray-400 font-medium">{label}</td>
                   {courses.map((c) => (
                     <td key={c.id} className="p-4 text-gray-900 dark:text-gray-100">
-                      {format ? format(c[key]) : (c[key] as string) ?? '—'}
+                      {format ? format(c[key]) : ((c[key] as string) ?? '—')}
                     </td>
                   ))}
                 </tr>
@@ -89,13 +102,25 @@ export function CompareBar() {
           Compare ({selected.length}/4):
         </span>
         {selected.map((c) => (
-          <span key={c.id} className="inline-flex items-center gap-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs px-2 py-1 rounded-full">
+          <span
+            key={c.id}
+            className="inline-flex items-center gap-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs px-2 py-1 rounded-full"
+          >
             {c.title}
-            <button onClick={() => remove(c.id)} aria-label={`Remove ${c.title} from comparison`} className="hover:text-blue-900 dark:hover:text-blue-100">✕</button>
+            <button
+              onClick={() => remove(c.id)}
+              aria-label={`Remove ${c.title} from comparison`}
+              className="hover:text-blue-900 dark:hover:text-blue-100"
+            >
+              ✕
+            </button>
           </span>
         ))}
         <div className="ml-auto flex gap-2">
-          <button onClick={clear} className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 underline">
+          <button
+            onClick={clear}
+            className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 underline"
+          >
             Clear
           </button>
           <button

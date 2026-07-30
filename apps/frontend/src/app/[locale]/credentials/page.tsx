@@ -70,7 +70,9 @@ export default function CredentialsPage() {
                 Issued: {new Date(cred.issuedAt).toLocaleDateString()}
               </p>
               {cred.expiresAt && (
-                <p className={`text-sm ${new Date(cred.expiresAt) < new Date() ? 'text-red-500' : 'text-gray-500 dark:text-gray-400'}`}>
+                <p
+                  className={`text-sm ${new Date(cred.expiresAt) < new Date() ? 'text-red-500' : 'text-gray-500 dark:text-gray-400'}`}
+                >
                   Expires: {new Date(cred.expiresAt).toLocaleDateString()}
                   {new Date(cred.expiresAt) < new Date() && ' · Expired'}
                 </p>

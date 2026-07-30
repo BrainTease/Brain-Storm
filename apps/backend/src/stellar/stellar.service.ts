@@ -44,15 +44,13 @@ export class StellarService {
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     @InjectRepository(StellarTransactionLog)
     private readonly txLogRepo: Repository<StellarTransactionLog>,
-    private readonly sorobanRpc: SorobanRpcClientService,
+    private readonly sorobanRpc: SorobanRpcClientService
   ) {
     const isTestnet = this.configService.get<string>('stellar.network') !== 'mainnet';
     this.networkPassphrase = isTestnet ? Networks.TESTNET : Networks.PUBLIC;
 
     this.server = new Horizon.Server(
-      isTestnet
-        ? 'https://horizon-testnet.stellar.org'
-        : 'https://horizon.stellar.org',
+      isTestnet ? 'https://horizon-testnet.stellar.org' : 'https://horizon.stellar.org'
     );
   }
 
@@ -69,7 +67,7 @@ export class StellarService {
       throw new Error('Friendbot is only available on testnet');
     }
     const response = await fetch(
-      `https://friendbot.stellar.org?addr=${encodeURIComponent(publicKey)}`,
+      `https://friendbot.stellar.org?addr=${encodeURIComponent(publicKey)}`
     );
     if (!response.ok) {
       const body = await response.text();
@@ -86,7 +84,7 @@ export class StellarService {
   async mintCertificateNFT(
     recipientPublicKey: string,
     certificateHash: string,
-    courseTitle: string,
+    courseTitle: string
   ): Promise<string> {
     try {
       const issuerKeypair = this.getIssuerKeypair();
@@ -100,7 +98,7 @@ export class StellarService {
           Operation.manageData({
             name: `brain-storm:cert:${certificateHash.slice(0, 28)}`,
             value: recipientPublicKey,
-          }),
+          })
         )
         .setTimeout(30)
         .build();
@@ -130,10 +128,7 @@ export class StellarService {
     }
   }
 
-  async issueCredential(
-    recipientPublicKey: string,
-    courseId: string,
-  ): Promise<string> {
+  async issueCredential(recipientPublicKey: string, courseId: string): Promise<string> {
     try {
       // Delegate Soroban progress-recording to the dedicated RPC service
       await this.sorobanRpc.recordProgress(recipientPublicKey, courseId, 100);
@@ -141,7 +136,7 @@ export class StellarService {
     } catch (error) {
       this.logger.error(
         `Failed to record progress on Soroban: ${error.message}, falling back to Horizon`,
-        error.stack,
+        error.stack
       );
       await this.issueCredentialFallback(recipientPublicKey, courseId);
     }
@@ -161,7 +156,7 @@ export class StellarService {
   async recordProgress(
     studentPublicKey: string,
     courseId: string,
-    progressPct: number,
+    progressPct: number
   ): Promise<string> {
     return this.sorobanRpc.recordProgress(studentPublicKey, courseId, progressPct);
   }
@@ -202,9 +197,7 @@ export class StellarService {
         operationCount: tx.operation_count,
       };
     } catch (error) {
-      this.logger.warn(
-        `Transaction verification failed for ${txHash}: ${error.message}`,
-      );
+      this.logger.warn(`Transaction verification failed for ${txHash}: ${error.message}`);
       return { verified: false, hash: txHash };
     }
   }
@@ -225,7 +218,7 @@ export class StellarService {
 
   private async issueCredentialFallback(
     recipientPublicKey: string,
-    courseId: string,
+    courseId: string
   ): Promise<void> {
     const issuerKeypair = this.getIssuerKeypair();
     const issuerAccount = await this.server.loadAccount(issuerKeypair.publicKey());
@@ -238,7 +231,7 @@ export class StellarService {
         Operation.manageData({
           name: `brain-storm:credential:${courseId}`,
           value: recipientPublicKey,
-        }),
+        })
       )
       .setTimeout(30)
       .build();
@@ -249,7 +242,7 @@ export class StellarService {
 
   private async mintCredentialViaHorizon(
     recipientPublicKey: string,
-    courseId: string,
+    courseId: string
   ): Promise<string> {
     const issuerKeypair = this.getIssuerKeypair();
     const issuerAccount = await this.server.loadAccount(issuerKeypair.publicKey());
@@ -262,7 +255,7 @@ export class StellarService {
         Operation.manageData({
           name: `brain-storm:credential:${courseId}`,
           value: recipientPublicKey,
-        }),
+        })
       )
       .setTimeout(30)
       .build();

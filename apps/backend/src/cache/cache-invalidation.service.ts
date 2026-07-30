@@ -34,7 +34,7 @@ export class CacheInvalidationService {
 
   constructor(
     private cacheService: CacheService,
-    private eventEmitter: EventEmitter2,
+    private eventEmitter: EventEmitter2
   ) {}
 
   async invalidateByKey(key: string, source: string = 'unknown'): Promise<void> {
@@ -69,7 +69,10 @@ export class CacheInvalidationService {
     await this.invalidateByKey(`${CacheKeys.COHORT_MEMBERS}${cohortId}`, source);
   }
 
-  async invalidateInstructorAnalytics(instructorId: string, source: string = 'unknown'): Promise<void> {
+  async invalidateInstructorAnalytics(
+    instructorId: string,
+    source: string = 'unknown'
+  ): Promise<void> {
     await this.invalidateByPrefix(`${CacheKeys.INSTRUCTOR_ANALYTICS}${instructorId}:`, source);
   }
 
@@ -88,7 +91,7 @@ export class CacheInvalidationService {
    * Protect against cache stampede by using probabilistic early expiration (jitter)
    */
   getTtlWithJitter(baseTtl: number, jitterPercent: number = 10): number {
-    const jitter = (Math.random() - 0.5) * 2 * (baseTtl * jitterPercent / 100);
+    const jitter = (Math.random() - 0.5) * 2 * ((baseTtl * jitterPercent) / 100);
     return Math.max(60, baseTtl + jitter); // Never less than 60 seconds
   }
 }

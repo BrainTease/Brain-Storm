@@ -34,7 +34,7 @@ export class AddPerformanceIndexes1760000000001 implements MigrationInterface {
       new TableIndex({
         name: 'IDX_ENROLLMENTS_USER_PROGRESS',
         columnNames: ['userId', 'completedAt'],
-      }),
+      })
     );
 
     // Reviews table — composite index for course rating aggregation.
@@ -43,7 +43,7 @@ export class AddPerformanceIndexes1760000000001 implements MigrationInterface {
       new TableIndex({
         name: 'IDX_REVIEWS_COURSE_RATING',
         columnNames: ['courseId', 'rating', 'createdAt'],
-      }),
+      })
     );
 
     // Notifications table — composite index for unread notification queries.
@@ -53,7 +53,7 @@ export class AddPerformanceIndexes1760000000001 implements MigrationInterface {
         name: 'IDX_NOTIFICATIONS_UNREAD',
         columnNames: ['userId', 'isRead', 'createdAt'],
         where: '"isRead" = false',
-      }),
+      })
     );
 
     // Progress table — composite index for completion-progress tracking.
@@ -62,7 +62,7 @@ export class AddPerformanceIndexes1760000000001 implements MigrationInterface {
       new TableIndex({
         name: 'IDX_PROGRESS_COURSE_COMPLETION',
         columnNames: ['courseId', 'progressPct', 'updatedAt'],
-      }),
+      })
     );
 
     // --- Check constraints (not expressible as entity decorators) -----------

@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  ForbiddenException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Grant } from './grant.entity';
@@ -19,7 +15,7 @@ export interface PaginatedGrants {
 export class GrantsService {
   constructor(
     @InjectRepository(Grant)
-    private readonly grantsRepo: Repository<Grant>,
+    private readonly grantsRepo: Repository<Grant>
   ) {}
 
   async create(dto: CreateGrantDto): Promise<Grant> {
@@ -64,7 +60,8 @@ export class GrantsService {
 
     // Only the original applicant or a reviewer may update
     if (grant.applicantId !== requesterId && grant.reviewerId !== requesterId) {
-      const isStatusUpdate = dto.status !== undefined || dto.reviewNotes !== undefined || dto.reviewerId !== undefined;
+      const isStatusUpdate =
+        dto.status !== undefined || dto.reviewNotes !== undefined || dto.reviewerId !== undefined;
       if (!isStatusUpdate) {
         throw new ForbiddenException('You do not have permission to update this grant');
       }

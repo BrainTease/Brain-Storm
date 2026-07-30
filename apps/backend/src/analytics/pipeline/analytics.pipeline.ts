@@ -24,7 +24,7 @@ export class AnalyticsPipeline {
     private readonly dataCollectionStage: DataCollectionStage,
     private readonly aggregationStage: AggregationStage,
     private readonly persistenceStage: PersistenceStage,
-    private readonly cacheStage: CacheStage,
+    private readonly cacheStage: CacheStage
   ) {}
 
   async run(courseId: string): Promise<CourseAnalytics> {

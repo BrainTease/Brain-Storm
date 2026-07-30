@@ -4,9 +4,7 @@ import { RecordProgressDto } from './dto/record-progress.dto';
 import { StellarService } from '../stellar/stellar.service';
 import { CredentialsService } from '../credentials/credentials.service';
 import { UsersService } from '../users/users.service';
-import {
-  PROGRESS_REPOSITORY_TOKEN,
-} from '../repositories/repositories.module';
+import { PROGRESS_REPOSITORY_TOKEN } from '../repositories/repositories.module';
 import { ProgressRepository } from '../repositories/progress-repository.interface';
 
 /**
@@ -23,10 +21,14 @@ export class ProgressService {
     private readonly progressRepository: ProgressRepository,
     private readonly stellarService: StellarService,
     private readonly credentialsService: CredentialsService,
-    private readonly usersService: UsersService,
+    private readonly usersService: UsersService
   ) {}
 
-  async record(userId: string, dto: RecordProgressDto, stellarPublicKey: string): Promise<Progress> {
+  async record(
+    userId: string,
+    dto: RecordProgressDto,
+    stellarPublicKey: string
+  ): Promise<Progress> {
     let progress = await this.progressRepository.findByUserAndCourse(userId, dto.courseId);
 
     if (!progress) {
@@ -45,7 +47,7 @@ export class ProgressService {
       const txHash = await this.stellarService.recordProgress(
         stellarPublicKey,
         dto.courseId,
-        dto.progressPct,
+        dto.progressPct
       );
       progress.txHash = txHash;
     } catch {

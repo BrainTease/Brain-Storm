@@ -5,12 +5,10 @@ import { GovernanceProposal } from './governance-proposal.entity';
 import { GovernanceProposalRepository } from './governance-proposal.repository.interface';
 
 @Injectable()
-export class TypeOrmGovernanceProposalRepository
-  implements GovernanceProposalRepository
-{
+export class TypeOrmGovernanceProposalRepository implements GovernanceProposalRepository {
   constructor(
     @InjectRepository(GovernanceProposal)
-    private readonly repo: Repository<GovernanceProposal>,
+    private readonly repo: Repository<GovernanceProposal>
   ) {}
 
   async findAll(options: {
@@ -54,10 +52,7 @@ export class TypeOrmGovernanceProposalRepository
     return this.repo.save(this.repo.create(proposal));
   }
 
-  async update(
-    id: string,
-    patch: Partial<GovernanceProposal>,
-  ): Promise<GovernanceProposal> {
+  async update(id: string, patch: Partial<GovernanceProposal>): Promise<GovernanceProposal> {
     await this.repo.update(id, patch);
     return this.repo.findOneOrFail({ where: { id } });
   }

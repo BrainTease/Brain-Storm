@@ -19,10 +19,7 @@ export class SecurityMiddleware implements NestMiddleware {
     // Disable legacy XSS auditor (covered by CSP)
     res.setHeader('X-XSS-Protection', '0');
     // Strict HTTPS enforcement (1 year, include sub-domains)
-    res.setHeader(
-      'Strict-Transport-Security',
-      'max-age=31536000; includeSubDomains',
-    );
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
     // Restrict referrer to same origin
     res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
     // Disallow FLoC / Topics API tracking

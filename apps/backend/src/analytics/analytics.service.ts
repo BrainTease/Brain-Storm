@@ -20,7 +20,7 @@ export class AnalyticsService {
     private readonly enrollmentRepo: Repository<Enrollment>,
     @Inject(CACHE_MANAGER)
     private readonly cache: Cache,
-    private readonly pipeline: AnalyticsPipeline,
+    private readonly pipeline: AnalyticsPipeline
   ) {}
 
   async getAnalytics(courseId: string): Promise<CourseAnalytics> {

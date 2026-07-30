@@ -11,7 +11,7 @@ export class CacheInterceptor implements NestInterceptor {
   constructor(
     private cacheService: CacheService,
     private invalidationService: CacheInvalidationService,
-    private reflector: Reflector,
+    private reflector: Reflector
   ) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
@@ -33,7 +33,11 @@ export class CacheInterceptor implements NestInterceptor {
     const cacheKey = this.generateCacheKey(request, prefix);
     const ttlWithJitter = this.invalidationService.getTtlWithJitter(ttl);
 
-    return this.cacheService.getOrSet(cacheKey, () => next.handle().toPromise(), Math.floor(ttlWithJitter));
+    return this.cacheService.getOrSet(
+      cacheKey,
+      () => next.handle().toPromise(),
+      Math.floor(ttlWithJitter)
+    );
   }
 
   private generateCacheKey(request: any, prefix?: string): string {

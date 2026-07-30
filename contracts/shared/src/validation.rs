@@ -24,5 +24,5 @@ pub fn require_future_timestamp(env: &Env, ts: u64) {
 }
 
 pub fn require_non_empty_string(s: &String) {
-    assert!(s.len() > 0, "String must not be empty");
+    assert!(!s.is_empty(), "String must not be empty");
 }

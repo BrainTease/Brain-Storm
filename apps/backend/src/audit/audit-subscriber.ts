@@ -1,4 +1,10 @@
-import { EventSubscriber, EntitySubscriberInterface, InsertEvent, UpdateEvent, RemoveEvent } from 'typeorm';
+import {
+  EventSubscriber,
+  EntitySubscriberInterface,
+  InsertEvent,
+  UpdateEvent,
+  RemoveEvent,
+} from 'typeorm';
 import { Injectable, Logger } from '@nestjs/common';
 import { AuditService } from './audit.service';
 import { AuditAction } from './audit-log.entity';
@@ -52,12 +58,7 @@ export class AuditSubscriber implements EntitySubscriberInterface {
       };
 
       // Log the audit entry
-      await this.auditService.log(
-        `entity.${action.toLowerCase()}`,
-        userId,
-        true,
-        metadata
-      );
+      await this.auditService.log(`entity.${action.toLowerCase()}`, userId, true, metadata);
     } catch (err) {
       // Don't let audit logging errors break the main operation
       this.logger.error('Failed to log audit entry:', err);
@@ -74,7 +75,7 @@ export class AuditSubscriber implements EntitySubscriberInterface {
     if (event?.connection?.dataSource?.options?.extra?.userId) {
       return event.connection.dataSource.options.extra.userId as string;
     }
-    
+
     // If we can't determine the user ID, return null (system action)
     return null;
   }
@@ -84,7 +85,7 @@ export class AuditSubscriber implements EntitySubscriberInterface {
    */
   private getEntityId(entity: any): string | number | undefined {
     if (!entity) return undefined;
-    
+
     // Try common ID field names
     return entity.id || entity._id || undefined;
   }
@@ -106,7 +107,7 @@ export class AuditSubscriber implements EntitySubscriberInterface {
       // Remove event
       return event.entity;
     }
-    
+
     return {};
   }
 }

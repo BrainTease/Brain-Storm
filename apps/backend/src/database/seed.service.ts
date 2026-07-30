@@ -24,17 +24,49 @@ export class SeedService {
 
   // Realistic names for generating demo data
   private readonly firstNames = [
-    'Alice', 'Bob', 'Charlie', 'Diana', 'Eve',
-    'Frank', 'Grace', 'Hank', 'Ivy', 'Jack',
-    'Kara', 'Leo', 'Mona', 'Nate', 'Olive',
-    'Pete', 'Quinn', 'Rosa', 'Sam', 'Tina',
+    'Alice',
+    'Bob',
+    'Charlie',
+    'Diana',
+    'Eve',
+    'Frank',
+    'Grace',
+    'Hank',
+    'Ivy',
+    'Jack',
+    'Kara',
+    'Leo',
+    'Mona',
+    'Nate',
+    'Olive',
+    'Pete',
+    'Quinn',
+    'Rosa',
+    'Sam',
+    'Tina',
   ];
 
   private readonly lastNames = [
-    'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia',
-    'Miller', 'Davis', 'Rodriguez', 'Martinez', 'Hernandez',
-    'Lopez', 'Gonzalez', 'Wilson', 'Anderson', 'Thomas',
-    'Taylor', 'Moore', 'Jackson', 'Martin', 'Lee',
+    'Johnson',
+    'Williams',
+    'Brown',
+    'Jones',
+    'Garcia',
+    'Miller',
+    'Davis',
+    'Rodriguez',
+    'Martinez',
+    'Hernandez',
+    'Lopez',
+    'Gonzalez',
+    'Wilson',
+    'Anderson',
+    'Thomas',
+    'Taylor',
+    'Moore',
+    'Jackson',
+    'Martin',
+    'Lee',
   ];
 
   private readonly courseTitles = [
@@ -103,7 +135,7 @@ export class SeedService {
     @InjectRepository(Review)
     private readonly reviewRepository: Repository<Review>,
     @InjectRepository(Notification)
-    private readonly notificationRepository: Repository<Notification>,
+    private readonly notificationRepository: Repository<Notification>
   ) {}
 
   async seed(options: SeedOptions = {}): Promise<void> {
@@ -183,8 +215,9 @@ export class SeedService {
         role: 'instructor',
         isVerified: true,
         bio: `Experienced instructor specializing in ${this.courseTitles[i]}`,
-        stellarPublicKey: `G${Array.from({ length: 55 }, () => 
-          'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'[Math.floor(Math.random() * 32)]
+        stellarPublicKey: `G${Array.from(
+          { length: 55 },
+          () => 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'[Math.floor(Math.random() * 32)]
         ).join('')}`,
       });
       instructors.push(instructor);
@@ -210,7 +243,8 @@ export class SeedService {
     const students: User[] = [];
     for (let i = 0; i < count * 2; i++) {
       const firstName = this.firstNames[i % this.firstNames.length];
-      const lastName = this.lastNames[Math.floor(i / this.firstNames.length) % this.lastNames.length];
+      const lastName =
+        this.lastNames[Math.floor(i / this.firstNames.length) % this.lastNames.length];
       const student = this.userRepository.create({
         email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}${i}@example.com`,
         username: `${firstName.toLowerCase()}_${lastName.toLowerCase()}`,
@@ -218,17 +252,21 @@ export class SeedService {
         role: 'student',
         isVerified: Math.random() > 0.2,
         bio: Math.random() > 0.5 ? `Student passionate about learning new technologies.` : null,
-        stellarPublicKey: Math.random() > 0.3
-          ? `G${Array.from({ length: 55 }, () =>
-              'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'[Math.floor(Math.random() * 32)]
-            ).join('')}`
-          : null,
+        stellarPublicKey:
+          Math.random() > 0.3
+            ? `G${Array.from(
+                { length: 55 },
+                () => 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'[Math.floor(Math.random() * 32)]
+              ).join('')}`
+            : null,
       });
       students.push(student);
     }
     await this.userRepository.save(students);
 
-    this.logger.log(`Created ${students.length} students, ${instructors.length} instructors, ${curators.length} curators, and admin`);
+    this.logger.log(
+      `Created ${students.length} students, ${instructors.length} instructors, ${curators.length} curators, and admin`
+    );
 
     return { students, instructors, curators, admin };
   }
@@ -287,8 +325,15 @@ export class SeedService {
       const lessonTitles = ['Overview', 'Deep Dive', 'Hands-On Exercise', 'Review & Quiz'];
       for (let l = 0; l < lessonCount; l++) {
         const titleSuffix = lessonTitles[l] || 'Section ' + (l + 1);
-        const lessonContent = '# ' + titleSuffix + '\n\n' +
-          'This is the content for lesson ' + (l + 1) + ' of ' + mod.title + '. ' +
+        const lessonContent =
+          '# ' +
+          titleSuffix +
+          '\n\n' +
+          'This is the content for lesson ' +
+          (l + 1) +
+          ' of ' +
+          mod.title +
+          '. ' +
           'It covers important concepts and provides practical examples.\n\n' +
           '## Key Points\n\n' +
           '- Concept 1 explained with examples\n' +
@@ -377,11 +422,13 @@ export class SeedService {
           lessonId: randomLesson.id,
           progressPct: Math.min(100, (i + 1) * 20 + Math.floor(Math.random() * 20)),
           completedAt: Math.random() > 0.6 ? new Date() : null,
-          txHash: Math.random() > 0.5
-            ? `0x${Array.from({ length: 64 }, () =>
-                '0123456789abcdef'[Math.floor(Math.random() * 16)]
-              ).join('')}`
-            : null,
+          txHash:
+            Math.random() > 0.5
+              ? `0x${Array.from(
+                  { length: 64 },
+                  () => '0123456789abcdef'[Math.floor(Math.random() * 16)]
+                ).join('')}`
+              : null,
         });
         progressRecords.push(progress);
       }
@@ -412,11 +459,12 @@ export class SeedService {
             userId: student.id,
             courseId: course.id,
             rating,
-            comment: rating >= 4
-              ? this.reviewComments[Math.floor(Math.random() * this.reviewComments.length)]
-              : rating === 3
-                ? 'Decent course, but there is room for improvement in the advanced sections.'
-                : 'The course did not meet my expectations. The content needs updating.',
+            comment:
+              rating >= 4
+                ? this.reviewComments[Math.floor(Math.random() * this.reviewComments.length)]
+                : rating === 3
+                  ? 'Decent course, but there is room for improvement in the advanced sections.'
+                  : 'The course did not meet my expectations. The content needs updating.',
           });
           reviews.push(review);
         }
@@ -432,7 +480,8 @@ export class SeedService {
 
     const notifications: Notification[] = [];
 
-    for (const enrollment of enrollments.slice(0, 50)) { // Limit to 50 notifications
+    for (const enrollment of enrollments.slice(0, 50)) {
+      // Limit to 50 notifications
       if (Math.random() > 0.5) continue;
 
       const notification = this.notificationRepository.create({

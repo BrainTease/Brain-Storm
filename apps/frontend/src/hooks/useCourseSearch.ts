@@ -56,7 +56,9 @@ export function useCourseSearch() {
   const [duration, setDuration] = useState(() => searchParams.get('duration') ?? '');
   const [language, setLanguage] = useState(() => searchParams.get('language') ?? '');
   const [price, setPrice] = useState(() => searchParams.get('price') ?? '');
-  const [sort, setSort] = useState<SortOption>(() => (searchParams.get('sort') as SortOption) ?? 'newest');
+  const [sort, setSort] = useState<SortOption>(
+    () => (searchParams.get('sort') as SortOption) ?? 'newest'
+  );
 
   const debouncedQuery = useDebounce(query);
 

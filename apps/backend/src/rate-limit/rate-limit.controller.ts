@@ -24,7 +24,7 @@ export class RateLimitController {
       req.user.id,
       req.user.role ?? 'guest',
       undefined,
-      req.user.plan,
+      req.user.plan
     );
   }
 
@@ -34,8 +34,8 @@ export class RateLimitController {
   @ApiOperation({ summary: 'Get rate limit configuration (admin)' })
   getConfig() {
     return {
-      roleLimits:     ROLE_RATE_LIMITS,
-      planLimits:     PLAN_RATE_LIMITS,
+      roleLimits: ROLE_RATE_LIMITS,
+      planLimits: PLAN_RATE_LIMITS,
       endpointLimits: ENDPOINT_RATE_LIMITS,
     };
   }

@@ -6,9 +6,7 @@ import { ProgressRepository } from './progress-repository.interface';
 
 @Injectable()
 export class TypeOrmProgressRepository implements ProgressRepository {
-  constructor(
-    @InjectRepository(Progress) private readonly repo: Repository<Progress>,
-  ) {}
+  constructor(@InjectRepository(Progress) private readonly repo: Repository<Progress>) {}
 
   findById(id: string): Promise<Progress | null> {
     return this.repo.findOne({ where: { id } });

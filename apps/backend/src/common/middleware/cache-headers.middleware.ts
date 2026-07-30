@@ -33,15 +33,13 @@ export class CacheHeadersMiddleware implements NestMiddleware {
 
     const path = req.path;
     const isAuthenticated = Boolean(req.headers['authorization']);
-    const publicRoute = CacheHeadersMiddleware.PUBLIC_ROUTES.find((r) =>
-      r.pattern.test(path),
-    );
+    const publicRoute = CacheHeadersMiddleware.PUBLIC_ROUTES.find((r) => r.pattern.test(path));
 
     if (publicRoute && !isAuthenticated) {
       // Public CDN-cacheable route
       res.setHeader(
         'Cache-Control',
-        `public, max-age=${publicRoute.maxAge}, stale-while-revalidate=${publicRoute.swr}`,
+        `public, max-age=${publicRoute.maxAge}, stale-while-revalidate=${publicRoute.swr}`
       );
     } else if (isAuthenticated) {
       // Authenticated: private cache only (browser cache, not CDN)

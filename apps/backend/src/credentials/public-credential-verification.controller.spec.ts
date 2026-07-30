@@ -57,7 +57,7 @@ describe('PublicCredentialVerificationController', () => {
     }).compile();
 
     controller = module.get<PublicCredentialVerificationController>(
-      PublicCredentialVerificationController,
+      PublicCredentialVerificationController
     );
   });
 
@@ -79,7 +79,10 @@ describe('PublicCredentialVerificationController', () => {
     });
 
     it('returns unverified status when stellar tx not found', async () => {
-      mockStellarService.verifyTransaction.mockResolvedValueOnce({ verified: false, hash: 'tx-hash-123' });
+      mockStellarService.verifyTransaction.mockResolvedValueOnce({
+        verified: false,
+        hash: 'tx-hash-123',
+      });
       const result = await controller.verifyById('cred-uuid');
       expect(result.status).toBe('unverified');
     });

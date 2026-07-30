@@ -56,7 +56,7 @@ export class IndexingWorker extends WorkerHost {
   }
 
   async process(
-    job: Job<IndexCourseJobData | IndexLessonJobData | IndexPostJobData | DeleteFromIndexJobData>,
+    job: Job<IndexCourseJobData | IndexLessonJobData | IndexPostJobData | DeleteFromIndexJobData>
   ): Promise<void> {
     switch (job.name) {
       case JOB_INDEX_COURSE: {

@@ -22,7 +22,7 @@ export class DataCollectionStage implements PipelineStage {
     @InjectRepository(Progress)
     private readonly progressRepo: Repository<Progress>,
     @InjectRepository(Review)
-    private readonly reviewRepo: Repository<Review>,
+    private readonly reviewRepo: Repository<Review>
   ) {}
 
   async execute(ctx: PipelineContext): Promise<void> {
@@ -66,9 +66,7 @@ export class DataCollectionStage implements PipelineStage {
       .getCount();
   }
 
-  private async fetchReviewStats(
-    courseId: string,
-  ): Promise<{ avg: string; cnt: string } | null> {
+  private async fetchReviewStats(courseId: string): Promise<{ avg: string; cnt: string } | null> {
     return this.reviewRepo
       .createQueryBuilder('r')
       .select('AVG(r.rating)', 'avg')
@@ -85,9 +83,7 @@ export class DataCollectionStage implements PipelineStage {
       .getRawOne<{ avg: string }>();
   }
 
-  private async fetchActiveLearners(
-    courseId: string,
-  ): Promise<{ cnt: string } | null> {
+  private async fetchActiveLearners(courseId: string): Promise<{ cnt: string } | null> {
     return this.progressRepo
       .createQueryBuilder('p')
       .where('p.courseId = :courseId', { courseId })

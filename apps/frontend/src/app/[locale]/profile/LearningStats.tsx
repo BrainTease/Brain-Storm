@@ -63,16 +63,15 @@ export default function LearningStats({ userId }: Props) {
           {/* Key metrics grid */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { label: 'Enrolled',     value: stats.coursesEnrolled,   emoji: '📚' },
-              { label: 'Completed',    value: stats.coursesCompleted,  emoji: '🎓' },
+              { label: 'Enrolled', value: stats.coursesEnrolled, emoji: '📚' },
+              { label: 'Completed', value: stats.coursesCompleted, emoji: '🎓' },
               { label: 'Certificates', value: stats.certificatesEarned, emoji: '📜' },
-              { label: 'Points',       value: stats.totalPoints,        emoji: '⭐' },
+              { label: 'Points', value: stats.totalPoints, emoji: '⭐' },
             ].map(({ label, value, emoji }) => (
-              <div
-                key={label}
-                className="rounded-lg bg-gray-50 dark:bg-gray-800 p-3 text-center"
-              >
-                <p className="text-xl" aria-hidden="true">{emoji}</p>
+              <div key={label} className="rounded-lg bg-gray-50 dark:bg-gray-800 p-3 text-center">
+                <p className="text-xl" aria-hidden="true">
+                  {emoji}
+                </p>
                 <p className="text-xl font-bold text-gray-900 dark:text-white">{value}</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">{label}</p>
               </div>
@@ -82,7 +81,10 @@ export default function LearningStats({ userId }: Props) {
           {/* Streak */}
           <div className="flex items-center justify-between text-sm">
             <span className="text-gray-700 dark:text-gray-300">
-              🔥 Current streak: <span className="font-semibold">{stats.currentStreak} day{stats.currentStreak !== 1 ? 's' : ''}</span>
+              🔥 Current streak:{' '}
+              <span className="font-semibold">
+                {stats.currentStreak} day{stats.currentStreak !== 1 ? 's' : ''}
+              </span>
             </span>
             <span className="text-gray-500 dark:text-gray-400">
               Best: {stats.longestStreak} day{stats.longestStreak !== 1 ? 's' : ''}
@@ -100,7 +102,9 @@ export default function LearningStats({ userId }: Props) {
           {/* Hours learned */}
           <p className="text-sm text-gray-600 dark:text-gray-300">
             ⏱️ Total time learning:{' '}
-            <span className="font-medium">{stats.hoursLearned} hour{stats.hoursLearned !== 1 ? 's' : ''}</span>
+            <span className="font-medium">
+              {stats.hoursLearned} hour{stats.hoursLearned !== 1 ? 's' : ''}
+            </span>
           </p>
 
           {/* Achievements */}
@@ -121,7 +125,10 @@ export default function LearningStats({ userId }: Props) {
                       {a.title}
                     </span>
                     <Badge variant="warning" className="text-xs py-0 px-1.5">
-                      {new Date(a.earnedAt).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}
+                      {new Date(a.earnedAt).toLocaleDateString(undefined, {
+                        month: 'short',
+                        year: 'numeric',
+                      })}
                     </Badge>
                   </div>
                 ))}

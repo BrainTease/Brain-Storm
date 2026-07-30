@@ -6,11 +6,11 @@ import { UserRateLimitService, RateLimitStatus } from './user-rate-limit.service
 
 function makeStatus(overrides: Partial<RateLimitStatus> = {}): RateLimitStatus {
   return {
-    limit:          100,
-    remaining:      99,
-    resetTime:      new Date(Date.now() + 60_000),
-    dailyQuota:     0,
-    dailyUsed:      0,
+    limit: 100,
+    remaining: 99,
+    resetTime: new Date(Date.now() + 60_000),
+    dailyQuota: 0,
+    dailyUsed: 0,
     dailyRemaining: -1,
     ...overrides,
   };
@@ -20,15 +20,17 @@ function makeReq(user?: Record<string, unknown>): any {
   return {
     user,
     method: 'GET',
-    path:   '/test',
-    route:  undefined,
+    path: '/test',
+    route: undefined,
   };
 }
 
 function makeRes(): any {
   const headers: Record<string, string> = {};
   return {
-    set: jest.fn((key: string, value: string) => { headers[key] = value; }),
+    set: jest.fn((key: string, value: string) => {
+      headers[key] = value;
+    }),
     _headers: headers,
   };
 }
@@ -42,7 +44,7 @@ describe('RateLimitMiddleware', () => {
 
   beforeEach(() => {
     rateLimitService = {
-      checkRateLimit:    jest.fn(),
+      checkRateLimit: jest.fn(),
       getRateLimitStatus: jest.fn(),
     } as unknown as jest.Mocked<UserRateLimitService>;
 
@@ -89,7 +91,7 @@ describe('RateLimitMiddleware', () => {
     rateLimitService.getRateLimitStatus.mockResolvedValue(status);
 
     await expect(
-      middleware.use(makeReq({ id: 'u3', role: 'student' }), makeRes(), next),
+      middleware.use(makeReq({ id: 'u3', role: 'student' }), makeRes(), next)
     ).rejects.toThrow(HttpException);
 
     try {
@@ -109,7 +111,9 @@ describe('RateLimitMiddleware', () => {
     const res = makeRes();
     try {
       await middleware.use(makeReq({ id: 'u4', role: 'student' }), res, next);
-    } catch { /* expected */ }
+    } catch {
+      /* expected */
+    }
 
     expect(res._headers['Retry-After']).toBeDefined();
   });
@@ -147,17 +151,13 @@ describe('RateLimitMiddleware', () => {
     rateLimitService.checkRateLimit.mockResolvedValue(true);
     rateLimitService.getRateLimitStatus.mockResolvedValue(status);
 
-    await middleware.use(
-      makeReq({ id: 'u7', role: 'student', plan: 'pro' }),
-      makeRes(),
-      next,
-    );
+    await middleware.use(makeReq({ id: 'u7', role: 'student', plan: 'pro' }), makeRes(), next);
 
     expect(rateLimitService.checkRateLimit).toHaveBeenCalledWith(
       'u7',
       'student',
       expect.any(String),
-      'pro',
+      'pro'
     );
   });
 

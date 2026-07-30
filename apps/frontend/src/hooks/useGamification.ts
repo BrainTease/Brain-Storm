@@ -53,7 +53,9 @@ export function useGamification(userId?: string): UseGamificationResult {
         if (!cancelled) setIsLoading(false);
       });
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [userId, tick]);
 
   return {

@@ -28,7 +28,10 @@ export class ValidationService {
   /**
    * Validate an object without throwing (returns errors)
    */
-  async validateDtoSilent<T>(dtoClass: new () => T, plainObject: any): Promise<{ valid: boolean; errors?: ValidationError[] }> {
+  async validateDtoSilent<T>(
+    dtoClass: new () => T,
+    plainObject: any
+  ): Promise<{ valid: boolean; errors?: ValidationError[] }> {
     const dto = plainToClass(dtoClass, plainObject);
     const errors = await validate(dto, {
       skipMissingProperties: false,

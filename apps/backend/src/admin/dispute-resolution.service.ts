@@ -16,11 +16,7 @@
  *   • User management (ban, suspend, role change)
  */
 
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Dispute, DisputeStatus } from './dispute.entity';
@@ -28,17 +24,14 @@ import { AuditService } from '../audit/audit.service';
 import { CreateDisputeDto, ResolveDisputeDto } from './admin.dto';
 
 /** Terminal statuses — a dispute in these states cannot be resolved again. */
-const TERMINAL_STATUSES: DisputeStatus[] = [
-  DisputeStatus.RESOLVED,
-  DisputeStatus.CLOSED,
-];
+const TERMINAL_STATUSES: DisputeStatus[] = [DisputeStatus.RESOLVED, DisputeStatus.CLOSED];
 
 @Injectable()
 export class DisputeResolutionService {
   constructor(
     @InjectRepository(Dispute)
     private readonly disputeRepo: Repository<Dispute>,
-    private readonly auditService: AuditService,
+    private readonly auditService: AuditService
   ) {}
 
   /**
@@ -87,22 +80,18 @@ export class DisputeResolutionService {
    *   - Dispute must not already be in a terminal state (BadRequestException)
    *   - Incoming status must be a terminal state (resolved / closed)
    */
-  async resolveDispute(
-    id: string,
-    dto: ResolveDisputeDto,
-    adminId: string,
-  ): Promise<Dispute> {
+  async resolveDispute(id: string, dto: ResolveDisputeDto, adminId: string): Promise<Dispute> {
     const dispute = await this.getDisputeOrThrow(id);
 
     if (this.isTerminal(dispute.status)) {
       throw new BadRequestException(
-        `Dispute ${id} is already ${dispute.status} and cannot be updated`,
+        `Dispute ${id} is already ${dispute.status} and cannot be updated`
       );
     }
 
     if (!this.isTerminal(dto.status)) {
       throw new BadRequestException(
-        `Resolution status must be '${DisputeStatus.RESOLVED}' or '${DisputeStatus.CLOSED}'`,
+        `Resolution status must be '${DisputeStatus.RESOLVED}' or '${DisputeStatus.CLOSED}'`
       );
     }
 

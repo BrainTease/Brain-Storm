@@ -6,7 +6,7 @@ import { DataSource, SelectQueryBuilder } from 'typeorm';
 export class ReadReplicaService {
   constructor(
     @InjectDataSource()
-    private readonly dataSource: DataSource,
+    private readonly dataSource: DataSource
   ) {}
 
   getReadConnection(): DataSource {
@@ -14,15 +14,11 @@ export class ReadReplicaService {
     return replicaHost ? this.dataSource : this.dataSource;
   }
 
-  async executeReadQuery<T>(
-    queryBuilder: SelectQueryBuilder<T>,
-  ): Promise<T[]> {
+  async executeReadQuery<T>(queryBuilder: SelectQueryBuilder<T>): Promise<T[]> {
     return queryBuilder.getMany();
   }
 
-  async executeReadOneQuery<T>(
-    queryBuilder: SelectQueryBuilder<T>,
-  ): Promise<T | null> {
+  async executeReadOneQuery<T>(queryBuilder: SelectQueryBuilder<T>): Promise<T | null> {
     return queryBuilder.getOne();
   }
 }

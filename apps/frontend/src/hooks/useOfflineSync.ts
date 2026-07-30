@@ -12,7 +12,9 @@ export function useOfflineSync() {
       if ('serviceWorker' in navigator) {
         const reg = await navigator.serviceWorker.ready.catch(() => null);
         if (reg && 'sync' in reg) {
-          await (reg as ServiceWorkerRegistration & { sync: { register(tag: string): Promise<void> } }).sync
+          await (
+            reg as ServiceWorkerRegistration & { sync: { register(tag: string): Promise<void> } }
+          ).sync
             .register('progress-sync')
             .catch(() => null);
         }

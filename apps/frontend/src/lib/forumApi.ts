@@ -54,8 +54,7 @@ export const forumApi = {
       })
       .then((r) => r.data),
 
-  getPost: (postId: string) =>
-    api.get<PostWithReplies>(`/posts/${postId}`).then((r) => r.data),
+  getPost: (postId: string) => api.get<PostWithReplies>(`/posts/${postId}`).then((r) => r.data),
 
   createPost: (courseId: string, data: { title: string; content: string; isPinned?: boolean }) =>
     api.post<Post>(`/courses/${courseId}/posts`, data).then((r) => r.data),
@@ -63,8 +62,7 @@ export const forumApi = {
   updatePost: (postId: string, data: { title?: string; content?: string }) =>
     api.patch<Post>(`/posts/${postId}`, data).then((r) => r.data),
 
-  deletePost: (postId: string) =>
-    api.delete(`/posts/${postId}`).then((r) => r.data),
+  deletePost: (postId: string) => api.delete(`/posts/${postId}`).then((r) => r.data),
 
   // Replies
   createReply: (postId: string, data: { content: string; isAnswer?: boolean }) =>
@@ -73,8 +71,7 @@ export const forumApi = {
   updateReply: (replyId: string, data: { content?: string }) =>
     api.patch<Reply>(`/replies/${replyId}`, data).then((r) => r.data),
 
-  deleteReply: (replyId: string) =>
-    api.delete(`/replies/${replyId}`).then((r) => r.data),
+  deleteReply: (replyId: string) => api.delete(`/replies/${replyId}`).then((r) => r.data),
 
   markAsAnswer: (replyId: string) =>
     api.post<Reply>(`/replies/${replyId}/mark-answer`, {}).then((r) => r.data),

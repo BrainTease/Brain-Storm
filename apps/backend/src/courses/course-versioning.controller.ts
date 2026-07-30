@@ -18,7 +18,7 @@ export class CourseVersioningController {
   createVersion(
     @Param('courseId') courseId: string,
     @Body('changeNote') changeNote: string,
-    @Request() req: { user: { id: string } },
+    @Request() req: { user: { id: string } }
   ) {
     return this.versioningService.createVersion(courseId, changeNote, req.user.id);
   }
@@ -38,7 +38,7 @@ export class CourseVersioningController {
   diffVersions(
     @Param('courseId') courseId: string,
     @Query('from') from: string,
-    @Query('to') to: string,
+    @Query('to') to: string
   ) {
     return this.versioningService.diffVersions(courseId, from, to);
   }

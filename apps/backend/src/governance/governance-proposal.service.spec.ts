@@ -6,11 +6,7 @@ import {
   GOVERNANCE_PROPOSAL_REPOSITORY,
   GovernanceProposalRepository,
 } from './governance-proposal.repository.interface';
-import {
-  GovernanceProposal,
-  ProposalStatus,
-  ProposalType,
-} from './governance-proposal.entity';
+import { GovernanceProposal, ProposalStatus, ProposalType } from './governance-proposal.entity';
 import {
   CreateProposalDto,
   UpdateProposalDto,
@@ -21,9 +17,7 @@ import { PaginatedResponseDto } from '../common/dto/api-response.dto';
 
 // ─── Fixtures ────────────────────────────────────────────────────────────────
 
-function makeProposal(
-  overrides: Partial<GovernanceProposal> = {},
-): GovernanceProposal {
+function makeProposal(overrides: Partial<GovernanceProposal> = {}): GovernanceProposal {
   return {
     id: 'prop-1',
     title: 'Test Proposal',
@@ -155,7 +149,7 @@ describe('GovernanceProposalService', () => {
           title: dto.title,
           status: ProposalStatus.DRAFT,
           quorumRequired: 5,
-        }),
+        })
       );
       expect(result).toBe(saved);
     });
@@ -166,10 +160,9 @@ describe('GovernanceProposalService', () => {
 
       await service.create(dto);
 
-      expect(eventEmitter.emit).toHaveBeenCalledWith(
-        'governance.proposal.created',
-        { proposalId: saved.id },
-      );
+      expect(eventEmitter.emit).toHaveBeenCalledWith('governance.proposal.created', {
+        proposalId: saved.id,
+      });
     });
 
     it('should set quorumRequired to 0 when not provided', async () => {
@@ -180,9 +173,7 @@ describe('GovernanceProposalService', () => {
 
       await service.create(noQuotaDto);
 
-      expect(repo.save).toHaveBeenCalledWith(
-        expect.objectContaining({ quorumRequired: 0 }),
-      );
+      expect(repo.save).toHaveBeenCalledWith(expect.objectContaining({ quorumRequired: 0 }));
     });
   });
 
@@ -199,7 +190,7 @@ describe('GovernanceProposalService', () => {
 
       expect(repo.update).toHaveBeenCalledWith(
         'prop-1',
-        expect.objectContaining({ title: 'Updated' }),
+        expect.objectContaining({ title: 'Updated' })
       );
       expect(result).toBe(updatedProposal);
     });
@@ -207,9 +198,9 @@ describe('GovernanceProposalService', () => {
     it('should throw BadRequestException when updating a non-DRAFT proposal', async () => {
       repo.findById.mockResolvedValue(makeProposal({ status: ProposalStatus.ACTIVE }));
 
-      await expect(
-        service.update('prop-1', { title: 'x' } as UpdateProposalDto),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.update('prop-1', { title: 'x' } as UpdateProposalDto)).rejects.toThrow(
+        BadRequestException
+      );
     });
 
     it('should preserve existing field values when partial dto is provided', async () => {
@@ -222,7 +213,7 @@ describe('GovernanceProposalService', () => {
 
       expect(repo.update).toHaveBeenCalledWith(
         'prop-1',
-        expect.objectContaining({ description: 'original desc' }),
+        expect.objectContaining({ description: 'original desc' })
       );
     });
   });
@@ -249,10 +240,9 @@ describe('GovernanceProposalService', () => {
 
       await service.activate('prop-1');
 
-      expect(eventEmitter.emit).toHaveBeenCalledWith(
-        'governance.proposal.activated',
-        { proposalId: 'prop-1' },
-      );
+      expect(eventEmitter.emit).toHaveBeenCalledWith('governance.proposal.activated', {
+        proposalId: 'prop-1',
+      });
     });
 
     it('should throw when proposal is not in DRAFT status', async () => {
@@ -333,10 +323,11 @@ describe('GovernanceProposalService', () => {
 
       await service.recordVote('prop-1', voteFor);
 
-      expect(eventEmitter.emit).toHaveBeenCalledWith(
-        'governance.proposal.voted',
-        { proposalId: 'prop-1', voter: 'GABC', support: true },
-      );
+      expect(eventEmitter.emit).toHaveBeenCalledWith('governance.proposal.voted', {
+        proposalId: 'prop-1',
+        voter: 'GABC',
+        support: true,
+      });
     });
 
     it('should throw when proposal is not ACTIVE', async () => {
@@ -347,7 +338,7 @@ describe('GovernanceProposalService', () => {
     it('should throw when the voting period has ended', async () => {
       const pastDate = new Date(Date.now() - 1000);
       repo.findById.mockResolvedValue(
-        makeProposal({ status: ProposalStatus.ACTIVE, votingEndsAt: pastDate }),
+        makeProposal({ status: ProposalStatus.ACTIVE, votingEndsAt: pastDate })
       );
       await expect(service.recordVote('prop-1', voteFor)).rejects.toThrow(BadRequestException);
     });
@@ -371,7 +362,7 @@ describe('GovernanceProposalService', () => {
 
       expect(repo.update).toHaveBeenCalledWith(
         'prop-1',
-        expect.objectContaining({ status: ProposalStatus.EXECUTED }),
+        expect.objectContaining({ status: ProposalStatus.EXECUTED })
       );
       expect(result.status).toBe(ProposalStatus.EXECUTED);
     });
@@ -391,7 +382,7 @@ describe('GovernanceProposalService', () => {
 
       expect(repo.update).toHaveBeenCalledWith(
         'prop-1',
-        expect.objectContaining({ status: ProposalStatus.REJECTED }),
+        expect.objectContaining({ status: ProposalStatus.REJECTED })
       );
       expect(result.status).toBe(ProposalStatus.REJECTED);
     });
@@ -415,30 +406,38 @@ describe('GovernanceProposalService', () => {
 
     it('should emit governance.proposal.executed event when passed', async () => {
       repo.findById.mockResolvedValue(
-        makeProposal({ status: ProposalStatus.ACTIVE, votesFor: 5, votesAgainst: 0, quorumRequired: 3 }),
+        makeProposal({
+          status: ProposalStatus.ACTIVE,
+          votesFor: 5,
+          votesAgainst: 0,
+          quorumRequired: 3,
+        })
       );
       repo.update.mockResolvedValue(makeProposal({ status: ProposalStatus.EXECUTED }));
 
       await service.execute('prop-1');
 
-      expect(eventEmitter.emit).toHaveBeenCalledWith(
-        'governance.proposal.executed',
-        { proposalId: 'prop-1' },
-      );
+      expect(eventEmitter.emit).toHaveBeenCalledWith('governance.proposal.executed', {
+        proposalId: 'prop-1',
+      });
     });
 
     it('should emit governance.proposal.rejected event when failed', async () => {
       repo.findById.mockResolvedValue(
-        makeProposal({ status: ProposalStatus.ACTIVE, votesFor: 0, votesAgainst: 5, quorumRequired: 3 }),
+        makeProposal({
+          status: ProposalStatus.ACTIVE,
+          votesFor: 0,
+          votesAgainst: 5,
+          quorumRequired: 3,
+        })
       );
       repo.update.mockResolvedValue(makeProposal({ status: ProposalStatus.REJECTED }));
 
       await service.execute('prop-1');
 
-      expect(eventEmitter.emit).toHaveBeenCalledWith(
-        'governance.proposal.rejected',
-        { proposalId: 'prop-1' },
-      );
+      expect(eventEmitter.emit).toHaveBeenCalledWith('governance.proposal.rejected', {
+        proposalId: 'prop-1',
+      });
     });
   });
 
@@ -447,7 +446,7 @@ describe('GovernanceProposalService', () => {
   describe('getStats', () => {
     it('should return correct vote statistics', async () => {
       repo.findById.mockResolvedValue(
-        makeProposal({ votesFor: 7, votesAgainst: 3, quorumRequired: 5 }),
+        makeProposal({ votesFor: 7, votesAgainst: 3, quorumRequired: 5 })
       );
 
       const stats = await service.getStats('prop-1');
@@ -463,7 +462,7 @@ describe('GovernanceProposalService', () => {
 
     it('should return zeros when no votes have been cast', async () => {
       repo.findById.mockResolvedValue(
-        makeProposal({ votesFor: 0, votesAgainst: 0, quorumRequired: 3 }),
+        makeProposal({ votesFor: 0, votesAgainst: 0, quorumRequired: 3 })
       );
 
       const stats = await service.getStats('prop-1');

@@ -92,12 +92,19 @@ describe('KycService', () => {
 
       const result = await service.upsertCustomer('GKEY', { firstName: 'Alice' });
 
-      expect(mockCustomerRepo.create).toHaveBeenCalledWith({ stellarPublicKey: 'GKEY', status: 'pending' });
+      expect(mockCustomerRepo.create).toHaveBeenCalledWith({
+        stellarPublicKey: 'GKEY',
+        status: 'pending',
+      });
       expect(result.providerId).toBe('sess-123');
     });
 
     it('resets an existing customer status to pending on re-submission', async () => {
-      const existing = { stellarPublicKey: 'GKEY', status: 'rejected' as KycStatus, providerId: 'old' } as KycCustomer;
+      const existing = {
+        stellarPublicKey: 'GKEY',
+        status: 'rejected' as KycStatus,
+        providerId: 'old',
+      } as KycCustomer;
       mockCustomerRepo.findOne.mockResolvedValue(existing);
       mockCustomerRepo.save.mockImplementation((c: any) => Promise.resolve(c));
 
@@ -185,12 +192,18 @@ describe('KycService', () => {
     it('returns early without throwing when customer not found', async () => {
       mockCustomerRepo.findOne.mockResolvedValue(null);
 
-      await expect(service.handleWebhook({ alias: 'UNKNOWN', status: 'APPROVED' })).resolves.toBeUndefined();
+      await expect(
+        service.handleWebhook({ alias: 'UNKNOWN', status: 'APPROVED' })
+      ).resolves.toBeUndefined();
       expect(mockCustomerRepo.save).not.toHaveBeenCalled();
     });
 
     it('looks up customer by session_id when alias not provided', async () => {
-      const customer = { stellarPublicKey: 'GKEY', status: 'pending' as KycStatus, providerId: 'sess-123' } as KycCustomer;
+      const customer = {
+        stellarPublicKey: 'GKEY',
+        status: 'pending' as KycStatus,
+        providerId: 'sess-123',
+      } as KycCustomer;
       mockCustomerRepo.findOne.mockResolvedValue(customer);
       mockCustomerRepo.save.mockImplementation((c: any) => Promise.resolve(c));
 

@@ -36,7 +36,7 @@ export class AuthService {
     private apiKeyRepo: Repository<ApiKey>,
     private encryptionService: EncryptionService,
     private auditService: AuditService,
-    private tokenBlacklistService: TokenBlacklistService,
+    private tokenBlacklistService: TokenBlacklistService
   ) {}
 
   async register(email: string, password: string, refCode?: string) {
@@ -68,26 +68,60 @@ export class AuthService {
     return { message: 'Registration successful. Please verify your email.' };
   }
 
-  async login(email: string, password: string, mfaToken?: string, ipAddress?: string, userAgent?: string) {
+  async login(
+    email: string,
+    password: string,
+    mfaToken?: string,
+    ipAddress?: string,
+    userAgent?: string
+  ) {
     const user = await this.usersService.findByEmail(email);
     if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
-      await this.auditService.log(AuditAction.LOGIN_FAILURE, null, false, { email }, ipAddress, userAgent);
+      await this.auditService.log(
+        AuditAction.LOGIN_FAILURE,
+        null,
+        false,
+        { email },
+        ipAddress,
+        userAgent
+      );
       throw new UnauthorizedException('Invalid credentials');
     }
 
     if (user.isBanned) {
-      await this.auditService.log(AuditAction.LOGIN_FAILURE, user.id, false, { reason: 'banned' }, ipAddress, userAgent);
+      await this.auditService.log(
+        AuditAction.LOGIN_FAILURE,
+        user.id,
+        false,
+        { reason: 'banned' },
+        ipAddress,
+        userAgent
+      );
       throw new UnauthorizedException('Account is banned');
     }
 
     if (!user.isVerified) {
-      await this.auditService.log(AuditAction.LOGIN_FAILURE, user.id, false, { reason: 'unverified' }, ipAddress, userAgent);
+      await this.auditService.log(
+        AuditAction.LOGIN_FAILURE,
+        user.id,
+        false,
+        { reason: 'unverified' },
+        ipAddress,
+        userAgent
+      );
       throw new ForbiddenException('Please verify your email before logging in');
     }
 
     // Enforce 2FA for admin accounts
     if (user.role === 'admin' && !user.mfaEnabled) {
-      await this.auditService.log(AuditAction.LOGIN_FAILURE, user.id, false, { reason: 'mfa_required' }, ipAddress, userAgent);
+      await this.auditService.log(
+        AuditAction.LOGIN_FAILURE,
+        user.id,
+        false,
+        { reason: 'mfa_required' },
+        ipAddress,
+        userAgent
+      );
       throw new ForbiddenException('Admin accounts must enable 2FA before logging in');
     }
 
@@ -105,7 +139,14 @@ export class AuthService {
         // Try backup code
         const used = await this.useBackupCode(user.id, mfaToken);
         if (!used) {
-          await this.auditService.log(AuditAction.LOGIN_FAILURE, user.id, false, { reason: 'invalid_mfa' }, ipAddress, userAgent);
+          await this.auditService.log(
+            AuditAction.LOGIN_FAILURE,
+            user.id,
+            false,
+            { reason: 'invalid_mfa' },
+            ipAddress,
+            userAgent
+          );
           throw new UnauthorizedException('Invalid MFA token');
         }
       }
@@ -284,7 +325,11 @@ export class AuthService {
     const result = verifySync({ token: code, secret });
     if (!result?.valid) throw new BadRequestException('Invalid MFA code');
 
-    await this.usersService.update(userId, { mfaEnabled: false, mfaSecret: null, mfaBackupCodes: [] });
+    await this.usersService.update(userId, {
+      mfaEnabled: false,
+      mfaSecret: null,
+      mfaBackupCodes: [],
+    });
     await this.auditService.log(AuditAction.MFA_DISABLED, userId, true);
     return { message: 'MFA disabled successfully' };
   }

@@ -96,10 +96,14 @@ export function TransactionModal({ xdr, description, onClose, onSuccess }: Trans
         {/* Content */}
         {step === 'build' && (
           <div className="space-y-3">
-            {description && <p className="text-sm text-gray-600 dark:text-gray-300">{description}</p>}
+            {description && (
+              <p className="text-sm text-gray-600 dark:text-gray-300">{description}</p>
+            )}
             <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-3">
               <p className="text-xs text-gray-500 mb-1">Signing as</p>
-              <p className="font-mono text-xs break-all text-gray-700 dark:text-gray-300">{address}</p>
+              <p className="font-mono text-xs break-all text-gray-700 dark:text-gray-300">
+                {address}
+              </p>
             </div>
             <div className="flex gap-2 pt-1">
               <button
@@ -120,7 +124,10 @@ export function TransactionModal({ xdr, description, onClose, onSuccess }: Trans
 
         {isInProgress && (
           <div className="flex flex-col items-center gap-3 py-4">
-            <span className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" aria-hidden="true" />
+            <span
+              className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"
+              aria-hidden="true"
+            />
             <p className="text-sm text-gray-500">
               {step === 'sign' ? 'Waiting for wallet signature…' : 'Broadcasting transaction…'}
             </p>
@@ -159,7 +166,10 @@ export function TransactionModal({ xdr, description, onClose, onSuccess }: Trans
               </button>
               <button
                 className="flex-1 bg-blue-600 text-white rounded-lg py-2 text-sm hover:bg-blue-700 transition-colors"
-                onClick={() => { setErrorMessage(null); run(); }}
+                onClick={() => {
+                  setErrorMessage(null);
+                  run();
+                }}
               >
                 Retry
               </button>
@@ -190,19 +200,23 @@ function StepIndicator({ current }: { current: TxStep }) {
               i < currentIndex
                 ? 'bg-blue-600 text-white'
                 : i === currentIndex
-                ? current === 'failed'
-                  ? 'bg-red-500 text-white'
-                  : 'bg-blue-600 text-white ring-2 ring-blue-200'
-                : 'bg-gray-100 dark:bg-gray-700 text-gray-400'
+                  ? current === 'failed'
+                    ? 'bg-red-500 text-white'
+                    : 'bg-blue-600 text-white ring-2 ring-blue-200'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-400'
             }`}
           >
             {i < currentIndex ? '✓' : i + 1}
           </div>
-          <span className={`text-xs hidden sm:block ${i <= currentIndex ? 'text-gray-700 dark:text-gray-300' : 'text-gray-400'}`}>
+          <span
+            className={`text-xs hidden sm:block ${i <= currentIndex ? 'text-gray-700 dark:text-gray-300' : 'text-gray-400'}`}
+          >
             {s.label}
           </span>
           {i < steps.length - 1 && (
-            <div className={`flex-1 h-px mx-1 ${i < currentIndex ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'}`} />
+            <div
+              className={`flex-1 h-px mx-1 ${i < currentIndex ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'}`}
+            />
           )}
         </div>
       ))}

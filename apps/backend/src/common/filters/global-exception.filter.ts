@@ -60,7 +60,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       details = exception.details;
       this.logger.warn(`AppError [${code}]: ${message}`, exception.stack);
 
-    // ── 2. Validation errors (BadRequestException from class-validator) ──────
+      // ── 2. Validation errors (BadRequestException from class-validator) ──────
     } else if (exception instanceof BadRequestException) {
       statusCode = exception.getStatus();
       code = 'VALIDATION_ERROR';
@@ -74,21 +74,23 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       }
       this.logger.debug(`Validation error: ${message}`);
 
-    // ── 3. Other NestJS / HTTP exceptions ────────────────────────────────────
+      // ── 3. Other NestJS / HTTP exceptions ────────────────────────────────────
     } else if (exception instanceof HttpException) {
       statusCode = exception.getStatus();
       const body = exception.getResponse();
       if (typeof body === 'object' && body !== null) {
         const b = body as Record<string, unknown>;
         message = typeof b['message'] === 'string' ? b['message'] : exception.message;
-        code = String(b['error'] ?? exception.name ?? 'HTTP_ERROR').toUpperCase().replace(/\s+/g, '_');
+        code = String(b['error'] ?? exception.name ?? 'HTTP_ERROR')
+          .toUpperCase()
+          .replace(/\s+/g, '_');
       } else {
         message = typeof body === 'string' ? body : exception.message;
         code = exception.name.toUpperCase().replace(/\s+/g, '_');
       }
       this.logger.warn(`HttpException [${statusCode}]: ${message}`);
 
-    // ── 4. Unhandled / unknown errors ────────────────────────────────────────
+      // ── 4. Unhandled / unknown errors ────────────────────────────────────────
     } else if (exception instanceof Error) {
       this.logger.error(`Unhandled exception: ${exception.message}`, exception.stack);
       // Do not leak internal error messages in production

@@ -1,4 +1,12 @@
-import { IsString, IsOptional, IsArray, IsEnum, IsNumber, IsDateString, Min } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsArray,
+  IsEnum,
+  IsNumber,
+  IsDateString,
+  Min,
+} from 'class-validator';
 import { JobStatus, ApplicationStatus } from '../job.entity';
 
 export class CreateJobDto {

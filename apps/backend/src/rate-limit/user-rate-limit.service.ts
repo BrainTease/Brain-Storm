@@ -31,30 +31,38 @@ export interface RateLimitStatus {
 
 /** Per-role default limits (configurable without redeploy via env). */
 export const ROLE_RATE_LIMITS: Record<string, RateLimitConfig> = {
-  admin:      { limit: Number(process.env.RATE_LIMIT_ADMIN)      || 10_000, windowMs: 60_000, dailyQuota: 0 },
-  instructor: { limit: Number(process.env.RATE_LIMIT_INSTRUCTOR) || 5_000,  windowMs: 60_000, dailyQuota: 0 },
-  student:    { limit: Number(process.env.RATE_LIMIT_STUDENT)    || 1_000,  windowMs: 60_000, dailyQuota: 0 },
-  guest:      { limit: Number(process.env.RATE_LIMIT_GUEST)      || 100,    windowMs: 60_000, dailyQuota: 200 },
+  admin: { limit: Number(process.env.RATE_LIMIT_ADMIN) || 10_000, windowMs: 60_000, dailyQuota: 0 },
+  instructor: {
+    limit: Number(process.env.RATE_LIMIT_INSTRUCTOR) || 5_000,
+    windowMs: 60_000,
+    dailyQuota: 0,
+  },
+  student: {
+    limit: Number(process.env.RATE_LIMIT_STUDENT) || 1_000,
+    windowMs: 60_000,
+    dailyQuota: 0,
+  },
+  guest: { limit: Number(process.env.RATE_LIMIT_GUEST) || 100, windowMs: 60_000, dailyQuota: 200 },
 };
 
 /** Per-plan limits — take precedence over role limits when set. */
 export const PLAN_RATE_LIMITS: Record<string, RateLimitConfig> = {
-  free:       { limit: 200,    windowMs: 60_000, dailyQuota: 1_000 },
-  pro:        { limit: 2_000,  windowMs: 60_000, dailyQuota: 10_000 },
+  free: { limit: 200, windowMs: 60_000, dailyQuota: 1_000 },
+  pro: { limit: 2_000, windowMs: 60_000, dailyQuota: 10_000 },
   enterprise: { limit: 10_000, windowMs: 60_000, dailyQuota: 0 },
 };
 
 /** Per-endpoint overrides (stricter limits for sensitive routes). */
 export const ENDPOINT_RATE_LIMITS: Record<string, RateLimitConfig> = {
-  'POST:/v1/auth/login':          { limit: 10, windowMs: 60_000,  dailyQuota: 0 },
-  'POST:/v1/auth/register':       { limit: 5,  windowMs: 60_000,  dailyQuota: 0 },
-  'POST:/v1/auth/password-reset': { limit: 5,  windowMs: 300_000, dailyQuota: 0 },
-  'GET:/v1/courses':              { limit: 200, windowMs: 60_000,  dailyQuota: 0 },
+  'POST:/v1/auth/login': { limit: 10, windowMs: 60_000, dailyQuota: 0 },
+  'POST:/v1/auth/register': { limit: 5, windowMs: 60_000, dailyQuota: 0 },
+  'POST:/v1/auth/password-reset': { limit: 5, windowMs: 300_000, dailyQuota: 0 },
+  'GET:/v1/courses': { limit: 200, windowMs: 60_000, dailyQuota: 0 },
 };
 
 /** Admin allowlist: these user IDs bypass all rate limiting. */
 const ADMIN_ALLOWLIST = new Set<string>(
-  (process.env.RATE_LIMIT_ALLOWLIST || '').split(',').filter(Boolean),
+  (process.env.RATE_LIMIT_ALLOWLIST || '').split(',').filter(Boolean)
 );
 
 // ─── Service ──────────────────────────────────────────────────────────────────
@@ -71,13 +79,13 @@ export class UserRateLimitService {
     userId: string,
     role: string,
     endpoint?: string,
-    plan?: string,
+    plan?: string
   ): Promise<boolean> {
     if (role === 'admin' || ADMIN_ALLOWLIST.has(userId)) return true;
 
     const config = this.resolveConfig(role, endpoint, plan);
     const windowKey = this.windowKey(userId, endpoint);
-    const dailyKey  = this.dailyKey(userId);
+    const dailyKey = this.dailyKey(userId);
 
     const now = Date.now();
     const timestamps = (await this.cacheManager.get<number[]>(windowKey)) ?? [];
@@ -89,11 +97,7 @@ export class UserRateLimitService {
     if (config.dailyQuota > 0) {
       const dailyCount = (await this.cacheManager.get<number>(dailyKey)) ?? 0;
       if (dailyCount >= config.dailyQuota) return false;
-      await this.cacheManager.set(
-        dailyKey,
-        dailyCount + 1,
-        this.msUntilMidnight(),
-      );
+      await this.cacheManager.set(dailyKey, dailyCount + 1, this.msUntilMidnight());
     }
 
     windowTimestamps.push(now);
@@ -105,29 +109,26 @@ export class UserRateLimitService {
     userId: string,
     role: string,
     endpoint?: string,
-    plan?: string,
+    plan?: string
   ): Promise<RateLimitStatus> {
     const config = this.resolveConfig(role, endpoint, plan);
     const windowKey = this.windowKey(userId, endpoint);
-    const dailyKey  = this.dailyKey(userId);
+    const dailyKey = this.dailyKey(userId);
 
     const now = Date.now();
     const timestamps = (await this.cacheManager.get<number[]>(windowKey)) ?? [];
     const windowTimestamps = timestamps.filter((t) => t > now - config.windowMs);
 
-    const dailyUsed = config.dailyQuota > 0
-      ? ((await this.cacheManager.get<number>(dailyKey)) ?? 0)
-      : 0;
+    const dailyUsed =
+      config.dailyQuota > 0 ? ((await this.cacheManager.get<number>(dailyKey)) ?? 0) : 0;
 
-    const dailyRemaining = config.dailyQuota > 0
-      ? Math.max(0, config.dailyQuota - dailyUsed)
-      : -1; // -1 = unlimited
+    const dailyRemaining = config.dailyQuota > 0 ? Math.max(0, config.dailyQuota - dailyUsed) : -1; // -1 = unlimited
 
     const status: RateLimitStatus = {
-      limit:          config.limit,
-      remaining:      Math.max(0, config.limit - windowTimestamps.length),
-      resetTime:      new Date(now + config.windowMs),
-      dailyQuota:     config.dailyQuota,
+      limit: config.limit,
+      remaining: Math.max(0, config.limit - windowTimestamps.length),
+      resetTime: new Date(now + config.windowMs),
+      dailyQuota: config.dailyQuota,
       dailyUsed,
       dailyRemaining,
     };

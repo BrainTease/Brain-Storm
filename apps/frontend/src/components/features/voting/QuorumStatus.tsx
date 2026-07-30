@@ -12,9 +12,7 @@ export function QuorumStatus({ totalVotes, quorumRequired }: QuorumStatusProps) 
   return (
     <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
       <div className="flex justify-between items-center mb-2">
-        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-          Quorum Status
-        </span>
+        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Quorum Status</span>
         <span
           className={`text-sm font-bold ${quorumReached ? 'text-green-600 dark:text-green-400' : 'text-orange-600 dark:text-orange-400'}`}
         >

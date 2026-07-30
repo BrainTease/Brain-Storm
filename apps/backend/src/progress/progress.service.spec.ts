@@ -133,7 +133,7 @@ describe('ProgressService', () => {
       mockCredentialsService.issue.mockResolvedValue(undefined);
       mockProgressRepo.count.mockResolvedValue(1); // first completion
       mockUsersService.findById
-        .mockResolvedValueOnce({ id: userId, referredBy: referrerId })   // user lookup
+        .mockResolvedValueOnce({ id: userId, referredBy: referrerId }) // user lookup
         .mockResolvedValueOnce({ id: referrerId, stellarPublicKey: referrerKey }); // referrer lookup
       mockStellarService.mintReward.mockResolvedValue(undefined);
 
@@ -199,7 +199,11 @@ describe('ProgressService', () => {
       mockProgressRepo.findOne.mockResolvedValue(null);
       mockProgressRepo.create.mockReturnValue(newProgress);
       mockStellarService.recordProgress.mockResolvedValue('txL');
-      mockProgressRepo.save.mockResolvedValue({ ...newProgress, lessonId: 'lesson-5', progressPct: 40 });
+      mockProgressRepo.save.mockResolvedValue({
+        ...newProgress,
+        lessonId: 'lesson-5',
+        progressPct: 40,
+      });
 
       await service.record(userId, dto as any, stellarKey);
 

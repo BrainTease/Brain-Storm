@@ -313,7 +313,7 @@ impl AnalyticsContract {
             .unwrap_or_else(|| vec![&env]);
 
         for milestone in milestones.iter() {
-            if progress_pct >= milestone && !achieved.contains(&milestone) {
+            if progress_pct >= milestone && !achieved.contains(milestone) {
                 achieved.push_back(milestone);
                 let record = MilestoneRecord {
                     student: student.clone(),
@@ -500,7 +500,7 @@ impl AnalyticsContract {
     /// Get the average progress percentage across all students in a course.
     pub fn get_course_average_progress(env: Env, course_id: Symbol) -> u32 {
         let records = Self::get_course_progress(env, course_id);
-        if records.len() == 0 {
+        if records.is_empty() {
             return 0;
         }
         let mut total: u64 = 0;
@@ -516,9 +516,9 @@ impl AnalyticsContract {
 
     /// Get completed courses for a student (filtered by completion status).
     pub fn get_completed_courses(env: Env, student: Address) -> Vec<ProgressRecord> {
-        let all_progress = Self::get_all_progress(env, student);
+        let all_progress = Self::get_all_progress(env.clone(), student);
         let mut completed = vec![&env];
-        
+
         for record in all_progress.iter() {
             if record.completed {
                 completed.push_back(record.clone());
@@ -529,9 +529,9 @@ impl AnalyticsContract {
 
     /// Get in-progress courses for a student (filtered by completion status).
     pub fn get_in_progress_courses(env: Env, student: Address) -> Vec<ProgressRecord> {
-        let all_progress = Self::get_all_progress(env, student);
+        let all_progress = Self::get_all_progress(env.clone(), student);
         let mut in_progress = vec![&env];
-        
+
         for record in all_progress.iter() {
             if !record.completed {
                 in_progress.push_back(record.clone());
@@ -548,13 +548,13 @@ impl AnalyticsContract {
         offset: u32,
         limit: u32,
     ) -> Vec<ProgressRecord> {
-        let all_progress = Self::get_all_progress(env, student);
+        let all_progress = Self::get_all_progress(env.clone(), student);
         let mut result = vec![&env];
-        
+
         let start = offset as usize;
-        let end = (offset as usize + limit as usize).min(all_progress.len());
-        
-        if start < all_progress.len() {
+        let end = (offset as usize + limit as usize).min(all_progress.len() as usize);
+
+        if start < all_progress.len() as usize {
             for i in start..end {
                 result.push_back(all_progress.get(i as u32).unwrap().clone());
             }
@@ -569,7 +569,7 @@ impl AnalyticsContract {
         min_progress_pct: u32,
     ) -> Vec<ProgressRecord> {
         assert!(min_progress_pct <= 100, "Threshold must be 0-100");
-        let all_progress = Self::get_all_progress(env, student);
+        let all_progress = Self::get_all_progress(env.clone(), student);
         let mut filtered = vec![&env];
         
         for record in all_progress.iter() {
@@ -583,13 +583,13 @@ impl AnalyticsContract {
     /// Count total completed courses for a student.
     pub fn count_completed_courses(env: Env, student: Address) -> u32 {
         let completed = Self::get_completed_courses(env, student);
-        completed.len() as u32
+        completed.len()
     }
 
     /// Get average progress across all courses for a student.
     pub fn get_average_progress(env: Env, student: Address) -> u32 {
         let all_progress = Self::get_all_progress(env, student);
-        if all_progress.len() == 0 {
+        if all_progress.is_empty() {
             return 0;
         }
         

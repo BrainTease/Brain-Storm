@@ -14,9 +14,7 @@ function makeConfigService(overrides: Record<string, any> = {}) {
   };
   return {
     get: jest.fn().mockImplementation((key: string, fallback: any) => {
-      return key in { ...defaults, ...overrides }
-        ? ({ ...defaults, ...overrides })[key]
-        : fallback;
+      return key in { ...defaults, ...overrides } ? { ...defaults, ...overrides }[key] : fallback;
     }),
   };
 }
@@ -42,9 +40,9 @@ describe('RoyaltyCalculationService.calculate', () => {
 
     const result = service.calculate(input);
 
-    expect(result.totalRevenue).toBe(1000);         // 10 × 100
-    expect(result.platformFee).toBe(200);           // 1000 × 20%
-    expect(result.instructorShare).toBe(800);       // 1000 – 200
+    expect(result.totalRevenue).toBe(1000); // 10 × 100
+    expect(result.platformFee).toBe(200); // 1000 × 20%
+    expect(result.instructorShare).toBe(800); // 1000 – 200
     expect(result.platformFeePercent).toBe(20);
     expect(result.courseId).toBe('course-1');
     expect(result.instructorId).toBe('inst-1');

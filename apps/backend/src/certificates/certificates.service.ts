@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  Logger,
-  BadRequestException,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, Logger, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as crypto from 'crypto';
@@ -21,7 +16,7 @@ export class CertificatesService {
     private readonly repo: Repository<Certificate>,
     @InjectRepository(Enrollment)
     private readonly enrollmentsRepo: Repository<Enrollment>,
-    private readonly stellarService: StellarService,
+    private readonly stellarService: StellarService
   ) {}
 
   async issueCertificate(dto: IssueCertificateDto): Promise<Certificate> {
@@ -57,10 +52,7 @@ export class CertificatesService {
     try {
       const stellarPublicKey = enrollment.user?.stellarPublicKey;
       if (stellarPublicKey) {
-        const txId = await this.stellarService.issueCredential(
-          stellarPublicKey,
-          courseId,
-        );
+        const txId = await this.stellarService.issueCredential(stellarPublicKey, courseId);
         saved.stellarTransactionId = txId;
         saved.status = 'minted';
         await this.repo.save(saved);
@@ -91,7 +83,7 @@ export class CertificatesService {
   }
 
   async verifyCertificate(
-    certificateHash: string,
+    certificateHash: string
   ): Promise<{ valid: boolean; certificate?: Certificate }> {
     const cert = await this.repo.findOne({
       where: { certificateHash },
@@ -107,9 +99,6 @@ export class CertificatesService {
   }
 
   private generateHash(userId: string, courseId: string): string {
-    return crypto
-      .createHash('sha256')
-      .update(`${userId}:${courseId}:${Date.now()}`)
-      .digest('hex');
+    return crypto.createHash('sha256').update(`${userId}:${courseId}:${Date.now()}`).digest('hex');
   }
 }

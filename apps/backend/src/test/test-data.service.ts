@@ -19,7 +19,7 @@ export class TestDataService {
     @InjectRepository(Enrollment)
     private enrollmentRepository: Repository<Enrollment>,
     @InjectRepository(Progress)
-    private progressRepository: Repository<Progress>,
+    private progressRepository: Repository<Progress>
   ) {}
 
   async seedBasicData(): Promise<void> {
@@ -35,10 +35,10 @@ export class TestDataService {
 
     // Create courses
     const courses = CourseFactory.createMany(5, { instructorId: instructors[0].id });
-    const premiumCourses = CourseFactory.createMany(2, { 
+    const premiumCourses = CourseFactory.createMany(2, {
       instructorId: instructors[1].id,
       price: 99.99,
-      requiresKyc: true 
+      requiresKyc: true,
     });
 
     await this.courseRepository.save([...courses, ...premiumCourses]);
@@ -46,13 +46,15 @@ export class TestDataService {
 
     // Create enrollments
     const enrollments = [];
-    users.forEach(user => {
+    users.forEach((user) => {
       const userCourses = courses.slice(0, Math.floor(Math.random() * 3) + 1);
-      userCourses.forEach(course => {
-        enrollments.push(EnrollmentFactory.create({
-          userId: user.id,
-          courseId: course.id,
-        }));
+      userCourses.forEach((course) => {
+        enrollments.push(
+          EnrollmentFactory.create({
+            userId: user.id,
+            courseId: course.id,
+          })
+        );
       });
     });
 
@@ -61,14 +63,16 @@ export class TestDataService {
 
     // Create progress records
     const progressRecords = [];
-    enrollments.forEach(enrollment => {
+    enrollments.forEach((enrollment) => {
       const progressCount = Math.floor(Math.random() * 5) + 1;
       for (let i = 0; i < progressCount; i++) {
-        progressRecords.push(ProgressFactory.create({
-          userId: enrollment.userId,
-          courseId: enrollment.courseId,
-          progressPct: Math.min(100, (i + 1) * 20 + Math.floor(Math.random() * 20)),
-        }));
+        progressRecords.push(
+          ProgressFactory.create({
+            userId: enrollment.userId,
+            courseId: enrollment.courseId,
+            progressPct: Math.min(100, (i + 1) * 20 + Math.floor(Math.random() * 20)),
+          })
+        );
       }
     });
 

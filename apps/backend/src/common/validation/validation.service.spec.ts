@@ -27,7 +27,9 @@ describe('ValidationService', () => {
     });
 
     it('should throw on invalid DTO', async () => {
-      await expect(service.validateDto(TestDto, { name: 'Jo' })).rejects.toThrow(BadRequestException);
+      await expect(service.validateDto(TestDto, { name: 'Jo' })).rejects.toThrow(
+        BadRequestException
+      );
     });
   });
 
@@ -60,12 +62,16 @@ describe('ValidationService', () => {
 
   describe('isValidStellarPublicKey', () => {
     it('should validate valid Stellar public keys', () => {
-      expect(service.isValidStellarPublicKey('GBRPYHIL2CI3WHZDTOOQFC6EB4KJJGUJJBBQ2EIISQE2BNXQ5BNRQ5')).toBe(true);
+      expect(
+        service.isValidStellarPublicKey('GBRPYHIL2CI3WHZDTOOQFC6EB4KJJGUJJBBQ2EIISQE2BNXQ5BNRQ5')
+      ).toBe(true);
     });
 
     it('should reject invalid Stellar public keys', () => {
       expect(service.isValidStellarPublicKey('invalid-key')).toBe(false);
-      expect(service.isValidStellarPublicKey('SBRPYHIL2CI3WHZDTOOQFC6EB4KJJGUJJBBQ2EIISQE2BNXQ5BNRQ5')).toBe(false);
+      expect(
+        service.isValidStellarPublicKey('SBRPYHIL2CI3WHZDTOOQFC6EB4KJJGUJJBBQ2EIISQE2BNXQ5BNRQ5')
+      ).toBe(false);
     });
   });
 

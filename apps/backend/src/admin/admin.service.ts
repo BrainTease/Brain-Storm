@@ -22,7 +22,7 @@ export class AdminService {
   constructor(
     private readonly auditService: AuditService,
     private readonly usersService: UsersService,
-    private readonly disputeResolutionService: DisputeResolutionService,
+    private readonly disputeResolutionService: DisputeResolutionService
   ) {}
 
   // ── User management ───────────────────────────────────────────────────────
@@ -33,7 +33,7 @@ export class AdminService {
       isBanned ? AuditAction.USER_BANNED : 'admin.user_unbanned',
       adminId,
       true,
-      { targetUserId: targetId },
+      { targetUserId: targetId }
     );
     return user;
   }

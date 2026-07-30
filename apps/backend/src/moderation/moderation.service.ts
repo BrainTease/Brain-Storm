@@ -90,7 +90,11 @@ export class ModerationService {
   /** Manually flag content */
   async flagContent(dto: FlagContentDto, userId: string): Promise<ModerationItem> {
     const existing = await this.itemRepo.findOne({
-      where: { contentType: dto.contentType, contentId: dto.contentId, status: ModerationStatus.PENDING },
+      where: {
+        contentType: dto.contentType,
+        contentId: dto.contentId,
+        status: ModerationStatus.PENDING,
+      },
     });
     if (existing) return existing;
 
@@ -102,7 +106,14 @@ export class ModerationService {
       flagReason: dto.reason ?? null,
     });
     const saved = await this.itemRepo.save(item);
-    await this.log(saved.id, dto.contentType, dto.contentId, ModerationAction.FLAG, userId, dto.reason);
+    await this.log(
+      saved.id,
+      dto.contentType,
+      dto.contentId,
+      ModerationAction.FLAG,
+      userId,
+      dto.reason
+    );
     return saved;
   }
 
@@ -146,7 +157,14 @@ export class ModerationService {
     item.appealReason = dto.reason;
     item.appealedByUserId = userId;
     const saved = await this.itemRepo.save(item);
-    await this.log(id, item.contentType, item.contentId, ModerationAction.APPEAL_SUBMITTED, userId, dto.reason);
+    await this.log(
+      id,
+      item.contentType,
+      item.contentId,
+      ModerationAction.APPEAL_SUBMITTED,
+      userId,
+      dto.reason
+    );
     return saved;
   }
 

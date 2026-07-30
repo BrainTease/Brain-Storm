@@ -37,7 +37,7 @@ export class QueueSchedulerService {
     @InjectQueue(QUEUE_EMAIL) private readonly emailQueue: Queue,
     @InjectQueue(QUEUE_NOTIFICATION) private readonly notificationQueue: Queue,
     @InjectQueue(QUEUE_CERTIFICATE) private readonly certificateQueue: Queue,
-    @InjectQueue(QUEUE_INDEXING) private readonly indexingQueue: Queue,
+    @InjectQueue(QUEUE_INDEXING) private readonly indexingQueue: Queue
   ) {}
 
   // ─── Cron jobs ──────────────────────────────────────────────────────────────
@@ -45,20 +45,28 @@ export class QueueSchedulerService {
   /** Daily midnight — clean up expired email queue entries */
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async scheduleCleanup() {
-    await this.emailQueue.add(JOB_CLEANUP_EXPIRED, {}, {
-      attempts: 3,
-      backoff: { type: 'exponential', delay: 5000 },
-    });
+    await this.emailQueue.add(
+      JOB_CLEANUP_EXPIRED,
+      {},
+      {
+        attempts: 3,
+        backoff: { type: 'exponential', delay: 5000 },
+      }
+    );
     this.logger.log('Scheduled cleanup job enqueued');
   }
 
   /** Every hour — extend TTLs for active sessions/caches */
   @Cron(CronExpression.EVERY_HOUR)
   async scheduleTtlExtension() {
-    await this.notificationQueue.add(JOB_TTL_EXTENSION, {}, {
-      attempts: 3,
-      backoff: { type: 'exponential', delay: 2000 },
-    });
+    await this.notificationQueue.add(
+      JOB_TTL_EXTENSION,
+      {},
+      {
+        attempts: 3,
+        backoff: { type: 'exponential', delay: 2000 },
+      }
+    );
     this.logger.log('Scheduled TTL-extension job enqueued');
   }
 
@@ -126,11 +134,10 @@ export class QueueSchedulerService {
   }
 
   async enqueueDeleteFromIndex(index: IndexName, id: string) {
-    return this.indexingQueue.add(
-      JOB_DELETE_FROM_INDEX,
-      { index, id } as DeleteFromIndexJobData,
-      { attempts: 3, backoff: { type: 'exponential', delay: 2000 } },
-    );
+    return this.indexingQueue.add(JOB_DELETE_FROM_INDEX, { index, id } as DeleteFromIndexJobData, {
+      attempts: 3,
+      backoff: { type: 'exponential', delay: 2000 },
+    });
   }
 
   // ─── DLQ inspection ──────────────────────────────────────────────────────────

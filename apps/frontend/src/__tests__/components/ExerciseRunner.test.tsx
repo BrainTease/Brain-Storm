@@ -54,7 +54,7 @@ describe('ExerciseRunner', () => {
       <ExerciseRunner
         exercise={{ ...mockExercise, starter: { ...mockExercise.starter, code: passingCode } }}
         onComplete={onComplete}
-      />,
+      />
     );
 
     const user = userEvent.setup();
@@ -66,7 +66,7 @@ describe('ExerciseRunner', () => {
           exerciseId: 'ex-1',
           passed: true,
           xpAwarded: 50,
-        }),
+        })
       );
     });
   });

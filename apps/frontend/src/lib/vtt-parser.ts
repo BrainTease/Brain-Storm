@@ -37,7 +37,7 @@ export function parseVTT(content: string): VTTLine[] {
     if (!timingLine) continue;
 
     const match = timingLine.match(
-      /(?:(\d{2}):)?(\d{2}:\d{2}\.\d{3})\s*-->\s*(?:(\d{2}):)?(\d{2}:\d{2}\.\d{3})/,
+      /(?:(\d{2}):)?(\d{2}:\d{2}\.\d{3})\s*-->\s*(?:(\d{2}):)?(\d{2}:\d{2}\.\d{3})/
     );
     if (!match) continue;
 
@@ -48,7 +48,10 @@ export function parseVTT(content: string): VTTLine[] {
       id,
       start,
       end,
-      text: textLines.join(' ').replace(/<[^>]+>/g, '').trim(),
+      text: textLines
+        .join(' ')
+        .replace(/<[^>]+>/g, '')
+        .trim(),
     });
   }
 

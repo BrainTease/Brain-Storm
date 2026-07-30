@@ -10,9 +10,13 @@ import {
 function makeCacheManager() {
   const store: Record<string, unknown> = {};
   return {
-    get:  jest.fn(async (key: string) => store[key] ?? undefined),
-    set:  jest.fn(async (key: string, value: unknown) => { store[key] = value; }),
-    del:  jest.fn(async (key: string) => { delete store[key]; }),
+    get: jest.fn(async (key: string) => store[key] ?? undefined),
+    set: jest.fn(async (key: string, value: unknown) => {
+      store[key] = value;
+    }),
+    del: jest.fn(async (key: string) => {
+      delete store[key];
+    }),
     _store: store, // exposed for assertions
   };
 }
@@ -71,8 +75,9 @@ describe('UserRateLimitService', () => {
     it('should block when daily quota is exhausted', async () => {
       const quota = ROLE_RATE_LIMITS['guest'].dailyQuota;
       // Inject exhausted daily count directly into the cache store
-      const dailyKey = Object.keys(cache._store).find((k) => k.startsWith('quota-daily:'))
-        ?? `quota-daily:u4:${new Date().toISOString().slice(0, 10)}`;
+      const dailyKey =
+        Object.keys(cache._store).find((k) => k.startsWith('quota-daily:')) ??
+        `quota-daily:u4:${new Date().toISOString().slice(0, 10)}`;
       cache._store[dailyKey] = quota;
 
       // The check should see the quota as full and deny
@@ -90,7 +95,7 @@ describe('UserRateLimitService', () => {
       expect(cache.set).toHaveBeenCalledWith(
         expect.stringContaining('quota-daily:'),
         1,
-        expect.any(Number),
+        expect.any(Number)
       );
     });
   });
@@ -101,11 +106,11 @@ describe('UserRateLimitService', () => {
     it('should return required status fields', async () => {
       const status = await service.getRateLimitStatus('u6', 'student');
       expect(status).toMatchObject({
-        limit:         expect.any(Number),
-        remaining:     expect.any(Number),
-        resetTime:     expect.any(Date),
-        dailyQuota:    expect.any(Number),
-        dailyUsed:     expect.any(Number),
+        limit: expect.any(Number),
+        remaining: expect.any(Number),
+        resetTime: expect.any(Date),
+        dailyQuota: expect.any(Number),
+        dailyUsed: expect.any(Number),
         dailyRemaining: expect.any(Number),
       });
     });
@@ -141,9 +146,7 @@ describe('UserRateLimitService', () => {
       await service.resetUserLimit('u9');
 
       expect(cache.del).toHaveBeenCalledWith('rate-limit:u9');
-      expect(cache.del).toHaveBeenCalledWith(
-        expect.stringContaining('quota-daily:u9:'),
-      );
+      expect(cache.del).toHaveBeenCalledWith(expect.stringContaining('quota-daily:u9:'));
     });
   });
 
@@ -154,9 +157,7 @@ describe('UserRateLimitService', () => {
       service.addToAllowlist('vip-user');
       const guestLimit = ROLE_RATE_LIMITS['guest'].limit;
       // Fill cache beyond limit
-      cache.get.mockImplementation(async () =>
-        Array(guestLimit + 1).fill(Date.now()),
-      );
+      cache.get.mockImplementation(async () => Array(guestLimit + 1).fill(Date.now()));
       expect(await service.checkRateLimit('vip-user', 'guest')).toBe(true);
     });
 
@@ -165,9 +166,7 @@ describe('UserRateLimitService', () => {
       service.removeFromAllowlist('vip2');
 
       const guestLimit = ROLE_RATE_LIMITS['guest'].limit;
-      cache.get.mockImplementation(async () =>
-        Array(guestLimit + 1).fill(Date.now()),
-      );
+      cache.get.mockImplementation(async () => Array(guestLimit + 1).fill(Date.now()));
       expect(await service.checkRateLimit('vip2', 'guest')).toBe(false);
     });
   });

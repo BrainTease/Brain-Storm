@@ -69,7 +69,7 @@ export class StellarController {
   getTransactionLogs(
     @Query('publicKey') publicKey?: string,
     @Query('type') type?: string,
-    @Query('status') status?: string,
+    @Query('status') status?: string
   ) {
     return this.stellarService.getTransactionLogs({
       recipientPublicKey: publicKey,

@@ -27,9 +27,7 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
   return (
     <>
       {children}
-      {tourActive && (
-        <Tour onComplete={handleTourComplete} onSkip={handleTourSkip} forceStart />
-      )}
+      {tourActive && <Tour onComplete={handleTourComplete} onSkip={handleTourSkip} forceStart />}
     </>
   );
 }

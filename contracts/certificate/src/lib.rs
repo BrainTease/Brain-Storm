@@ -352,7 +352,7 @@ impl CertificateContract {
             .persistent()
             .get(&key)
             .unwrap_or_else(|| soroban_sdk::vec![&env]);
-        ids.len() as u32
+        ids.len()
     }
 
     /// Check whether a certificate is transferable.

@@ -55,13 +55,8 @@ const schema = z.object({
     .string()
     .min(1, 'Field of study is required')
     .max(100, 'Field of study must be less than 100 characters'),
-  gpa: z
-    .number()
-    .min(0, 'GPA must be at least 0')
-    .max(4.0, 'GPA must not exceed 4.0'),
-  yearOfStudy: z
-    .string()
-    .min(1, 'Year of study is required'),
+  gpa: z.number().min(0, 'GPA must be at least 0').max(4.0, 'GPA must not exceed 4.0'),
+  yearOfStudy: z.string().min(1, 'Year of study is required'),
   financialNeed: z
     .string()
     .min(10, 'Please provide details about your financial need')
@@ -70,12 +65,13 @@ const schema = z.object({
     .string()
     .min(100, 'Essay must be at least 100 characters')
     .max(2000, 'Essay must be less than 2000 characters'),
-  agreement: z
-    .boolean()
-    .refine((v) => v === true, 'You must agree to the terms'),
+  agreement: z.boolean().refine((v) => v === true, 'You must agree to the terms'),
 });
 
-export function ScholarshipApplicationForm({ onSubmit, onCancel }: ScholarshipApplicationFormProps) {
+export function ScholarshipApplicationForm({
+  onSubmit,
+  onCancel,
+}: ScholarshipApplicationFormProps) {
   const [currentStep, setCurrentStep] = useState(1);
 
   const form = useZodForm<ScholarshipApplicationValues>({
@@ -234,7 +230,8 @@ export function ScholarshipApplicationForm({ onSubmit, onCancel }: ScholarshipAp
                   id="agreement"
                 />
                 <label htmlFor="agreement" className="text-sm text-gray-700 dark:text-gray-300">
-                  I certify that the information provided is accurate and complete, and I agree to the scholarship terms and conditions.
+                  I certify that the information provided is accurate and complete, and I agree to
+                  the scholarship terms and conditions.
                 </label>
               </div>
               {form.formState.errors.agreement && (
@@ -247,30 +244,16 @@ export function ScholarshipApplicationForm({ onSubmit, onCancel }: ScholarshipAp
 
           {/* Navigation Buttons */}
           <div className="flex gap-3 mt-8 pt-8 border-t border-gray-200 dark:border-gray-700">
-            <Button
-              type="button"
-              onClick={onCancel}
-              variant="outline"
-              className="flex-1"
-            >
+            <Button type="button" onClick={onCancel} variant="outline" className="flex-1">
               Cancel
             </Button>
             {currentStep > 1 && (
-              <Button
-                type="button"
-                onClick={handlePrevious}
-                variant="outline"
-                className="flex-1"
-              >
+              <Button type="button" onClick={handlePrevious} variant="outline" className="flex-1">
                 Previous
               </Button>
             )}
             {currentStep < STEP_COUNT && (
-              <Button
-                type="button"
-                onClick={handleNext}
-                className="flex-1"
-              >
+              <Button type="button" onClick={handleNext} className="flex-1">
                 Next Step
               </Button>
             )}

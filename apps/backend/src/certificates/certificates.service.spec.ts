@@ -27,7 +27,7 @@ function buildService() {
   const service = new CertificatesService(
     certRepo as any,
     enrollmentRepo as any,
-    stellarService as any,
+    stellarService as any
   );
   return { service, certRepo, enrollmentRepo, stellarService };
 }
@@ -46,7 +46,7 @@ describe('CertificatesService', () => {
       enrollmentRepo.findOne.mockResolvedValue(null);
 
       await expect(
-        service.issueCertificate({ userId: VALID_UUID_1, courseId: VALID_UUID_2 }),
+        service.issueCertificate({ userId: VALID_UUID_1, courseId: VALID_UUID_2 })
       ).rejects.toThrow(new BadRequestException('Enrollment not found for this user and course'));
     });
 
@@ -60,7 +60,7 @@ describe('CertificatesService', () => {
       });
 
       await expect(
-        service.issueCertificate({ userId: VALID_UUID_1, courseId: VALID_UUID_2 }),
+        service.issueCertificate({ userId: VALID_UUID_1, courseId: VALID_UUID_2 })
       ).rejects.toThrow(new BadRequestException('Course has not been completed yet'));
     });
 
@@ -75,7 +75,7 @@ describe('CertificatesService', () => {
       certRepo.findOne.mockResolvedValue({ id: 'existing-cert' });
 
       await expect(
-        service.issueCertificate({ userId: VALID_UUID_1, courseId: VALID_UUID_2 }),
+        service.issueCertificate({ userId: VALID_UUID_1, courseId: VALID_UUID_2 })
       ).rejects.toThrow(new BadRequestException('Certificate already issued for this course'));
     });
 
@@ -99,10 +99,13 @@ describe('CertificatesService', () => {
       certRepo.create.mockReturnValue(newCert);
       certRepo.save.mockResolvedValue(newCert);
 
-      const result = await service.issueCertificate({ userId: VALID_UUID_1, courseId: VALID_UUID_2 });
+      const result = await service.issueCertificate({
+        userId: VALID_UUID_1,
+        courseId: VALID_UUID_2,
+      });
 
       expect(certRepo.create).toHaveBeenCalledWith(
-        expect.objectContaining({ userId: VALID_UUID_1, courseId: VALID_UUID_2, status: 'pending' }),
+        expect.objectContaining({ userId: VALID_UUID_1, courseId: VALID_UUID_2, status: 'pending' })
       );
       expect(certRepo.save).toHaveBeenCalled();
       expect(result).toEqual(newCert);
@@ -118,7 +121,11 @@ describe('CertificatesService', () => {
       });
       certRepo.findOne.mockResolvedValue(null);
 
-      const savedCert = { id: 'cert-uuid', status: 'pending', stellarTransactionId: undefined } as any;
+      const savedCert = {
+        id: 'cert-uuid',
+        status: 'pending',
+        stellarTransactionId: undefined,
+      } as any;
       certRepo.create.mockReturnValue(savedCert);
       certRepo.save.mockResolvedValue(savedCert);
       stellarService.issueCredential.mockResolvedValue('TX_HASH_ABC');
@@ -148,7 +155,7 @@ describe('CertificatesService', () => {
 
       // Should resolve (not throw) even though Stellar failed
       await expect(
-        service.issueCertificate({ userId: VALID_UUID_1, courseId: VALID_UUID_2 }),
+        service.issueCertificate({ userId: VALID_UUID_1, courseId: VALID_UUID_2 })
       ).resolves.toBeDefined();
     });
 
@@ -186,7 +193,7 @@ describe('CertificatesService', () => {
       certRepo.findOne.mockResolvedValue(null);
 
       await expect(service.getCertificate('missing')).rejects.toThrow(
-        new NotFoundException('Certificate not found'),
+        new NotFoundException('Certificate not found')
       );
     });
   });
@@ -246,7 +253,7 @@ describe('CertificatesService', () => {
 
       await expect(service.getUserCertificates(VALID_UUID_1)).resolves.toEqual(certs);
       expect(certRepo.find).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { userId: VALID_UUID_1 } }),
+        expect.objectContaining({ where: { userId: VALID_UUID_1 } })
       );
     });
 

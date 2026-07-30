@@ -24,7 +24,8 @@ export class TypeOrmCredentialsRepository implements CredentialsRepository {
   }
 
   findByUser(userId: string): Promise<Credential[]> {
-    return this.repo.createQueryBuilder('credential')
+    return this.repo
+      .createQueryBuilder('credential')
       .leftJoinAndSelect('credential.course', 'course')
       .select([
         'credential.id',

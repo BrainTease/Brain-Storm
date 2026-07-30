@@ -12,12 +12,18 @@ export class UpdateUserDto {
   @Trim()
   username?: string;
 
-  @ApiPropertyOptional({ example: 'https://cdn.example.com/avatars/user.png', description: 'Avatar URL' })
+  @ApiPropertyOptional({
+    example: 'https://cdn.example.com/avatars/user.png',
+    description: 'Avatar URL',
+  })
   @IsOptional()
   @IsUrl()
   avatar?: string;
 
-  @ApiPropertyOptional({ example: 'Blockchain enthusiast and educator.', description: 'Short bio (max 500 chars)' })
+  @ApiPropertyOptional({
+    example: 'Blockchain enthusiast and educator.',
+    description: 'Short bio (max 500 chars)',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(500)
