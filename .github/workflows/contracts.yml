@@ -44,6 +44,45 @@ jobs:
         run: timeout 60 cargo test --lib fuzz || true
         working-directory: contracts
 
+      # ── Coverage gate (85 % line coverage required) ────────────────────────
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-llvm-cov
+
+      - name: Run coverage and enforce 85% gate
+        id: coverage
+        run: |
+          cargo llvm-cov \
+            --workspace \
+            --all-features \
+            --summary-only \
+            --fail-under-lines 85 \
+            -- --test-threads=1 \
+          2>&1 | tee coverage-summary.txt
+          echo "Coverage gate: 85% line coverage required"
+        working-directory: contracts
+
+      - name: Upload coverage summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: contracts-coverage-summary
+          path: contracts/coverage-summary.txt
+          retention-days: 30
+
+      - name: Coverage badge summary
+        if: always()
+        run: |
+          echo "## Contract Coverage Report" >> $GITHUB_STEP_SUMMARY
+          echo "Gate: **85% line coverage required**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f contracts/coverage-summary.txt ]; then
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            tail -20 contracts/coverage-summary.txt >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi
+
       - name: cargo fmt check
         run: cargo fmt --all -- --check
         working-directory: contracts
@@ -69,6 +108,7 @@ jobs:
           echo "- Clippy lint: PASSED" >> $GITHUB_STEP_SUMMARY
           echo "- Audit check: PASSED" >> $GITHUB_STEP_SUMMARY
           echo "- Deny check: PASSED" >> $GITHUB_STEP_SUMMARY
+          echo "- Coverage gate (≥85%): ${{ steps.coverage.outcome == 'success' && 'PASSED ✅' || 'FAILED ❌' }}" >> $GITHUB_STEP_SUMMARY
 
   contracts-build-wasm:
     name: Contracts - Build WASM
