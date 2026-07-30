@@ -36,7 +36,7 @@ export class WebhookDelivery {
   attempts: number;
 
   @Column({ nullable: true, type: 'timestamp' })
-  nextRetryAt: Date;
+  nextRetryAt: Date | null;
 
   /** Set when this delivery moves to the dead-letter queue */
   @Column({ nullable: true, type: 'timestamp' })

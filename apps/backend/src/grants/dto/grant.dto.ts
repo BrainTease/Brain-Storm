@@ -1,6 +1,7 @@
 import { IsString, IsNotEmpty, IsNumber, IsPositive, IsOptional, IsIn, MaxLength, Min } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
+import { PaginationDto } from '../../common/dto/pagination.dto';
 import type { GrantStatus } from '../grant.entity';
 
 export class CreateGrantDto {
@@ -70,21 +71,11 @@ export class UpdateGrantDto {
   reviewerId?: string;
 }
 
-export class PaginateGrantsDto {
-  @ApiPropertyOptional({ default: 1 })
-  @IsOptional()
-  @IsNumber()
-  @Min(1)
-  @Type(() => Number)
-  page?: number;
-
-  @ApiPropertyOptional({ default: 20 })
-  @IsOptional()
-  @IsNumber()
-  @Min(1)
-  @Type(() => Number)
-  limit?: number;
-
+/**
+ * #807: Extends shared PaginationDto to avoid duplicating page/limit fields.
+ * Adds grant-specific filter (status).
+ */
+export class PaginateGrantsDto extends PaginationDto {
   @ApiPropertyOptional({ enum: ['open', 'under_review', 'approved', 'rejected', 'closed'] })
   @IsOptional()
   @IsIn(['open', 'under_review', 'approved', 'rejected', 'closed'])

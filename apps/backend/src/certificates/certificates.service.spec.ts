@@ -1,5 +1,7 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { CertificatesService } from './certificates.service';
+import { CertificateValidationService } from './certificate-validation.service';
+import { CertificateMintingService } from './certificate-minting.service';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Mock factories
@@ -20,14 +22,28 @@ const mockStellarService = () => ({
   issueCredential: jest.fn(),
 });
 
+/**
+ * Build a CertificatesService wired with the new modular sub-services.
+ * CertificateValidationService and CertificateMintingService are created
+ * with their own repos/services so all three layers can be exercised.
+ */
 function buildService() {
   const certRepo = mockCertRepo();
   const enrollmentRepo = mockEnrollmentRepo();
   const stellarService = mockStellarService();
+
+  // Real sub-service instances backed by mocks so the full flow runs
+  const validationService = new CertificateValidationService(enrollmentRepo as any);
+  const mintingService = new CertificateMintingService(certRepo as any, stellarService as any);
+  jest.spyOn((mintingService as any).logger, 'log').mockImplementation(() => undefined);
+  jest.spyOn((mintingService as any).logger, 'warn').mockImplementation(() => undefined);
+  jest.spyOn((mintingService as any).logger, 'error').mockImplementation(() => undefined);
+
   const service = new CertificatesService(
     certRepo as any,
-    enrollmentRepo as any,
     stellarService as any,
+    validationService,
+    mintingService,
   );
   return { service, certRepo, enrollmentRepo, stellarService };
 }
@@ -118,7 +134,7 @@ describe('CertificatesService', () => {
       });
       certRepo.findOne.mockResolvedValue(null);
 
-      const savedCert = { id: 'cert-uuid', status: 'pending', stellarTransactionId: undefined } as any;
+      const savedCert = { id: 'cert-uuid', courseId: VALID_UUID_2, userId: VALID_UUID_1, status: 'pending', stellarTransactionId: undefined } as any;
       certRepo.create.mockReturnValue(savedCert);
       certRepo.save.mockResolvedValue(savedCert);
       stellarService.issueCredential.mockResolvedValue('TX_HASH_ABC');
