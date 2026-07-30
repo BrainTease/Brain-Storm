@@ -12,6 +12,7 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
+import { ConfigService } from '@nestjs/config';
 
 @ApiTags('Health')
 @Controller('health')
@@ -23,6 +24,7 @@ export class HealthController {
     private http: HttpHealthIndicator,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+    private readonly configService: ConfigService,
   ) {}
 
   /**
@@ -103,7 +105,10 @@ export class HealthController {
   }
 
   private async checkStellarHorizon(): Promise<HealthIndicatorResult> {
-    const horizonUrl = process.env.STELLAR_HORIZON_URL || 'https://horizon-testnet.stellar.org';
+    // #805: use central config instead of raw process.env
+    const horizonUrl =
+      this.configService.get<string>('stellar.horizonUrl') ||
+      'https://horizon-testnet.stellar.org';
     try {
       return await this.http.pingCheck('stellar_horizon', `${horizonUrl}/health`);
     } catch (error) {

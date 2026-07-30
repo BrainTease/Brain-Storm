@@ -1,5 +1,5 @@
 #[cfg(test)]
-mod test {
+mod tests {
     use crate::{RegistryContract, RegistryContractClient, VerificationLevel};
     use soroban_sdk::{symbol_short, testutils::Address as _, vec, Address, Env, Vec};
 

@@ -4,21 +4,18 @@ import { Certificate } from './certificate.entity';
 import { Enrollment } from '../enrollments/enrollment.entity';
 import { CertificatesService } from './certificates.service';
 import { CertificatePdfService } from './certificate-pdf.service';
-import { CertificateValidationService } from './certificate-validation.service';
-import { CertificateMintingService } from './certificate-minting.service';
-import { CertificatesController } from './certificates.controller';
-import { StellarModule } from '../stellar/stellar.module';
-import { PdfBuilderService } from '../common/services/pdf-builder.service';
+import { CredentialsModule } from '../credentials/credentials.module';
 
+/**
+ * CertificatesModule
+ *
+ * Issue #818: StellarModule import removed — CertificatesService no longer
+ * calls StellarService directly.  On-chain issuance now delegates to
+ * BadgeAwardService (provided by CredentialsModule).
+ */
 @Module({
-  imports: [TypeOrmModule.forFeature([Certificate, Enrollment]), StellarModule],
-  providers: [
-    PdfBuilderService,
-    CertificatePdfService,
-    CertificateValidationService,
-    CertificateMintingService,
-    CertificatesService,
-  ],
+  imports: [TypeOrmModule.forFeature([Certificate, Enrollment]), CredentialsModule],
+  providers: [CertificatesService, CertificatePdfService],
   controllers: [CertificatesController],
   exports: [CertificatesService],
 })

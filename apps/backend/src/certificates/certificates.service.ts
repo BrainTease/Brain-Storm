@@ -18,21 +18,31 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as crypto from 'crypto';
 import { Certificate } from './certificate.entity';
-import { StellarService } from '../stellar/stellar.service';
+import { Enrollment } from '../enrollments/enrollment.entity';
+import { BadgeAwardService } from './badge-award.service';
 import { IssueCertificateDto } from './dto/issue-certificate.dto';
 import { CertificateValidationService } from './certificate-validation.service';
 import { CertificateMintingService } from './certificate-minting.service';
 
+/**
+ * CertificatesService
+ *
+ * Issue #818: on-chain credential issuance now delegates to `BadgeAwardService`
+ * instead of calling `StellarService.issueCredential()` directly.  This ensures:
+ *
+ *  - Idempotency (CredentialsService deduplicates on userId+courseId).
+ *  - KYC gate is enforced consistently.
+ *  - Referral reward minting is not silently skipped.
+ *  - A single unit test covers the award path (badge-award.service.spec.ts).
+ */
 @Injectable()
 export class CertificatesService {
   constructor(
     @InjectRepository(Certificate)
     private readonly repo: Repository<Certificate>,
-    // StellarService is kept for backward-compatible injection; minting is
-    // delegated to CertificateMintingService.
-    private readonly stellarService: StellarService,
-    private readonly validationService: CertificateValidationService,
-    private readonly mintingService: CertificateMintingService,
+    @InjectRepository(Enrollment)
+    private readonly enrollmentsRepo: Repository<Enrollment>,
+    private readonly badgeAwardService: BadgeAwardService,
   ) {}
 
   // ── Step-based issuance ────────────────────────────────────────────────────
@@ -54,8 +64,20 @@ export class CertificatesService {
     const certificate = this.repo.create({ userId, courseId, certificateHash, status: 'pending' });
     const saved = await this.repo.save(certificate);
 
-    // Step 4: Mint on Stellar (non-fatal on failure)
-    return this.mintingService.mint(saved, enrollment.user?.stellarPublicKey);
+    // Delegate on-chain issuance + referral reward to BadgeAwardService (#818).
+    const stellarPublicKey = enrollment.user?.stellarPublicKey;
+    if (stellarPublicKey) {
+      try {
+        await this.badgeAwardService.awardOnCompletion(userId, courseId, stellarPublicKey);
+        saved.status = 'minted';
+        await this.repo.save(saved);
+        this.logger.log(`Certificate minted for user=${userId} course=${courseId}`);
+      } catch (error) {
+        this.logger.error(`Badge award failed for user=${userId} course=${courseId}: ${(error as Error).message}`);
+      }
+    }
+
+    return saved;
   }
 
   // ── Queries ────────────────────────────────────────────────────────────────
