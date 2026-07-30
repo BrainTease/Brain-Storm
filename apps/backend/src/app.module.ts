@@ -58,6 +58,7 @@ import configuration from './config/configuration';
 import { validationSchema } from './config/validation.schema';
 import { DatabaseModule } from './database/database.module';
 import { GovernanceModule } from './governance/governance.module';
+import { GrantsModule } from './grants/grants.module';
 
 @Module({
   imports: [
@@ -159,6 +160,7 @@ import { GovernanceModule } from './governance/governance.module';
     PaymentsModule,
     DatabaseModule,
     GovernanceModule,
+    GrantsModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

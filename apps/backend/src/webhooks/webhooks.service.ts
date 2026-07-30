@@ -1,7 +1,6 @@
 import { Injectable, Logger, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, LessThanOrEqual, IsNull, In } from 'typeorm';
-import { OnEvent } from '@nestjs/event-emitter';
+import { Repository, LessThanOrEqual, IsNull } from 'typeorm';
 import * as crypto from 'crypto';
 import * as https from 'https';
 import * as http from 'http';
@@ -311,24 +310,14 @@ export class WebhooksService implements OnModuleInit {
   }
 
   // ─── Event listeners ─────────────────────────────────────────────────────────
-
-  @OnEvent('enrollment.created')
-  onEnrollment(payload: any) {
-    this.publish('enrollment.created', payload);
-  }
-
-  @OnEvent('enrollment.completed')
-  onCompletion(payload: any) {
-    this.publish('enrollment.completed', payload);
-  }
-
-  @OnEvent('credential.issued')
-  onCredential(payload: any) {
-    this.publish('credential.issued', payload);
-  }
-
-  @OnEvent('payment.completed')
-  onPaymentCompleted(payload: any) {
-    this.publish('payment.completed', payload);
-  }
+  //
+  // #819 — Legacy @OnEvent bridge handlers removed.
+  //
+  // The four methods that previously forwarded internal NestJS events
+  // (enrollment.created, enrollment.completed, credential.issued,
+  // payment.completed) to outbound webhook deliveries have been removed.
+  //
+  // Callers that need to fan out an event to registered webhooks should call
+  // `WebhooksService.publish(event, payload)` explicitly.  This makes the
+  // dependency visible at the call site and avoids hidden event coupling.
 }

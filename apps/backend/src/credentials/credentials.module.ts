@@ -8,6 +8,7 @@ import { StellarModule } from '../stellar/stellar.module';
 import { KycModule } from '../kyc/kyc.module';
 import { CoursesModule } from '../courses/courses.module';
 import { CertificatePdfService } from './certificate-pdf.service';
+import { PdfBuilderService } from '../common/services/pdf-builder.service';
 
 @Module({
   imports: [
@@ -16,7 +17,7 @@ import { CertificatePdfService } from './certificate-pdf.service';
     KycModule,
     CoursesModule,
   ],
-  providers: [CredentialsService, CertificatePdfService],
+  providers: [CredentialsService, PdfBuilderService, CertificatePdfService],
   controllers: [CredentialsController, PublicCredentialVerificationController],
   exports: [CredentialsService],
 })
