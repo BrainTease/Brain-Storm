@@ -85,10 +85,11 @@ import { GovernanceModule } from './governance/governance.module';
         autoLoadEntities: true,
         synchronize: config.get<string>('nodeEnv') !== 'production',
         extra: {
-          max: parseInt(process.env.DB_POOL_MAX || '20'),
-          min: parseInt(process.env.DB_POOL_MIN || '5'),
-          connectionTimeoutMillis: parseInt(process.env.DB_ACQUIRE_TIMEOUT || '30000'),
-          idleTimeoutMillis: parseInt(process.env.DB_IDLE_TIMEOUT || '10000'),
+          // #805: pool config now flows through ConfigService (see configuration.ts + validation.schema.ts)
+          max: config.get<number>('dbPool.max') ?? 20,
+          min: config.get<number>('dbPool.min') ?? 5,
+          connectionTimeoutMillis: config.get<number>('dbPool.acquireTimeout') ?? 30000,
+          idleTimeoutMillis: config.get<number>('dbPool.idleTimeout') ?? 10000,
         },
         maxQueryExecutionTime: 5000,
       }),

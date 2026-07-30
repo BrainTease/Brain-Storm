@@ -2,8 +2,7 @@ import { Injectable, NotFoundException, Inject } from '@nestjs/common';
 import { Progress } from './progress.entity';
 import { RecordProgressDto } from './dto/record-progress.dto';
 import { StellarService } from '../stellar/stellar.service';
-import { CredentialsService } from '../credentials/credentials.service';
-import { UsersService } from '../users/users.service';
+import { BadgeAwardService } from '../credentials/badge-award.service';
 import {
   PROGRESS_REPOSITORY_TOKEN,
 } from '../repositories/repositories.module';
@@ -13,8 +12,10 @@ import { ProgressRepository } from '../repositories/progress-repository.interfac
  * ProgressService
  *
  * All database access is delegated to ProgressRepository (#800).
- * No direct @InjectRepository(Progress) — the repository abstraction
- * is the single seam for progress query logic.
+ *
+ * Badge/credential award on course completion is delegated to BadgeAwardService
+ * (#818) — this service no longer owns CredentialsService or the referral-reward
+ * minting logic.
  */
 @Injectable()
 export class ProgressService {
@@ -22,8 +23,7 @@ export class ProgressService {
     @Inject(PROGRESS_REPOSITORY_TOKEN)
     private readonly progressRepository: ProgressRepository,
     private readonly stellarService: StellarService,
-    private readonly credentialsService: CredentialsService,
-    private readonly usersService: UsersService,
+    private readonly badgeAwardService: BadgeAwardService,
   ) {}
 
   async record(userId: string, dto: RecordProgressDto, stellarPublicKey: string): Promise<Progress> {
@@ -54,25 +54,10 @@ export class ProgressService {
 
     const saved = await this.progressRepository.save(progress);
 
-    // Auto-issue credential at 100 %
+    // Auto-issue credential + referral reward at 100 % — delegated to
+    // BadgeAwardService (#818) so the logic lives in one place.
     if (dto.progressPct >= 100) {
-      await this.credentialsService.issue(userId, dto.courseId, stellarPublicKey);
-
-      // Mint 50 BST to referrer on first course completion
-      const completedCount = await this.progressRepository.countCompletedByUser(userId);
-      if (completedCount === 1) {
-        const user = await this.usersService.findById(userId);
-        if (user?.referredBy) {
-          const referrer = await this.usersService.findById(user.referredBy);
-          if (referrer?.stellarPublicKey) {
-            try {
-              await this.stellarService.mintReward(referrer.stellarPublicKey, 50);
-            } catch {
-              // Non-fatal
-            }
-          }
-        }
-      }
+      await this.badgeAwardService.awardOnCompletion(userId, dto.courseId, stellarPublicKey);
     }
 
     return saved;
