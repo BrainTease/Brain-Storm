@@ -822,7 +822,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Unauthorized: must be student or admin")]
+    #[should_panic(expected = "Unauthorized: must be student, admin, or authorized caller")]
     fn test_unauthorized_caller_rejected() {
         let (env, client, _, student) = setup();
         let rando = Address::generate(&env);
@@ -831,7 +831,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Unauthorized: must be student or admin")]
+    #[should_panic(expected = "Unauthorized: must be student, admin, or authorized caller")]
     fn test_third_party_cannot_record_for_other_student() {
         let (env, client, _, student) = setup();
         let other_student = Address::generate(&env);

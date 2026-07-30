@@ -7,28 +7,14 @@ import {
   Memo,
   xdr,
 } from '@stellar/stellar-sdk';
+import type {
+  ParsedTransaction,
+  ParsedOperation,
+  ValidationResult,
+} from '@brain-storm/types';
 
-export interface ParsedTransaction {
-  source: string;
-  fee: string;
-  sequence: string;
-  memo: string | null;
-  memoType: string | null;
-  network: string;
-  operations: ParsedOperation[];
-  timeBounds: { minTime: string; maxTime: string } | null;
-}
-
-export interface ParsedOperation {
-  type: string;
-  details: Record<string, string>;
-}
-
-export interface ValidationResult {
-  valid: boolean;
-  errors: string[];
-  warnings: string[];
-}
+// Re-export so existing consumers of this module keep working without changes.
+export type { ParsedTransaction, ParsedOperation, ValidationResult } from '@brain-storm/types';
 
 const EXPECTED_NETWORK =
   (process.env.NEXT_PUBLIC_STELLAR_NETWORK as string) || 'testnet';

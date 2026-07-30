@@ -45,7 +45,7 @@ jobs:
         working-directory: contracts
 
       - name: cargo fmt check
-        run: cargo fmt --check
+        run: cargo fmt --all -- --check
         working-directory: contracts
 
       - name: cargo clippy
