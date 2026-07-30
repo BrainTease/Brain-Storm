@@ -47,7 +47,7 @@ pub fn checked_sub_u32(a: u32, b: u32) -> u32 {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
 
     #[test]

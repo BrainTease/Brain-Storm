@@ -1,13 +1,13 @@
 #[cfg(test)]
 mod tests {
-    use crate::{NFTContract, NFTContractClient};
+    use crate::{NftContract, NftContractClient};
     use soroban_sdk::{symbol_short, testutils::Address as _, Address, Env, String};
 
-    fn setup() -> (Env, NFTContractClient<'static>, Address) {
+    fn setup() -> (Env, NftContractClient<'static>, Address) {
         let env = Env::default();
         env.mock_all_auths();
-        let id = env.register_contract(None, NFTContract);
-        let client = NFTContractClient::new(&env, &id);
+        let id = env.register_contract(None, NftContract);
+        let client = NftContractClient::new(&env, &id);
         let admin = Address::generate(&env);
         client.initialize(&admin);
         (env, client, admin)
@@ -15,7 +15,7 @@ mod tests {
 
     fn mint_nft(
         env: &Env,
-        client: &NFTContractClient,
+        client: &NftContractClient,
         admin: &Address,
         owner: &Address,
     ) -> u32 {
