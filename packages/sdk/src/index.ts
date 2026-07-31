@@ -405,7 +405,14 @@ class CoursesClient {
    * stringified and `undefined` fields are dropped.
    */
   async list(params?: CourseQueryParams): Promise<CourseListResponse> {
-    const qs = params ? '?' + new URLSearchParams(params as Record<string, string>).toString() : '';
+    const qs = params
+      ? '?' +
+        new URLSearchParams(
+          Object.fromEntries(
+            Object.entries(params).filter(([, value]) => value !== undefined),
+          ) as Record<string, string>,
+        ).toString()
+      : '';
     return this.http.get<CourseListResponse>(`/v1/courses${qs}`);
   }
 

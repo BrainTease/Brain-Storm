@@ -6,12 +6,17 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "generate": "node ../../scripts/generate-sdk.js"
+    "generate": "node ../../scripts/generate-sdk.js",
+    "test": "jest",
+    "test:coverage": "jest --coverage"
   },
   "peerDependencies": {
     "axios": ">=1.0.0"
   },
   "devDependencies": {
+    "@types/jest": "^29.5.12",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.4",
     "typescript": "^5.4.0"
   },
   "keywords": ["brain-storm", "sdk", "api", "stellar"],
