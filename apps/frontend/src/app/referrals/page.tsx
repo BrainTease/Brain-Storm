@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { ReferralLink } from '@/components/referrals/ReferralLink';
 import { ReferralStats } from '@/components/referrals/ReferralStats';

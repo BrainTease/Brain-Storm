@@ -1,8 +1,19 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+/**
+ * #809 — Grants: Persistence Layer
+ *
+ * Handles all database operations (CRUD) for grants.  Domain rules and
+ * authorisation logic live in `GrantsBusinessService` so they can be tested
+ * independently of the database.
+ */
+import {
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, FindOptionsWhere } from 'typeorm';
 import { Grant } from './grant.entity';
 import { CreateGrantDto, UpdateGrantDto, PaginateGrantsDto } from './dto/grant.dto';
+import { GrantsBusinessService } from './grants-business.service';
 
 export interface PaginatedGrants {
   data: Grant[];
@@ -15,24 +26,20 @@ export interface PaginatedGrants {
 export class GrantsService {
   constructor(
     @InjectRepository(Grant)
-    private readonly grantsRepo: Repository<Grant>
+    private readonly grantsRepo: Repository<Grant>,
+    private readonly businessService: GrantsBusinessService,
   ) {}
 
   async create(dto: CreateGrantDto): Promise<Grant> {
-    const grant = this.grantsRepo.create({
-      ...dto,
-      currency: dto.currency ?? 'USD',
-      status: 'open',
-    });
+    const defaults = this.businessService.applyCreateDefaults({ ...dto });
+    const grant = this.grantsRepo.create(defaults as Grant);
     return this.grantsRepo.save(grant);
   }
 
   async findAll(query: PaginateGrantsDto): Promise<PaginatedGrants> {
-    const page = query.page ?? 1;
-    const limit = query.limit ?? 20;
-    const skip = (page - 1) * limit;
+    const { page, limit, skip } = this.businessService.resolvePagination(query.page, query.limit);
 
-    const where: Partial<Grant> = {};
+    const where: FindOptionsWhere<Grant> = {};
     if (query.status) {
       where.status = query.status;
     }
@@ -58,14 +65,8 @@ export class GrantsService {
   async update(id: string, dto: UpdateGrantDto, requesterId: string): Promise<Grant> {
     const grant = await this.findOne(id);
 
-    // Only the original applicant or a reviewer may update
-    if (grant.applicantId !== requesterId && grant.reviewerId !== requesterId) {
-      const isStatusUpdate =
-        dto.status !== undefined || dto.reviewNotes !== undefined || dto.reviewerId !== undefined;
-      if (!isStatusUpdate) {
-        throw new ForbiddenException('You do not have permission to update this grant');
-      }
-    }
+    // Business rule: authorisation check
+    this.businessService.assertUpdatePermission(grant, dto, requesterId);
 
     Object.assign(grant, dto);
     return this.grantsRepo.save(grant);

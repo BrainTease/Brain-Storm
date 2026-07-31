@@ -2,7 +2,6 @@
 
 import React, { useMemo } from 'react';
 import { Card } from '@/components/ui/Card';
-import { CHART_COLORS } from '@/lib/chart-colors';
 
 export interface StreakData {
   date: string;

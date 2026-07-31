@@ -402,14 +402,15 @@ export class SearchService implements OnModuleInit {
       const returnedIds = hits.slice(0, k).map((h) => h.id);
 
       const relevantSet = new Set(relevantIds);
-      const hits_at_k = returnedIds.filter((id) => relevantSet.has(id)).length;
+      const hits_at_k = returnedIds.filter((id): id is string => id !== undefined && relevantSet.has(id)).length;
       const precisionAtK = hits_at_k / k;
 
       // Discounted Cumulative Gain
       let dcg = 0;
       let idcg = 0;
       for (let i = 0; i < k; i++) {
-        const rel = relevantSet.has(returnedIds[i]) ? 1 : 0;
+        const returnedId = returnedIds[i];
+        const rel = returnedId !== undefined && relevantSet.has(returnedId) ? 1 : 0;
         dcg += rel / Math.log2(i + 2);
         if (i < relevantIds.length) idcg += 1 / Math.log2(i + 2);
       }

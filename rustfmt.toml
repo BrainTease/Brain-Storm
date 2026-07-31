@@ -1,0 +1,44 @@
+# Brain-Storm Rust formatting configuration
+# Enforces consistent code style across all contracts crates.
+# Run: cargo fmt --all -- --check (CI), cargo fmt --all (local)
+
+# Edition
+edition = "2021"
+
+# Line length
+max_width = 100
+comment_width = 80
+
+# Imports
+imports_granularity = "Crate"
+group_imports = "StdExternalCrate"
+reorder_imports = true
+
+# Formatting preferences
+use_small_heuristics = "Default"
+fn_single_line = false
+where_single_line = false
+force_explicit_abi = true
+format_code_in_doc_comments = true
+normalize_comments = true
+normalize_doc_attributes = true
+wrap_comments = true
+
+# Trailing commas
+trailing_comma = "Vertical"
+trailing_semicolon = true
+
+# Spaces
+space_after_colon = true
+space_before_colon = false
+spaces_around_ranges = false
+
+# Match blocks
+match_arm_blocks = true
+match_block_trailing_comma = false
+
+# Use field init shorthand
+use_field_init_shorthand = true
+
+# Newlines
+newline_style = "Unix"

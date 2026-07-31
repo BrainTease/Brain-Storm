@@ -8,6 +8,7 @@ import {
   Min,
 } from 'class-validator';
 import { JobStatus, ApplicationStatus } from '../job.entity';
+import { PaginationDto } from '../../common/dto/pagination.dto';
 
 export class CreateJobDto {
   @IsString() title: string;
@@ -37,10 +38,11 @@ export class UpdateApplicationStatusDto {
   @IsString() @IsOptional() reviewNote?: string;
 }
 
-export class JobQueryDto {
+/**
+ * #807: Extends shared PaginationDto instead of re-declaring page/limit fields.
+ */
+export class JobQueryDto extends PaginationDto {
   @IsString() @IsOptional() search?: string;
   @IsString() @IsOptional() category?: string;
   @IsEnum(JobStatus) @IsOptional() status?: JobStatus;
-  @IsNumber() @IsOptional() @Min(1) page?: number;
-  @IsNumber() @IsOptional() @Min(1) limit?: number;
 }
