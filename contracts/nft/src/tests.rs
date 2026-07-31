@@ -174,4 +174,192 @@ mod tests {
         let (_, client, _) = setup();
         assert!(client.get_nft_metadata(&9999).is_none());
     }
+
+    #[test]
+    fn test_get_nft_owner_nonexistent_returns_none() {
+        let (_, client, _) = setup();
+        assert!(client.get_nft_owner(&9999).is_none());
+    }
+
+    #[test]
+    fn test_get_owner_nfts_empty_for_unknown_owner() {
+        let (env, client, _) = setup();
+        let nobody = Address::generate(&env);
+        assert_eq!(client.get_owner_nfts(&nobody).len(), 0);
+    }
+
+    #[test]
+    fn test_get_royalty_info_nonexistent_returns_none() {
+        let (_, client, _) = setup();
+        assert!(client.get_royalty_info(&9999).is_none());
+    }
+
+    #[test]
+    fn test_transfer_updates_nft_list_of_sender_and_receiver() {
+        let (env, client, admin) = setup();
+        let owner = Address::generate(&env);
+        let recipient = Address::generate(&env);
+        let nft_id = mint_nft(&env, &client, &admin, &owner);
+
+        client.transfer_nft(&owner, &recipient, &nft_id);
+
+        // sender's list should be empty
+        assert_eq!(client.get_owner_nfts(&owner).len(), 0);
+        // recipient's list should have the nft
+        assert_eq!(client.get_owner_nfts(&recipient).len(), 1);
+        assert_eq!(client.get_owner_nfts(&recipient).get(0).unwrap(), nft_id);
+    }
+
+    #[test]
+    fn test_grant_access_by_non_owner_panics() {
+        let (env, client, admin) = setup();
+        let owner = Address::generate(&env);
+        let rando = Address::generate(&env);
+        let viewer = Address::generate(&env);
+        let nft_id = mint_nft(&env, &client, &admin, &owner);
+        // rando is not the owner
+        // mock_all_auths still allows the call but require_owner will panic
+        let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            client.grant_access(&rando, &nft_id, &viewer);
+        }));
+        assert!(result.is_err());
+    }
+
+    // ── Burn ────────────────────────────────────────────────────────────────
+
+    #[test]
+    fn test_burn_nft_removes_owner() {
+        let (env, client, admin) = setup();
+        let owner = Address::generate(&env);
+        let nft_id = mint_nft(&env, &client, &admin, &owner);
+        client.burn_nft(&owner, &nft_id);
+        assert!(client.get_nft_owner(&nft_id).is_none());
+    }
+
+    #[test]
+    fn test_burn_nft_removes_metadata() {
+        let (env, client, admin) = setup();
+        let owner = Address::generate(&env);
+        let nft_id = mint_nft(&env, &client, &admin, &owner);
+        client.burn_nft(&owner, &nft_id);
+        assert!(client.get_nft_metadata(&nft_id).is_none());
+    }
+
+    #[test]
+    fn test_burn_nft_removes_from_owner_list() {
+        let (env, client, admin) = setup();
+        let owner = Address::generate(&env);
+        let nft_id = mint_nft(&env, &client, &admin, &owner);
+        assert_eq!(client.get_owner_nfts(&owner).len(), 1);
+        client.burn_nft(&owner, &nft_id);
+        assert_eq!(client.get_owner_nfts(&owner).len(), 0);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_burn_nonexistent_nft_panics() {
+        let (env, client, _) = setup();
+        let owner = Address::generate(&env);
+        client.burn_nft(&owner, &9999);
+    }
+
+    #[test]
+    #[should_panic(expected = "Already burned")]
+    fn test_burn_already_burned_nft_panics() {
+        let (env, client, admin) = setup();
+        let owner = Address::generate(&env);
+        let nft_id = mint_nft(&env, &client, &admin, &owner);
+        client.burn_nft(&owner, &nft_id);
+        client.burn_nft(&owner, &nft_id);
+    }
+
+    // ── Marketplace ─────────────────────────────────────────────────────────
+
+    #[test]
+    fn test_list_nft() {
+        let (env, client, admin) = setup();
+        let owner = Address::generate(&env);
+        let nft_id = mint_nft(&env, &client, &admin, &owner);
+        client.list_nft(&owner, &nft_id, &500);
+        let listing = client.get_listing(&nft_id).unwrap();
+        assert_eq!(listing.nft_id, nft_id);
+        assert_eq!(listing.seller, owner);
+        assert_eq!(listing.price, 500);
+    }
+
+    #[test]
+    #[should_panic(expected = "Price must be positive")]
+    fn test_list_nft_zero_price_panics() {
+        let (env, client, admin) = setup();
+        let owner = Address::generate(&env);
+        let nft_id = mint_nft(&env, &client, &admin, &owner);
+        client.list_nft(&owner, &nft_id, &0);
+    }
+
+    #[test]
+    #[should_panic(expected = "Already listed")]
+    fn test_list_nft_already_listed_panics() {
+        let (env, client, admin) = setup();
+        let owner = Address::generate(&env);
+        let nft_id = mint_nft(&env, &client, &admin, &owner);
+        client.list_nft(&owner, &nft_id, &500);
+        client.list_nft(&owner, &nft_id, &600);
+    }
+
+    #[test]
+    fn test_delist_nft() {
+        let (env, client, admin) = setup();
+        let owner = Address::generate(&env);
+        let nft_id = mint_nft(&env, &client, &admin, &owner);
+        client.list_nft(&owner, &nft_id, &500);
+        client.delist_nft(&owner, &nft_id);
+        assert!(client.get_listing(&nft_id).is_none());
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_delist_nft_not_listed_panics() {
+        let (env, client, admin) = setup();
+        let owner = Address::generate(&env);
+        let nft_id = mint_nft(&env, &client, &admin, &owner);
+        client.delist_nft(&owner, &nft_id);
+    }
+
+    #[test]
+    fn test_buy_nft_transfers_ownership() {
+        let (env, client, admin) = setup();
+        let owner = Address::generate(&env);
+        let buyer = Address::generate(&env);
+        let nft_id = mint_nft(&env, &client, &admin, &owner);
+        client.list_nft(&owner, &nft_id, &500);
+        client.buy_nft(&buyer, &nft_id);
+        assert_eq!(client.get_nft_owner(&nft_id).unwrap(), buyer);
+    }
+
+    #[test]
+    fn test_buy_nft_removes_listing() {
+        let (env, client, admin) = setup();
+        let owner = Address::generate(&env);
+        let buyer = Address::generate(&env);
+        let nft_id = mint_nft(&env, &client, &admin, &owner);
+        client.list_nft(&owner, &nft_id, &500);
+        client.buy_nft(&buyer, &nft_id);
+        assert!(client.get_listing(&nft_id).is_none());
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_buy_nft_not_listed_panics() {
+        let (env, client, admin) = setup();
+        let owner = Address::generate(&env);
+        let buyer = Address::generate(&env);
+        let nft_id = mint_nft(&env, &client, &admin, &owner);
+        client.buy_nft(&buyer, &nft_id);
+    }
+
+    #[test]
+    fn test_get_listing_returns_none_for_nonexistent() {
+        let (_, client, _) = setup();
+        assert!(client.get_listing(&9999).is_none());
+    }
 }

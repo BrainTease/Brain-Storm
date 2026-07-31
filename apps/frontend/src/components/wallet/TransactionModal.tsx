@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { HORIZON_URL, explorerTxUrl, useWallet } from '@/lib/wallet';
 import { toast } from '@/lib/toast';
 
