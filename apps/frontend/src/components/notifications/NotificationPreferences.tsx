@@ -1,6 +1,11 @@
 'use client';
 
-import { useNotifications, TYPE_ICONS, TYPE_LABELS, NotificationType } from '@/hooks/useNotifications';
+import {
+  useNotifications,
+  TYPE_ICONS,
+  TYPE_LABELS,
+  NotificationType,
+} from '@/hooks/useNotifications';
 
 const ALL_TYPES: NotificationType[] = [
   'enrollment',

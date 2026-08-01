@@ -133,7 +133,10 @@ export class ObjectUtils {
   /**
    * Map object values
    */
-  static mapValues<T extends Record<string, any>, R>(obj: T, fn: (value: T[keyof T], key: keyof T) => R): Record<keyof T, R> {
+  static mapValues<T extends Record<string, any>, R>(
+    obj: T,
+    fn: (value: T[keyof T], key: keyof T) => R
+  ): Record<keyof T, R> {
     const result = {} as Record<keyof T, R>;
     for (const key in obj) {
       result[key as keyof T] = fn(obj[key], key as keyof T);
@@ -144,7 +147,10 @@ export class ObjectUtils {
   /**
    * Filter object by predicate
    */
-  static filter<T extends Record<string, any>>(obj: T, predicate: (value: T[keyof T], key: keyof T) => boolean): Partial<T> {
+  static filter<T extends Record<string, any>>(
+    obj: T,
+    predicate: (value: T[keyof T], key: keyof T) => boolean
+  ): Partial<T> {
     const result = {} as Partial<T>;
     for (const key in obj) {
       if (predicate(obj[key], key as keyof T)) {
@@ -158,7 +164,9 @@ export class ObjectUtils {
    * Check if object is plain object
    */
   static isObject(obj: any): obj is Record<string, any> {
-    return obj !== null && typeof obj === 'object' && !(obj instanceof Date) && !(obj instanceof Array);
+    return (
+      obj !== null && typeof obj === 'object' && !(obj instanceof Date) && !(obj instanceof Array)
+    );
   }
 
   /**

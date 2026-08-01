@@ -22,10 +22,7 @@ export class OrganizationsController {
   constructor(private orgsService: OrganizationsService) {}
 
   @Post()
-  async createOrganization(
-    @CurrentUser() user: any,
-    @Body() dto: CreateOrgDto,
-  ) {
+  async createOrganization(@CurrentUser() user: any, @Body() dto: CreateOrgDto) {
     return this.orgsService.createOrganization(user.id, dto);
   }
 
@@ -48,7 +45,7 @@ export class OrganizationsController {
   async inviteMember(
     @Param('orgId') orgId: string,
     @CurrentUser() user: any,
-    @Body() dto: InviteMemberDto,
+    @Body() dto: InviteMemberDto
   ) {
     return this.orgsService.inviteMember(orgId, user.id, dto);
   }
@@ -57,7 +54,7 @@ export class OrganizationsController {
   async acceptInvite(
     @Param('token') inviteToken: string,
     @Query('email') email: string,
-    @CurrentUser() user: any,
+    @CurrentUser() user: any
   ) {
     if (!email) throw new BadRequestException('Email is required');
     return this.orgsService.acceptInvite(inviteToken, user.id, email);
@@ -68,7 +65,7 @@ export class OrganizationsController {
     @Param('orgId') orgId: string,
     @Param('memberId') memberId: string,
     @Body('role') role: OrgRole,
-    @CurrentUser() user: any,
+    @CurrentUser() user: any
   ) {
     return this.orgsService.assignRoleToMember(orgId, memberId, role, user.id);
   }
@@ -77,7 +74,7 @@ export class OrganizationsController {
   async removeMember(
     @Param('orgId') orgId: string,
     @Param('memberId') memberId: string,
-    @CurrentUser() user: any,
+    @CurrentUser() user: any
   ) {
     await this.orgsService.removeMember(orgId, memberId, user.id);
     return { success: true };
@@ -89,10 +86,7 @@ export class OrganizationsController {
   }
 
   @Put(':orgId/billing/budget')
-  async updateBudget(
-    @Param('orgId') orgId: string,
-    @Body('monthlyBudget') monthlyBudget: number,
-  ) {
+  async updateBudget(@Param('orgId') orgId: string, @Body('monthlyBudget') monthlyBudget: number) {
     await this.orgsService.updateBillingBudget(orgId, monthlyBudget);
     return { success: true };
   }

@@ -8,7 +8,7 @@ import { CreateCouponDto, ValidateCouponDto } from './dto';
 export class CouponsService {
   constructor(
     @InjectRepository(Coupon)
-    private couponsRepository: Repository<Coupon>,
+    private couponsRepository: Repository<Coupon>
   ) {}
 
   async create(dto: CreateCouponDto): Promise<Coupon> {
@@ -31,7 +31,7 @@ export class CouponsService {
     count: number,
     discountType: 'percentage' | 'fixed',
     discountValue: number,
-    expiresAt?: Date,
+    expiresAt?: Date
   ): Promise<Coupon[]> {
     const coupons = [];
     for (let i = 0; i < count; i++) {
@@ -75,11 +75,7 @@ export class CouponsService {
   }
 
   async incrementUsage(code: string): Promise<void> {
-    await this.couponsRepository.increment(
-      { code },
-      'usageCount',
-      1,
-    );
+    await this.couponsRepository.increment({ code }, 'usageCount', 1);
   }
 
   async findAll(): Promise<Coupon[]> {

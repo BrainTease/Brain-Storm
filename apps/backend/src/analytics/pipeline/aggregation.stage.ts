@@ -25,8 +25,7 @@ export class AggregationStage implements PipelineStage {
       activeLearnersLast30Days: activeLearners,
     } = ctx.rawData;
 
-    const completionRate =
-      totalEnrollments > 0 ? (totalCompletions / totalEnrollments) * 100 : 0;
+    const completionRate = totalEnrollments > 0 ? (totalCompletions / totalEnrollments) * 100 : 0;
 
     const metrics: AggregatedMetrics = {
       courseId,

@@ -7,7 +7,13 @@ import {
   type FieldPath,
   type RegisterOptions,
 } from 'react-hook-form';
-import { Checkbox, SelectInput, TextArea, TextInput, type SelectOption } from '@/components/ui/form';
+import {
+  Checkbox,
+  SelectInput,
+  TextArea,
+  TextInput,
+  type SelectOption,
+} from '@/components/ui/form';
 
 /**
  * react-hook-form adapters over the shared form-input library.

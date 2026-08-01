@@ -20,7 +20,7 @@ export class AddMultiTenancy1728000000001 implements MigrationInterface {
           { name: 'updatedAt', type: 'timestamp', default: 'now()' },
         ],
       }),
-      true,
+      true
     );
 
     await queryRunner.createIndex(
@@ -29,7 +29,7 @@ export class AddMultiTenancy1728000000001 implements MigrationInterface {
         columnNames: ['slug'],
         isUnique: true,
         name: 'IDX_organizations_slug',
-      }),
+      })
     );
 
     // Create organization_members table
@@ -60,11 +60,9 @@ export class AddMultiTenancy1728000000001 implements MigrationInterface {
             onDelete: 'CASCADE',
           }),
         ],
-        uniques: [
-          { columnNames: ['organizationId', 'userId'], name: 'UQ_org_members_org_user' },
-        ],
+        uniques: [{ columnNames: ['organizationId', 'userId'], name: 'UQ_org_members_org_user' }],
       }),
-      true,
+      true
     );
 
     await queryRunner.createIndex(
@@ -72,7 +70,7 @@ export class AddMultiTenancy1728000000001 implements MigrationInterface {
       new TableIndex({
         columnNames: ['organizationId', 'role'],
         name: 'IDX_org_members_org_role',
-      }),
+      })
     );
 
     // Create organization_billing_profiles table
@@ -99,18 +97,15 @@ export class AddMultiTenancy1728000000001 implements MigrationInterface {
           }),
         ],
       }),
-      true,
+      true
     );
 
     // Add organizationId column to courses for org-scoped data
-    await queryRunner.addColumn(
-      'courses',
-      {
-        name: 'organizationId',
-        type: 'uuid',
-        isNullable: true,
-      },
-    );
+    await queryRunner.addColumn('courses', {
+      name: 'organizationId',
+      type: 'uuid',
+      isNullable: true,
+    });
 
     await queryRunner.createForeignKey(
       'courses',
@@ -119,7 +114,7 @@ export class AddMultiTenancy1728000000001 implements MigrationInterface {
         referencedTableName: 'organizations',
         referencedColumnNames: ['id'],
         onDelete: 'SET NULL',
-      }),
+      })
     );
   }
 

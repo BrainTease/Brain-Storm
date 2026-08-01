@@ -41,7 +41,7 @@ export class SearchService implements OnModuleInit {
   constructor(
     private readonly es: ElasticsearchService,
     @InjectRepository(SearchAnalytic)
-    private readonly analyticsRepo: Repository<SearchAnalytic>,
+    private readonly analyticsRepo: Repository<SearchAnalytic>
   ) {}
 
   async onModuleInit() {
@@ -95,7 +95,11 @@ export class SearchService implements OnModuleInit {
               analyzer: 'synonym_analyzer',
               search_analyzer: 'search_analyzer',
               fields: {
-                autocomplete: { type: 'text', analyzer: 'autocomplete_analyzer', search_analyzer: 'search_analyzer' },
+                autocomplete: {
+                  type: 'text',
+                  analyzer: 'autocomplete_analyzer',
+                  search_analyzer: 'search_analyzer',
+                },
                 keyword: { type: 'keyword' },
               },
               copy_to: 'suggest',
@@ -122,11 +126,19 @@ export class SearchService implements OnModuleInit {
               analyzer: 'synonym_analyzer',
               search_analyzer: 'search_analyzer',
               fields: {
-                autocomplete: { type: 'text', analyzer: 'autocomplete_analyzer', search_analyzer: 'search_analyzer' },
+                autocomplete: {
+                  type: 'text',
+                  analyzer: 'autocomplete_analyzer',
+                  search_analyzer: 'search_analyzer',
+                },
               },
               copy_to: 'suggest',
             },
-            content: { type: 'text', analyzer: 'synonym_analyzer', search_analyzer: 'search_analyzer' },
+            content: {
+              type: 'text',
+              analyzer: 'synonym_analyzer',
+              search_analyzer: 'search_analyzer',
+            },
             moduleId: { type: 'keyword' },
             courseId: { type: 'keyword' },
             durationMinutes: { type: 'integer' },
@@ -143,11 +155,19 @@ export class SearchService implements OnModuleInit {
               analyzer: 'synonym_analyzer',
               search_analyzer: 'search_analyzer',
               fields: {
-                autocomplete: { type: 'text', analyzer: 'autocomplete_analyzer', search_analyzer: 'search_analyzer' },
+                autocomplete: {
+                  type: 'text',
+                  analyzer: 'autocomplete_analyzer',
+                  search_analyzer: 'search_analyzer',
+                },
               },
               copy_to: 'suggest',
             },
-            content: { type: 'text', analyzer: 'synonym_analyzer', search_analyzer: 'search_analyzer' },
+            content: {
+              type: 'text',
+              analyzer: 'synonym_analyzer',
+              search_analyzer: 'search_analyzer',
+            },
             courseId: { type: 'keyword' },
             userId: { type: 'keyword' },
             suggest: { type: 'completion' },
@@ -245,7 +265,7 @@ export class SearchService implements OnModuleInit {
       enrolledCourseIds?: string[];
       respectPrivacy?: boolean;
       explain?: boolean;
-    } = {},
+    } = {}
   ) {
     const { enrolledCourseIds = [], explain = false } = options;
 
@@ -358,7 +378,7 @@ export class SearchService implements OnModuleInit {
     const suggestions =
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (response.suggest?.['suggestions'] as any[])?.flatMap((s: any) =>
-        (s.options ?? []).map((o: any) => ({ text: o.text, index: o._index, id: o._id })),
+        (s.options ?? []).map((o: any) => ({ text: o.text, index: o._index, id: o._id }))
       ) ?? [];
 
     return suggestions;
@@ -373,7 +393,7 @@ export class SearchService implements OnModuleInit {
    */
   async evaluateRelevance(
     labeledSet: Array<{ query: string; relevantIds: string[] }>,
-    k = 5,
+    k = 5
   ): Promise<Array<{ query: string; precisionAtK: number; ndcgAtK: number }>> {
     const results: Array<{ query: string; precisionAtK: number; ndcgAtK: number }> = [];
 
@@ -407,7 +427,7 @@ export class SearchService implements OnModuleInit {
   private async trackAnalytic(query: string, resultsCount: number, userId?: string) {
     try {
       await this.analyticsRepo.save(
-        this.analyticsRepo.create({ query, resultsCount, userId: userId ?? null }),
+        this.analyticsRepo.create({ query, resultsCount, userId: userId ?? null })
       );
     } catch {
       // non-critical
@@ -422,7 +442,7 @@ export class SearchService implements OnModuleInit {
         clickedResultId: resultId,
         clickedResultType: resultType,
         userId: userId ?? null,
-      }),
+      })
     );
   }
 

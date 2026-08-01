@@ -66,6 +66,7 @@ dependencies = [
 name = "badges"
 version = "0.1.0"
 dependencies = [
+ "brain-storm-shared",
  "soroban-sdk",
 ]
 
@@ -133,6 +134,7 @@ dependencies = [
 name = "brain-storm-analytics"
 version = "0.1.0"
 dependencies = [
+ "brain-storm-shared",
  "proptest",
  "soroban-sdk",
 ]
@@ -141,6 +143,7 @@ dependencies = [
 name = "brain-storm-certificate"
 version = "0.1.0"
 dependencies = [
+ "brain-storm-shared",
  "proptest",
  "soroban-sdk",
 ]
@@ -149,6 +152,7 @@ dependencies = [
 name = "brain-storm-governance"
 version = "0.1.0"
 dependencies = [
+ "brain-storm-shared",
  "soroban-sdk",
 ]
 
@@ -156,6 +160,7 @@ dependencies = [
 name = "brain-storm-grants"
 version = "0.1.0"
 dependencies = [
+ "brain-storm-shared",
  "soroban-sdk",
 ]
 
@@ -173,6 +178,7 @@ dependencies = [
 name = "brain-storm-nft"
 version = "0.1.0"
 dependencies = [
+ "brain-storm-shared",
  "soroban-sdk",
 ]
 
@@ -202,6 +208,7 @@ checksum = "5d20789868f4b01b2f2caec9f5c4e0213b41e3e5702a50157d699ae31ced2fcb"
 name = "buyback"
 version = "0.1.0"
 dependencies = [
+ "brain-storm-shared",
  "soroban-sdk",
 ]
 
@@ -281,6 +288,7 @@ dependencies = [
 name = "credential_metadata"
 version = "0.1.0"
 dependencies = [
+ "brain-storm-shared",
  "soroban-sdk",
 ]
 
@@ -459,6 +467,7 @@ dependencies = [
 name = "dispute"
 version = "0.1.0"
 dependencies = [
+ "brain-storm-shared",
  "soroban-sdk",
 ]
 
@@ -860,6 +869,7 @@ checksum = "32a66949e030da00e8c7d4434b251670a91556f4144941d37452769c25d58a53"
 name = "liquidity_pool"
 version = "0.1.0"
 dependencies = [
+ "brain-storm-shared",
  "soroban-sdk",
 ]
 
@@ -873,6 +883,7 @@ checksum = "5e5032e24019045c762d3c0f28f5b6b8bbf38563a65908389bf7978758920897"
 name = "market"
 version = "0.1.0"
 dependencies = [
+ "brain-storm-shared",
  "proptest",
  "soroban-sdk",
 ]
@@ -1167,6 +1178,7 @@ checksum = "dc897dd8d9e8bd1ed8cdad82b5966c3e0ecae09fb1907d58efaa013543185d0a"
 name = "registry"
 version = "0.1.0"
 dependencies = [
+ "brain-storm-shared",
  "proptest",
  "soroban-sdk",
 ]
@@ -1175,6 +1187,7 @@ dependencies = [
 name = "reputation"
 version = "0.1.0"
 dependencies = [
+ "brain-storm-shared",
  "soroban-sdk",
 ]
 
@@ -1186,6 +1199,14 @@ checksum = "f8dd2a808d456c4a54e300a23e9f5a67e122c3024119acbfd73e3bf664491cb2"
 dependencies = [
  "hmac",
  "subtle",
+]
+
+[[package]]
+name = "royalty_distribution"
+version = "0.1.0"
+dependencies = [
+ "brain-storm-shared",
+ "soroban-sdk",
 ]
 
 [[package]]
@@ -1262,6 +1283,7 @@ dependencies = [
 name = "scholarship_fund"
 version = "0.1.0"
 dependencies = [
+ "brain-storm-shared",
  "soroban-sdk",
 ]
 
@@ -1727,6 +1749,7 @@ dependencies = [
 name = "token_restrictions"
 version = "0.1.0"
 dependencies = [
+ "brain-storm-shared",
  "soroban-sdk",
 ]
 

@@ -25,11 +25,11 @@ export class AddSoftDeleteAuditColumns1760000000000 implements MigrationInterfac
 
     await queryRunner.addColumn(
       'users',
-      new TableColumn({ name: 'createdBy', type: 'varchar', isNullable: true }),
+      new TableColumn({ name: 'createdBy', type: 'varchar', isNullable: true })
     );
     await queryRunner.addColumn(
       'users',
-      new TableColumn({ name: 'updatedBy', type: 'varchar', isNullable: true }),
+      new TableColumn({ name: 'updatedBy', type: 'varchar', isNullable: true })
     );
     await queryRunner.addColumn(
       'users',
@@ -38,22 +38,22 @@ export class AddSoftDeleteAuditColumns1760000000000 implements MigrationInterfac
         type: 'timestamptz',
         isNullable: true,
         default: 'NOW()',
-      }),
+      })
     );
 
     // ── Courses: soft-delete + audit columns ──────────────────────────────
 
     await queryRunner.addColumn(
       'courses',
-      new TableColumn({ name: 'deletedAt', type: 'timestamptz', isNullable: true }),
+      new TableColumn({ name: 'deletedAt', type: 'timestamptz', isNullable: true })
     );
     await queryRunner.addColumn(
       'courses',
-      new TableColumn({ name: 'createdBy', type: 'varchar', isNullable: true }),
+      new TableColumn({ name: 'createdBy', type: 'varchar', isNullable: true })
     );
     await queryRunner.addColumn(
       'courses',
-      new TableColumn({ name: 'updatedBy', type: 'varchar', isNullable: true }),
+      new TableColumn({ name: 'updatedBy', type: 'varchar', isNullable: true })
     );
     await queryRunner.addColumn(
       'courses',
@@ -62,7 +62,7 @@ export class AddSoftDeleteAuditColumns1760000000000 implements MigrationInterfac
         type: 'timestamptz',
         isNullable: true,
         default: 'NOW()',
-      }),
+      })
     );
   }
 

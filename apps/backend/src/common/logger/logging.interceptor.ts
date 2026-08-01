@@ -29,17 +29,13 @@ export class LoggingInterceptor implements NestInterceptor {
       }),
       catchError((error) => {
         const duration = Date.now() - startTime;
-        this.logger.error(
-          `Method failed: ${method} ${path}`,
-          error,
-          {
-            requestId,
-            duration,
-            statusCode: error.status || 500,
-          },
-        );
+        this.logger.error(`Method failed: ${method} ${path}`, error, {
+          requestId,
+          duration,
+          statusCode: error.status || 500,
+        });
         return throwError(() => error);
-      }),
+      })
     );
   }
 }

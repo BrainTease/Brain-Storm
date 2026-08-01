@@ -26,9 +26,7 @@ export const getPoolConfig = (): PoolConfig => ({
   idleTimeout: parseInt(process.env.DB_IDLE_TIMEOUT || '10000', 10),
 });
 
-export const createDataSourceOptions = (
-  poolConfig: PoolConfig,
-): Partial<TypeOrmModuleOptions> => ({
+export const createDataSourceOptions = (poolConfig: PoolConfig): Partial<TypeOrmModuleOptions> => ({
   extra: {
     max: poolConfig.max,
     min: poolConfig.min,

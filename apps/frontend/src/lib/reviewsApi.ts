@@ -48,7 +48,5 @@ export const reviewsApi = {
       .then((r) => r.data),
 
   flagReview: (courseId: string, reviewId: string, reason: string) =>
-    api
-      .post(`/courses/${courseId}/reviews/${reviewId}/flag`, { reason })
-      .then((r) => r.data),
+    api.post(`/courses/${courseId}/reviews/${reviewId}/flag`, { reason }).then((r) => r.data),
 };

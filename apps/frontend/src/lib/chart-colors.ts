@@ -12,7 +12,7 @@ export const COLORBLIND_SAFE_PALETTE = {
   yellow: '#CA9161',
   green: '#56B4E9',
   purple: '#F8766D',
-  
+
   // Extended palette for multiple series
   colors: [
     '#0173B2', // Blue
@@ -29,16 +29,16 @@ export const COLORBLIND_SAFE_PALETTE = {
 export const CHART_COLORS = {
   // Performance metrics
   excellent: '#0173B2', // Blue - good performance
-  good: '#56B4E9',      // Light Blue - acceptable performance
-  average: '#DE8F05',   // Orange - needs improvement
-  poor: '#CC78BC',      // Red/Purple - critical attention needed
-  
+  good: '#56B4E9', // Light Blue - acceptable performance
+  average: '#DE8F05', // Orange - needs improvement
+  poor: '#CC78BC', // Red/Purple - critical attention needed
+
   // Neutral colors
   neutral: '#999999',
   background: '#F5F5F5',
   text: '#333333',
   textLight: '#666666',
-  
+
   // Dark mode
   darkBackground: '#1F2937',
   darkText: '#F3F4F6',

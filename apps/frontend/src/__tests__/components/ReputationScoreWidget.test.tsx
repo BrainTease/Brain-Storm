@@ -50,13 +50,7 @@ describe('ReputationScoreWidget', () => {
     });
 
     it('should cap progress bar at 100%', () => {
-      render(
-        <ReputationScoreWidget
-          {...defaultProps}
-          xp={1200}
-          xpForNextLevel={1000}
-        />
-      );
+      render(<ReputationScoreWidget {...defaultProps} xp={1200} xpForNextLevel={1000} />);
 
       const progressBar = screen.getByRole('progressbar');
       expect(progressBar).toHaveStyle({ width: '100%' });
@@ -81,9 +75,7 @@ describe('ReputationScoreWidget', () => {
     });
 
     it('should show level and streak inline', () => {
-      const { container } = render(
-        <ReputationScoreWidget {...defaultProps} compact={true} />
-      );
+      const { container } = render(<ReputationScoreWidget {...defaultProps} compact={true} />);
 
       const root = container.firstChild;
       expect(root).toHaveClass('inline-flex');
@@ -97,9 +89,7 @@ describe('ReputationScoreWidget', () => {
     });
 
     it('should show level number in compact mode', () => {
-      const { container } = render(
-        <ReputationScoreWidget {...defaultProps} compact={true} />
-      );
+      const { container } = render(<ReputationScoreWidget {...defaultProps} compact={true} />);
 
       const levelElement = screen.getByText('5');
       expect(levelElement).toBeInTheDocument();
@@ -115,13 +105,7 @@ describe('ReputationScoreWidget', () => {
   describe('edge cases', () => {
     it('should handle zero values', () => {
       render(
-        <ReputationScoreWidget
-          {...defaultProps}
-          level={0}
-          xp={0}
-          streak={0}
-          longestStreak={0}
-        />
+        <ReputationScoreWidget {...defaultProps} level={0} xp={0} streak={0} longestStreak={0} />
       );
 
       expect(screen.getByText('0')).toBeInTheDocument();

@@ -75,7 +75,7 @@ describe('DisputeResolutionService.createDispute', () => {
       expect.objectContaining({
         status: DisputeStatus.OPEN,
         submittedByUserId: 'user-1',
-      }),
+      })
     );
     expect(repo.save).toHaveBeenCalledTimes(1);
     expect(result.id).toBe('new-dispute');
@@ -83,7 +83,7 @@ describe('DisputeResolutionService.createDispute', () => {
       'admin.dispute_created',
       'user-1',
       true,
-      expect.objectContaining({ disputeId: 'new-dispute' }),
+      expect.objectContaining({ disputeId: 'new-dispute' })
     );
   });
 });
@@ -171,7 +171,7 @@ describe('DisputeResolutionService.resolveDispute', () => {
       'admin.dispute_resolved',
       'admin-1',
       true,
-      expect.objectContaining({ status: DisputeStatus.RESOLVED }),
+      expect.objectContaining({ status: DisputeStatus.RESOLVED })
     );
   });
 
@@ -203,7 +203,7 @@ describe('DisputeResolutionService.resolveDispute', () => {
     };
 
     await expect(service.resolveDispute('dispute-1', dto, 'admin-1')).rejects.toThrow(
-      BadRequestException,
+      BadRequestException
     );
   });
 
@@ -219,7 +219,7 @@ describe('DisputeResolutionService.resolveDispute', () => {
     };
 
     await expect(service.resolveDispute('dispute-1', dto, 'admin-1')).rejects.toThrow(
-      BadRequestException,
+      BadRequestException
     );
   });
 
@@ -236,7 +236,7 @@ describe('DisputeResolutionService.resolveDispute', () => {
     } as unknown as ResolveDisputeDto;
 
     await expect(service.resolveDispute('dispute-1', dto, 'admin-1')).rejects.toThrow(
-      BadRequestException,
+      BadRequestException
     );
   });
 
@@ -251,7 +251,7 @@ describe('DisputeResolutionService.resolveDispute', () => {
     };
 
     await expect(service.resolveDispute('ghost', dto, 'admin-1')).rejects.toThrow(
-      NotFoundException,
+      NotFoundException
     );
   });
 });

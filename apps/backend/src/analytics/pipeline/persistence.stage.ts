@@ -16,7 +16,7 @@ import { PipelineContext, PipelineStage } from './pipeline.types';
 export class PersistenceStage implements PipelineStage {
   constructor(
     @InjectRepository(CourseAnalytics)
-    private readonly analyticsRepo: Repository<CourseAnalytics>,
+    private readonly analyticsRepo: Repository<CourseAnalytics>
   ) {}
 
   async execute(ctx: PipelineContext): Promise<void> {

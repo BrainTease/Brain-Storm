@@ -14,10 +14,16 @@ describe('ForumsService', () => {
   let service: ForumsService;
 
   const mockPostRepo = {
-    create: jest.fn(), save: jest.fn(), findOne: jest.fn(), find: jest.fn(), update: jest.fn(),
+    create: jest.fn(),
+    save: jest.fn(),
+    findOne: jest.fn(),
+    find: jest.fn(),
+    update: jest.fn(),
   };
   const mockReplyRepo = {
-    create: jest.fn(), save: jest.fn(), update: jest.fn(),
+    create: jest.fn(),
+    save: jest.fn(),
+    update: jest.fn(),
   };
   const mockCourseRepo = { findOne: jest.fn() };
   const mockModerationService = { analyzeContent: jest.fn().mockResolvedValue(false) };
@@ -42,7 +48,8 @@ describe('ForumsService', () => {
   // ── createPost ───────────────────────────────────────────────────────────────
 
   describe('createPost', () => {
-    const courseId = 'c1', userId = 'u1';
+    const courseId = 'c1',
+      userId = 'u1';
     const dto: CreatePostDto = { title: 'Help', content: 'Question here', isPinned: false };
 
     it('creates a post for any role when not pinning', async () => {
@@ -54,23 +61,25 @@ describe('ForumsService', () => {
       const result = await service.createPost(courseId, userId, 'student', dto);
 
       expect(mockPostRepo.create).toHaveBeenCalledWith(
-        expect.objectContaining({ courseId, userId, isPinned: false }),
+        expect.objectContaining({ courseId, userId, isPinned: false })
       );
       expect(result).toEqual(post);
     });
 
     it('allows instructor to create a pinned post', async () => {
       mockCourseRepo.findOne.mockResolvedValue({ id: courseId });
-      const pinnedDto: CreatePostDto = { title: 'Announcement', content: 'Read this', isPinned: true };
+      const pinnedDto: CreatePostDto = {
+        title: 'Announcement',
+        content: 'Read this',
+        isPinned: true,
+      };
       const post = { id: 'p2', courseId, userId, isPinned: true } as Post;
       mockPostRepo.create.mockReturnValue(post);
       mockPostRepo.save.mockResolvedValue(post);
 
       const result = await service.createPost(courseId, userId, 'instructor', pinnedDto);
 
-      expect(mockPostRepo.create).toHaveBeenCalledWith(
-        expect.objectContaining({ isPinned: true }),
-      );
+      expect(mockPostRepo.create).toHaveBeenCalledWith(expect.objectContaining({ isPinned: true }));
       expect(result).toEqual(post);
     });
 
@@ -89,7 +98,7 @@ describe('ForumsService', () => {
       const pinnedDto: CreatePostDto = { title: 'Pin me', content: 'Nope', isPinned: true };
 
       await expect(service.createPost(courseId, userId, 'student', pinnedDto)).rejects.toThrow(
-        ForbiddenException,
+        ForbiddenException
       );
       expect(mockPostRepo.save).not.toHaveBeenCalled();
     });
@@ -98,7 +107,7 @@ describe('ForumsService', () => {
       mockCourseRepo.findOne.mockResolvedValue(null);
 
       await expect(service.createPost('nonexistent', userId, 'student', dto)).rejects.toThrow(
-        NotFoundException,
+        NotFoundException
       );
       expect(mockPostRepo.save).not.toHaveBeenCalled();
     });
@@ -118,7 +127,8 @@ describe('ForumsService', () => {
   // ── createReply ──────────────────────────────────────────────────────────────
 
   describe('createReply', () => {
-    const postId = 'p1', userId = 'u1';
+    const postId = 'p1',
+      userId = 'u1';
     const dto: CreateReplyDto = { content: 'My reply', isAnswer: false };
 
     it('creates a reply when post exists', async () => {
@@ -137,7 +147,7 @@ describe('ForumsService', () => {
       mockPostRepo.findOne.mockResolvedValue(null);
 
       await expect(service.createReply('missing', userId, 'student', dto)).rejects.toThrow(
-        NotFoundException,
+        NotFoundException
       );
       expect(mockReplyRepo.save).not.toHaveBeenCalled();
     });
@@ -148,7 +158,7 @@ describe('ForumsService', () => {
       const answerDto: CreateReplyDto = { content: 'Answer', isAnswer: true };
 
       await expect(service.createReply(postId, userId, 'student', answerDto)).rejects.toThrow(
-        ForbiddenException,
+        ForbiddenException
       );
     });
 
@@ -167,7 +177,7 @@ describe('ForumsService', () => {
       // Previous answers cleared
       expect(mockReplyRepo.update).toHaveBeenCalledWith(
         { postId, isAnswer: true },
-        { isAnswer: false },
+        { isAnswer: false }
       );
       expect(result).toEqual(reply);
     });
@@ -184,7 +194,10 @@ describe('ForumsService', () => {
 
     it('returns posts ordered by isPinned and createdAt', async () => {
       const course = { id: 'c1' } as Course;
-      const posts = [{ id: 'p1', isPinned: true }, { id: 'p2', isPinned: false }] as Post[];
+      const posts = [
+        { id: 'p1', isPinned: true },
+        { id: 'p2', isPinned: false },
+      ] as Post[];
       mockCourseRepo.findOne.mockResolvedValue(course);
       mockPostRepo.find.mockResolvedValue(posts);
 
@@ -192,7 +205,7 @@ describe('ForumsService', () => {
 
       expect(result).toEqual(posts);
       expect(mockPostRepo.find).toHaveBeenCalledWith(
-        expect.objectContaining({ order: { isPinned: 'DESC', createdAt: 'DESC' } }),
+        expect.objectContaining({ order: { isPinned: 'DESC', createdAt: 'DESC' } })
       );
     });
   });

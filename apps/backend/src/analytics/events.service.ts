@@ -12,7 +12,7 @@ export class EventsService {
 
   constructor(
     @InjectRepository(AnalyticsEvent)
-    private readonly analyticsEventRepo: Repository<AnalyticsEvent>,
+    private readonly analyticsEventRepo: Repository<AnalyticsEvent>
   ) {}
 
   /**
@@ -40,7 +40,7 @@ export class EventsService {
   async handleEvent(event: string, payload: any): Promise<void> {
     try {
       const userId = payload.userId;
-      
+
       // Check consent if userId is provided
       if (userId) {
         const consent = this.getConsent(userId);
@@ -52,7 +52,7 @@ export class EventsService {
 
       // Scrub PII from payload
       const scrubbedPayload = scrubPII(payload);
-      
+
       const analyticsEvent = this.analyticsEventRepo.create({
         eventType: event,
         payload: JSON.stringify(scrubbedPayload),
@@ -76,7 +76,7 @@ export class EventsService {
       endDate?: Date;
       userId?: string;
       courseId?: string;
-    } = {},
+    } = {}
   ): Promise<[AnalyticsEvent[], number]> {
     const queryBuilder = this.analyticsEventRepo.createQueryBuilder('event');
 

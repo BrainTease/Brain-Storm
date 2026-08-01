@@ -67,17 +67,12 @@ export function ReferralStats() {
 
       <div className="grid grid-cols-2 gap-4">
         {statItems.map((stat) => (
-          <div
-            key={stat.label}
-            className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 text-center"
-          >
+          <div key={stat.label} className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 text-center">
             <div className={`text-2xl mb-2 ${stat.color}`}>{stat.icon}</div>
             <div className="text-2xl font-bold text-gray-900 dark:text-white">
               {isLoading ? '...' : stat.value}
             </div>
-            <div className="text-sm text-gray-600 dark:text-gray-400">
-              {stat.label}
-            </div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">{stat.label}</div>
           </div>
         ))}
       </div>

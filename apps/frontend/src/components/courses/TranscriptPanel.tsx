@@ -38,7 +38,7 @@ export function TranscriptPanel({
   }, [src]);
 
   const activeIndex = lines.findIndex(
-    (line) => currentTime >= line.start && currentTime < line.end,
+    (line) => currentTime >= line.start && currentTime < line.end
   );
 
   useEffect(() => {
@@ -54,7 +54,7 @@ export function TranscriptPanel({
     (time: number) => {
       onSeek(time);
     },
-    [onSeek],
+    [onSeek]
   );
 
   const handleKeyDown = useCallback(
@@ -64,16 +64,12 @@ export function TranscriptPanel({
         onSeek(time);
       }
     },
-    [onSeek],
+    [onSeek]
   );
 
   if (loading) {
     return (
-      <div
-        className="p-4 text-sm text-gray-400"
-        role="status"
-        aria-label="Loading transcript"
-      >
+      <div className="p-4 text-sm text-gray-400" role="status" aria-label="Loading transcript">
         Loading transcript…
       </div>
     );
@@ -95,9 +91,7 @@ export function TranscriptPanel({
     >
       {(availableLanguages.length > 1 || onLanguageChange) && (
         <div className="flex items-center justify-between px-4 py-2 border-b border-gray-200 dark:border-gray-700">
-          <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
-            Transcript
-          </span>
+          <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Transcript</span>
           {onLanguageChange && availableLanguages.length > 1 && (
             <select
               value={language}

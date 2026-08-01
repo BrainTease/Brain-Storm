@@ -26,7 +26,15 @@ import { CacheManagementModule } from '../cache/cache-management.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Course, CourseModule, Lesson, Review, Enrollment, CourseVersion, CoursePrerequisite]),
+    TypeOrmModule.forFeature([
+      Course,
+      CourseModule,
+      Lesson,
+      Review,
+      Enrollment,
+      CourseVersion,
+      CoursePrerequisite,
+    ]),
     SearchModule,
     NotificationsModule,
     CacheManagementModule,

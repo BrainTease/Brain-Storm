@@ -26,7 +26,11 @@ export class ProgressService {
     private readonly badgeAwardService: BadgeAwardService,
   ) {}
 
-  async record(userId: string, dto: RecordProgressDto, stellarPublicKey: string): Promise<Progress> {
+  async record(
+    userId: string,
+    dto: RecordProgressDto,
+    stellarPublicKey: string
+  ): Promise<Progress> {
     let progress = await this.progressRepository.findByUserAndCourse(userId, dto.courseId);
 
     if (!progress) {
@@ -45,7 +49,7 @@ export class ProgressService {
       const txHash = await this.stellarService.recordProgress(
         stellarPublicKey,
         dto.courseId,
-        dto.progressPct,
+        dto.progressPct
       );
       progress.txHash = txHash;
     } catch {

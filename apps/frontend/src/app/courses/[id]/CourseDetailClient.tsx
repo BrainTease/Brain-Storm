@@ -40,14 +40,19 @@ export function CourseDetailClient({
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 capitalize">
             {level} · {durationHours}h
           </p>
-          <p className="text-gray-700 dark:text-gray-300 mt-3 leading-relaxed">{courseDescription}</p>
+          <p className="text-gray-700 dark:text-gray-300 mt-3 leading-relaxed">
+            {courseDescription}
+          </p>
         </div>
         <Button onClick={() => setEnrollOpen(true)} className="shrink-0">
           Enroll Now
         </Button>
       </div>
 
-      <Link href={`/courses/${courseId}/forum`} className="text-blue-600 hover:underline text-sm inline-block">
+      <Link
+        href={`/courses/${courseId}/forum`}
+        className="text-blue-600 hover:underline text-sm inline-block"
+      >
         View Discussion Forum →
       </Link>
 
@@ -72,7 +77,9 @@ export function CourseDetailClient({
 
       {tab === 'overview' && (
         <div className="space-y-4">
-          <p className="text-gray-600 dark:text-gray-400">Course content and details would appear here.</p>
+          <p className="text-gray-600 dark:text-gray-400">
+            Course content and details would appear here.
+          </p>
           <ReviewForm
             courseId={courseId}
             onSuccess={() => {

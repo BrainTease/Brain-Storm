@@ -49,7 +49,9 @@ export default function ProfilePage() {
   const savedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { bookmarks, fetchBookmarks } = useBookmarksStore();
 
-  useEffect(() => { fetchBookmarks(); }, [fetchBookmarks]);
+  useEffect(() => {
+    fetchBookmarks();
+  }, [fetchBookmarks]);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -162,7 +164,9 @@ export default function ProfilePage() {
   if (loading) {
     return (
       <main className="max-w-2xl mx-auto p-8 text-gray-900 dark:text-gray-100">
-        <p role="status" aria-live="polite">{t('loading')}</p>
+        <p role="status" aria-live="polite">
+          {t('loading')}
+        </p>
       </main>
     );
   }
@@ -191,16 +195,15 @@ export default function ProfilePage() {
   const initial = user.username[0]?.toUpperCase() ?? '?';
 
   const TABS: { key: ActiveTab; label: string }[] = [
-    { key: 'profile',       label: '👤 Profile' },
-    { key: 'stats',         label: '📊 Stats' },
+    { key: 'profile', label: '👤 Profile' },
+    { key: 'stats', label: '📊 Stats' },
     { key: 'notifications', label: '🔔 Notifications' },
-    { key: 'security',      label: '🔒 Security' },
+    { key: 'security', label: '🔒 Security' },
   ];
 
   return (
     <ProtectedRoute>
       <main className="max-w-2xl mx-auto p-8 space-y-8">
-
         {/* ── User header ── */}
         <div className="flex items-center gap-5">
           {/* Avatar with upload overlay */}
@@ -256,8 +259,17 @@ export default function ProfilePage() {
                 href="/bookmarks"
                 className="inline-flex items-center gap-1.5 text-sm text-blue-600 dark:text-blue-400 hover:underline"
               >
-                <svg className="w-4 h-4 fill-blue-500" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                <svg
+                  className="w-4 h-4 fill-blue-500"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
+                  />
                 </svg>
                 {bookmarks.length} Bookmarked Course{bookmarks.length !== 1 ? 's' : ''}
               </Link>
@@ -278,9 +290,10 @@ export default function ProfilePage() {
               aria-selected={activeTab === key}
               onClick={() => setActiveTab(key)}
               className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors
-                ${activeTab === key
-                  ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400'
-                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                ${
+                  activeTab === key
+                    ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400'
+                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
                 }`}
             >
               {label}
@@ -373,7 +386,8 @@ export default function ProfilePage() {
                   {t('avatarUrlHint')}
                 </p>
                 <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
-                  Or hover your avatar photo above to upload a new image (JPEG / PNG / WebP, max 5 MB).
+                  Or hover your avatar photo above to upload a new image (JPEG / PNG / WebP, max 5
+                  MB).
                 </p>
               </div>
 
@@ -408,9 +422,7 @@ export default function ProfilePage() {
         {activeTab === 'notifications' && <NotificationPreferences userId={user.id} />}
 
         {/* ════════ SECURITY TAB ════════ */}
-        {activeTab === 'security' && (
-          <SecuritySettings userId={user.id} email={user.email} />
-        )}
+        {activeTab === 'security' && <SecuritySettings userId={user.id} email={user.email} />}
       </main>
     </ProtectedRoute>
   );

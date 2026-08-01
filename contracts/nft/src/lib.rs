@@ -68,6 +68,7 @@ impl NftContract {
         env.storage().instance().get(&DataKey::Admin).unwrap()
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn mint_course_nft(
         env: Env,
         admin: Address,

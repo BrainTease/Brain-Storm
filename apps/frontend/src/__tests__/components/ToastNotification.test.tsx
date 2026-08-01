@@ -52,11 +52,7 @@ function Toast({ id, type, message, onClose, duration = 3000, action }: ToastPro
     >
       <span data-testid="toast-message">{message}</span>
       {action && (
-        <button
-          data-testid="toast-action"
-          onClick={action.onClick}
-          className="toast-action"
-        >
+        <button data-testid="toast-action" onClick={action.onClick} className="toast-action">
           {action.label}
         </button>
       )}
@@ -96,8 +92,13 @@ describe('Toast Notification Component', () => {
   });
 
   it('should render different toast types with correct styling', () => {
-    const types: Array<'success' | 'error' | 'warning' | 'info'> = ['success', 'error', 'warning', 'info'];
-    
+    const types: Array<'success' | 'error' | 'warning' | 'info'> = [
+      'success',
+      'error',
+      'warning',
+      'info',
+    ];
+
     types.forEach((type) => {
       const { unmount } = render(
         <Toast
@@ -111,21 +112,13 @@ describe('Toast Notification Component', () => {
 
       const toast = screen.getByTestId(`toast-toast-${type}`);
       expect(toast).toHaveClass('toast');
-      
+
       unmount();
     });
   });
 
   it('should have proper ARIA attributes', () => {
-    render(
-      <Toast
-        id="1"
-        type="info"
-        message="Information"
-        onClose={mockOnClose}
-        duration={0}
-      />
-    );
+    render(<Toast id="1" type="info" message="Information" onClose={mockOnClose} duration={0} />);
 
     const toast = screen.getByRole('alert');
     expect(toast).toHaveAttribute('aria-live', 'polite');
@@ -133,13 +126,7 @@ describe('Toast Notification Component', () => {
 
   it('should close toast when close button is clicked', async () => {
     render(
-      <Toast
-        id="1"
-        type="success"
-        message="Test message"
-        onClose={mockOnClose}
-        duration={0}
-      />
+      <Toast id="1" type="success" message="Test message" onClose={mockOnClose} duration={0} />
     );
 
     const closeButton = screen.getByTestId('toast-close');
@@ -177,13 +164,7 @@ describe('Toast Notification Component', () => {
     vi.useFakeTimers();
 
     render(
-      <Toast
-        id="1"
-        type="info"
-        message="Persistent message"
-        onClose={mockOnClose}
-        duration={0}
-      />
+      <Toast id="1" type="info" message="Persistent message" onClose={mockOnClose} duration={0} />
     );
 
     vi.advanceTimersByTime(5000);
@@ -220,13 +201,7 @@ describe('Toast Notification Component', () => {
 
   it('should render success toast with correct styling', () => {
     render(
-      <Toast
-        id="1"
-        type="success"
-        message="Success message"
-        onClose={mockOnClose}
-        duration={0}
-      />
+      <Toast id="1" type="success" message="Success message" onClose={mockOnClose} duration={0} />
     );
 
     const toast = screen.getByTestId('toast-1');
@@ -235,13 +210,7 @@ describe('Toast Notification Component', () => {
 
   it('should render error toast with correct styling', () => {
     render(
-      <Toast
-        id="1"
-        type="error"
-        message="Error message"
-        onClose={mockOnClose}
-        duration={0}
-      />
+      <Toast id="1" type="error" message="Error message" onClose={mockOnClose} duration={0} />
     );
 
     const toast = screen.getByTestId('toast-1');
@@ -281,13 +250,7 @@ describe('Toast Notification Component', () => {
     vi.useFakeTimers();
 
     const { unmount } = render(
-      <Toast
-        id="1"
-        type="success"
-        message="Test message"
-        onClose={mockOnClose}
-        duration={3000}
-      />
+      <Toast id="1" type="success" message="Test message" onClose={mockOnClose} duration={3000} />
     );
 
     unmount();
@@ -300,18 +263,10 @@ describe('Toast Notification Component', () => {
   });
 
   it('should be accessible via keyboard', () => {
-    render(
-      <Toast
-        id="1"
-        type="info"
-        message="Keyboard test"
-        onClose={mockOnClose}
-        duration={0}
-      />
-    );
+    render(<Toast id="1" type="info" message="Keyboard test" onClose={mockOnClose} duration={0} />);
 
     const closeButton = screen.getByTestId('toast-close');
-    
+
     // Should be focusable
     closeButton.focus();
     expect(closeButton).toHaveFocus();
@@ -324,7 +279,7 @@ describe('Toast Notification Component', () => {
 describe('Toast Container', () => {
   it('should stack multiple toasts', () => {
     const mockOnClose = vi.fn();
-    
+
     render(
       <div>
         <Toast id="1" type="success" message="Toast 1" onClose={mockOnClose} duration={0} />
@@ -340,7 +295,7 @@ describe('Toast Container', () => {
 
   it('should remove toast from stack when closed', async () => {
     const mockOnClose = vi.fn();
-    
+
     const { rerender } = render(
       <div>
         <Toast id="1" type="success" message="Toast 1" onClose={mockOnClose} duration={0} />

@@ -20,11 +20,15 @@ export function NotificationSettings() {
   return (
     <section aria-labelledby="notifications-heading" className="space-y-6">
       <div>
-        <h2 id="notifications-heading" className="text-lg font-semibold text-gray-900 dark:text-white">
+        <h2
+          id="notifications-heading"
+          className="text-lg font-semibold text-gray-900 dark:text-white"
+        >
           Notification Preferences
         </h2>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-          Choose which types of notifications you want to receive. These preferences sync to your account.
+          Choose which types of notifications you want to receive. These preferences sync to your
+          account.
         </p>
       </div>
 

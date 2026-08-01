@@ -90,11 +90,7 @@ export class UsersController {
   })
   @ApiResponse({ status: 403, description: 'Forbidden - can only update own profile' })
   @ApiResponse({ status: 404, description: 'User not found' })
-  async update(
-    @Param('id') id: string,
-    @Body() dto: UpdateUserDto,
-    @CurrentUser() user: any
-  ) {
+  async update(@Param('id') id: string, @Body() dto: UpdateUserDto, @CurrentUser() user: any) {
     if (!this.usersService.canUpdateUser(user.id, id, user.role)) {
       throw new ForbiddenException('You can only update your own profile');
     }

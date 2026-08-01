@@ -14,7 +14,10 @@ interface FacetedSearchProps {
   language: string;
   price: string;
   sort: SortOption;
-  onFilterChange: (key: 'level' | 'category' | 'duration' | 'language' | 'price' | 'sort', value: string) => void;
+  onFilterChange: (
+    key: 'level' | 'category' | 'duration' | 'language' | 'price' | 'sort',
+    value: string
+  ) => void;
   onClearAll: () => void;
 }
 

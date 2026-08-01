@@ -140,7 +140,7 @@ describe('Card — snapshots', () => {
       <Card>
         <h2>Title</h2>
         <p>Body text</p>
-      </Card>,
+      </Card>
     );
     expect(container.firstChild).toMatchSnapshot();
   });
@@ -205,7 +205,7 @@ describe('Modal — snapshots', () => {
     const { container } = render(
       <Modal isOpen={false} onClose={onClose}>
         Hidden content
-      </Modal>,
+      </Modal>
     );
     expect(container.firstChild).toMatchSnapshot();
     // structural guard: dialog must not appear in DOM
@@ -216,7 +216,7 @@ describe('Modal — snapshots', () => {
     const { container } = render(
       <Modal isOpen={true} onClose={onClose} title="Confirm action">
         Are you sure?
-      </Modal>,
+      </Modal>
     );
     expect(container.firstChild).toMatchSnapshot();
     expect(container.querySelector('[role="dialog"]')).not.toBeNull();
@@ -226,7 +226,7 @@ describe('Modal — snapshots', () => {
     const { container } = render(
       <Modal isOpen={true} onClose={onClose} title="Small" size="sm">
         Compact modal
-      </Modal>,
+      </Modal>
     );
     expect(container.firstChild).toMatchSnapshot();
   });
@@ -235,7 +235,7 @@ describe('Modal — snapshots', () => {
     const { container } = render(
       <Modal isOpen={true} onClose={onClose} title="Large" size="lg">
         Wide modal
-      </Modal>,
+      </Modal>
     );
     expect(container.firstChild).toMatchSnapshot();
   });
@@ -244,7 +244,7 @@ describe('Modal — snapshots', () => {
     const { container } = render(
       <Modal isOpen={true} onClose={onClose} title="XL" size="xl">
         Extra-wide modal
-      </Modal>,
+      </Modal>
     );
     expect(container.firstChild).toMatchSnapshot();
   });
@@ -258,7 +258,7 @@ describe('Modal — snapshots', () => {
         footer={<div data-testid="footer">Footer actions</div>}
       >
         Body content
-      </Modal>,
+      </Modal>
     );
     expect(container.firstChild).toMatchSnapshot();
   });
@@ -271,7 +271,7 @@ describe('Modal — snapshots', () => {
         header={<div data-testid="custom-header">My header</div>}
       >
         Body content
-      </Modal>,
+      </Modal>
     );
     expect(container.firstChild).toMatchSnapshot();
   });
@@ -280,7 +280,7 @@ describe('Modal — snapshots', () => {
     const { container } = render(
       <Modal isOpen={true} onClose={onClose} title="No X" showCloseButton={false}>
         Content
-      </Modal>,
+      </Modal>
     );
     expect(container.firstChild).toMatchSnapshot();
     // structural guard: close button must not appear
@@ -292,7 +292,7 @@ describe('Modal — snapshots', () => {
     const { container } = render(
       <Modal isOpen={true} onClose={onClose} ariaLabel="Media viewer" showCloseButton={false}>
         <img src="/placeholder.png" alt="media" />
-      </Modal>,
+      </Modal>
     );
     expect(container.firstChild).toMatchSnapshot();
     const dialog = container.querySelector('[role="dialog"]');

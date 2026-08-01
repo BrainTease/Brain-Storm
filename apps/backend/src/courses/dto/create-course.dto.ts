@@ -32,8 +32,13 @@ export class CreateCourseDto {
   level?: string;
 
   @ApiPropertyOptional({ example: 8, description: 'Estimated duration in hours' })
-  @IsOptional() @IsInt() @Min(0) durationHours?: number;
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  durationHours?: number;
 
   @ApiPropertyOptional({ example: false, description: 'Whether KYC is required to enroll' })
-  @IsOptional() @IsBoolean() requiresKyc?: boolean;
+  @IsOptional()
+  @IsBoolean()
+  requiresKyc?: boolean;
 }

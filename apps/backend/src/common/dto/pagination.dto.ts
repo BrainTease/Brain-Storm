@@ -46,7 +46,7 @@ export class PaginationDto {
 export function buildPaginationMeta(
   page: number,
   limit: number,
-  total: number,
+  total: number
 ): { page: number; limit: number; total: number; totalPages: number } {
   return {
     page,

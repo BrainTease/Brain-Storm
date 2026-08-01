@@ -31,16 +31,19 @@ export class TypeOrmUsersRepository implements UsersRepository {
     return this.repo.remove(entity);
   }
 
-  async findAll(options: {
-    page?: number;
-    limit?: number;
-    role?: string;
-    isVerified?: boolean;
-    search?: string;
-  } = {}) {
+  async findAll(
+    options: {
+      page?: number;
+      limit?: number;
+      role?: string;
+      isVerified?: boolean;
+      search?: string;
+    } = {}
+  ) {
     const { page = 1, limit = 10, role, isVerified, search } = options;
 
-    const query = this.repo.createQueryBuilder('user')
+    const query = this.repo
+      .createQueryBuilder('user')
       .select([
         'user.id',
         'user.email',
@@ -64,10 +67,9 @@ export class TypeOrmUsersRepository implements UsersRepository {
     }
 
     if (search) {
-      query.andWhere(
-        '(user.email ILIKE :search OR user.username ILIKE :search)',
-        { search: `%${search}%` },
-      );
+      query.andWhere('(user.email ILIKE :search OR user.username ILIKE :search)', {
+        search: `%${search}%`,
+      });
     }
 
     query.andWhere('user.deletedAt IS NULL');

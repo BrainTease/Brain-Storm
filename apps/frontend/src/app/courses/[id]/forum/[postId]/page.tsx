@@ -43,7 +43,9 @@ export default function ThreadDetailPage({ params }: ThreadDetailPageProps) {
           <div className="bg-red-50 border border-red-200 rounded-lg p-6">
             <h2 className="text-lg font-semibold text-red-900 mb-2">Discussion Not Found</h2>
             <p className="text-red-700 mb-4">
-              {error ? 'Failed to load this discussion' : 'The discussion you are looking for does not exist.'}
+              {error
+                ? 'Failed to load this discussion'
+                : 'The discussion you are looking for does not exist.'}
             </p>
             <Link href={`/courses/${params.id}/forum`} className="text-blue-600 hover:underline">
               ← Back to Forum

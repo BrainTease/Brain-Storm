@@ -35,9 +35,7 @@ export function DashboardHeader({
         Welcome back, {username ?? email ?? 'Student'}
         {suffix ? ` ${suffix}` : ''}
       </h1>
-      {showEmail && email && (
-        <p className="text-sm text-gray-500 dark:text-gray-400">{email}</p>
-      )}
+      {showEmail && email && <p className="text-sm text-gray-500 dark:text-gray-400">{email}</p>}
     </div>
   );
 }

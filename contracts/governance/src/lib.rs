@@ -242,7 +242,7 @@ impl GovernanceContract {
 
     /// Compute the effective vote weight for a balance under a given strategy.
     /// strategy: 0 = Weighted, 1 = Quadratic, 2 = Flat
-    pub fn get_vote_weight(env: Env, balance: i128, strategy: u32) -> i128 {
+    pub fn get_vote_weight(_env: Env, balance: i128, strategy: u32) -> i128 {
         let strat = match strategy {
             1 => VotingStrategy::Quadratic,
             2 => VotingStrategy::Flat,

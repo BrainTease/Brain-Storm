@@ -228,7 +228,7 @@ describe('useWallet — account switching', () => {
     (getWalletAdapter as Mock).mockReturnValue(
       buildMockAdapter({
         connect: vi.fn(async () => ({ publicKey: SECOND_KEY, network: MOCK_NETWORK })),
-      }),
+      })
     );
 
     await act(async () => {
@@ -283,7 +283,7 @@ describe('useWallet — wallet extension not installed', () => {
         connect: vi.fn(async () => {
           throw new WalletError('NOT_INSTALLED', 'Freighter extension not found.', 'freighter');
         }),
-      }),
+      })
     );
 
     const { result } = renderHook(() => useWallet(), { wrapper });
@@ -306,7 +306,7 @@ describe('useWallet — wallet extension not installed', () => {
         connect: vi.fn(async () => {
           throw new WalletError('NOT_INSTALLED', 'Freighter extension not found.', 'freighter');
         }),
-      }),
+      })
     );
 
     const { result } = renderHook(() => useWallet(), { wrapper });
@@ -326,7 +326,7 @@ describe('useWallet — wallet extension not installed', () => {
         connect: vi.fn(async () => {
           throw new WalletError('NOT_INSTALLED', 'Freighter extension not found.', 'freighter');
         }),
-      }),
+      })
     );
 
     const { result } = renderHook(() => useWallet(), { wrapper });
@@ -350,9 +350,13 @@ describe('useWallet — connection rejection / user cancellation', () => {
     (getWalletAdapter as Mock).mockReturnValue(
       buildMockAdapter({
         connect: vi.fn(async () => {
-          throw new WalletError('CONNECTION_REJECTED', 'User rejected the connection request.', 'freighter');
+          throw new WalletError(
+            'CONNECTION_REJECTED',
+            'User rejected the connection request.',
+            'freighter'
+          );
         }),
-      }),
+      })
     );
 
     const { result } = renderHook(() => useWallet(), { wrapper });
@@ -375,7 +379,7 @@ describe('useWallet — network / chain ID mismatch', () => {
           publicKey: MOCK_PUBLIC_KEY,
           network: 'PUBLIC', // Mainnet passphrase keyword
         })),
-      }),
+      })
     );
 
     const { result } = renderHook(() => useWallet(), { wrapper });
@@ -396,7 +400,7 @@ describe('useWallet — network / chain ID mismatch', () => {
           publicKey: MOCK_PUBLIC_KEY,
           network: 'Test SDF Network ; September 2015',
         })),
-      }),
+      })
     );
 
     const { result } = renderHook(() => useWallet(), { wrapper });
@@ -477,7 +481,7 @@ describe('useWallet — signTransaction', () => {
     await expect(
       act(async () => {
         await result.current.signTransaction('MOCK_XDR_PAYLOAD');
-      }),
+      })
     ).rejects.toThrow(/no wallet connected/i);
   });
 });

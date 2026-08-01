@@ -6,11 +6,7 @@ import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { CodeEditor } from './CodeEditor';
 import { runExercise, supportsSandbox } from './SandboxRunner';
-import type {
-  Exercise,
-  TestResult,
-  ExerciseResult,
-} from '@brain-storm/types';
+import type { Exercise, TestResult, ExerciseResult } from '@brain-storm/types';
 
 interface ExerciseRunnerProps {
   exercise: Exercise;
@@ -36,7 +32,11 @@ export function ExerciseRunner({ exercise, onComplete }: ExerciseRunnerProps) {
     await new Promise((r) => setTimeout(r, 300));
 
     try {
-      const { testResults, xpEarned: xp } = runExercise(code, exercise.testCases, exercise.xpReward);
+      const { testResults, xpEarned: xp } = runExercise(
+        code,
+        exercise.testCases,
+        exercise.xpReward
+      );
       const allPassed = testResults.every((t) => t.passed);
       const passedCount = testResults.filter((t) => t.passed).length;
       const s = testResults.length > 0 ? Math.round((passedCount / testResults.length) * 100) : 0;
@@ -87,12 +87,8 @@ export function ExerciseRunner({ exercise, onComplete }: ExerciseRunnerProps) {
     <Card className="space-y-4">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-            {exercise.title}
-          </h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            {exercise.description}
-          </p>
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white">{exercise.title}</h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{exercise.description}</p>
         </div>
         <Badge variant={exercise.xpReward > 0 ? 'success' : 'default'}>
           {exercise.xpReward} XP
@@ -118,7 +114,7 @@ export function ExerciseRunner({ exercise, onComplete }: ExerciseRunnerProps) {
         </div>
       )}
 
-      {(!browserSupported && !showFallback) ? null : (
+      {!browserSupported && !showFallback ? null : (
         <>
           <CodeEditor value={code} onChange={setCode} language={exercise.starter.language} />
 
@@ -149,15 +145,11 @@ export function ExerciseRunner({ exercise, onComplete }: ExerciseRunnerProps) {
             <Badge variant={passed ? 'success' : 'error'}>
               {score}% ({results.filter((r) => r.passed).length}/{results.length})
             </Badge>
-            {passed && xpEarned > 0 && (
-              <Badge variant="success">+{xpEarned} XP</Badge>
-            )}
+            {passed && xpEarned > 0 && <Badge variant="success">+{xpEarned} XP</Badge>}
           </div>
 
           <div className="space-y-2">
-            <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-              Test Cases
-            </h4>
+            <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Test Cases</h4>
             {results.map((tr, i) => (
               <div
                 key={i}

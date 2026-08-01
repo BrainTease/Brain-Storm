@@ -32,13 +32,14 @@ export class HealthController {
    * Kubernetes restarts the pod if this fails.
    */
   @Get('liveness')
-  @ApiOperation({ summary: 'Liveness probe', description: 'Returns 200 when the process is running.' })
+  @ApiOperation({
+    summary: 'Liveness probe',
+    description: 'Returns 200 when the process is running.',
+  })
   @ApiResponse({ status: 200, description: 'Process is alive' })
   @HealthCheck()
   liveness() {
-    return this.health.check([
-      () => this.memory.checkHeap('memory_heap', 500 * 1024 * 1024),
-    ]);
+    return this.health.check([() => this.memory.checkHeap('memory_heap', 500 * 1024 * 1024)]);
   }
 
   /**
@@ -99,7 +100,10 @@ export class HealthController {
       if (retrieved !== testValue) throw new Error('Redis value mismatch');
       return { redis: { status: 'up' } };
     } catch (error) {
-      this.logger.warn('Redis health check failed', { context: 'HealthController', error: error.message });
+      this.logger.warn('Redis health check failed', {
+        context: 'HealthController',
+        error: error.message,
+      });
       throw new Error(`Redis health check failed: ${error.message}`);
     }
   }
@@ -112,7 +116,10 @@ export class HealthController {
     try {
       return await this.http.pingCheck('stellar_horizon', `${horizonUrl}/health`);
     } catch (error) {
-      this.logger.warn('Stellar Horizon health check failed', { context: 'HealthController', error: error.message });
+      this.logger.warn('Stellar Horizon health check failed', {
+        context: 'HealthController',
+        error: error.message,
+      });
       throw error;
     }
   }

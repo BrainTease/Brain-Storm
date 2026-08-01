@@ -100,7 +100,7 @@ export class CertificatesService {
   }
 
   async verifyCertificate(
-    certificateHash: string,
+    certificateHash: string
   ): Promise<{ valid: boolean; certificate?: Certificate }> {
     const cert = await this.repo.findOne({
       where: { certificateHash },
@@ -118,9 +118,6 @@ export class CertificatesService {
   // ── Helpers ────────────────────────────────────────────────────────────────
 
   private generateHash(userId: string, courseId: string): string {
-    return crypto
-      .createHash('sha256')
-      .update(`${userId}:${courseId}:${Date.now()}`)
-      .digest('hex');
+    return crypto.createHash('sha256').update(`${userId}:${courseId}:${Date.now()}`).digest('hex');
   }
 }

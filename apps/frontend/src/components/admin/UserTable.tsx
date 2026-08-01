@@ -19,17 +19,22 @@ export function UserTable() {
     });
   }
 
-  useEffect(() => { load(page, search); }, [page]);
+  useEffect(() => {
+    load(page, search);
+  }, [page]);
 
   function handleSearch(value: string) {
     setSearch(value);
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => { setPage(1); load(1, value); }, 300);
+    debounceRef.current = setTimeout(() => {
+      setPage(1);
+      load(1, value);
+    }, 300);
   }
 
   async function handleBan(user: AdminUser) {
     const prev = [...users];
-    setUsers((u) => u.map((x) => x.id === user.id ? { ...x, status: 'banned' } : x));
+    setUsers((u) => u.map((x) => (x.id === user.id ? { ...x, status: 'banned' } : x)));
     setConfirmBan(null);
     try {
       await adminApi.banUser(user.id);
@@ -41,7 +46,7 @@ export function UserTable() {
 
   async function handleRoleChange(user: AdminUser, role: AdminUser['role']) {
     const prev = [...users];
-    setUsers((u) => u.map((x) => x.id === user.id ? { ...x, role } : x));
+    setUsers((u) => u.map((x) => (x.id === user.id ? { ...x, role } : x)));
     try {
       await adminApi.updateUserRole(user.id, role);
     } catch {
@@ -92,7 +97,9 @@ export function UserTable() {
                   </select>
                 </td>
                 <td className="py-2 pr-4">
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${user.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                  <span
+                    className={`text-xs px-2 py-0.5 rounded-full ${user.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}
+                  >
                     {user.status}
                   </span>
                 </td>
@@ -113,20 +120,38 @@ export function UserTable() {
       </div>
       {totalPages > 1 && (
         <div className="flex gap-2 items-center text-sm">
-          <Button variant="outline" disabled={page === 1} onClick={() => setPage((p) => p - 1)}>Previous</Button>
-          <span>{page} / {totalPages}</span>
-          <Button variant="outline" disabled={page === totalPages} onClick={() => setPage((p) => p + 1)}>Next</Button>
+          <Button variant="outline" disabled={page === 1} onClick={() => setPage((p) => p - 1)}>
+            Previous
+          </Button>
+          <span>
+            {page} / {totalPages}
+          </span>
+          <Button
+            variant="outline"
+            disabled={page === totalPages}
+            onClick={() => setPage((p) => p + 1)}
+          >
+            Next
+          </Button>
         </div>
       )}
 
       {confirmBan && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" role="dialog" aria-modal="true">
+        <div
+          className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
+          role="dialog"
+          aria-modal="true"
+        >
           <div className="bg-white rounded-xl p-6 max-w-sm w-full shadow-xl space-y-4">
             <h2 className="font-semibold text-lg">Ban {confirmBan.displayName}?</h2>
-            <p className="text-sm text-gray-600">This will prevent the user from accessing the platform.</p>
+            <p className="text-sm text-gray-600">
+              This will prevent the user from accessing the platform.
+            </p>
             <div className="flex gap-3">
               <Button onClick={() => handleBan(confirmBan)}>Confirm Ban</Button>
-              <Button variant="outline" onClick={() => setConfirmBan(null)}>Cancel</Button>
+              <Button variant="outline" onClick={() => setConfirmBan(null)}>
+                Cancel
+              </Button>
             </div>
           </div>
         </div>

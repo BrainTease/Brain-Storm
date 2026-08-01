@@ -31,12 +31,16 @@ export function StatsCards() {
     }
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+  }, []);
 
   if (loading) {
     return (
       <div className="grid grid-cols-3 gap-4">
-        <SkeletonCard /><SkeletonCard /><SkeletonCard />
+        <SkeletonCard />
+        <SkeletonCard />
+        <SkeletonCard />
       </div>
     );
   }
@@ -45,7 +49,9 @@ export function StatsCards() {
     return (
       <div className="border border-red-200 rounded-lg p-6 text-center">
         <p className="text-red-600 mb-3">Failed to load statistics.</p>
-        <button className="text-blue-600 hover:underline text-sm" onClick={load}>Retry</button>
+        <button className="text-blue-600 hover:underline text-sm" onClick={load}>
+          Retry
+        </button>
       </div>
     );
   }

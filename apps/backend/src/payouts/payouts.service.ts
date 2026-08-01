@@ -17,7 +17,7 @@ export class PayoutsService {
     private readonly enrollmentsRepository: Repository<Enrollment>,
     @InjectRepository(Course)
     private readonly coursesRepository: Repository<Course>,
-    private readonly royaltyCalculationService: RoyaltyCalculationService,
+    private readonly royaltyCalculationService: RoyaltyCalculationService
   ) {}
 
   async calculatePayouts(startDate: Date, endDate: Date): Promise<Payout[]> {
@@ -78,7 +78,7 @@ export class PayoutsService {
       payout.status = 'processed';
       payout.transactionId = `TXN-${Date.now()}`;
       this.logger.log(
-        `Payout processed for instructor ${payout.instructor.email}: $${payout.instructorShare}`,
+        `Payout processed for instructor ${payout.instructor.email}: $${payout.instructorShare}`
       );
     } catch (error) {
       payout.status = 'failed';

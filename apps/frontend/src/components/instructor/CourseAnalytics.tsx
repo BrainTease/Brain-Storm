@@ -32,7 +32,8 @@ export function CourseAnalytics() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get('/instructor/courses/analytics')
+    api
+      .get('/instructor/courses/analytics')
       .then((r) => setCourses(r.data ?? []))
       .catch(() => setCourses(MOCK))
       .finally(() => setLoading(false));
@@ -51,14 +52,18 @@ export function CourseAnalytics() {
             <thead className="bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
               <tr>
                 {['Course', 'Enrollments', 'Completion Rate', 'Rating'].map((h) => (
-                  <th key={h} className="px-4 py-3 text-left font-medium">{h}</th>
+                  <th key={h} className="px-4 py-3 text-left font-medium">
+                    {h}
+                  </th>
                 ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900">
               {courses.map((c) => (
                 <tr key={c.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                  <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{c.title}</td>
+                  <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">
+                    {c.title}
+                  </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       <div className="h-2 w-20 rounded-full bg-gray-200 dark:bg-gray-700">
@@ -82,7 +87,8 @@ export function CourseAnalytics() {
                     </div>
                   </td>
                   <td className="px-4 py-3 text-yellow-500">
-                    {'★'.repeat(Math.round(c.rating))} <span className="text-gray-600 dark:text-gray-300">{c.rating}</span>
+                    {'★'.repeat(Math.round(c.rating))}{' '}
+                    <span className="text-gray-600 dark:text-gray-300">{c.rating}</span>
                   </td>
                 </tr>
               ))}

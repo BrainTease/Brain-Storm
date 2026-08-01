@@ -6,7 +6,11 @@ import { NotificationsService } from './notifications.service';
 import { MailService } from '../mail/mail.service';
 import { NotificationType } from './notification.entity';
 
-const mockPrefRepo = () => ({ findOne: jest.fn(), create: jest.fn((d) => d), save: jest.fn((d) => Promise.resolve(d)) });
+const mockPrefRepo = () => ({
+  findOne: jest.fn(),
+  create: jest.fn((d) => d),
+  save: jest.fn((d) => Promise.resolve(d)),
+});
 const mockNotifService = () => ({ create: jest.fn().mockResolvedValue({}) });
 const mockMailService = () => ({ sendNotificationEmail: jest.fn().mockResolvedValue(undefined) });
 

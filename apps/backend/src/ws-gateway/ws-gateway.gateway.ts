@@ -18,7 +18,7 @@ export class WsGatewayGateway implements OnGatewayConnection, OnGatewayDisconnec
   constructor(
     private jwtService: JwtService,
     @Inject('REDIS_PUBLISHER') private redisPublisher: Redis,
-    @Inject('REDIS_SUBSCRIBER') private redisSubscriber: Redis,
+    @Inject('REDIS_SUBSCRIBER') private redisSubscriber: Redis
   ) {}
 
   onModuleInit() {

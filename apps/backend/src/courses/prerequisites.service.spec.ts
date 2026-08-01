@@ -10,8 +10,11 @@ describe('PrerequisitesService', () => {
   let service: PrerequisitesService;
 
   const mockPrereqRepo = {
-    create: jest.fn(), save: jest.fn(), findOne: jest.fn(),
-    find: jest.fn(), remove: jest.fn(),
+    create: jest.fn(),
+    save: jest.fn(),
+    findOne: jest.fn(),
+    find: jest.fn(),
+    remove: jest.fn(),
   };
   const mockEnrollmentRepo = { find: jest.fn() };
   const mockCourseRepo = { findOne: jest.fn() };
@@ -35,7 +38,7 @@ describe('PrerequisitesService', () => {
   describe('addPrerequisite', () => {
     it('creates prerequisite relationship between two valid courses', async () => {
       mockCourseRepo.findOne
-        .mockResolvedValueOnce({ id: 'c1' } as Course)  // course
+        .mockResolvedValueOnce({ id: 'c1' } as Course) // course
         .mockResolvedValueOnce({ id: 'c2' } as Course); // prereq
       const record = { courseId: 'c1', prerequisiteId: 'c2' } as CoursePrerequisite;
       mockPrereqRepo.create.mockReturnValue(record);
@@ -54,7 +57,7 @@ describe('PrerequisitesService', () => {
 
     it('throws NotFoundException when the main course does not exist', async () => {
       mockCourseRepo.findOne
-        .mockResolvedValueOnce(null)          // course missing
+        .mockResolvedValueOnce(null) // course missing
         .mockResolvedValueOnce({ id: 'c2' }); // prereq exists
 
       await expect(service.addPrerequisite('c1', 'c2')).rejects.toThrow(NotFoundException);
@@ -63,7 +66,7 @@ describe('PrerequisitesService', () => {
     it('throws NotFoundException when the prerequisite course does not exist', async () => {
       mockCourseRepo.findOne
         .mockResolvedValueOnce({ id: 'c1' }) // course exists
-        .mockResolvedValueOnce(null);         // prereq missing
+        .mockResolvedValueOnce(null); // prereq missing
 
       await expect(service.addPrerequisite('c1', 'c2')).rejects.toThrow(NotFoundException);
     });
@@ -136,9 +139,7 @@ describe('PrerequisitesService', () => {
     });
 
     it('treats enrollment without completedAt as not completed', async () => {
-      mockPrereqRepo.find.mockResolvedValue([
-        { prerequisiteId: 'pre-1' } as CoursePrerequisite,
-      ]);
+      mockPrereqRepo.find.mockResolvedValue([{ prerequisiteId: 'pre-1' } as CoursePrerequisite]);
       mockEnrollmentRepo.find.mockResolvedValue([
         { courseId: 'pre-1', completedAt: null } as Enrollment,
       ]);
@@ -159,9 +160,7 @@ describe('PrerequisitesService', () => {
     });
 
     it('throws ForbiddenException listing missing course ids', async () => {
-      mockPrereqRepo.find.mockResolvedValue([
-        { prerequisiteId: 'pre-x' } as CoursePrerequisite,
-      ]);
+      mockPrereqRepo.find.mockResolvedValue([{ prerequisiteId: 'pre-x' } as CoursePrerequisite]);
       mockEnrollmentRepo.find.mockResolvedValue([]);
 
       await expect(service.enforcePrerequisites('u1', 'c1')).rejects.toThrow(ForbiddenException);

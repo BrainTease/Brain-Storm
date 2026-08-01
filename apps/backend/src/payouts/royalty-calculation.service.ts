@@ -89,8 +89,6 @@ export class RoyaltyCalculationService {
    * @returns       Array of RoyaltyResults (only for courses with completions > 0).
    */
   calculateBatch(inputs: RoyaltyInput[]): RoyaltyResult[] {
-    return inputs
-      .filter((input) => input.completions > 0)
-      .map((input) => this.calculate(input));
+    return inputs.filter((input) => input.completions > 0).map((input) => this.calculate(input));
   }
 }

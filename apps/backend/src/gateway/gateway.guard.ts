@@ -8,7 +8,7 @@ export const SKIP_GATEWAY_AUTH = 'skipGatewayAuth';
 export class GatewayAuthGuard implements CanActivate {
   constructor(
     private readonly gatewayService: GatewayService,
-    private readonly reflector: Reflector,
+    private readonly reflector: Reflector
   ) {}
 
   canActivate(context: ExecutionContext): boolean {

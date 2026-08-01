@@ -259,7 +259,7 @@ describe('AnalyticsPipeline', () => {
       dataCollectionStage as any,
       aggregationStage as any,
       persistenceStage as any,
-      cacheStage as any,
+      cacheStage as any
     );
 
     const result = await pipeline.run('pipeline-test');
@@ -272,7 +272,7 @@ describe('AnalyticsPipeline', () => {
     const noop = { execute: jest.fn().mockResolvedValue(undefined) };
     const pipeline = new AnalyticsPipeline(noop as any, noop as any, noop as any, noop as any);
     await expect(pipeline.run('no-record')).rejects.toThrow(
-      'Pipeline did not produce a record for course no-record',
+      'Pipeline did not produce a record for course no-record'
     );
   });
 });

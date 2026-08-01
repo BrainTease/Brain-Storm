@@ -7,7 +7,9 @@ import { OrganizationsService } from './organizations.service';
 import { OrganizationsController } from './organizations.controller';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Organization, OrganizationMember, OrganizationBillingProfile])],
+  imports: [
+    TypeOrmModule.forFeature([Organization, OrganizationMember, OrganizationBillingProfile]),
+  ],
   providers: [OrganizationsService],
   controllers: [OrganizationsController],
   exports: [OrganizationsService],

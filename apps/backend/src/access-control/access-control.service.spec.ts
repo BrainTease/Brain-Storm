@@ -31,7 +31,7 @@ describe('AccessControlService', () => {
       subscriptionExpiryDate: null,
       allowedIpAddresses: null,
       ...overrides,
-    } as CourseAccessControl);
+    }) as CourseAccessControl;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -57,7 +57,7 @@ describe('AccessControlService', () => {
       const result = await service.grantAccess('c1', 'u1', AccessRole.STUDENT);
 
       expect(mockAccessRepo.create).toHaveBeenCalledWith(
-        expect.objectContaining({ courseId: 'c1', userId: 'u1', role: AccessRole.STUDENT }),
+        expect.objectContaining({ courseId: 'c1', userId: 'u1', role: AccessRole.STUDENT })
       );
       expect(result).toEqual(access);
     });
@@ -72,7 +72,7 @@ describe('AccessControlService', () => {
       await service.grantAccess('c1', 'u1', AccessRole.STUDENT, expiry, ips);
 
       expect(mockAccessRepo.create).toHaveBeenCalledWith(
-        expect.objectContaining({ subscriptionExpiryDate: expiry, allowedIpAddresses: ips }),
+        expect.objectContaining({ subscriptionExpiryDate: expiry, allowedIpAddresses: ips })
       );
     });
   });
@@ -141,7 +141,10 @@ describe('AccessControlService', () => {
     });
 
     it('returns allowed:true when subscription has a future expiry', async () => {
-      const access = makeAccess({ subscriptionExpiryDate: new Date('2099-01-01'), allowedIpAddresses: null });
+      const access = makeAccess({
+        subscriptionExpiryDate: new Date('2099-01-01'),
+        allowedIpAddresses: null,
+      });
       mockAccessRepo.findOne.mockResolvedValue(access);
 
       const result = await service.checkAccess('c1', 'u1');
@@ -169,7 +172,7 @@ describe('AccessControlService', () => {
 
       expect(mockAccessRepo.update).toHaveBeenCalledWith(
         { courseId: 'c1', userId: 'u1' },
-        { isActive: false },
+        { isActive: false }
       );
     });
   });
@@ -185,7 +188,7 @@ describe('AccessControlService', () => {
 
       expect(mockAccessRepo.update).toHaveBeenCalledWith(
         { courseId: 'c1', userId: 'u1' },
-        { subscriptionExpiryDate: expiry },
+        { subscriptionExpiryDate: expiry }
       );
     });
   });

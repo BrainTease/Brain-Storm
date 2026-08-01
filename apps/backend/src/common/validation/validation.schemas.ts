@@ -1,4 +1,21 @@
-import { IsString, IsEmail, IsOptional, MinLength, MaxLength, Matches, IsInt, Min, Max, IsBoolean, IsIn, IsUUID, IsISO8601, IsArray, ValidateNested, IsNumber } from 'class-validator';
+import {
+  IsString,
+  IsEmail,
+  IsOptional,
+  MinLength,
+  MaxLength,
+  Matches,
+  IsInt,
+  Min,
+  Max,
+  IsBoolean,
+  IsIn,
+  IsUUID,
+  IsISO8601,
+  IsArray,
+  ValidateNested,
+  IsNumber,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 /**

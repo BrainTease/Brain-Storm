@@ -13,7 +13,7 @@ export class UsersService {
 
   constructor(
     @InjectRepository(User) private repo: Repository<User>,
-    @InjectRepository(ImportJob) private importJobRepo: Repository<ImportJob>,
+    @InjectRepository(ImportJob) private importJobRepo: Repository<ImportJob>
   ) {}
 
   findByEmail(email: string) {
@@ -49,18 +49,16 @@ export class UsersService {
   async uploadAvatar(userId: string, file: Express.Multer.File) {
     const user = await this.findById(userId);
     if (!user) throw new NotFoundException('User not found');
-    
+
     // In production, upload to S3/CDN and return URL
     // For now, return a placeholder
     const avatarUrl = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
-    
+
     await this.repo.save({ ...user, avatar: avatarUrl });
     return { avatarUrl };
   }
 
-  async findAll(
-    options: UserQueryDto = {}
-  ): Promise<PaginatedResponseDto<User>> {
+  async findAll(options: UserQueryDto = {}): Promise<PaginatedResponseDto<User>> {
     const { page = 1, limit = 20, role, isVerified, search } = options;
 
     const query = this.repo.createQueryBuilder('user');
@@ -133,7 +131,7 @@ export class UsersService {
         total: rows.length,
         processed: 0,
         result: {},
-      }),
+      })
     );
 
     this.processUserImportJob(job.id, rows).catch((err) => {

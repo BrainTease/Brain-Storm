@@ -16,8 +16,8 @@ export default function ReferralsPage() {
             Referral Program
           </h1>
           <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-            Invite friends to join Brain-Storm and earn rewards for each successful referral.
-            Share your unique link and start building your network!
+            Invite friends to join Brain-Storm and earn rewards for each successful referral. Share
+            your unique link and start building your network!
           </p>
         </div>
 

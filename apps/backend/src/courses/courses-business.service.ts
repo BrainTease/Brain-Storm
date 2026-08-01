@@ -32,15 +32,10 @@ export class CoursesBusinessService extends BusinessLogicService {
   /**
    * Update a course with authorization check
    */
-  async updateCourse(
-    courseId: string,
-    userId: string,
-    userRole: string,
-    dto: UpdateCourseDto,
-  ) {
+  async updateCourse(courseId: string, userId: string, userRole: string, dto: UpdateCourseDto) {
     // Verify user is authorized to update this course
     const course = await this.coursesService.findOne(courseId);
-    
+
     if (userRole !== 'admin' && course.createdBy !== userId) {
       throw new ForbiddenException('You can only update courses you created');
     }
@@ -53,7 +48,7 @@ export class CoursesBusinessService extends BusinessLogicService {
    */
   async deleteCourse(courseId: string, userId: string, userRole: string) {
     const course = await this.coursesService.findOne(courseId);
-    
+
     if (userRole !== 'admin' && course.createdBy !== userId) {
       throw new ForbiddenException('You can only delete courses you created');
     }
@@ -68,10 +63,10 @@ export class CoursesBusinessService extends BusinessLogicService {
     courseId: string,
     userId: string,
     userRole: string,
-    scheduledAt: Date,
+    scheduledAt: Date
   ) {
     const course = await this.coursesService.findOne(courseId);
-    
+
     if (userRole !== 'admin' && course.createdBy !== userId) {
       throw new ForbiddenException('You can only schedule courses you created');
     }
@@ -88,7 +83,7 @@ export class CoursesBusinessService extends BusinessLogicService {
    */
   async publishCourseNow(courseId: string, userId: string, userRole: string) {
     const course = await this.coursesService.findOne(courseId);
-    
+
     if (userRole !== 'admin' && course.createdBy !== userId) {
       throw new ForbiddenException('You can only publish courses you created');
     }

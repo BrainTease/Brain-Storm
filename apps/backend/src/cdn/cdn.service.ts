@@ -15,7 +15,7 @@ export class CdnService {
 
   constructor(
     private configService: ConfigService,
-    @InjectRepository(CdnAsset) private assetRepo: Repository<CdnAsset>,
+    @InjectRepository(CdnAsset) private assetRepo: Repository<CdnAsset>
   ) {
     this.cdnProvider = this.configService.get('CDN_PROVIDER', 'cloudfront');
     this.cdnDomain = this.configService.get('CDN_DOMAIN');
@@ -27,7 +27,7 @@ export class CdnService {
     lessonId: string,
     fileName: string,
     contentType: ContentType,
-    fileSize: number,
+    fileSize: number
   ) {
     const cdnUrl = `${this.cdnDomain}/${lessonId}/${fileName}`;
 
@@ -66,7 +66,7 @@ export class CdnService {
         isTranscoded: true,
         availableBitrates: bitrates,
         thumbnailUrl,
-      },
+      }
     );
   }
 

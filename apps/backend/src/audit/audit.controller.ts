@@ -15,7 +15,10 @@ export class AuditController {
 
   @Get()
   @Roles('admin')
-  @ApiOperation({ summary: 'Query audit logs (admin only)', description: 'Filterable, paginated audit log query.' })
+  @ApiOperation({
+    summary: 'Query audit logs (admin only)',
+    description: 'Filterable, paginated audit log query.',
+  })
   @ApiQuery({ name: 'userId', required: false })
   @ApiQuery({ name: 'action', required: false })
   @ApiQuery({ name: 'startDate', required: false })
@@ -29,7 +32,7 @@ export class AuditController {
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
     @Query('limit') limit?: string,
-    @Query('offset') offset?: string,
+    @Query('offset') offset?: string
   ) {
     return this.auditService.getLogs({
       userId,
@@ -52,7 +55,7 @@ export class AuditController {
     @Res() res: Response,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
-    @Query('limit') limit?: string,
+    @Query('limit') limit?: string
   ) {
     const ndjson = await this.auditService.exportLogs({
       startDate: startDate ? new Date(startDate) : undefined,
@@ -81,10 +84,7 @@ export class AuditController {
       example: { checked: 500, broken: 0, brokenIds: [], valid: true },
     },
   })
-  verifyIntegrity(
-    @Query('startDate') startDate?: string,
-    @Query('endDate') endDate?: string,
-  ) {
+  verifyIntegrity(@Query('startDate') startDate?: string, @Query('endDate') endDate?: string) {
     return this.auditService.verifyIntegrity({
       startDate: startDate ? new Date(startDate) : undefined,
       endDate: endDate ? new Date(endDate) : undefined,

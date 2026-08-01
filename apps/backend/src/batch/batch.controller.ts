@@ -27,7 +27,7 @@ export class BatchController {
   })
   batchUsers(
     @Body('operations') operations: Record<string, any>[],
-    @Request() req: { user: { id: string } },
+    @Request() req: { user: { id: string } }
   ) {
     return this.batchService.createUserBatch(operations, req.user.id);
   }
@@ -46,7 +46,7 @@ export class BatchController {
   })
   batchCourses(
     @Body('operations') operations: Record<string, any>[],
-    @Request() req: { user: { id: string } },
+    @Request() req: { user: { id: string } }
   ) {
     return this.batchService.createCourseBatch(operations, req.user.id);
   }
@@ -65,7 +65,7 @@ export class BatchController {
   })
   batchCertificates(
     @Body('operations') operations: Record<string, any>[],
-    @Request() req: { user: { id: string } },
+    @Request() req: { user: { id: string } }
   ) {
     return this.batchService.createCertificateBatch(operations, req.user.id);
   }
@@ -76,14 +76,19 @@ export class BatchController {
     schema: {
       example: {
         operations: [
-          { to: 'user@example.com', subject: 'Welcome', template: 'welcome', context: { name: 'John' } },
+          {
+            to: 'user@example.com',
+            subject: 'Welcome',
+            template: 'welcome',
+            context: { name: 'John' },
+          },
         ],
       },
     },
   })
   batchEmails(
     @Body('operations') operations: Record<string, any>[],
-    @Request() req: { user: { id: string } },
+    @Request() req: { user: { id: string } }
   ) {
     return this.batchService.createEmailBatch(operations, req.user.id);
   }
@@ -105,14 +110,18 @@ export class BatchController {
   })
   batchExport(
     @Body('operations') operations: Record<string, any>[],
-    @Request() req: { user: { id: string } },
+    @Request() req: { user: { id: string } }
   ) {
     return this.batchService.createExportBatch(operations, req.user.id);
   }
 
   @Get('jobs')
   @ApiOperation({ summary: 'List batch jobs' })
-  @ApiQuery({ name: 'type', required: false, enum: ['users', 'courses', 'certificates', 'emails', 'export'] })
+  @ApiQuery({
+    name: 'type',
+    required: false,
+    enum: ['users', 'courses', 'certificates', 'emails', 'export'],
+  })
   listJobs(@Query('type') type?: string) {
     return this.batchService.listJobs(type);
   }

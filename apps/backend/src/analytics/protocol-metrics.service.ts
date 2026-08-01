@@ -19,7 +19,7 @@ export class ProtocolMetricsService {
     @InjectRepository(ProtocolMetric)
     private readonly metricsRepo: Repository<ProtocolMetric>,
     @InjectRepository(AnalyticsEvent)
-    private readonly eventsRepo: Repository<AnalyticsEvent>,
+    private readonly eventsRepo: Repository<AnalyticsEvent>
   ) {}
 
   // ─── Aggregation jobs ────────────────────────────────────────────────────
@@ -42,7 +42,12 @@ export class ProtocolMetricsService {
     await Promise.all([
       this.upsertBuckets('registrations', interval, pgTrunc, this.queryRegistrations(pgTrunc)),
       this.upsertBuckets('tip_volume', interval, pgTrunc, this.queryTipVolume(pgTrunc)),
-      this.upsertBuckets('escrow_throughput', interval, pgTrunc, this.queryEscrowThroughput(pgTrunc)),
+      this.upsertBuckets(
+        'escrow_throughput',
+        interval,
+        pgTrunc,
+        this.queryEscrowThroughput(pgTrunc)
+      ),
       this.upsertBuckets('dispute_outcomes', interval, pgTrunc, this.queryDisputeOutcomes(pgTrunc)),
     ]);
   }
@@ -54,7 +59,7 @@ export class ProtocolMetricsService {
       .createQueryBuilder('e')
       .select(`DATE_TRUNC('${trunc}', e.timestamp)`, 'bucket')
       .addSelect('COUNT(*)', 'value')
-      .addSelect("NULL::text", 'dimension')
+      .addSelect('NULL::text', 'dimension')
       .where(`e.eventType IN ('user.registered', 'stellar.registration')`)
       .groupBy('bucket')
       .orderBy('bucket', 'ASC')
@@ -78,7 +83,7 @@ export class ProtocolMetricsService {
       .createQueryBuilder('e')
       .select(`DATE_TRUNC('${trunc}', e.timestamp)`, 'bucket')
       .addSelect('COUNT(*)', 'value')
-      .addSelect("NULL::text", 'dimension')
+      .addSelect('NULL::text', 'dimension')
       .where(`e.eventType IN ('escrow.created', 'escrow.released', 'escrow.refunded')`)
       .groupBy('bucket')
       .orderBy('bucket', 'ASC')
@@ -101,7 +106,7 @@ export class ProtocolMetricsService {
     metric: string,
     interval: MetricInterval,
     _trunc: string,
-    rowsPromise: Promise<BucketRow[]>,
+    rowsPromise: Promise<BucketRow[]>
   ): Promise<void> {
     const rows = await rowsPromise;
     for (const row of rows) {

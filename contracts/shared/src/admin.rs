@@ -8,7 +8,7 @@
 //! assert!(admin == stored_admin, "Only admin");
 //! ```
 
-use soroban_sdk::{Address, Env};
+use soroban_sdk::Address;
 
 /// Storage key for admin role. Contracts should use this when storing the admin address.
 /// Example: `DataKey::Admin` enum variant or similar.

@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  Inject,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, Inject, NotFoundException, BadRequestException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   GovernanceProposalRepository,
@@ -38,7 +33,7 @@ export class GovernanceProposalService {
   constructor(
     @Inject(GOVERNANCE_PROPOSAL_REPOSITORY)
     private readonly proposalRepo: GovernanceProposalRepository,
-    private readonly eventEmitter: EventEmitter2,
+    private readonly eventEmitter: EventEmitter2
   ) {}
 
   // ── Query ─────────────────────────────────────────────────────────────────
@@ -80,9 +75,7 @@ export class GovernanceProposalService {
     const existing = await this.findById(id);
 
     if (existing.status !== ProposalStatus.DRAFT) {
-      throw new BadRequestException(
-        'Only draft proposals can be edited',
-      );
+      throw new BadRequestException('Only draft proposals can be edited');
     }
 
     return this.proposalRepo.update(id, {
@@ -96,9 +89,7 @@ export class GovernanceProposalService {
     const proposal = await this.findById(id);
 
     if (proposal.status !== ProposalStatus.DRAFT) {
-      throw new BadRequestException(
-        `Cannot activate a proposal in status '${proposal.status}'`,
-      );
+      throw new BadRequestException(`Cannot activate a proposal in status '${proposal.status}'`);
     }
 
     const updated = await this.proposalRepo.update(id, {
@@ -112,15 +103,10 @@ export class GovernanceProposalService {
   async cancel(id: string): Promise<GovernanceProposal> {
     const proposal = await this.findById(id);
 
-    const cancellableStatuses: ProposalStatus[] = [
-      ProposalStatus.DRAFT,
-      ProposalStatus.ACTIVE,
-    ];
+    const cancellableStatuses: ProposalStatus[] = [ProposalStatus.DRAFT, ProposalStatus.ACTIVE];
 
     if (!cancellableStatuses.includes(proposal.status)) {
-      throw new BadRequestException(
-        `Cannot cancel a proposal in status '${proposal.status}'`,
-      );
+      throw new BadRequestException(`Cannot cancel a proposal in status '${proposal.status}'`);
     }
 
     return this.proposalRepo.update(id, { status: ProposalStatus.CANCELLED });
@@ -156,9 +142,7 @@ export class GovernanceProposalService {
     const proposal = await this.findById(id);
 
     if (proposal.status !== ProposalStatus.ACTIVE) {
-      throw new BadRequestException(
-        `Cannot execute a proposal in status '${proposal.status}'`,
-      );
+      throw new BadRequestException(`Cannot execute a proposal in status '${proposal.status}'`);
     }
 
     const totalVotes = proposal.votesFor + proposal.votesAgainst;
@@ -166,7 +150,7 @@ export class GovernanceProposalService {
 
     if (!quorumMet) {
       throw new BadRequestException(
-        `Quorum not reached: ${totalVotes} votes cast, ${proposal.quorumRequired} required`,
+        `Quorum not reached: ${totalVotes} votes cast, ${proposal.quorumRequired} required`
       );
     }
 

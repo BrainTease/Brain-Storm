@@ -17,11 +17,51 @@ const twoDaysAgo = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000);
 const thirtyOneDaysAgo = new Date(now.getTime() - 31 * 24 * 60 * 60 * 1000);
 
 const sampleSignals: Partial<RecommendationSignal>[] = [
-  { id: '1', userId: 'u1', courseId: 'c1', signalType: SignalType.VIEW, value: 1, consentGranted: true, createdAt: twoDaysAgo },
-  { id: '2', userId: 'u1', courseId: 'c2', signalType: SignalType.COMPLETE, value: 1, consentGranted: true, createdAt: twoDaysAgo },
-  { id: '3', userId: 'u1', courseId: 'c3', signalType: SignalType.DISMISS, value: 1, consentGranted: true, createdAt: twoDaysAgo },
-  { id: '4', userId: 'u1', courseId: 'c4', signalType: SignalType.RATING, value: 5, consentGranted: true, createdAt: thirtyOneDaysAgo },
-  { id: '5', userId: 'u1', courseId: 'c5', signalType: SignalType.DWELL, value: 120, consentGranted: false, createdAt: twoDaysAgo },
+  {
+    id: '1',
+    userId: 'u1',
+    courseId: 'c1',
+    signalType: SignalType.VIEW,
+    value: 1,
+    consentGranted: true,
+    createdAt: twoDaysAgo,
+  },
+  {
+    id: '2',
+    userId: 'u1',
+    courseId: 'c2',
+    signalType: SignalType.COMPLETE,
+    value: 1,
+    consentGranted: true,
+    createdAt: twoDaysAgo,
+  },
+  {
+    id: '3',
+    userId: 'u1',
+    courseId: 'c3',
+    signalType: SignalType.DISMISS,
+    value: 1,
+    consentGranted: true,
+    createdAt: twoDaysAgo,
+  },
+  {
+    id: '4',
+    userId: 'u1',
+    courseId: 'c4',
+    signalType: SignalType.RATING,
+    value: 5,
+    consentGranted: true,
+    createdAt: thirtyOneDaysAgo,
+  },
+  {
+    id: '5',
+    userId: 'u1',
+    courseId: 'c5',
+    signalType: SignalType.DWELL,
+    value: 120,
+    consentGranted: false,
+    createdAt: twoDaysAgo,
+  },
 ];
 
 const mockSignalRepo = {
@@ -30,7 +70,8 @@ const mockSignalRepo = {
   find: jest.fn().mockImplementation(({ where }: any) => {
     let results = sampleSignals;
     if (where?.userId) results = results.filter((s) => s.userId === where.userId);
-    if (where?.consentGranted !== undefined) results = results.filter((s) => s.consentGranted === where.consentGranted);
+    if (where?.consentGranted !== undefined)
+      results = results.filter((s) => s.consentGranted === where.consentGranted);
     return Promise.resolve(results);
   }),
   createQueryBuilder: jest.fn().mockReturnValue({
@@ -48,9 +89,11 @@ const mockEnrollmentRepo = {
 };
 
 const mockCourseRepo = {
-  findByIds: jest.fn().mockImplementation((ids: string[]) =>
-    Promise.resolve(ids.map((id) => ({ id, title: id, isPublished: true, isDeleted: false }))),
-  ),
+  findByIds: jest
+    .fn()
+    .mockImplementation((ids: string[]) =>
+      Promise.resolve(ids.map((id) => ({ id, title: id, isPublished: true, isDeleted: false })))
+    ),
 };
 
 describe('RecommendationSignalsService', () => {

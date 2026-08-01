@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  NestMiddleware,
-  HttpException,
-  HttpStatus,
-} from '@nestjs/common';
+import { Injectable, NestMiddleware, HttpException, HttpStatus } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 import { UserRateLimitService, RateLimitStatus } from './user-rate-limit.service';
 
@@ -46,19 +41,9 @@ export class RateLimitMiddleware implements NestMiddleware {
     const plan: string | undefined = user.plan;
     const endpoint = `${req.method}:${(req as any).route?.path ?? req.path}`;
 
-    const allowed = await this.rateLimitService.checkRateLimit(
-      userId,
-      role,
-      endpoint,
-      plan,
-    );
+    const allowed = await this.rateLimitService.checkRateLimit(userId, role, endpoint, plan);
 
-    const status = await this.rateLimitService.getRateLimitStatus(
-      userId,
-      role,
-      endpoint,
-      plan,
-    );
+    const status = await this.rateLimitService.getRateLimitStatus(userId, role, endpoint, plan);
 
     this.applyHeaders(res, status, allowed ? status.remaining : 0);
 
@@ -71,7 +56,7 @@ export class RateLimitMiddleware implements NestMiddleware {
           dailyQuota: status.dailyQuota,
           dailyRemaining: status.dailyRemaining,
         },
-        HttpStatus.TOO_MANY_REQUESTS,
+        HttpStatus.TOO_MANY_REQUESTS
       );
     }
 
@@ -83,11 +68,7 @@ export class RateLimitMiddleware implements NestMiddleware {
    * Extracted as a public method so it can be called from the guard as well,
    * keeping the header-setting logic in a single place.
    */
-  applyHeaders(
-    res: Response,
-    status: RateLimitStatus,
-    remaining: number,
-  ): void {
+  applyHeaders(res: Response, status: RateLimitStatus, remaining: number): void {
     res.set('X-RateLimit-Limit', String(status.limit));
     res.set('X-RateLimit-Remaining', String(remaining));
     res.set('X-RateLimit-Reset', status.resetTime.toISOString());
@@ -98,9 +79,7 @@ export class RateLimitMiddleware implements NestMiddleware {
     }
 
     if (remaining === 0) {
-      const retryAfterSeconds = Math.ceil(
-        (status.resetTime.getTime() - Date.now()) / 1000,
-      );
+      const retryAfterSeconds = Math.ceil((status.resetTime.getTime() - Date.now()) / 1000);
       res.set('Retry-After', String(retryAfterSeconds));
     }
   }
