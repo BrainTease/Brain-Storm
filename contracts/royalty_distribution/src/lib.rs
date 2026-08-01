@@ -214,7 +214,7 @@ impl RoyaltyDistributionContract {
 
         env.storage()
             .persistent()
-            .set(&DataKey::RoyaltyBalance(recipient.clone()), &0);
+            .set(&DataKey::RoyaltyBalance(recipient.clone()), &0i128);
 
         env.events()
             .publish((WITHDRAW, symbol_short!("addr")), (recipient, balance));
