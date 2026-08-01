@@ -40,9 +40,15 @@ export function PrivacySettings() {
     setMessage(null);
     try {
       await api.delete('/users/me');
-      setMessage({ type: 'success', text: 'Account deletion request submitted. You will receive a confirmation email.' });
+      setMessage({
+        type: 'success',
+        text: 'Account deletion request submitted. You will receive a confirmation email.',
+      });
     } catch {
-      setMessage({ type: 'error', text: 'Failed to submit deletion request. Please contact support.' });
+      setMessage({
+        type: 'error',
+        text: 'Failed to submit deletion request. Please contact support.',
+      });
     } finally {
       setDeleting(false);
     }
@@ -63,8 +69,8 @@ export function PrivacySettings() {
       <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-5 space-y-3">
         <h3 className="text-base font-medium text-gray-900 dark:text-white">Data Export</h3>
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          Download all your personal data, including profile information, course progress, credentials, and activity logs.
-          This export is provided in JSON format.
+          Download all your personal data, including profile information, course progress,
+          credentials, and activity logs. This export is provided in JSON format.
         </p>
         <button
           type="button"

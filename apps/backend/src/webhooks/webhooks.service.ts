@@ -1,7 +1,6 @@
 import { Injectable, Logger, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, LessThanOrEqual, IsNull, In } from 'typeorm';
-import { OnEvent } from '@nestjs/event-emitter';
+import { Repository, LessThanOrEqual, IsNull } from 'typeorm';
 import * as crypto from 'crypto';
 import * as https from 'https';
 import * as http from 'http';
@@ -20,7 +19,7 @@ export class WebhooksService implements OnModuleInit {
 
   constructor(
     @InjectRepository(Webhook) private webhookRepo: Repository<Webhook>,
-    @InjectRepository(WebhookDelivery) private deliveryRepo: Repository<WebhookDelivery>,
+    @InjectRepository(WebhookDelivery) private deliveryRepo: Repository<WebhookDelivery>
   ) {}
 
   onModuleInit() {
@@ -35,7 +34,7 @@ export class WebhooksService implements OnModuleInit {
   async register(userId: string, url: string, events: string[]): Promise<Webhook> {
     const secret = this.generateSecret();
     return this.webhookRepo.save(
-      this.webhookRepo.create({ userId, url, events: events.join(','), secret }),
+      this.webhookRepo.create({ userId, url, events: events.join(','), secret })
     );
   }
 
@@ -58,7 +57,7 @@ export class WebhooksService implements OnModuleInit {
   async update(
     userId: string,
     id: string,
-    data: Partial<Pick<Webhook, 'url' | 'events' | 'isActive'>>,
+    data: Partial<Pick<Webhook, 'url' | 'events' | 'isActive'>>
   ): Promise<Webhook> {
     const wh = await this.webhookRepo.findOne({ where: { id, userId } });
     if (!wh) throw new NotFoundException('Webhook not found');
@@ -74,7 +73,10 @@ export class WebhooksService implements OnModuleInit {
    * The old secret is preserved for SECRET_GRACE_SECONDS so consumers can drain
    * in-flight deliveries before the rotation is complete.
    */
-  async rotateSecret(userId: string, id: string): Promise<{ secret: string; previousSecretExpiresAt: Date }> {
+  async rotateSecret(
+    userId: string,
+    id: string
+  ): Promise<{ secret: string; previousSecretExpiresAt: Date }> {
     const wh = await this.webhookRepo.findOne({ where: { id, userId } });
     if (!wh) throw new NotFoundException('Webhook not found');
 
@@ -118,7 +120,7 @@ export class WebhooksService implements OnModuleInit {
     signature: string,
     timestamp?: string,
     previousSecret?: string | null,
-    secretRotatedAt?: Date | null,
+    secretRotatedAt?: Date | null
   ): boolean {
     if (timestamp) {
       const ts = parseInt(timestamp, 10);
@@ -198,7 +200,8 @@ export class WebhooksService implements OnModuleInit {
       const { status, responseBody } = await this.httpPost(wh.url, body, sig, timestamp);
       delivery.responseStatus = status;
       delivery.responseBody = responseBody.slice(0, 500);
-      delivery.status = status >= 200 && status < 300 ? DeliveryStatus.SUCCESS : DeliveryStatus.FAILED;
+      delivery.status =
+        status >= 200 && status < 300 ? DeliveryStatus.SUCCESS : DeliveryStatus.FAILED;
     } catch (err: any) {
       delivery.responseBody = err.message?.slice(0, 500) ?? 'Unknown error';
       delivery.status = DeliveryStatus.FAILED;
@@ -206,19 +209,18 @@ export class WebhooksService implements OnModuleInit {
 
     if (delivery.status === DeliveryStatus.FAILED) {
       if (delivery.attempts < MAX_ATTEMPTS) {
-        const delaySec = RETRY_DELAYS[delivery.attempts - 1] ?? RETRY_DELAYS[RETRY_DELAYS.length - 1];
+        const delaySec =
+          RETRY_DELAYS[delivery.attempts - 1] ?? RETRY_DELAYS[RETRY_DELAYS.length - 1];
         delivery.nextRetryAt = new Date(Date.now() + delaySec * 1000);
         delivery.status = DeliveryStatus.PENDING;
         this.logger.warn(
-          `Delivery ${delivery.id} failed (attempt ${delivery.attempts}/${MAX_ATTEMPTS}), retry in ${delaySec}s`,
+          `Delivery ${delivery.id} failed (attempt ${delivery.attempts}/${MAX_ATTEMPTS}), retry in ${delaySec}s`
         );
       } else {
         // Move to dead-letter queue
         delivery.status = DeliveryStatus.DLQ;
         delivery.deadLetteredAt = new Date();
-        this.logger.error(
-          `Delivery ${delivery.id} exhausted ${MAX_ATTEMPTS} attempts → DLQ`,
-        );
+        this.logger.error(`Delivery ${delivery.id} exhausted ${MAX_ATTEMPTS} attempts → DLQ`);
       }
     }
 
@@ -253,10 +255,7 @@ export class WebhooksService implements OnModuleInit {
 
   private safeCompare(a: string, b: string): boolean {
     try {
-      return (
-        a.length === b.length &&
-        crypto.timingSafeEqual(Buffer.from(a), Buffer.from(b))
-      );
+      return a.length === b.length && crypto.timingSafeEqual(Buffer.from(a), Buffer.from(b));
     } catch {
       return false;
     }
@@ -276,7 +275,7 @@ export class WebhooksService implements OnModuleInit {
     url: string,
     body: string,
     signature: string,
-    timestamp: string,
+    timestamp: string
   ): Promise<{ status: number; responseBody: string }> {
     return new Promise((resolve, reject) => {
       const parsed = new URL(url);
@@ -298,7 +297,7 @@ export class WebhooksService implements OnModuleInit {
           let data = '';
           res.on('data', (chunk) => (data += chunk));
           res.on('end', () => resolve({ status: res.statusCode ?? 0, responseBody: data }));
-        },
+        }
       );
       req.on('error', reject);
       req.setTimeout(10_000, () => {
@@ -311,24 +310,14 @@ export class WebhooksService implements OnModuleInit {
   }
 
   // ─── Event listeners ─────────────────────────────────────────────────────────
-
-  @OnEvent('enrollment.created')
-  onEnrollment(payload: any) {
-    this.publish('enrollment.created', payload);
-  }
-
-  @OnEvent('enrollment.completed')
-  onCompletion(payload: any) {
-    this.publish('enrollment.completed', payload);
-  }
-
-  @OnEvent('credential.issued')
-  onCredential(payload: any) {
-    this.publish('credential.issued', payload);
-  }
-
-  @OnEvent('payment.completed')
-  onPaymentCompleted(payload: any) {
-    this.publish('payment.completed', payload);
-  }
+  //
+  // #819 — Legacy @OnEvent bridge handlers removed.
+  //
+  // The four methods that previously forwarded internal NestJS events
+  // (enrollment.created, enrollment.completed, credential.issued,
+  // payment.completed) to outbound webhook deliveries have been removed.
+  //
+  // Callers that need to fan out an event to registered webhooks should call
+  // `WebhooksService.publish(event, payload)` explicitly.  This makes the
+  // dependency visible at the call site and avoids hidden event coupling.
 }

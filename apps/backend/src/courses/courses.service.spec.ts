@@ -55,14 +55,14 @@ describe('CoursesService', () => {
     };
 
     // Simulate cache miss: delegate to the factory function directly
-    mockCacheManager.wrap.mockImplementation(
-      (_key: string, factory: () => Promise<unknown>) => factory(),
+    mockCacheManager.wrap.mockImplementation((_key: string, factory: () => Promise<unknown>) =>
+      factory()
     );
 
     service = new CoursesService(
       mockRepo,
       mockCacheManager as unknown as any,
-      mockSearchService as unknown as any,
+      mockSearchService as unknown as any
     );
   });
 
@@ -88,11 +88,11 @@ describe('CoursesService', () => {
     const qb = mockRepo.createQueryBuilder.mock.results[0].value;
     expect(qb.andWhere).toHaveBeenCalledWith(
       expect.stringContaining('ILIKE'),
-      expect.objectContaining({ search: '%stellar%' }),
+      expect.objectContaining({ search: '%stellar%' })
     );
     expect(qb.andWhere).toHaveBeenCalledWith(
       expect.stringContaining('level'),
-      expect.objectContaining({ level: 'beginner' }),
+      expect.objectContaining({ level: 'beginner' })
     );
   });
 
@@ -102,8 +102,8 @@ describe('CoursesService', () => {
     const course = { id: '1', title: 'A', isDeleted: false } as Course;
     mockRepo.findOne.mockResolvedValue(course);
     // Bypass cache for findOne too
-    mockCacheManager.wrap.mockImplementation(
-      (_key: string, factory: () => Promise<unknown>) => factory(),
+    mockCacheManager.wrap.mockImplementation((_key: string, factory: () => Promise<unknown>) =>
+      factory()
     );
 
     const result = await service.findOne('1');
@@ -114,8 +114,8 @@ describe('CoursesService', () => {
 
   it('findOne should throw NotFoundException when course is missing', async () => {
     mockRepo.findOne.mockResolvedValue(null);
-    mockCacheManager.wrap.mockImplementation(
-      (_key: string, factory: () => Promise<unknown>) => factory(),
+    mockCacheManager.wrap.mockImplementation((_key: string, factory: () => Promise<unknown>) =>
+      factory()
     );
 
     await expect(service.findOne('missing')).rejects.toThrow('Course not found');

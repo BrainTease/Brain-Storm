@@ -1,5 +1,9 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { ReconnectStrategy, DEFAULT_RECONNECT_CONFIG, ReconnectConfig } from '@/lib/reconnect-strategy';
+import {
+  ReconnectStrategy,
+  DEFAULT_RECONNECT_CONFIG,
+  ReconnectConfig,
+} from '@/lib/reconnect-strategy';
 
 describe('ReconnectStrategy', () => {
   let strategy: ReconnectStrategy;

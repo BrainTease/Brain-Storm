@@ -15,7 +15,12 @@ import { MailModule } from '../mail/mail.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Notification, NotificationPreference, ScheduledNotification, MobileDevice]),
+    TypeOrmModule.forFeature([
+      Notification,
+      NotificationPreference,
+      ScheduledNotification,
+      MobileDevice,
+    ]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (config: ConfigService) => ({
@@ -26,7 +31,12 @@ import { MailModule } from '../mail/mail.module';
     MailModule,
   ],
   controllers: [NotificationsController],
-  providers: [NotificationsService, NotificationsEvents, NotificationsGateway, PushNotificationService],
+  providers: [
+    NotificationsService,
+    NotificationsEvents,
+    NotificationsGateway,
+    PushNotificationService,
+  ],
   exports: [NotificationsService, PushNotificationService],
 })
 export class NotificationsModule {}

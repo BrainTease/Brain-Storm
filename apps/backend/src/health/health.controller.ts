@@ -12,6 +12,7 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
+import { ConfigService } from '@nestjs/config';
 
 @ApiTags('Health')
 @Controller('health')
@@ -23,6 +24,7 @@ export class HealthController {
     private http: HttpHealthIndicator,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+    private readonly configService: ConfigService,
   ) {}
 
   /**
@@ -30,13 +32,14 @@ export class HealthController {
    * Kubernetes restarts the pod if this fails.
    */
   @Get('liveness')
-  @ApiOperation({ summary: 'Liveness probe', description: 'Returns 200 when the process is running.' })
+  @ApiOperation({
+    summary: 'Liveness probe',
+    description: 'Returns 200 when the process is running.',
+  })
   @ApiResponse({ status: 200, description: 'Process is alive' })
   @HealthCheck()
   liveness() {
-    return this.health.check([
-      () => this.memory.checkHeap('memory_heap', 500 * 1024 * 1024),
-    ]);
+    return this.health.check([() => this.memory.checkHeap('memory_heap', 500 * 1024 * 1024)]);
   }
 
   /**
@@ -97,17 +100,26 @@ export class HealthController {
       if (retrieved !== testValue) throw new Error('Redis value mismatch');
       return { redis: { status: 'up' } };
     } catch (error) {
-      this.logger.warn('Redis health check failed', { context: 'HealthController', error: error.message });
+      this.logger.warn('Redis health check failed', {
+        context: 'HealthController',
+        error: error.message,
+      });
       throw new Error(`Redis health check failed: ${error.message}`);
     }
   }
 
   private async checkStellarHorizon(): Promise<HealthIndicatorResult> {
-    const horizonUrl = process.env.STELLAR_HORIZON_URL || 'https://horizon-testnet.stellar.org';
+    // #805: use central config instead of raw process.env
+    const horizonUrl =
+      this.configService.get<string>('stellar.horizonUrl') ||
+      'https://horizon-testnet.stellar.org';
     try {
       return await this.http.pingCheck('stellar_horizon', `${horizonUrl}/health`);
     } catch (error) {
-      this.logger.warn('Stellar Horizon health check failed', { context: 'HealthController', error: error.message });
+      this.logger.warn('Stellar Horizon health check failed', {
+        context: 'HealthController',
+        error: error.message,
+      });
       throw error;
     }
   }

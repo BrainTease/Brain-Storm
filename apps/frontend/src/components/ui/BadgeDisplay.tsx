@@ -39,11 +39,7 @@ export const BadgeDisplay: React.FC<BadgeDisplayProps> = ({
   columns = 6,
 }) => {
   if (badges.length === 0) {
-    return (
-      <p className={`text-sm text-gray-500 py-4 text-center ${className}`}>
-        {emptyMessage}
-      </p>
-    );
+    return <p className={`text-sm text-gray-500 py-4 text-center ${className}`}>{emptyMessage}</p>;
   }
 
   const columnClasses = {
@@ -89,10 +85,7 @@ export const BadgeDisplay: React.FC<BadgeDisplayProps> = ({
                 {badge.name}
               </p>
               {unlocked && badge.unlockedAt && (
-                <time
-                  dateTime={badge.unlockedAt}
-                  className="text-[10px] text-gray-400"
-                >
+                <time dateTime={badge.unlockedAt} className="text-[10px] text-gray-400">
                   {new Date(badge.unlockedAt).toLocaleDateString()}
                 </time>
               )}
@@ -165,10 +158,7 @@ export const StatusBadge: React.FC<{
   };
 
   return (
-    <Badge
-      variant={statusVariants[status]}
-      className={className}
-    >
+    <Badge variant={statusVariants[status]} className={className}>
       {label || defaultLabels[status]}
     </Badge>
   );
@@ -185,9 +175,7 @@ export const BadgeGroup: React.FC<{
   className?: string;
 }> = ({ label, items, variant = 'default', className = '' }) => (
   <div className={className}>
-    <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-      {label}
-    </p>
+    <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">{label}</p>
     <InlineBadgeList items={items} variant={variant} />
   </div>
 );

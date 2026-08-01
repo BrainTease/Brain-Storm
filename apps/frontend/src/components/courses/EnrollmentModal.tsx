@@ -109,7 +109,11 @@ export function EnrollmentModal({
             <Button type="button" variant="outline" onClick={handleClose} className="flex-1">
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting} className="flex-1 flex items-center justify-center gap-2">
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className="flex-1 flex items-center justify-center gap-2"
+            >
               {isSubmitting && <Spinner size="sm" />}
               {isSubmitting ? 'Enrolling…' : 'Confirm Enrollment'}
             </Button>
@@ -119,7 +123,9 @@ export function EnrollmentModal({
 
       {step === 'success' && (
         <div className="text-center space-y-4" role="status">
-          <div className="text-5xl" aria-hidden="true">🎉</div>
+          <div className="text-5xl" aria-hidden="true">
+            🎉
+          </div>
           <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
             You&apos;re enrolled!
           </p>

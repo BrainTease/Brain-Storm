@@ -66,9 +66,7 @@ export function ReplyItem({
 
   return (
     <div
-      className={`border rounded-lg p-4 ${
-        isAnswer ? 'bg-green-50 border-green-200' : 'bg-white'
-      }`}
+      className={`border rounded-lg p-4 ${isAnswer ? 'bg-green-50 border-green-200' : 'bg-white'}`}
     >
       {/* Header */}
       <div className="flex items-start justify-between mb-3">

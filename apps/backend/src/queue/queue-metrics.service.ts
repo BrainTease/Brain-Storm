@@ -21,7 +21,7 @@ export class QueueMetricsService implements OnModuleInit {
     @InjectQueue(QUEUE_EMAIL) private readonly emailQueue: Queue,
     @InjectQueue(QUEUE_NOTIFICATION) private readonly notificationQueue: Queue,
     @InjectQueue(QUEUE_CERTIFICATE) private readonly certificateQueue: Queue,
-    @InjectQueue(QUEUE_INDEXING) private readonly indexingQueue: Queue,
+    @InjectQueue(QUEUE_INDEXING) private readonly indexingQueue: Queue
   ) {
     this.queues = new Map([
       [QUEUE_EMAIL, emailQueue],

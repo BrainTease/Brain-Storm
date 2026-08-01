@@ -58,13 +58,7 @@ export function AccountSettings() {
           maxLength={30}
         />
 
-        <TextInput
-          id="settings-role"
-          label="Role"
-          value={user?.role ?? ''}
-          disabled
-          readOnly
-        />
+        <TextInput id="settings-role" label="Role" value={user?.role ?? ''} disabled readOnly />
 
         {message && (
           <div

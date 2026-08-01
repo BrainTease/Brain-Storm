@@ -64,8 +64,8 @@ export function CourseGrid({
         {isLoading
           ? 'Loading courses…'
           : total > 0
-          ? `${total} course${total !== 1 ? 's' : ''} found`
-          : 'No courses match those filters.'}
+            ? `${total} course${total !== 1 ? 's' : ''} found`
+            : 'No courses match those filters.'}
       </p>
 
       <p id="course-grid-help" className="sr-only">

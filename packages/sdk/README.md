@@ -144,4 +144,11 @@ Full rules, deprecation process, changelog format, and reserved rules for future
 cd packages/sdk && npm run build   # tsc → dist/, with .d.ts declarations
 ```
 
-There are currently no tests for this package.
+## Testing
+
+```bash
+cd packages/sdk && npm install && npm test          # run once
+cd packages/sdk && npm run test:coverage             # with coverage
+```
+
+Tests live alongside the source as `src/*.test.ts` (`ts-jest`, config in `jest.config.js`) and mock the global `fetch` — no network access or fetch polyfill required.

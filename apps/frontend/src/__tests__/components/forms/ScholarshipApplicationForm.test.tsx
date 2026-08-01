@@ -24,34 +24,19 @@ describe('ScholarshipApplicationForm', () => {
   });
 
   it('renders step 1 by default', () => {
-    render(
-      <ScholarshipApplicationForm
-        onSubmit={mockOnSubmit}
-        onCancel={mockOnCancel}
-      />
-    );
+    render(<ScholarshipApplicationForm onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);
     expect(screen.getByText('Personal Information')).toBeInTheDocument();
   });
 
   it('displays all three step indicators', () => {
-    render(
-      <ScholarshipApplicationForm
-        onSubmit={mockOnSubmit}
-        onCancel={mockOnCancel}
-      />
-    );
+    render(<ScholarshipApplicationForm onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);
     expect(screen.getByText('Personal Information')).toBeInTheDocument();
     expect(screen.getByText('Academic Details')).toBeInTheDocument();
     expect(screen.getByText('Essay & Agreement')).toBeInTheDocument();
   });
 
   it('renders step 1 fields', () => {
-    render(
-      <ScholarshipApplicationForm
-        onSubmit={mockOnSubmit}
-        onCancel={mockOnCancel}
-      />
-    );
+    render(<ScholarshipApplicationForm onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);
     expect(screen.getByPlaceholderText('John')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Doe')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('john@example.com')).toBeInTheDocument();
@@ -60,12 +45,7 @@ describe('ScholarshipApplicationForm', () => {
 
   it('shows previous button on step 2+', async () => {
     const user = userEvent.setup();
-    render(
-      <ScholarshipApplicationForm
-        onSubmit={mockOnSubmit}
-        onCancel={mockOnCancel}
-      />
-    );
+    render(<ScholarshipApplicationForm onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);
 
     const nextButton = screen.getByRole('button', { name: 'Next Step' });
     await user.click(nextButton);
@@ -77,12 +57,7 @@ describe('ScholarshipApplicationForm', () => {
 
   it('renders step 2 fields after clicking next', async () => {
     const user = userEvent.setup();
-    render(
-      <ScholarshipApplicationForm
-        onSubmit={mockOnSubmit}
-        onCancel={mockOnCancel}
-      />
-    );
+    render(<ScholarshipApplicationForm onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);
 
     const nextButton = screen.getByRole('button', { name: 'Next Step' });
     await user.click(nextButton);
@@ -95,12 +70,7 @@ describe('ScholarshipApplicationForm', () => {
 
   it('shows Submit Application button on step 3', async () => {
     const user = userEvent.setup();
-    render(
-      <ScholarshipApplicationForm
-        onSubmit={mockOnSubmit}
-        onCancel={mockOnCancel}
-      />
-    );
+    render(<ScholarshipApplicationForm onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);
 
     const nextButton1 = screen.getByRole('button', { name: 'Next Step' });
     await user.click(nextButton1);
@@ -119,12 +89,7 @@ describe('ScholarshipApplicationForm', () => {
 
   it('calls onCancel when cancel is clicked', async () => {
     const user = userEvent.setup();
-    render(
-      <ScholarshipApplicationForm
-        onSubmit={mockOnSubmit}
-        onCancel={mockOnCancel}
-      />
-    );
+    render(<ScholarshipApplicationForm onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);
 
     const cancelButton = screen.getByRole('button', { name: 'Cancel' });
     await user.click(cancelButton);
@@ -134,12 +99,7 @@ describe('ScholarshipApplicationForm', () => {
 
   it('renders all step 3 fields', async () => {
     const user = userEvent.setup();
-    render(
-      <ScholarshipApplicationForm
-        onSubmit={mockOnSubmit}
-        onCancel={mockOnCancel}
-      />
-    );
+    render(<ScholarshipApplicationForm onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);
 
     const nextButtons = screen.getAllByRole('button', { name: 'Next Step' });
     await user.click(nextButtons[0]);
@@ -154,12 +114,7 @@ describe('ScholarshipApplicationForm', () => {
 
   it('has checkbox for agreement', async () => {
     const user = userEvent.setup();
-    render(
-      <ScholarshipApplicationForm
-        onSubmit={mockOnSubmit}
-        onCancel={mockOnCancel}
-      />
-    );
+    render(<ScholarshipApplicationForm onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);
 
     const nextButtons = screen.getAllByRole('button', { name: 'Next Step' });
     await user.click(nextButtons[0]);

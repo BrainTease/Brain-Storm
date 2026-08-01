@@ -41,10 +41,7 @@ describe('Badge Display Library - Issue #783', () => {
       "from '@/components/ui/BadgeDisplay'",
       'BadgeGrid should import from shared BadgeDisplay'
     );
-    expect(content).toContain(
-      'BadgeDisplay',
-      'BadgeGrid should use BadgeDisplay component'
-    );
+    expect(content).toContain('BadgeDisplay', 'BadgeGrid should use BadgeDisplay component');
   });
 
   it('should define BadgeItem interface for consistency', () => {
@@ -63,15 +60,13 @@ describe('Badge Display Library - Issue #783', () => {
     const badgeDisplayPath = path.resolve(baseDir, 'src/components/ui/BadgeDisplay.tsx');
     const content = fs.readFileSync(badgeDisplayPath, 'utf-8');
 
-    const utilities = [
-      'BadgeCounter',
-      'StatusBadge',
-      'BadgeGroup',
-      'InlineBadgeList',
-    ];
+    const utilities = ['BadgeCounter', 'StatusBadge', 'BadgeGroup', 'InlineBadgeList'];
 
     utilities.forEach((utility) => {
-      expect(content).toContain(`export const ${utility}`, `Should export ${utility} utility component`);
+      expect(content).toContain(
+        `export const ${utility}`,
+        `Should export ${utility} utility component`
+      );
     });
   });
 });

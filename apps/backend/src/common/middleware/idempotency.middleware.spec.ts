@@ -17,10 +17,7 @@ describe('IdempotencyMiddleware', () => {
 
   beforeEach(async () => {
     const module = await Test.createTestingModule({
-      providers: [
-        IdempotencyMiddleware,
-        { provide: CACHE_MANAGER, useFactory: mockCache },
-      ],
+      providers: [IdempotencyMiddleware, { provide: CACHE_MANAGER, useFactory: mockCache }],
     }).compile();
     middleware = module.get(IdempotencyMiddleware);
     cache = module.get(CACHE_MANAGER);
@@ -57,7 +54,7 @@ describe('IdempotencyMiddleware', () => {
     expect(cache.set).toHaveBeenCalledWith(
       'idempotency:key-2',
       { status: 200, body: { result: 'created' } },
-      86400,
+      86400
     );
   });
 });

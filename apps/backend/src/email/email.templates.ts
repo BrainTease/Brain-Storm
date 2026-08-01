@@ -1,5 +1,10 @@
 export const emailTemplates = {
-  enrollment: (data: { userName: string; courseTitle: string; courseUrl: string; unsubscribeUrl: string }) => ({
+  enrollment: (data: {
+    userName: string;
+    courseTitle: string;
+    courseUrl: string;
+    unsubscribeUrl: string;
+  }) => ({
     subject: `You're enrolled in "${data.courseTitle}"`,
     html: `
       <div style="font-family:sans-serif;max-width:600px;margin:0 auto">
@@ -13,7 +18,12 @@ export const emailTemplates = {
       </div>`,
   }),
 
-  completion: (data: { userName: string; courseTitle: string; credentialUrl: string; unsubscribeUrl: string }) => ({
+  completion: (data: {
+    userName: string;
+    courseTitle: string;
+    credentialUrl: string;
+    unsubscribeUrl: string;
+  }) => ({
     subject: `Congratulations! You completed "${data.courseTitle}"`,
     html: `
       <div style="font-family:sans-serif;max-width:600px;margin:0 auto">
@@ -27,7 +37,12 @@ export const emailTemplates = {
       </div>`,
   }),
 
-  credentialIssued: (data: { userName: string; courseTitle: string; txHash: string; unsubscribeUrl: string }) => ({
+  credentialIssued: (data: {
+    userName: string;
+    courseTitle: string;
+    txHash: string;
+    unsubscribeUrl: string;
+  }) => ({
     subject: `Your blockchain credential for "${data.courseTitle}" is ready`,
     html: `
       <div style="font-family:sans-serif;max-width:600px;margin:0 auto">

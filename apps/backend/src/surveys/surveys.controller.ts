@@ -20,14 +20,14 @@ export class SurveysController {
       description: string;
       triggerType: 'completion' | 'milestone';
       triggerMilestone?: number;
-    },
+    }
   ) {
     return this.surveysService.createSurvey(
       body.courseId,
       body.title,
       body.description,
       body.triggerType,
-      body.triggerMilestone,
+      body.triggerMilestone
     );
   }
 
@@ -43,7 +43,7 @@ export class SurveysController {
       order: number;
       options?: string[];
       required?: boolean;
-    },
+    }
   ) {
     return this.surveysService.addQuestion(
       surveyId,
@@ -51,14 +51,14 @@ export class SurveysController {
       body.type,
       body.order,
       body.options,
-      body.required,
+      body.required
     );
   }
 
   @Post(':surveyId/responses')
   async submitResponse(
     @Param('surveyId') surveyId: string,
-    @Body() body: { userId: string; answers: Record<string, string | number> },
+    @Body() body: { userId: string; answers: Record<string, string | number> }
   ) {
     return this.surveysService.submitResponse(surveyId, body.userId, body.answers);
   }

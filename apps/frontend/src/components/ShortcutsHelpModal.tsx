@@ -25,7 +25,10 @@ export function ShortcutsHelpModal({ onClose }: ShortcutsHelpModalProps) {
             <span className="text-gray-600 dark:text-gray-400">{description}</span>
             <span className="flex gap-1">
               {keys.map((k) => (
-                <kbd key={k} className="px-2 py-0.5 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded text-xs font-mono text-gray-700 dark:text-gray-300">
+                <kbd
+                  key={k}
+                  className="px-2 py-0.5 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded text-xs font-mono text-gray-700 dark:text-gray-300"
+                >
                   {k}
                 </kbd>
               ))}

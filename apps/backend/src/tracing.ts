@@ -24,12 +24,9 @@ const isProd = process.env.NODE_ENV === 'production';
 
 const sdk = new NodeSDK({
   resource: new Resource({
-    [SemanticResourceAttributes.SERVICE_NAME]:
-      process.env.OTEL_SERVICE_NAME ?? 'brain-storm-api',
-    [SemanticResourceAttributes.SERVICE_VERSION]:
-      process.env.GIT_COMMIT_SHA ?? 'unknown',
-    [SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT]:
-      process.env.NODE_ENV ?? 'development',
+    [SemanticResourceAttributes.SERVICE_NAME]: process.env.OTEL_SERVICE_NAME ?? 'brain-storm-api',
+    [SemanticResourceAttributes.SERVICE_VERSION]: process.env.GIT_COMMIT_SHA ?? 'unknown',
+    [SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT]: process.env.NODE_ENV ?? 'development',
   }),
   traceExporter: new OTLPTraceExporter({
     url: `${process.env.OTEL_EXPORTER_OTLP_ENDPOINT ?? 'http://localhost:4318'}/v1/traces`,
@@ -42,7 +39,7 @@ const sdk = new NodeSDK({
     }),
   ],
   sampler: new TraceIdRatioBasedSampler(
-    isProd ? parseFloat(process.env.OTEL_TRACES_SAMPLER_ARG ?? '0.1') : 1.0,
+    isProd ? parseFloat(process.env.OTEL_TRACES_SAMPLER_ARG ?? '0.1') : 1.0
   ),
   textMapPropagator: new W3CTraceContextPropagator(),
 });

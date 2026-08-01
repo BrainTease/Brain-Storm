@@ -135,17 +135,13 @@ export function useNotifications() {
 
   const markAsRead = useCallback((ids: string[]) => {
     // Optimistic update
-    setNotifications((prev) =>
-      prev.map((n) => (ids.includes(n.id) ? { ...n, isRead: true } : n))
-    );
+    setNotifications((prev) => prev.map((n) => (ids.includes(n.id) ? { ...n, isRead: true } : n)));
     socketRef.current?.emit('notifications:markRead', ids);
   }, []);
 
   const markAsUnread = useCallback((ids: string[]) => {
     // Optimistic update
-    setNotifications((prev) =>
-      prev.map((n) => (ids.includes(n.id) ? { ...n, isRead: false } : n))
-    );
+    setNotifications((prev) => prev.map((n) => (ids.includes(n.id) ? { ...n, isRead: false } : n)));
     socketRef.current?.emit('notifications:markUnread', ids);
   }, []);
 

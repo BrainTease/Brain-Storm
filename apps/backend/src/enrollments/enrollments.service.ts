@@ -2,9 +2,7 @@ import { Injectable, ConflictException, NotFoundException, Inject } from '@nestj
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Enrollment } from './enrollment.entity';
 import { PrerequisitesService } from '../courses/prerequisites.service';
-import {
-  ENROLLMENTS_REPOSITORY_TOKEN,
-} from '../repositories/repositories.module';
+import { ENROLLMENTS_REPOSITORY_TOKEN } from '../repositories/repositories.module';
 import { EnrollmentsRepository } from '../repositories/enrollments-repository.interface';
 
 /**
@@ -20,7 +18,7 @@ export class EnrollmentsService {
     @Inject(ENROLLMENTS_REPOSITORY_TOKEN)
     private readonly enrollmentsRepository: EnrollmentsRepository,
     private readonly eventEmitter: EventEmitter2,
-    private readonly prereqService: PrerequisitesService,
+    private readonly prereqService: PrerequisitesService
   ) {}
 
   async enroll(userId: string, courseId: string, adminOverride = false): Promise<Enrollment> {

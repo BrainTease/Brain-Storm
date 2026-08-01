@@ -20,7 +20,7 @@ export class AwsSecretsService implements OnModuleInit {
 
   constructor(
     private configService: ConfigService,
-    @InjectRepository(SecretAccessLog) private accessLogRepo: Repository<SecretAccessLog>,
+    @InjectRepository(SecretAccessLog) private accessLogRepo: Repository<SecretAccessLog>
   ) {}
 
   onModuleInit() {
@@ -31,9 +31,7 @@ export class AwsSecretsService implements OnModuleInit {
 
   async getSecret(secretName: string, accessedBy?: string, ipAddress?: string): Promise<string> {
     try {
-      const response = await this.client.send(
-        new GetSecretValueCommand({ SecretId: secretName }),
-      );
+      const response = await this.client.send(new GetSecretValueCommand({ SecretId: secretName }));
       await this.logAccess(secretName, SecretAccessAction.READ, accessedBy, ipAddress, true);
       return response.SecretString ?? '';
     } catch (err) {
@@ -47,27 +45,23 @@ export class AwsSecretsService implements OnModuleInit {
     secretName: string,
     secretValue: string,
     description: string,
-    accessedBy?: string,
+    accessedBy?: string
   ): Promise<string> {
     const response = await this.client.send(
       new CreateSecretCommand({
         Name: secretName,
         SecretString: secretValue,
         Description: description,
-      }),
+      })
     );
     await this.logAccess(secretName, SecretAccessAction.WRITE, accessedBy, undefined, true);
     this.logger.log(`Secret created: ${secretName}`);
     return response.ARN ?? '';
   }
 
-  async updateSecret(
-    secretName: string,
-    secretValue: string,
-    accessedBy?: string,
-  ): Promise<void> {
+  async updateSecret(secretName: string, secretValue: string, accessedBy?: string): Promise<void> {
     await this.client.send(
-      new UpdateSecretCommand({ SecretId: secretName, SecretString: secretValue }),
+      new UpdateSecretCommand({ SecretId: secretName, SecretString: secretValue })
     );
     await this.logAccess(secretName, SecretAccessAction.WRITE, accessedBy, undefined, true);
     this.logger.log(`Secret updated: ${secretName}`);
@@ -75,7 +69,7 @@ export class AwsSecretsService implements OnModuleInit {
 
   async deleteSecret(secretName: string, accessedBy?: string): Promise<void> {
     await this.client.send(
-      new DeleteSecretCommand({ SecretId: secretName, RecoveryWindowInDays: 30 }),
+      new DeleteSecretCommand({ SecretId: secretName, RecoveryWindowInDays: 30 })
     );
     await this.logAccess(secretName, SecretAccessAction.WRITE, accessedBy, undefined, true);
     this.logger.warn(`Secret scheduled for deletion: ${secretName}`);
@@ -98,9 +92,7 @@ export class AwsSecretsService implements OnModuleInit {
     lastRotatedDate?: Date;
     rotationEnabled: boolean;
   }> {
-    const response = await this.client.send(
-      new DescribeSecretCommand({ SecretId: secretName }),
-    );
+    const response = await this.client.send(new DescribeSecretCommand({ SecretId: secretName }));
     return {
       arn: response.ARN ?? '',
       name: response.Name ?? '',
@@ -115,18 +107,16 @@ export class AwsSecretsService implements OnModuleInit {
     secretName: string,
     accessedBy: string,
     reason: string,
-    ipAddress?: string,
+    ipAddress?: string
   ): Promise<string> {
-    this.logger.warn(
-      `EMERGENCY ACCESS: secret=${secretName} by=${accessedBy} reason="${reason}"`,
-    );
+    this.logger.warn(`EMERGENCY ACCESS: secret=${secretName} by=${accessedBy} reason="${reason}"`);
     await this.logAccess(
       secretName,
       SecretAccessAction.EMERGENCY_ACCESS,
       accessedBy,
       ipAddress,
       true,
-      reason,
+      reason
     );
     return this.getSecret(secretName, accessedBy, ipAddress);
   }
@@ -141,10 +131,7 @@ export class AwsSecretsService implements OnModuleInit {
     return { secretName, meta, value, backedUpAt: new Date().toISOString() };
   }
 
-  async getAccessLogs(
-    secretName?: string,
-    limit = 100,
-  ): Promise<SecretAccessLog[]> {
+  async getAccessLogs(secretName?: string, limit = 100): Promise<SecretAccessLog[]> {
     const qb = this.accessLogRepo.createQueryBuilder('l');
     if (secretName) qb.where('l.secretName = :secretName', { secretName });
     return qb.orderBy('l.accessedAt', 'DESC').limit(limit).getMany();
@@ -156,7 +143,7 @@ export class AwsSecretsService implements OnModuleInit {
     accessedBy?: string,
     ipAddress?: string,
     success = true,
-    reason?: string,
+    reason?: string
   ) {
     try {
       await this.accessLogRepo.save({

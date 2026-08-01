@@ -1,10 +1,5 @@
 import React from 'react';
-import {
-  ERROR_TEXT_CLASS,
-  HELPER_TEXT_CLASS,
-  LABEL_CLASS,
-  slugifyLabel,
-} from './fieldStyles';
+import { ERROR_TEXT_CLASS, HELPER_TEXT_CLASS, LABEL_CLASS, slugifyLabel } from './fieldStyles';
 
 /** Props shared by every field primitive in this library. */
 export interface FieldMeta {
@@ -22,12 +17,7 @@ export interface FieldMeta {
  * `error` takes precedence over `helperText` for `aria-describedby` because
  * only one of the two is ever rendered.
  */
-export function useFieldA11y({
-  id,
-  label,
-  error,
-  helperText,
-}: FieldMeta & { id?: string }) {
+export function useFieldA11y({ id, label, error, helperText }: FieldMeta & { id?: string }) {
   const generatedId = React.useId();
   const fieldId = id ?? slugifyLabel(label) ?? generatedId;
 
@@ -36,21 +26,13 @@ export function useFieldA11y({
     a11yProps: {
       id: fieldId,
       'aria-invalid': !!error,
-      'aria-describedby': error
-        ? `${fieldId}-error`
-        : helperText
-          ? `${fieldId}-helper`
-          : undefined,
+      'aria-describedby': error ? `${fieldId}-error` : helperText ? `${fieldId}-helper` : undefined,
     } as const,
   };
 }
 
 /** Renders the error message, or the helper text when there is no error. */
-export function FieldFeedback({
-  fieldId,
-  error,
-  helperText,
-}: FieldMeta & { fieldId: string }) {
+export function FieldFeedback({ fieldId, error, helperText }: FieldMeta & { fieldId: string }) {
   if (error) {
     return (
       <p id={`${fieldId}-error`} role="alert" className={ERROR_TEXT_CLASS}>

@@ -21,8 +21,7 @@ const RECENT_CREDENTIAL_COUNT = 5;
  * the presentational sections under `components/dashboard`.
  */
 export default function DashboardPage() {
-  const { user, tokenBalance, enrolledCourses, credentials, isLoading, error } =
-    useDashboardData();
+  const { user, tokenBalance, enrolledCourses, credentials, isLoading, error } = useDashboardData();
 
   const recentCredentials = useMemo(
     () => credentials.slice(0, RECENT_CREDENTIAL_COUNT),

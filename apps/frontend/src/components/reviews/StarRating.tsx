@@ -9,7 +9,7 @@ interface StarRatingProps {
 
 export function StarRating({ value, readOnly = false, onRatingChange }: StarRatingProps) {
   const [hovered, setHovered] = useState(0);
-  const display = readOnly ? value : (hovered || value);
+  const display = readOnly ? value : hovered || value;
 
   if (readOnly) {
     return (

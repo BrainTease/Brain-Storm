@@ -55,75 +55,71 @@ export function CreateThreadModal({
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Start a New Discussion" size="lg">
+      {/* Content */}
+      <form onSubmit={handleSubmit}>
+        {error && (
+          <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+            {error}
+          </div>
+        )}
+
+        {/* Title */}
+        <div className="mb-6">
+          <label className="block text-sm font-semibold text-gray-900 mb-2">Title</label>
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="What's your question or discussion topic?"
+            maxLength={200}
+            disabled={isLoading}
+            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+          />
+          <p className="text-xs text-gray-500 mt-1">{title.length}/200 characters</p>
+        </div>
+
         {/* Content */}
-        <form onSubmit={handleSubmit}>
-          {error && (
-            <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-              {error}
-            </div>
-          )}
+        <div className="mb-6">
+          <label className="block text-sm font-semibold text-gray-900 mb-2">Description</label>
+          <MarkdownEditor
+            value={content}
+            onChange={setContent}
+            placeholder="Provide details about your question or topic. Markdown is supported."
+            disabled={isLoading}
+            minHeight={250}
+          />
+        </div>
 
-          {/* Title */}
-          <div className="mb-6">
-            <label className="block text-sm font-semibold text-gray-900 mb-2">
-              Title
-            </label>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="What's your question or discussion topic?"
-              maxLength={200}
-              disabled={isLoading}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
-            />
-            <p className="text-xs text-gray-500 mt-1">{title.length}/200 characters</p>
-          </div>
+        {/* Guidelines */}
+        <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm text-gray-700">
+          <p className="font-semibold text-blue-900 mb-2">✓ Tips for Good Posts:</p>
+          <ul className="list-disc list-inside space-y-1 text-blue-800">
+            <li>Be specific and provide context</li>
+            <li>Include error messages or code examples if relevant</li>
+            <li>Check if your question has already been answered</li>
+            <li>Be respectful and follow community guidelines</li>
+          </ul>
+        </div>
 
-          {/* Content */}
-          <div className="mb-6">
-            <label className="block text-sm font-semibold text-gray-900 mb-2">
-              Description
-            </label>
-            <MarkdownEditor
-              value={content}
-              onChange={setContent}
-              placeholder="Provide details about your question or topic. Markdown is supported."
-              disabled={isLoading}
-              minHeight={250}
-            />
-          </div>
-
-          {/* Guidelines */}
-          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm text-gray-700">
-            <p className="font-semibold text-blue-900 mb-2">✓ Tips for Good Posts:</p>
-            <ul className="list-disc list-inside space-y-1 text-blue-800">
-              <li>Be specific and provide context</li>
-              <li>Include error messages or code examples if relevant</li>
-              <li>Check if your question has already been answered</li>
-              <li>Be respectful and follow community guidelines</li>
-            </ul>
-          </div>
-
-          {/* Actions */}
-          <div className="flex gap-2 justify-end">
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={isLoading}
-              className="px-4 py-2 text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-lg font-medium disabled:opacity-50"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isLoading || !title.trim() || !content.trim()}
-              className="px-4 py-2 text-white bg-blue-600 hover:bg-blue-700 rounded-lg font-medium disabled:opacity-50"
-            >
-              {isLoading ? 'Creating...' : 'Create Discussion'}
-            </button>
-          </div>
-        </form>
+        {/* Actions */}
+        <div className="flex gap-2 justify-end">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={isLoading}
+            className="px-4 py-2 text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-lg font-medium disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={isLoading || !title.trim() || !content.trim()}
+            className="px-4 py-2 text-white bg-blue-600 hover:bg-blue-700 rounded-lg font-medium disabled:opacity-50"
+          >
+            {isLoading ? 'Creating...' : 'Create Discussion'}
+          </button>
+        </div>
+      </form>
     </Modal>
   );
 }

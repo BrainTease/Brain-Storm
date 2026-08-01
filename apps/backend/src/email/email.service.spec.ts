@@ -67,7 +67,12 @@ describe('EmailService', () => {
 
   describe('enqueue', () => {
     it('saves a new job to the queue and triggers processing', async () => {
-      const job = { id: 'j1', to: 'a@b.com', status: EmailStatus.PENDING, attempts: 0 } as EmailQueue;
+      const job = {
+        id: 'j1',
+        to: 'a@b.com',
+        status: EmailStatus.PENDING,
+        attempts: 0,
+      } as EmailQueue;
       mockQueueRepo.create.mockReturnValue(job);
       mockQueueRepo.save.mockResolvedValue(job);
       mockQueueRepo.find.mockResolvedValue([]);
@@ -75,7 +80,7 @@ describe('EmailService', () => {
       await service.enqueue('a@b.com', 'Subject', '<p>Body</p>');
 
       expect(mockQueueRepo.create).toHaveBeenCalledWith(
-        expect.objectContaining({ to: 'a@b.com', subject: 'Subject', html: '<p>Body</p>' }),
+        expect.objectContaining({ to: 'a@b.com', subject: 'Subject', html: '<p>Body</p>' })
       );
       expect(mockQueueRepo.save).toHaveBeenCalled();
     });
@@ -86,8 +91,13 @@ describe('EmailService', () => {
   describe('processQueue', () => {
     it('marks job as SENT in dev mode (mail.enabled = false)', async () => {
       const job = {
-        id: 'j1', to: 'a@b.com', subject: 'Hi', html: '<p>Test</p>',
-        status: EmailStatus.PENDING, attempts: 0, nextRetryAt: null,
+        id: 'j1',
+        to: 'a@b.com',
+        subject: 'Hi',
+        html: '<p>Test</p>',
+        status: EmailStatus.PENDING,
+        attempts: 0,
+        nextRetryAt: null,
       } as EmailQueue;
       mockQueueRepo.find.mockResolvedValue([job]);
       mockQueueRepo.save.mockImplementation((j: any) => Promise.resolve(j));
@@ -107,8 +117,13 @@ describe('EmailService', () => {
       mockTransporter.sendMail.mockRejectedValue(new Error('SMTP error'));
 
       const job = {
-        id: 'j1', to: 'a@b.com', subject: 'Hi', html: '<p>Test</p>',
-        status: EmailStatus.PENDING, attempts: 0, nextRetryAt: null,
+        id: 'j1',
+        to: 'a@b.com',
+        subject: 'Hi',
+        html: '<p>Test</p>',
+        status: EmailStatus.PENDING,
+        attempts: 0,
+        nextRetryAt: null,
       } as EmailQueue;
       mockQueueRepo.find.mockResolvedValue([job]);
       mockQueueRepo.save.mockImplementation((j: any) => Promise.resolve(j));
@@ -130,8 +145,13 @@ describe('EmailService', () => {
       mockTransporter.sendMail.mockRejectedValue(new Error('Final failure'));
 
       const job = {
-        id: 'j1', to: 'a@b.com', subject: 'Hi', html: '<p>Test</p>',
-        status: EmailStatus.PENDING, attempts: 2, nextRetryAt: null, // attempt 3 = MAX
+        id: 'j1',
+        to: 'a@b.com',
+        subject: 'Hi',
+        html: '<p>Test</p>',
+        status: EmailStatus.PENDING,
+        attempts: 2,
+        nextRetryAt: null, // attempt 3 = MAX
       } as EmailQueue;
       mockQueueRepo.find.mockResolvedValue([job]);
       mockQueueRepo.save.mockImplementation((j: any) => Promise.resolve(j));
@@ -153,7 +173,12 @@ describe('EmailService', () => {
 
   describe('onEnrollment', () => {
     it('enqueues email when enrollment preference is enabled', async () => {
-      const prefs = { userId: 'u1', unsubscribedAll: false, enrollment: true, unsubscribeToken: 'tok' } as EmailPreference;
+      const prefs = {
+        userId: 'u1',
+        unsubscribedAll: false,
+        enrollment: true,
+        unsubscribeToken: 'tok',
+      } as EmailPreference;
       mockPrefRepo.findOne.mockResolvedValue(prefs);
       const job = { id: 'j1' } as EmailQueue;
       mockQueueRepo.create.mockReturnValue(job);
@@ -161,32 +186,51 @@ describe('EmailService', () => {
       mockQueueRepo.find.mockResolvedValue([]);
 
       await service.onEnrollment({
-        userId: 'u1', courseId: 'c1', userEmail: 'a@b.com',
-        userName: 'Alice', courseTitle: 'Rust 101',
+        userId: 'u1',
+        courseId: 'c1',
+        userEmail: 'a@b.com',
+        userName: 'Alice',
+        courseTitle: 'Rust 101',
       });
 
       expect(mockQueueRepo.save).toHaveBeenCalled();
     });
 
     it('skips email when user has unsubscribed from all', async () => {
-      const prefs = { userId: 'u1', unsubscribedAll: true, enrollment: true, unsubscribeToken: 'tok' } as EmailPreference;
+      const prefs = {
+        userId: 'u1',
+        unsubscribedAll: true,
+        enrollment: true,
+        unsubscribeToken: 'tok',
+      } as EmailPreference;
       mockPrefRepo.findOne.mockResolvedValue(prefs);
 
       await service.onEnrollment({
-        userId: 'u1', courseId: 'c1', userEmail: 'a@b.com',
-        userName: 'Alice', courseTitle: 'Rust 101',
+        userId: 'u1',
+        courseId: 'c1',
+        userEmail: 'a@b.com',
+        userName: 'Alice',
+        courseTitle: 'Rust 101',
       });
 
       expect(mockQueueRepo.save).not.toHaveBeenCalled();
     });
 
     it('skips email when enrollment preference is disabled', async () => {
-      const prefs = { userId: 'u1', unsubscribedAll: false, enrollment: false, unsubscribeToken: 'tok' } as EmailPreference;
+      const prefs = {
+        userId: 'u1',
+        unsubscribedAll: false,
+        enrollment: false,
+        unsubscribeToken: 'tok',
+      } as EmailPreference;
       mockPrefRepo.findOne.mockResolvedValue(prefs);
 
       await service.onEnrollment({
-        userId: 'u1', courseId: 'c1', userEmail: 'a@b.com',
-        userName: 'Alice', courseTitle: 'Rust 101',
+        userId: 'u1',
+        courseId: 'c1',
+        userEmail: 'a@b.com',
+        userName: 'Alice',
+        courseTitle: 'Rust 101',
       });
 
       expect(mockQueueRepo.save).not.toHaveBeenCalled();
@@ -197,7 +241,11 @@ describe('EmailService', () => {
 
   describe('unsubscribeByToken', () => {
     it('sets unsubscribedAll to true for matching token', async () => {
-      const prefs = { userId: 'u1', unsubscribedAll: false, unsubscribeToken: 'tok123' } as EmailPreference;
+      const prefs = {
+        userId: 'u1',
+        unsubscribedAll: false,
+        unsubscribeToken: 'tok123',
+      } as EmailPreference;
       mockPrefRepo.findOne.mockResolvedValue(prefs);
       mockPrefRepo.save.mockImplementation((p: any) => Promise.resolve(p));
 
@@ -219,7 +267,12 @@ describe('EmailService', () => {
 
   describe('updatePreferences', () => {
     it('merges updates into existing preferences', async () => {
-      const prefs = { userId: 'u1', enrollment: true, completion: true, unsubscribeToken: 'tok' } as EmailPreference;
+      const prefs = {
+        userId: 'u1',
+        enrollment: true,
+        completion: true,
+        unsubscribeToken: 'tok',
+      } as EmailPreference;
       mockPrefRepo.findOne.mockResolvedValue(prefs);
       mockPrefRepo.save.mockImplementation((p: any) => Promise.resolve(p));
 

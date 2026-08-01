@@ -2,20 +2,31 @@
  * Jobs service — Issue #648
  * Job posting, application workflow, skill matching, auto-expiry, notifications.
  */
-import { Injectable, NotFoundException, ConflictException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, ILike, LessThan } from 'typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { Job, JobApplication, JobStatus, ApplicationStatus } from './job.entity';
-import { CreateJobDto, UpdateJobDto, CreateApplicationDto, UpdateApplicationStatusDto, JobQueryDto } from './dto';
+import {
+  CreateJobDto,
+  UpdateJobDto,
+  CreateApplicationDto,
+  UpdateApplicationStatusDto,
+  JobQueryDto,
+} from './dto';
 
 @Injectable()
 export class JobsService {
   constructor(
     @InjectRepository(Job) private jobRepo: Repository<Job>,
     @InjectRepository(JobApplication) private appRepo: Repository<JobApplication>,
-    private events: EventEmitter2,
+    private events: EventEmitter2
   ) {}
 
   // ── Jobs ─────────────────────────────────────────────────────────────────
@@ -48,7 +59,10 @@ export class JobsService {
   }
 
   async findOne(id: string): Promise<Job> {
-    const job = await this.jobRepo.findOne({ where: { id, isDeleted: false }, relations: ['instructor', 'applications'] });
+    const job = await this.jobRepo.findOne({
+      where: { id, isDeleted: false },
+      relations: ['instructor', 'applications'],
+    });
     if (!job) throw new NotFoundException('Job not found');
     return job;
   }
@@ -80,21 +94,37 @@ export class JobsService {
 
     const app = this.appRepo.create({ jobId, applicantId: userId, coverLetter: dto.coverLetter });
     const saved = await this.appRepo.save(app);
-    this.events.emit('job.application.submitted', { jobId, applicantId: userId, applicationId: saved.id });
+    this.events.emit('job.application.submitted', {
+      jobId,
+      applicantId: userId,
+      applicationId: saved.id,
+    });
     return saved;
   }
 
   async getApplicationsForJob(jobId: string, userId: string) {
     const job = await this.findOne(jobId);
     if (job.instructorId !== userId) throw new ForbiddenException('Not your job');
-    return this.appRepo.find({ where: { jobId }, relations: ['applicant'], order: { appliedAt: 'DESC' } });
+    return this.appRepo.find({
+      where: { jobId },
+      relations: ['applicant'],
+      order: { appliedAt: 'DESC' },
+    });
   }
 
   async getMyApplications(userId: string) {
-    return this.appRepo.find({ where: { applicantId: userId }, relations: ['job'], order: { appliedAt: 'DESC' } });
+    return this.appRepo.find({
+      where: { applicantId: userId },
+      relations: ['job'],
+      order: { appliedAt: 'DESC' },
+    });
   }
 
-  async updateApplicationStatus(appId: string, userId: string, dto: UpdateApplicationStatusDto): Promise<JobApplication> {
+  async updateApplicationStatus(
+    appId: string,
+    userId: string,
+    dto: UpdateApplicationStatusDto
+  ): Promise<JobApplication> {
     const app = await this.appRepo.findOne({ where: { id: appId }, relations: ['job'] });
     if (!app) throw new NotFoundException('Application not found');
     if (app.job.instructorId !== userId) throw new ForbiddenException('Not your job');
@@ -120,7 +150,8 @@ export class JobsService {
   async withdraw(appId: string, userId: string): Promise<void> {
     const app = await this.appRepo.findOne({ where: { id: appId, applicantId: userId } });
     if (!app) throw new NotFoundException('Application not found');
-    if (app.status === ApplicationStatus.ACCEPTED) throw new ConflictException('Cannot withdraw accepted application');
+    if (app.status === ApplicationStatus.ACCEPTED)
+      throw new ConflictException('Cannot withdraw accepted application');
     app.status = ApplicationStatus.WITHDRAWN;
     await this.appRepo.save(app);
   }
@@ -128,13 +159,20 @@ export class JobsService {
   // ── Skill-based recommendations ───────────────────────────────────────────
 
   async getMatchingJobs(userSkills: string[], limit = 10): Promise<Job[]> {
-    if (!userSkills.length) return this.jobRepo.find({ where: { status: JobStatus.OPEN, isDeleted: false }, take: limit });
+    if (!userSkills.length)
+      return this.jobRepo.find({
+        where: { status: JobStatus.OPEN, isDeleted: false },
+        take: limit,
+      });
     const jobs = await this.jobRepo.find({ where: { status: JobStatus.OPEN, isDeleted: false } });
     return jobs
-      .map(j => ({ job: j, score: (j.requiredSkills ?? []).filter(s => userSkills.includes(s)).length }))
+      .map((j) => ({
+        job: j,
+        score: (j.requiredSkills ?? []).filter((s) => userSkills.includes(s)).length,
+      }))
       .sort((a, b) => b.score - a.score)
       .slice(0, limit)
-      .map(x => x.job);
+      .map((x) => x.job);
   }
 
   // ── Auto-expiry (runs every hour) ─────────────────────────────────────────

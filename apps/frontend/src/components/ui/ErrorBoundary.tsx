@@ -35,7 +35,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   componentDidUpdate(prevProps: ErrorBoundaryProps): void {
     if (this.state.error && this.props.resetKeys && prevProps.resetKeys) {
       const changed = this.props.resetKeys.some(
-        (key, i) => !Object.is(key, prevProps.resetKeys?.[i]),
+        (key, i) => !Object.is(key, prevProps.resetKeys?.[i])
       );
       if (changed) this.reset();
     }
@@ -68,12 +68,7 @@ interface ErrorFallbackProps {
   description?: string;
 }
 
-export function ErrorFallback({
-  error,
-  reset,
-  title,
-  description,
-}: ErrorFallbackProps) {
+export function ErrorFallback({ error, reset, title, description }: ErrorFallbackProps) {
   const category = categorizeError(error);
   const displayTitle = title ?? getErrorTitle(category);
   const displayDescription = description ?? getErrorDescription(category);

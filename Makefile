@@ -1,4 +1,4 @@
-.PHONY: setup dev test build lint clean docker-up docker-down export-openapi help
+.PHONY: setup dev test build lint clean docker-up docker-down export-openapi audit cargo-audit help
 
 help:
 	@echo "Brain-Storm Makefile"
@@ -12,6 +12,8 @@ help:
 	@echo "make docker-up      - Start PostgreSQL and Redis via Docker Compose"
 	@echo "make docker-down    - Stop and remove Docker Compose services"
 	@echo "make export-openapi - Build backend and export openapi.json"
+	@echo "make audit          - Run npm audit across all workspaces"
+	@echo "make cargo-audit    - Run cargo-audit on Rust contracts"
 
 setup:
 	@echo "==> Installing Node.js dependencies..."
@@ -54,6 +56,17 @@ docker-up:
 docker-down:
 	@echo "==> Stopping Docker services..."
 	docker compose down
+
+audit:
+	@echo "==> Running npm audit across workspaces..."
+	@for ws in apps/backend apps/frontend; do \
+		echo "  -> npm audit in $$ws"; \
+		npm audit --workspace=$$ws --audit-level=moderate || true; \
+	done
+
+cargo-audit:
+	@echo "==> Running cargo-audit on Rust contracts..."
+	cargo audit --deny warnings
 
 export-openapi:
 	@echo "==> Exporting OpenAPI spec..."

@@ -19,31 +19,18 @@ export class CohortsController {
   }
 
   @Post(':cohortId/members')
-  async addMember(
-    @Param('cohortId') cohortId: string,
-    @Body() data: any,
-  ) {
+  async addMember(@Param('cohortId') cohortId: string, @Body() data: any) {
     return this.cohortsService.addMember(cohortId, data.userId);
   }
 
   @Delete(':cohortId/members/:userId')
-  async removeMember(
-    @Param('cohortId') cohortId: string,
-    @Param('userId') userId: string,
-  ) {
+  async removeMember(@Param('cohortId') cohortId: string, @Param('userId') userId: string) {
     return this.cohortsService.removeMember(cohortId, userId);
   }
 
   @Post(':cohortId/progress')
-  async updateProgress(
-    @Param('cohortId') cohortId: string,
-    @Body() data: any,
-  ) {
-    return this.cohortsService.updateMemberProgress(
-      cohortId,
-      data.userId,
-      data.progressPercentage,
-    );
+  async updateProgress(@Param('cohortId') cohortId: string, @Body() data: any) {
+    return this.cohortsService.updateMemberProgress(cohortId, data.userId, data.progressPercentage);
   }
 
   @Get(':cohortId/progress')

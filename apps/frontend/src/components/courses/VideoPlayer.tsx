@@ -43,14 +43,19 @@ export function VideoPlayer({
   const [captionsOn, setCaptionsOn] = useState(true);
   const completedRef = useRef(false);
   const lastSyncedRef = useRef(0);
-  const { pending: progressPending, complete: markComplete } = useOptimisticProgress(courseId, lessonId);
+  const { pending: progressPending, complete: markComplete } = useOptimisticProgress(
+    courseId,
+    lessonId
+  );
 
   useVideoShortcuts(videoRef);
 
   useEffect(() => {
     const v = videoRef.current;
     if (!v || !initialTime) return;
-    const onLoaded = () => { v.currentTime = initialTime; };
+    const onLoaded = () => {
+      v.currentTime = initialTime;
+    };
     v.addEventListener('loadedmetadata', onLoaded);
     return () => v.removeEventListener('loadedmetadata', onLoaded);
   }, [initialTime]);
@@ -63,7 +68,9 @@ export function VideoPlayer({
           completionPct: Math.round(pct * 100),
         });
         lastSyncedRef.current = time;
-      } catch { /* non-blocking */ }
+      } catch {
+        /* non-blocking */
+      }
     },
     [courseId, lessonId]
   );
@@ -200,8 +207,10 @@ export function VideoPlayer({
             title="Rewind 10s"
           >
             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/>
-              <text x="8" y="15" fontSize="6" fill="currentColor">10</text>
+              <path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z" />
+              <text x="8" y="15" fontSize="6" fill="currentColor">
+                10
+              </text>
             </svg>
           </button>
 
@@ -213,11 +222,11 @@ export function VideoPlayer({
           >
             {isPlaying ? (
               <svg className="w-7 h-7" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+                <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
               </svg>
             ) : (
               <svg className="w-7 h-7" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M8 5v14l11-7z"/>
+                <path d="M8 5v14l11-7z" />
               </svg>
             )}
           </button>
@@ -229,8 +238,10 @@ export function VideoPlayer({
             title="Skip 10s"
           >
             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M12 5V1l5 5-5 5V7c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6h2c0 4.42-3.58 8-8 8s-8-3.58-8-8 3.58-8 8-8z"/>
-              <text x="8" y="15" fontSize="6" fill="currentColor">10</text>
+              <path d="M12 5V1l5 5-5 5V7c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6h2c0 4.42-3.58 8-8 8s-8-3.58-8-8 3.58-8 8-8z" />
+              <text x="8" y="15" fontSize="6" fill="currentColor">
+                10
+              </text>
             </svg>
           </button>
 
@@ -252,7 +263,7 @@ export function VideoPlayer({
             title="Captions"
           >
             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-6 7h-2v-2h2v2zm-4 0H8v-2h2v2zm8 0h-2v-2h2v2z"/>
+              <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-6 7h-2v-2h2v2zm-4 0H8v-2h2v2zm8 0h-2v-2h2v2z" />
             </svg>
           </button>
 

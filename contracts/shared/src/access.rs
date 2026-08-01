@@ -106,7 +106,7 @@ pub fn require_owner(caller: &Address, owner: &Address) {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
     use soroban_sdk::{contract, contractimpl, contracttype, testutils::Address as _};
 

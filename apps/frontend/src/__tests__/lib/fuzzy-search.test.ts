@@ -59,11 +59,21 @@ describe('fuzzyScore', () => {
 
 const ITEMS: SearchItem[] = [
   { id: '1', title: 'Introduction to Rust', category: 'programming' },
-  { id: '2', title: 'JavaScript Fundamentals', description: 'Learn JS basics', category: 'programming' },
+  {
+    id: '2',
+    title: 'JavaScript Fundamentals',
+    description: 'Learn JS basics',
+    category: 'programming',
+  },
   { id: '3', title: 'CSS Grid Layout', description: 'Modern CSS techniques', category: 'design' },
   { id: '4', title: 'React Hooks in Depth', category: 'programming' },
   { id: '5', title: 'TypeScript Advanced Patterns', description: 'TS generics and types' },
-  { id: '6', title: 'Blockchain Basics', description: 'Intro to blockchain and crypto', category: 'blockchain' },
+  {
+    id: '6',
+    title: 'Blockchain Basics',
+    description: 'Intro to blockchain and crypto',
+    category: 'blockchain',
+  },
 ];
 
 describe('fuzzySearch', () => {
@@ -80,18 +90,18 @@ describe('fuzzySearch', () => {
   it('filters items that do not match query', () => {
     const results = fuzzySearch(ITEMS, 'rust');
     expect(results.length).toBeGreaterThan(0);
-    expect(results.every(r => r.id !== '3')).toBe(true); // CSS Grid has no rust
+    expect(results.every((r) => r.id !== '3')).toBe(true); // CSS Grid has no rust
   });
 
   it('finds match by title', () => {
     const results = fuzzySearch(ITEMS, 'react');
-    expect(results.some(r => r.id === '4')).toBe(true);
+    expect(results.some((r) => r.id === '4')).toBe(true);
   });
 
   it('finds match by description', () => {
     const results = fuzzySearch(ITEMS, 'basics');
     // JS Fundamentals has "Learn JS basics" in description, Blockchain has "Intro to blockchain..."
-    expect(results.some(r => r.id === '2' || r.id === '6')).toBe(true);
+    expect(results.some((r) => r.id === '2' || r.id === '6')).toBe(true);
   });
 
   it('respects maxResults limit', () => {
@@ -108,7 +118,7 @@ describe('fuzzySearch', () => {
   it('is case-insensitive in search', () => {
     const lowerResults = fuzzySearch(ITEMS, 'typescript');
     const upperResults = fuzzySearch(ITEMS, 'TYPESCRIPT');
-    expect(lowerResults.map(r => r.id)).toEqual(upperResults.map(r => r.id));
+    expect(lowerResults.map((r) => r.id)).toEqual(upperResults.map((r) => r.id));
   });
 
   it('returns items sorted by relevance score (best match first)', () => {
@@ -123,7 +133,7 @@ describe('fuzzySearch', () => {
   it('does not include items without descriptions when description score is 0', () => {
     // items with no description field still match on title
     const results = fuzzySearch(ITEMS, 'react');
-    const reactItem = results.find(r => r.id === '4');
+    const reactItem = results.find((r) => r.id === '4');
     expect(reactItem).toBeDefined();
   });
 

@@ -68,7 +68,7 @@ describe('LeaderboardService (Issue #817)', () => {
     expect(mockCacheService.getOrSet).toHaveBeenCalledWith(
       'leaderboard:top50',
       expect.any(Function),
-      300,
+      300
     );
     expect(result).toBe(fakeLeaderboard);
   });
@@ -79,13 +79,11 @@ describe('LeaderboardService (Issue #817)', () => {
       { id: 'u2', email: 'b@b.com', stellarPublicKey: 'GB2', username: 'Bob', deletedAt: null },
     ];
     mockUserRepo.find.mockResolvedValue(users);
-    mockStellarService.getTokenBalance
-      .mockResolvedValueOnce('50')
-      .mockResolvedValueOnce('200');
+    mockStellarService.getTokenBalance.mockResolvedValueOnce('50').mockResolvedValueOnce('200');
 
     // Invoke the real factory by calling getOrSet's impl
-    mockCacheService.getOrSet.mockImplementation(
-      (_key: string, factory: () => Promise<any>) => factory(),
+    mockCacheService.getOrSet.mockImplementation((_key: string, factory: () => Promise<any>) =>
+      factory()
     );
 
     const result = await service.getTopUsers();
@@ -111,54 +109,36 @@ describe('Caching refactor – source-level checks (Issue #817)', () => {
   }
 
   it('LeaderboardService does NOT inject CACHE_MANAGER in code', () => {
-    const raw = fs.readFileSync(
-      path.join(SRC, 'leaderboard/leaderboard.service.ts'),
-      'utf8',
-    );
+    const raw = fs.readFileSync(path.join(SRC, 'leaderboard/leaderboard.service.ts'), 'utf8');
     const code = stripComments(raw);
     expect(code).not.toMatch(/CACHE_MANAGER/);
   });
 
   it('LeaderboardService uses CacheService', () => {
-    const src = fs.readFileSync(
-      path.join(SRC, 'leaderboard/leaderboard.service.ts'),
-      'utf8',
-    );
+    const src = fs.readFileSync(path.join(SRC, 'leaderboard/leaderboard.service.ts'), 'utf8');
     expect(src).toMatch(/CacheService/);
     expect(src).toMatch(/cacheService\.getOrSet/);
   });
 
   it('CoursesService does NOT inject CACHE_MANAGER in code', () => {
-    const raw = fs.readFileSync(
-      path.join(SRC, 'courses/courses.service.ts'),
-      'utf8',
-    );
+    const raw = fs.readFileSync(path.join(SRC, 'courses/courses.service.ts'), 'utf8');
     const code = stripComments(raw);
     expect(code).not.toMatch(/CACHE_MANAGER/);
   });
 
   it('CoursesService uses CacheService.getOrSet', () => {
-    const src = fs.readFileSync(
-      path.join(SRC, 'courses/courses.service.ts'),
-      'utf8',
-    );
+    const src = fs.readFileSync(path.join(SRC, 'courses/courses.service.ts'), 'utf8');
     expect(src).toMatch(/cacheService\.getOrSet/);
   });
 
   it('CoursesService does NOT call cacheManager.wrap in code', () => {
-    const raw = fs.readFileSync(
-      path.join(SRC, 'courses/courses.service.ts'),
-      'utf8',
-    );
+    const raw = fs.readFileSync(path.join(SRC, 'courses/courses.service.ts'), 'utf8');
     const code = stripComments(raw);
     expect(code).not.toMatch(/cacheManager\.wrap/);
   });
 
   it('CoursesService uses CacheService.invalidatePrefix and has no deleteCacheKeys method', () => {
-    const raw = fs.readFileSync(
-      path.join(SRC, 'courses/courses.service.ts'),
-      'utf8',
-    );
+    const raw = fs.readFileSync(path.join(SRC, 'courses/courses.service.ts'), 'utf8');
     const code = stripComments(raw);
     expect(code).toMatch(/cacheService\.invalidatePrefix/);
     expect(code).not.toMatch(/deleteCacheKeys/);

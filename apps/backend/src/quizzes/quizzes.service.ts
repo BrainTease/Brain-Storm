@@ -14,7 +14,7 @@ export class QuizzesService {
     @InjectRepository(QuizQuestion) private questionRepo: Repository<QuizQuestion>,
     @InjectRepository(QuizAttempt) private attemptRepo: Repository<QuizAttempt>,
     @InjectRepository(QuizAttemptAnswer) private attemptAnswerRepo: Repository<QuizAttemptAnswer>,
-    @InjectRepository(QuizAnswer) private answerRepo: Repository<QuizAnswer>,
+    @InjectRepository(QuizAnswer) private answerRepo: Repository<QuizAnswer>
   ) {}
 
   async createQuiz(lessonId: string, data: any) {
@@ -91,7 +91,8 @@ export class QuizzesService {
 
     const scores = attempts.map((a) => a.score || 0);
     const averageScore = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
-    const passRate = scores.length > 0 ? scores.filter((s) => s >= quiz.passingScore).length / scores.length : 0;
+    const passRate =
+      scores.length > 0 ? scores.filter((s) => s >= quiz.passingScore).length / scores.length : 0;
 
     return {
       quizId,
@@ -135,7 +136,9 @@ export class QuizzesService {
   }
 
   async getAttempts(quizId: string, userId?: string) {
-    const query = this.attemptRepo.createQueryBuilder('attempt').where('attempt.quizId = :quizId', { quizId });
+    const query = this.attemptRepo
+      .createQueryBuilder('attempt')
+      .where('attempt.quizId = :quizId', { quizId });
 
     if (userId) {
       query.andWhere('attempt.userId = :userId', { userId });

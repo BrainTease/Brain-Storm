@@ -26,12 +26,7 @@ export function SubmitButton({
   const submitting = isLoading || isSubmitting;
 
   return (
-    <Button
-      type="submit"
-      variant={variant}
-      isDisabled={submitting || isDisabled}
-      {...rest}
-    >
+    <Button type="submit" variant={variant} isDisabled={submitting || isDisabled} {...rest}>
       {submitting ? (submittingLabel ?? t('submitting')) : (label ?? t('submit'))}
     </Button>
   );

@@ -8,7 +8,7 @@ import { CohortMember } from './cohort-member.entity';
 export class CohortsService {
   constructor(
     @InjectRepository(Cohort) private cohortRepo: Repository<Cohort>,
-    @InjectRepository(CohortMember) private memberRepo: Repository<CohortMember>,
+    @InjectRepository(CohortMember) private memberRepo: Repository<CohortMember>
   ) {}
 
   async createCohort(courseId: string, instructorId: string, data: any) {
@@ -45,10 +45,7 @@ export class CohortsService {
   }
 
   async updateMemberProgress(cohortId: string, userId: string, progressPercentage: number) {
-    return this.memberRepo.update(
-      { cohortId, userId },
-      { progressPercentage },
-    );
+    return this.memberRepo.update({ cohortId, userId }, { progressPercentage });
   }
 
   async getCohortProgress(cohortId: string) {
@@ -56,9 +53,10 @@ export class CohortsService {
       where: { cohortId },
     });
 
-    const avgProgress = members.length > 0
-      ? members.reduce((sum, m) => sum + m.progressPercentage, 0) / members.length
-      : 0;
+    const avgProgress =
+      members.length > 0
+        ? members.reduce((sum, m) => sum + m.progressPercentage, 0) / members.length
+        : 0;
 
     return {
       totalMembers: members.length,

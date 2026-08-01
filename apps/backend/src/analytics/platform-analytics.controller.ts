@@ -21,7 +21,7 @@ class TrackEventDto {
 export class PlatformAnalyticsController {
   constructor(
     private readonly platformAnalyticsService: PlatformAnalyticsService,
-    private readonly eventsService: EventsService,
+    private readonly eventsService: EventsService
   ) {}
 
   @Post('events')
@@ -29,17 +29,19 @@ export class PlatformAnalyticsController {
   async trackEvent(@Body() dto: TrackEventDto) {
     // Validate event type
     const validEventTypes = Object.values(CORE_EVENTS);
-    if (!validEventTypes.includes(dto.eventType as typeof CORE_EVENTS[keyof typeof CORE_EVENTS])) {
+    if (
+      !validEventTypes.includes(dto.eventType as (typeof CORE_EVENTS)[keyof typeof CORE_EVENTS])
+    ) {
       return { success: false, error: 'Invalid event type' };
     }
-    
+
     // Emit event for storage
     await this.eventsService.handleEvent(dto.eventType, {
       ...dto.payload,
       userId: dto.userId,
       sessionId: dto.sessionId,
     });
-    
+
     return { success: true };
   }
 
@@ -65,7 +67,7 @@ export class PlatformAnalyticsController {
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
     @Query('userId') userId?: string,
-    @Query('courseId') courseId?: string,
+    @Query('courseId') courseId?: string
   ) {
     const [events, total] = await this.eventsService.findEvents({
       limit,
@@ -87,7 +89,7 @@ export class PlatformAnalyticsController {
     @Query('endDate') endDate?: string,
     @Query('userId') userId?: string,
     @Query('courseId') courseId?: string,
-    @Res() res: any,
+    @Res() res: any
   ) {
     const [events] = await this.eventsService.findEvents({
       eventType,

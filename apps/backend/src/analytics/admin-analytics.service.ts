@@ -39,13 +39,16 @@ export class AdminAnalyticsService {
     @InjectRepository(Enrollment) private readonly enrollmentRepo: Repository<Enrollment>,
     @InjectRepository(Progress) private readonly progressRepo: Repository<Progress>,
     @InjectRepository(Review) private readonly reviewRepo: Repository<Review>,
-    @InjectRepository(AnalyticsEvent) private readonly analyticsEventRepo: Repository<AnalyticsEvent>,
-    @Inject(CACHE_MANAGER) private cache: Cache,
+    @InjectRepository(AnalyticsEvent)
+    private readonly analyticsEventRepo: Repository<AnalyticsEvent>,
+    @Inject(CACHE_MANAGER) private cache: Cache
   ) {}
 
   private getDateRange(query: AdminDashboardQueryDto): { startDate: Date; endDate: Date } {
     const endDate = query.endDate ? new Date(query.endDate) : new Date();
-    const startDate = query.startDate ? new Date(query.startDate) : new Date(Date.now() - 30 * 86400_000);
+    const startDate = query.startDate
+      ? new Date(query.startDate)
+      : new Date(Date.now() - 30 * 86400_000);
     return { startDate, endDate };
   }
 
@@ -63,9 +66,10 @@ export class AdminAnalyticsService {
       this.aggregateMetrics(prevStartDate, prevEndDate),
     ]);
 
-    const growth = previous.totalUsers > 0 
-      ? ((current.totalUsers - previous.totalUsers) / previous.totalUsers) * 100 
-      : 0;
+    const growth =
+      previous.totalUsers > 0
+        ? ((current.totalUsers - previous.totalUsers) / previous.totalUsers) * 100
+        : 0;
 
     const metrics: DashboardMetrics = {
       ...current,
@@ -79,7 +83,10 @@ export class AdminAnalyticsService {
     return metrics;
   }
 
-  private async aggregateMetrics(startDate: Date, endDate: Date): Promise<Omit<DashboardMetrics, 'growth' | 'activeWorkers' | 'tipVolume' | 'disputeRate'>> {
+  private async aggregateMetrics(
+    startDate: Date,
+    endDate: Date
+  ): Promise<Omit<DashboardMetrics, 'growth' | 'activeWorkers' | 'tipVolume' | 'disputeRate'>> {
     const [
       totalUsers,
       totalCourses,
@@ -97,7 +104,10 @@ export class AdminAnalyticsService {
       this.enrollmentRepo
         .createQueryBuilder('e')
         .where('e.completedAt IS NOT NULL')
-        .andWhere('e.completedAt >= :start AND e.completedAt <= :end', { start: startDate, end: endDate })
+        .andWhere('e.completedAt >= :start AND e.completedAt <= :end', {
+          start: startDate,
+          end: endDate,
+        })
         .getCount(),
       this.reviewRepo
         .createQueryBuilder('r')
@@ -144,7 +154,7 @@ export class AdminAnalyticsService {
   private async calculateTipVolume(startDate: Date, endDate: Date): Promise<number> {
     const result = await this.analyticsEventRepo
       .createQueryBuilder('e')
-      .select('SUM(CAST(e.payload->>\'amount\' AS numeric))', 'total')
+      .select("SUM(CAST(e.payload->>'amount' AS numeric))", 'total')
       .where('e.eventType = :type', { type: 'tip_received' })
       .andWhere('e.timestamp >= :start AND e.timestamp <= :end', { start: startDate, end: endDate })
       .getRawOne<{ total: string }>();
@@ -156,15 +166,25 @@ export class AdminAnalyticsService {
       this.analyticsEventRepo
         .createQueryBuilder('e')
         .where('e.eventType = :type', { type: 'dispute_opened' })
-        .andWhere('e.timestamp >= :start AND e.timestamp <= :end', { start: startDate, end: endDate })
+        .andWhere('e.timestamp >= :start AND e.timestamp <= :end', {
+          start: startDate,
+          end: endDate,
+        })
         .getCount(),
       this.analyticsEventRepo
         .createQueryBuilder('e')
-        .where('e.eventType IN (:...types)', { types: ['tip_sent', 'tip_received', 'payment_completed'] })
-        .andWhere('e.timestamp >= :start AND e.timestamp <= :end', { start: startDate, end: endDate })
+        .where('e.eventType IN (:...types)', {
+          types: ['tip_sent', 'tip_received', 'payment_completed'],
+        })
+        .andWhere('e.timestamp >= :start AND e.timestamp <= :end', {
+          start: startDate,
+          end: endDate,
+        })
         .getCount(),
     ]);
-    return totalTransactions > 0 ? Math.round((totalDisputes / totalTransactions) * 10000) / 100 : 0;
+    return totalTransactions > 0
+      ? Math.round((totalDisputes / totalTransactions) * 10000) / 100
+      : 0;
   }
 
   async exportMetrics(query: AdminDashboardQueryDto = {}): Promise<string> {

@@ -56,10 +56,7 @@ describe('SorobanRpcClientService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        SorobanRpcClientService,
-        { provide: ConfigService, useValue: mockConfigService },
-      ],
+      providers: [SorobanRpcClientService, { provide: ConfigService, useValue: mockConfigService }],
     }).compile();
 
     service = module.get<SorobanRpcClientService>(SorobanRpcClientService);
@@ -89,7 +86,7 @@ describe('SorobanRpcClientService', () => {
     it('throws when TOKEN_CONTRACT_ID is not configured', async () => {
       (service as any).tokenContractId = '';
       await expect(service.getTokenBalance(TEST_PUBLIC_KEY)).rejects.toThrow(
-        'TOKEN_CONTRACT_ID not configured',
+        'TOKEN_CONTRACT_ID not configured'
       );
     });
 
@@ -101,11 +98,7 @@ describe('SorobanRpcClientService', () => {
 
       const balance = await service.getTokenBalance(TEST_PUBLIC_KEY);
 
-      expect(spy).toHaveBeenCalledWith(
-        service.tokenContractId,
-        'balance',
-        expect.any(Array),
-      );
+      expect(spy).toHaveBeenCalledWith(service.tokenContractId, 'balance', expect.any(Array));
       expect(balance).toBe('1000000000');
     });
   });
@@ -116,22 +109,16 @@ describe('SorobanRpcClientService', () => {
     it('throws when TOKEN_CONTRACT_ID is not configured', async () => {
       (service as any).tokenContractId = '';
       await expect(service.mintReward(TEST_PUBLIC_KEY, 100)).rejects.toThrow(
-        'TOKEN_CONTRACT_ID not configured',
+        'TOKEN_CONTRACT_ID not configured'
       );
     });
 
     it('delegates to invokeContract with mint method', async () => {
-      const spy = jest
-        .spyOn(service, 'invokeContract')
-        .mockResolvedValue('mint_tx_hash');
+      const spy = jest.spyOn(service, 'invokeContract').mockResolvedValue('mint_tx_hash');
 
       const result = await service.mintReward(TEST_PUBLIC_KEY, 500);
 
-      expect(spy).toHaveBeenCalledWith(
-        service.tokenContractId,
-        'mint',
-        expect.any(Array),
-      );
+      expect(spy).toHaveBeenCalledWith(service.tokenContractId, 'mint', expect.any(Array));
       expect(result).toBe('mint_tx_hash');
     });
   });
@@ -140,16 +127,14 @@ describe('SorobanRpcClientService', () => {
 
   describe('recordProgress', () => {
     it('delegates to invokeContract with record_progress method', async () => {
-      const spy = jest
-        .spyOn(service, 'invokeContract')
-        .mockResolvedValue('progress_tx_hash');
+      const spy = jest.spyOn(service, 'invokeContract').mockResolvedValue('progress_tx_hash');
 
       const result = await service.recordProgress(TEST_PUBLIC_KEY, 'course-1', 75);
 
       expect(spy).toHaveBeenCalledWith(
         service.analyticsContractId,
         'record_progress',
-        expect.any(Array),
+        expect.any(Array)
       );
       expect(result).toBe('progress_tx_hash');
     });
@@ -160,41 +145,27 @@ describe('SorobanRpcClientService', () => {
   describe('Separation of concerns (Issue #803)', () => {
     /** Strip block and single-line comments from source */
     function stripComments(src: string): string {
-      return src
-        .replace(/\/\*[\s\S]*?\*\//g, '')
-        .replace(/\/\/[^\n]*/g, '');
+      return src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
     }
 
     it('does NOT import or use Horizon in code', () => {
-      const raw = fs.readFileSync(
-        path.join(__dirname, 'soroban-rpc-client.service.ts'),
-        'utf8',
-      );
+      const raw = fs.readFileSync(path.join(__dirname, 'soroban-rpc-client.service.ts'), 'utf8');
       const code = stripComments(raw);
       expect(code).not.toMatch(/Horizon/);
     });
 
     it('does NOT import StellarTransactionLog', () => {
-      const src = fs.readFileSync(
-        path.join(__dirname, 'soroban-rpc-client.service.ts'),
-        'utf8',
-      );
+      const src = fs.readFileSync(path.join(__dirname, 'soroban-rpc-client.service.ts'), 'utf8');
       expect(src).not.toMatch(/StellarTransactionLog/);
     });
 
     it('does NOT inject CACHE_MANAGER', () => {
-      const src = fs.readFileSync(
-        path.join(__dirname, 'soroban-rpc-client.service.ts'),
-        'utf8',
-      );
+      const src = fs.readFileSync(path.join(__dirname, 'soroban-rpc-client.service.ts'), 'utf8');
       expect(src).not.toMatch(/CACHE_MANAGER/);
     });
 
     it('StellarService delegates Soroban calls to SorobanRpcClientService', () => {
-      const src = fs.readFileSync(
-        path.join(__dirname, 'stellar.service.ts'),
-        'utf8',
-      );
+      const src = fs.readFileSync(path.join(__dirname, 'stellar.service.ts'), 'utf8');
       expect(src).toMatch(/SorobanRpcClientService/);
       expect(src).toMatch(/sorobanRpc\./);
       // StellarService should no longer own invokeContract

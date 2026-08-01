@@ -13,19 +13,28 @@ interface InstructorReplyProps {
   isInstructor: boolean;
 }
 
-export function InstructorReply({ courseId, reviewId, existingReply, isInstructor }: InstructorReplyProps) {
+export function InstructorReply({
+  courseId,
+  reviewId,
+  existingReply,
+  isInstructor,
+}: InstructorReplyProps) {
   const [showForm, setShowForm] = useState(false);
   const [replyText, setReplyText] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [submitted, setSubmitted] = useState<{ text: string; createdAt: string } | null>(existingReply ?? null);
+  const [submitted, setSubmitted] = useState<{ text: string; createdAt: string } | null>(
+    existingReply ?? null
+  );
 
   if (submitted) {
     return (
       <div className="mt-3 pl-4 border-l-2 border-blue-300 bg-blue-50 rounded p-3">
         <p className="text-xs font-semibold text-blue-700 mb-1">Instructor Response</p>
         <p className="text-sm text-gray-700">{submitted.text}</p>
-        <p className="text-xs text-gray-400 mt-1">{new Date(submitted.createdAt).toLocaleDateString()}</p>
+        <p className="text-xs text-gray-400 mt-1">
+          {new Date(submitted.createdAt).toLocaleDateString()}
+        </p>
       </div>
     );
   }

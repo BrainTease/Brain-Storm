@@ -3,8 +3,6 @@ use soroban_sdk::{
     contract, contractimpl, contracttype, symbol_short, Address, Bytes, Env, String, Symbol,
 };
 
-use brain_storm_shared::access;
-
 pub mod linkage;
 pub mod validation;
 pub use linkage::{
@@ -79,6 +77,7 @@ impl CredentialMetadataContract {
     ///
     /// # Returns
     /// The minted NFT ID.
+    #[allow(clippy::too_many_arguments)]
     pub fn issue_with_nft(
         env: Env,
         admin: Address,
@@ -92,6 +91,7 @@ impl CredentialMetadataContract {
         course_id: soroban_sdk::Symbol,
         instructor: Address,
         royalty_basis: u32,
+
     ) -> u32 {
         admin.require_auth();
         validation::validate_admin(&env, &admin);

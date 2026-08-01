@@ -6,7 +6,8 @@ function createSandboxIframe(): HTMLIFrameElement {
   const iframe = document.createElement('iframe');
   iframe.style.display = 'none';
   iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
-  iframe.srcdoc = '<!DOCTYPE html><html><body><script>window.__results__ = [];</script></body></html>';
+  iframe.srcdoc =
+    '<!DOCTYPE html><html><body><script>window.__results__ = [];</script></body></html>';
   document.body.appendChild(iframe);
   return iframe;
 }
@@ -66,7 +67,7 @@ export interface SandboxResult {
 export function runExercise(
   code: string,
   testCases: ExerciseTestCase[],
-  xpReward: number,
+  xpReward: number
 ): SandboxResult {
   const testResults: TestResult[] = [];
 
@@ -114,7 +115,7 @@ export function runExercise(
   const totalWeight = testCases.reduce((s, tc) => s + (tc.weight ?? 1), 0);
   const earnedWeight = testResults.reduce(
     (s, tr, i) => s + (tr.passed ? (testCases[i].weight ?? 1) : 0),
-    0,
+    0
   );
   const score = totalWeight > 0 ? Math.round((earnedWeight / totalWeight) * 100) : 0;
 

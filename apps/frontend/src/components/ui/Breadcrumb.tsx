@@ -88,21 +88,19 @@ export const Breadcrumb: React.FC<BreadcrumbProps> = ({ items, className = '' })
 // Helper function to generate breadcrumbs from pathname
 function generateBreadcrumbs(pathname: string): BreadcrumbItem[] {
   const paths = pathname.split('/').filter(Boolean);
-  const breadcrumbs: BreadcrumbItem[] = [
-    { label: 'Home', href: '/' },
-  ];
+  const breadcrumbs: BreadcrumbItem[] = [{ label: 'Home', href: '/' }];
 
   let currentPath = '';
   paths.forEach((path, index) => {
     currentPath += `/${path}`;
-    
+
     // Skip locale segments
     if (path.length === 2 && index === 0) return;
 
     // Format label (capitalize and replace hyphens)
     const label = path
       .split('-')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
 
     breadcrumbs.push({
@@ -133,12 +131,7 @@ export const CompactBreadcrumb: React.FC<BreadcrumbProps> = ({ items, className 
             href={parentItem.href}
             className="text-blue-600 hover:text-blue-800 dark:text-blue-400 flex items-center"
           >
-            <svg
-              className="w-4 h-4 mr-1"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
+            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"

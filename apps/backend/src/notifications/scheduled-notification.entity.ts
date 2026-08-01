@@ -24,7 +24,11 @@ export class ScheduledNotification {
   @Column({ type: 'timestamp' })
   scheduledAt: Date;
 
-  @Column({ type: 'enum', enum: ScheduledNotificationStatus, default: ScheduledNotificationStatus.PENDING })
+  @Column({
+    type: 'enum',
+    enum: ScheduledNotificationStatus,
+    default: ScheduledNotificationStatus.PENDING,
+  })
   status: ScheduledNotificationStatus;
 
   @CreateDateColumn()

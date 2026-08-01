@@ -90,7 +90,11 @@ export const CourseCardSkeleton: React.FC = () => {
 
 export const CourseListSkeleton: React.FC<{ count?: number }> = ({ count = 6 }) => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" role="status" aria-label="Loading courses">
+    <div
+      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+      role="status"
+      aria-label="Loading courses"
+    >
       {Array.from({ length: count }).map((_, index) => (
         <CourseCardSkeleton key={index} />
       ))}
@@ -277,4 +281,3 @@ export const VideoPlayerSkeleton: React.FC = () => {
     </div>
   );
 };
-
