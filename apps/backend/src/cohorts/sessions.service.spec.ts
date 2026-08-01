@@ -15,11 +15,17 @@ describe('SessionsService', () => {
   let service: SessionsService;
 
   const mockSessionRepo = {
-    create: jest.fn(), save: jest.fn(), findOne: jest.fn(),
-    find: jest.fn(), update: jest.fn(),
+    create: jest.fn(),
+    save: jest.fn(),
+    findOne: jest.fn(),
+    find: jest.fn(),
+    update: jest.fn(),
   };
   const mockAttendanceRepo = {
-    create: jest.fn(), save: jest.fn(), findOne: jest.fn(), find: jest.fn(),
+    create: jest.fn(),
+    save: jest.fn(),
+    findOne: jest.fn(),
+    find: jest.fn(),
   };
   const mockNotifications = {
     scheduleNotification: jest.fn().mockResolvedValue(undefined),
@@ -36,7 +42,7 @@ describe('SessionsService', () => {
       endTime: new Date('2030-01-15T11:00:00Z'),
       status: SessionStatus.SCHEDULED,
       ...overrides,
-    } as CohortSession);
+    }) as CohortSession;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -74,7 +80,11 @@ describe('SessionsService', () => {
       const result = await service.createSession('coh-1', 'ins-1', dto);
 
       expect(mockSessionRepo.create).toHaveBeenCalledWith(
-        expect.objectContaining({ cohortId: 'coh-1', instructorId: 'ins-1', status: SessionStatus.SCHEDULED }),
+        expect.objectContaining({
+          cohortId: 'coh-1',
+          instructorId: 'ins-1',
+          status: SessionStatus.SCHEDULED,
+        })
       );
       expect(result).toEqual(session);
     });
@@ -86,10 +96,7 @@ describe('SessionsService', () => {
       mockSessionRepo.findOne.mockResolvedValue({
         ...session,
         cohort: {
-          members: [
-            { user: { id: 'u1' } },
-            { user: { id: 'u2' } },
-          ],
+          members: [{ user: { id: 'u1' } }, { user: { id: 'u2' } }],
         },
       });
 
@@ -109,7 +116,7 @@ describe('SessionsService', () => {
       const result = await service.getSession('s1');
 
       expect(mockSessionRepo.findOne).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { id: 's1' } }),
+        expect.objectContaining({ where: { id: 's1' } })
       );
       expect(result).toEqual(session);
     });
@@ -126,21 +133,27 @@ describe('SessionsService', () => {
   describe('recordAttendance', () => {
     it('creates a new attendance record when none exists', async () => {
       mockAttendanceRepo.findOne.mockResolvedValue(null);
-      const attendance = { sessionId: 's1', userId: 'u1', status: AttendanceStatus.PRESENT } as SessionAttendance;
+      const attendance = {
+        sessionId: 's1',
+        userId: 'u1',
+        status: AttendanceStatus.PRESENT,
+      } as SessionAttendance;
       mockAttendanceRepo.create.mockReturnValue(attendance);
       mockAttendanceRepo.save.mockResolvedValue(attendance);
 
       const result = await service.recordAttendance('s1', 'u1');
 
       expect(mockAttendanceRepo.create).toHaveBeenCalledWith(
-        expect.objectContaining({ sessionId: 's1', userId: 'u1', status: AttendanceStatus.PRESENT }),
+        expect.objectContaining({ sessionId: 's1', userId: 'u1', status: AttendanceStatus.PRESENT })
       );
       expect(result).toEqual(attendance);
     });
 
     it('updates status when attendance record already exists', async () => {
       const existing = {
-        sessionId: 's1', userId: 'u1', status: AttendanceStatus.PRESENT,
+        sessionId: 's1',
+        userId: 'u1',
+        status: AttendanceStatus.PRESENT,
       } as SessionAttendance;
       mockAttendanceRepo.findOne.mockResolvedValue(existing);
       mockAttendanceRepo.save.mockImplementation((a: any) => Promise.resolve(a));
@@ -153,14 +166,18 @@ describe('SessionsService', () => {
 
     it('defaults status to PRESENT when not specified', async () => {
       mockAttendanceRepo.findOne.mockResolvedValue(null);
-      const attendance = { sessionId: 's1', userId: 'u1', status: AttendanceStatus.PRESENT } as SessionAttendance;
+      const attendance = {
+        sessionId: 's1',
+        userId: 'u1',
+        status: AttendanceStatus.PRESENT,
+      } as SessionAttendance;
       mockAttendanceRepo.create.mockReturnValue(attendance);
       mockAttendanceRepo.save.mockResolvedValue(attendance);
 
       await service.recordAttendance('s1', 'u1');
 
       expect(mockAttendanceRepo.create).toHaveBeenCalledWith(
-        expect.objectContaining({ status: AttendanceStatus.PRESENT }),
+        expect.objectContaining({ status: AttendanceStatus.PRESENT })
       );
     });
   });
@@ -194,7 +211,7 @@ describe('SessionsService', () => {
 
       expect(mockSessionRepo.update).toHaveBeenCalledWith(
         { id: 's1' },
-        { recordingUrl: 'https://cdn.example.com/rec.mp4' },
+        { recordingUrl: 'https://cdn.example.com/rec.mp4' }
       );
     });
   });

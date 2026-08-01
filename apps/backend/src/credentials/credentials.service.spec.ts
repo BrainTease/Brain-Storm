@@ -36,7 +36,9 @@ describe('CredentialsService', () => {
   afterEach(() => jest.clearAllMocks());
 
   describe('issue', () => {
-    const userId = 'u1', courseId = 'c1', key = 'GKEY';
+    const userId = 'u1',
+      courseId = 'c1',
+      key = 'GKEY';
 
     it('returns existing credential without re-issuing (idempotent)', async () => {
       const existing = { id: 'cred-1', userId, courseId } as Credential;
@@ -108,7 +110,10 @@ describe('CredentialsService', () => {
       const result = await service.findByUser('u1');
 
       expect(result).toEqual(creds);
-      expect(mockRepo.find).toHaveBeenCalledWith({ where: { userId: 'u1' }, order: { issuedAt: 'DESC' } });
+      expect(mockRepo.find).toHaveBeenCalledWith({
+        where: { userId: 'u1' },
+        order: { issuedAt: 'DESC' },
+      });
     });
   });
 
@@ -120,7 +125,10 @@ describe('CredentialsService', () => {
       const result = await service.findOne('c1');
 
       expect(result).toEqual(cred);
-      expect(mockRepo.findOne).toHaveBeenCalledWith({ where: { id: 'c1' }, relations: ['user', 'course'] });
+      expect(mockRepo.findOne).toHaveBeenCalledWith({
+        where: { id: 'c1' },
+        relations: ['user', 'course'],
+      });
     });
 
     it('throws NotFoundException when credential not found', async () => {

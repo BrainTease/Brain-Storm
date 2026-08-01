@@ -88,7 +88,9 @@ describe('EnrollmentsService', () => {
       mockEnrollmentRepo.findOne.mockResolvedValue({ id: 'existing' });
 
       await expect(service.enroll(userId, courseId)).rejects.toThrow(ConflictException);
-      await expect(service.enroll(userId, courseId)).rejects.toThrow('Already enrolled in this course');
+      await expect(service.enroll(userId, courseId)).rejects.toThrow(
+        'Already enrolled in this course'
+      );
       expect(mockPrereqService.enforcePrerequisites).not.toHaveBeenCalled();
     });
 
@@ -107,9 +109,7 @@ describe('EnrollmentsService', () => {
 
     it('should propagate error when prerequisites check fails', async () => {
       mockEnrollmentRepo.findOne.mockResolvedValue(null);
-      mockPrereqService.enforcePrerequisites.mockRejectedValue(
-        new Error('Prerequisites not met'),
-      );
+      mockPrereqService.enforcePrerequisites.mockRejectedValue(new Error('Prerequisites not met'));
 
       await expect(service.enroll(userId, courseId)).rejects.toThrow('Prerequisites not met');
       expect(mockEnrollmentRepo.save).not.toHaveBeenCalled();

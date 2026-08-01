@@ -49,21 +49,45 @@ const buildRedisMock = () => {
     }),
     zcard: jest.fn(async (key: string) => getOrCreate(key).size),
     get: jest.fn(async (key: string) => stringStore.get(key) ?? null),
-    set: jest.fn(async (key: string, value: string) => { stringStore.set(key, value); return 'OK'; }),
-    del: jest.fn(async (...keys: string[]) => { keys.forEach(k => store.delete(k)); return keys.length; }),
+    set: jest.fn(async (key: string, value: string) => {
+      stringStore.set(key, value);
+      return 'OK';
+    }),
+    del: jest.fn(async (...keys: string[]) => {
+      keys.forEach((k) => store.delete(k));
+      return keys.length;
+    }),
     rename: jest.fn(async (src: string, dst: string) => {
       const s = store.get(src);
-      if (s) { store.set(dst, s); store.delete(src); }
+      if (s) {
+        store.set(dst, s);
+        store.delete(src);
+      }
       return 'OK';
     }),
     pipeline: jest.fn(() => {
       const ops: Array<() => Promise<any>> = [];
       const pipe = {
-        zincrby: (...args: any[]) => { ops.push(() => mock.zincrby(...args)); return pipe; },
-        zadd: (...args: any[]) => { ops.push(() => mock.zadd(...args)); return pipe; },
-        del: (...args: any[]) => { ops.push(() => mock.del(...args)); return pipe; },
-        rename: (...args: any[]) => { ops.push(() => mock.rename(...args)); return pipe; },
-        exec: jest.fn(async () => { for (const op of ops) await op(); return []; }),
+        zincrby: (...args: any[]) => {
+          ops.push(() => mock.zincrby(...args));
+          return pipe;
+        },
+        zadd: (...args: any[]) => {
+          ops.push(() => mock.zadd(...args));
+          return pipe;
+        },
+        del: (...args: any[]) => {
+          ops.push(() => mock.del(...args));
+          return pipe;
+        },
+        rename: (...args: any[]) => {
+          ops.push(() => mock.rename(...args));
+          return pipe;
+        },
+        exec: jest.fn(async () => {
+          for (const op of ops) await op();
+          return [];
+        }),
       };
       return pipe;
     }),
@@ -105,7 +129,10 @@ describe('RedisLeaderboardService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         RedisLeaderboardService,
-        { provide: ConfigService, useValue: { get: jest.fn().mockReturnValue('redis://localhost:6379') } },
+        {
+          provide: ConfigService,
+          useValue: { get: jest.fn().mockReturnValue('redis://localhost:6379') },
+        },
         { provide: getRepositoryToken(Progress), useValue: progressRepoMock },
         { provide: getRepositoryToken(Enrollment), useValue: enrollmentRepoMock },
         { provide: getRepositoryToken(User), useValue: userRepoMock },

@@ -20,10 +20,10 @@ export function VotingProgressBar({
   return (
     <div>
       <div className="flex justify-between items-center mb-2">
-        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-          {label}
-        </span>
-        <span className={`text-sm font-bold ${color === 'green' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{label}</span>
+        <span
+          className={`text-sm font-bold ${color === 'green' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}
+        >
           {votes.toLocaleString()} ({percentage.toFixed(1)}%)
         </span>
       </div>

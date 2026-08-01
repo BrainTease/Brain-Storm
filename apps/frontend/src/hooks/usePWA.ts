@@ -57,7 +57,7 @@ export function usePWA(config: PWAConfig = {}) {
 
         // Check for updates periodically
         const checkForUpdates = () => {
-          registration.update().catch(err => {
+          registration.update().catch((err) => {
             // Silent fail - update checks are best-effort
           });
         };

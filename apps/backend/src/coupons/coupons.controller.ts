@@ -25,7 +25,7 @@ export class CouponsController {
       dto.count,
       dto.discountType,
       dto.discountValue,
-      dto.expiresAt ? new Date(dto.expiresAt) : undefined,
+      dto.expiresAt ? new Date(dto.expiresAt) : undefined
     );
   }
 

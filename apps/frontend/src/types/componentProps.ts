@@ -7,7 +7,8 @@ export interface BaseComponentProps {
   'data-testid'?: string;
 }
 
-export interface BaseButtonProps extends BaseComponentProps, React.ButtonHTMLAttributes<HTMLButtonElement> {
+export interface BaseButtonProps
+  extends BaseComponentProps, React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'outline' | 'secondary' | 'danger';
   size?: 'sm' | 'md' | 'lg';
   isLoading?: boolean;
@@ -15,7 +16,8 @@ export interface BaseButtonProps extends BaseComponentProps, React.ButtonHTMLAtt
   children: React.ReactNode;
 }
 
-export interface BaseInputProps extends BaseComponentProps, Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'> {
+export interface BaseInputProps
+  extends BaseComponentProps, Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'> {
   label?: string;
   error?: string;
   helperText?: string;
@@ -23,7 +25,8 @@ export interface BaseInputProps extends BaseComponentProps, Omit<React.InputHTML
   variant?: 'outlined' | 'filled';
 }
 
-export interface BaseSelectProps extends BaseComponentProps, React.SelectHTMLAttributes<HTMLSelectElement> {
+export interface BaseSelectProps
+  extends BaseComponentProps, React.SelectHTMLAttributes<HTMLSelectElement> {
   label?: string;
   error?: string;
   helperText?: string;
@@ -31,7 +34,8 @@ export interface BaseSelectProps extends BaseComponentProps, React.SelectHTMLAtt
   options: Array<{ value: string; label: string; disabled?: boolean }>;
 }
 
-export interface BaseTextareaProps extends BaseComponentProps, React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+export interface BaseTextareaProps
+  extends BaseComponentProps, React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   label?: string;
   error?: string;
   helperText?: string;

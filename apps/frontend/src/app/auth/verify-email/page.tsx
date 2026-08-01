@@ -79,7 +79,11 @@ export default function VerifyEmailPage() {
     <main className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950 px-4">
       <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-2xl shadow p-8 flex flex-col gap-6">
         {status === 'verifying' && (
-          <div role="status" aria-live="polite" className="text-center flex flex-col items-center gap-4">
+          <div
+            role="status"
+            aria-live="polite"
+            className="text-center flex flex-col items-center gap-4"
+          >
             <Spinner size="lg" label="Verifying your email" />
             <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
               Verifying your email…
@@ -91,13 +95,18 @@ export default function VerifyEmailPage() {
         )}
 
         {status === 'success' && (
-          <div role="status" aria-live="polite" className="text-center flex flex-col items-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-600 dark:text-green-400 text-4xl" aria-hidden="true">
+          <div
+            role="status"
+            aria-live="polite"
+            className="text-center flex flex-col items-center gap-4"
+          >
+            <div
+              className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-600 dark:text-green-400 text-4xl"
+              aria-hidden="true"
+            >
               ✓
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Email verified
-            </h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Email verified</h1>
             <p className="text-sm text-gray-600 dark:text-gray-400">
               Your email address has been confirmed. You can now access your account.
             </p>
@@ -124,7 +133,7 @@ export default function VerifyEmailPage() {
               value={code}
               onChange={setCode}
               onComplete={handleCodeComplete}
-              error={status === 'error' ? error ?? undefined : undefined}
+              error={status === 'error' ? (error ?? undefined) : undefined}
             />
 
             {status === 'error' && !error?.includes('code') && (
@@ -155,8 +164,8 @@ export default function VerifyEmailPage() {
                 {resending
                   ? 'Sending…'
                   : cooldownActive
-                  ? `Resend available in ${secondsLeft}s`
-                  : 'Resend verification email'}
+                    ? `Resend available in ${secondsLeft}s`
+                    : 'Resend verification email'}
               </Button>
             </div>
 

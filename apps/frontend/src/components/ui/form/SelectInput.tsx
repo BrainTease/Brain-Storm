@@ -8,7 +8,8 @@ export interface SelectOption {
 }
 
 export interface SelectInputProps
-  extends FieldMeta,
+  extends
+    FieldMeta,
     Omit<React.SelectHTMLAttributes<HTMLSelectElement>, 'aria-invalid' | 'children' | 'size'> {
   options: SelectOption[];
   /** Prepended entry rendered before `options`, e.g. an "All levels" reset row. */

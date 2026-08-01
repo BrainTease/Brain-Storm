@@ -49,12 +49,14 @@ function makeCache() {
 
 // ─── factory ─────────────────────────────────────────────────────────────────
 
-function buildService(repoOverrides: {
-  analytics?: Partial<Repository<CourseAnalytics>>;
-  enrollment?: Partial<Repository<any>>;
-  progress?: Partial<Repository<any>>;
-  review?: Partial<Repository<any>>;
-} = {}) {
+function buildService(
+  repoOverrides: {
+    analytics?: Partial<Repository<CourseAnalytics>>;
+    enrollment?: Partial<Repository<any>>;
+    progress?: Partial<Repository<any>>;
+    review?: Partial<Repository<any>>;
+  } = {}
+) {
   const analyticsRepo = makeRepo(repoOverrides.analytics ?? {});
   const enrollmentRepo = makeRepo(repoOverrides.enrollment ?? {});
   const progressRepo = makeRepo(repoOverrides.progress ?? {});
@@ -66,7 +68,7 @@ function buildService(repoOverrides: {
     enrollmentRepo,
     progressRepo,
     reviewRepo,
-    cache as any,
+    cache as any
   );
 
   return { service, analyticsRepo, enrollmentRepo, progressRepo, reviewRepo, cache };
@@ -85,7 +87,7 @@ function stubAggregateQueryBuilders(
     reviewCount?: string;
     avgProgress?: string;
     activeCount?: string;
-  } = {},
+  } = {}
 ) {
   const {
     totalEnrollments = 10,
@@ -119,8 +121,8 @@ function stubAggregateQueryBuilders(
   activeQb.getRawOne = jest.fn().mockResolvedValue({ cnt: activeCount });
 
   enrollmentRepo.createQueryBuilder
-    .mockReturnValueOnce(completionQb)  // completion count
-    .mockReturnValueOnce(activeQb);     // active learners (distinct)
+    .mockReturnValueOnce(completionQb) // completion count
+    .mockReturnValueOnce(activeQb); // active learners (distinct)
 
   reviewRepo.createQueryBuilder.mockReturnValue(reviewQb);
   progressRepo.createQueryBuilder.mockReturnValue(progressAvgQb);
@@ -166,11 +168,7 @@ describe('AnalyticsService.getAnalytics', () => {
 
     await service.getAnalytics(COURSE_ID);
 
-    expect(cache.set).toHaveBeenCalledWith(
-      `analytics:${COURSE_ID}`,
-      stored,
-      expect.any(Number),
-    );
+    expect(cache.set).toHaveBeenCalledWith(`analytics:${COURSE_ID}`, stored, expect.any(Number));
   });
 
   it('triggers aggregation when no stored record exists', async () => {
@@ -279,8 +277,9 @@ describe('AnalyticsService.aggregateCourse', () => {
     const saveMock = jest.fn().mockImplementation(async (r) => r);
     const { service, analyticsRepo, enrollmentRepo, progressRepo, reviewRepo } = buildService({
       analytics: {
-        findOne: jest.fn()
-          .mockResolvedValueOnce(null)    // first call in aggregateCourse
+        findOne: jest
+          .fn()
+          .mockResolvedValueOnce(null) // first call in aggregateCourse
           .mockResolvedValueOnce(existing), // second call for "existing" check
         create: jest.fn().mockReturnValue({ courseId: COURSE_ID }),
         save: saveMock,
@@ -317,11 +316,7 @@ describe('AnalyticsService.aggregateCourse', () => {
 
 describe('AnalyticsService.aggregateAll', () => {
   it('aggregates each course returned by the enrollment query', async () => {
-    const courseIds = [
-      { courseId: 'c1' },
-      { courseId: 'c2' },
-      { courseId: 'c3' },
-    ];
+    const courseIds = [{ courseId: 'c1' }, { courseId: 'c2' }, { courseId: 'c3' }];
 
     const rawManyQb: any = {
       select: jest.fn().mockReturnThis(),
@@ -350,13 +345,13 @@ describe('AnalyticsService.aggregateAll', () => {
     activeQb.getRawOne = jest.fn().mockResolvedValue({ cnt: '0' });
 
     (enrollmentRepo.createQueryBuilder as jest.Mock)
-      .mockReturnValueOnce(rawManyQb)     // DISTINCT courseId
-      .mockReturnValueOnce(completionQb)  // c1 completions
-      .mockReturnValueOnce(activeQb)      // c1 active
-      .mockReturnValueOnce(completionQb)  // c2 completions
-      .mockReturnValueOnce(activeQb)      // c2 active
-      .mockReturnValueOnce(completionQb)  // c3 completions
-      .mockReturnValueOnce(activeQb);     // c3 active
+      .mockReturnValueOnce(rawManyQb) // DISTINCT courseId
+      .mockReturnValueOnce(completionQb) // c1 completions
+      .mockReturnValueOnce(activeQb) // c1 active
+      .mockReturnValueOnce(completionQb) // c2 completions
+      .mockReturnValueOnce(activeQb) // c2 active
+      .mockReturnValueOnce(completionQb) // c3 completions
+      .mockReturnValueOnce(activeQb); // c3 active
 
     reviewRepo.createQueryBuilder.mockReturnValue(makeQb({ avg: '0', cnt: '0' }));
     progressRepo.createQueryBuilder.mockReturnValue(makeQb({ avg: '0' }));
@@ -411,7 +406,7 @@ describe('AnalyticsService.aggregateAll', () => {
       .mockReturnValueOnce(rawManyQb)
       .mockReturnValueOnce(goodCompletionQb)
       .mockReturnValueOnce(goodActiveQb)
-      .mockReturnValueOnce(badCompletionQb)   // throws
+      .mockReturnValueOnce(badCompletionQb) // throws
       .mockReturnValueOnce(goodCompletionQb)
       .mockReturnValueOnce(goodActiveQb);
 

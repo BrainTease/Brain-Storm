@@ -13,7 +13,7 @@ export class SurveysService {
     @InjectRepository(SurveyQuestion)
     private questionRepo: Repository<SurveyQuestion>,
     @InjectRepository(SurveyResponse)
-    private responseRepo: Repository<SurveyResponse>,
+    private responseRepo: Repository<SurveyResponse>
   ) {}
 
   async createSurvey(
@@ -21,7 +21,7 @@ export class SurveysService {
     title: string,
     description: string,
     triggerType: 'completion' | 'milestone',
-    triggerMilestone?: number,
+    triggerMilestone?: number
   ): Promise<Survey> {
     const survey = this.surveyRepo.create({
       courseId,
@@ -39,7 +39,7 @@ export class SurveysService {
     type: 'rating' | 'text' | 'mcq',
     order: number,
     options?: string[],
-    required = true,
+    required = true
   ): Promise<SurveyQuestion> {
     const question = this.questionRepo.create({
       surveyId,
@@ -55,7 +55,7 @@ export class SurveysService {
   async submitResponse(
     surveyId: string,
     userId: string,
-    answers: Record<string, string | number>,
+    answers: Record<string, string | number>
   ): Promise<SurveyResponse> {
     const response = this.responseRepo.create({
       surveyId,

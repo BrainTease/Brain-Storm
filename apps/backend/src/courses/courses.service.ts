@@ -13,11 +13,7 @@
  * The `CACHE_MANAGER` injection token is no longer used in this class.
  */
 
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Course, CourseStatus } from './course.entity';
@@ -39,7 +35,7 @@ export class CoursesService {
   constructor(
     @InjectRepository(Course) private repo: Repository<Course>,
     private readonly cacheService: CacheService,
-    private readonly searchService: SearchService,
+    private readonly searchService: SearchService
   ) {}
 
   async findAll(query: CourseQueryDto = {}) {
@@ -49,7 +45,7 @@ export class CoursesService {
     const result = await this.cacheService.getOrSet(
       cacheKey,
       () => this.queryCourses(query),
-      CACHE_TTL,
+      CACHE_TTL
     );
 
     return new PaginatedResponseDto(result.data, 200, result.page, result.limit, result.total);
@@ -64,10 +60,9 @@ export class CoursesService {
       .andWhere('course.isDeleted = :isDeleted', { isDeleted: false });
 
     if (search) {
-      qb = qb.andWhere(
-        '(course.title ILIKE :search OR course.description ILIKE :search)',
-        { search: `%${search}%` },
-      );
+      qb = qb.andWhere('(course.title ILIKE :search OR course.description ILIKE :search)', {
+        search: `%${search}%`,
+      });
     }
 
     if (level) {
@@ -92,7 +87,7 @@ export class CoursesService {
         if (!course) throw new NotFoundException('Course not found');
         return course;
       },
-      CACHE_TTL,
+      CACHE_TTL
     );
   }
 

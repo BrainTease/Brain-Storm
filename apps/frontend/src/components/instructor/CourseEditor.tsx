@@ -29,7 +29,8 @@ export function CourseEditor() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get('/instructor/courses')
+    api
+      .get('/instructor/courses')
       .then((r) => setCourses(r.data ?? []))
       .catch(() => setCourses(MOCK))
       .finally(() => setLoading(false));
@@ -51,7 +52,9 @@ export function CourseEditor() {
           ))}
         </div>
       ) : courses.length === 0 ? (
-        <p className="text-gray-500 dark:text-gray-400 text-sm">No courses yet. Create your first course!</p>
+        <p className="text-gray-500 dark:text-gray-400 text-sm">
+          No courses yet. Create your first course!
+        </p>
       ) : (
         <div className="space-y-2">
           {courses.map((c) => (
@@ -67,7 +70,9 @@ export function CourseEditor() {
                   </p>
                 )}
               </div>
-              <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${STATUS_STYLES[c.status]}`}>
+              <span
+                className={`text-xs font-medium px-2 py-0.5 rounded-full ${STATUS_STYLES[c.status]}`}
+              >
                 {c.status}
               </span>
               <div className="flex gap-2 shrink-0">

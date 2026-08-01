@@ -28,12 +28,9 @@ export function useCertificateActions(certificate: Certificate) {
   const [emailFeedback, setEmailFeedback] = useState<string | null>(null);
 
   const certUrl =
-    typeof window !== 'undefined'
-      ? `${window.location.origin}/credentials/${certificate.id}`
-      : '';
+    typeof window !== 'undefined' ? `${window.location.origin}/credentials/${certificate.id}` : '';
 
-  const isExpired =
-    certificate.expiresAt ? new Date(certificate.expiresAt) < new Date() : false;
+  const isExpired = certificate.expiresAt ? new Date(certificate.expiresAt) < new Date() : false;
 
   /* ── Download PDF ── */
   const downloadPDF = async () => {

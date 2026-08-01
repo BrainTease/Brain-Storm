@@ -43,7 +43,7 @@ describe('WebhooksService', () => {
       secretRotatedAt: null,
       isActive: true,
       ...overrides,
-    } as Webhook);
+    }) as Webhook;
 
   beforeEach(async () => {
     mockWebhookRepo.createQueryBuilder.mockReturnValue(qb);
@@ -73,7 +73,9 @@ describe('WebhooksService', () => {
       mockWebhookRepo.create.mockReturnValue(wh);
       mockWebhookRepo.save.mockResolvedValue(wh);
 
-      const result = await service.register('u1', 'https://example.com/hook', ['enrollment.created']);
+      const result = await service.register('u1', 'https://example.com/hook', [
+        'enrollment.created',
+      ]);
 
       expect(mockWebhookRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -81,7 +83,7 @@ describe('WebhooksService', () => {
           url: 'https://example.com/hook',
           events: 'enrollment.created',
           secret: expect.any(String),
-        }),
+        })
       );
       expect(result).toEqual(wh);
     });

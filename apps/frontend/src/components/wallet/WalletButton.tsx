@@ -15,7 +15,10 @@ export function WalletButton() {
     return (
       <div className="relative">
         {networkMismatch && (
-          <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-amber-400" title="Network mismatch" />
+          <span
+            className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-amber-400"
+            title="Network mismatch"
+          />
         )}
         <button
           data-tour="wallet-button"

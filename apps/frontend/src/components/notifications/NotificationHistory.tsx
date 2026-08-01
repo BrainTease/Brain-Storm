@@ -2,7 +2,12 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useNotifications, TYPE_ICONS, TYPE_LABELS, NotificationType } from '@/hooks/useNotifications';
+import {
+  useNotifications,
+  TYPE_ICONS,
+  TYPE_LABELS,
+  NotificationType,
+} from '@/hooks/useNotifications';
 import { NotificationPreferences } from './NotificationPreferences';
 
 const PAGE_SIZE = 15;
@@ -10,13 +15,8 @@ const PAGE_SIZE = 15;
 type FilterType = 'all' | NotificationType;
 
 export function NotificationHistory() {
-  const {
-    visibleNotifications,
-    unreadCount,
-    markAsRead,
-    markAsUnread,
-    markAllRead,
-  } = useNotifications();
+  const { visibleNotifications, unreadCount, markAsRead, markAsUnread, markAllRead } =
+    useNotifications();
 
   const [filter, setFilter] = useState<FilterType>('all');
   const [showUnreadOnly, setShowUnreadOnly] = useState(false);
@@ -64,8 +64,18 @@ export function NotificationHistory() {
             className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1.5 transition-colors"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+              />
             </svg>
             Preferences
           </button>
@@ -84,7 +94,10 @@ export function NotificationHistory() {
         {/* Unread toggle */}
         <button
           type="button"
-          onClick={() => { setShowUnreadOnly((v) => !v); setPage(1); }}
+          onClick={() => {
+            setShowUnreadOnly((v) => !v);
+            setPage(1);
+          }}
           className={`text-sm px-3 py-1 rounded-full border transition-colors ${
             showUnreadOnly
               ? 'bg-blue-600 text-white border-blue-600'
@@ -99,14 +112,19 @@ export function NotificationHistory() {
           <button
             key={t}
             type="button"
-            onClick={() => { setFilter(t); setPage(1); }}
+            onClick={() => {
+              setFilter(t);
+              setPage(1);
+            }}
             className={`text-sm px-3 py-1 rounded-full border transition-colors ${
               filter === t
                 ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 border-transparent'
                 : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:border-gray-400'
             }`}
           >
-            {t === 'all' ? 'All types' : `${TYPE_ICONS[t as NotificationType]} ${TYPE_LABELS[t as NotificationType]}`}
+            {t === 'all'
+              ? 'All types'
+              : `${TYPE_ICONS[t as NotificationType]} ${TYPE_LABELS[t as NotificationType]}`}
           </button>
         ))}
       </div>
@@ -114,8 +132,18 @@ export function NotificationHistory() {
       {/* Notification list */}
       {paginated.length === 0 ? (
         <div className="text-center py-16 text-gray-500 dark:text-gray-400">
-          <svg className="mx-auto h-10 w-10 mb-3 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+          <svg
+            className="mx-auto h-10 w-10 mb-3 opacity-40"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={1.5}
+              d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+            />
           </svg>
           <p className="font-medium">No notifications</p>
           <p className="text-sm mt-1">

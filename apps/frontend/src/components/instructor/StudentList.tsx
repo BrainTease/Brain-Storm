@@ -12,10 +12,34 @@ interface StudentProgress {
 }
 
 const MOCK: StudentProgress[] = [
-  { studentId: 's1', studentName: 'Alice Johnson', courseTitle: 'Intro to Stellar', progressPct: 90, lastActive: '2026-05-26' },
-  { studentId: 's2', studentName: 'Bob Smith', courseTitle: 'Intro to Stellar', progressPct: 45, lastActive: '2026-05-25' },
-  { studentId: 's3', studentName: 'Carol White', courseTitle: 'Soroban Smart Contracts', progressPct: 60, lastActive: '2026-05-24' },
-  { studentId: 's4', studentName: 'David Lee', courseTitle: 'DeFi on Stellar', progressPct: 20, lastActive: '2026-05-23' },
+  {
+    studentId: 's1',
+    studentName: 'Alice Johnson',
+    courseTitle: 'Intro to Stellar',
+    progressPct: 90,
+    lastActive: '2026-05-26',
+  },
+  {
+    studentId: 's2',
+    studentName: 'Bob Smith',
+    courseTitle: 'Intro to Stellar',
+    progressPct: 45,
+    lastActive: '2026-05-25',
+  },
+  {
+    studentId: 's3',
+    studentName: 'Carol White',
+    courseTitle: 'Soroban Smart Contracts',
+    progressPct: 60,
+    lastActive: '2026-05-24',
+  },
+  {
+    studentId: 's4',
+    studentName: 'David Lee',
+    courseTitle: 'DeFi on Stellar',
+    progressPct: 20,
+    lastActive: '2026-05-23',
+  },
 ];
 
 export function StudentList() {
@@ -24,7 +48,8 @@ export function StudentList() {
   const [search, setSearch] = useState('');
 
   useEffect(() => {
-    api.get('/instructor/students/progress')
+    api
+      .get('/instructor/students/progress')
       .then((r) => setStudents(r.data ?? []))
       .catch(() => setStudents(MOCK))
       .finally(() => setLoading(false));
@@ -68,7 +93,9 @@ export function StudentList() {
                 {s.studentName.charAt(0)}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{s.studentName}</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                  {s.studentName}
+                </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{s.courseTitle}</p>
               </div>
               <div className="flex items-center gap-2 w-36 shrink-0">
@@ -78,7 +105,9 @@ export function StudentList() {
                     style={{ width: `${s.progressPct}%` }}
                   />
                 </div>
-                <span className="text-xs text-gray-500 dark:text-gray-400 w-8 text-right">{s.progressPct}%</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400 w-8 text-right">
+                  {s.progressPct}%
+                </span>
               </div>
               {s.lastActive && (
                 <span className="text-xs text-gray-400 dark:text-gray-500 shrink-0 hidden sm:block">

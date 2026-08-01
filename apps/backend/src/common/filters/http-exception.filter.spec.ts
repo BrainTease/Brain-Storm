@@ -69,7 +69,9 @@ describe('HttpExceptionFilter', () => {
   });
 
   it('handles generic HttpException with custom status', () => {
-    const { status, body } = run(new HttpException('Service Unavailable', HttpStatus.SERVICE_UNAVAILABLE));
+    const { status, body } = run(
+      new HttpException('Service Unavailable', HttpStatus.SERVICE_UNAVAILABLE)
+    );
     expect(status).toBe(503);
     expect(body.statusCode).toBe(503);
   });

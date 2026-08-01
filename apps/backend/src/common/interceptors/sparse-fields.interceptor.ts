@@ -1,9 +1,4 @@
-import {
-  CallHandler,
-  ExecutionContext,
-  Injectable,
-  NestInterceptor,
-} from '@nestjs/common';
+import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
@@ -35,12 +30,17 @@ export class SparseFieldsInterceptor implements NestInterceptor {
 
     if (!rawFields) return next.handle();
 
-    const allowedFields = new Set(rawFields.split(',').map((f) => f.trim()).filter(Boolean));
+    const allowedFields = new Set(
+      rawFields
+        .split(',')
+        .map((f) => f.trim())
+        .filter(Boolean)
+    );
     if (allowedFields.size === 0) return next.handle();
 
-    return next.handle().pipe(
-      map((response) => SparseFieldsInterceptor.trim(response, allowedFields)),
-    );
+    return next
+      .handle()
+      .pipe(map((response) => SparseFieldsInterceptor.trim(response, allowedFields)));
   }
 
   private static trim(response: unknown, fields: Set<string>): unknown {
@@ -59,7 +59,7 @@ export class SparseFieldsInterceptor implements NestInterceptor {
           ...obj,
           data: Array.isArray(obj.data)
             ? (obj.data as unknown[]).map((item) =>
-                SparseFieldsInterceptor.pickFields(item, fields),
+                SparseFieldsInterceptor.pickFields(item, fields)
               )
             : SparseFieldsInterceptor.pickFields(obj.data, fields),
         };

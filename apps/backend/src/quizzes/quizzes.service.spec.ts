@@ -14,7 +14,9 @@ describe('QuizzesService', () => {
   const mockQuizRepo = { create: jest.fn(), save: jest.fn(), findOne: jest.fn() };
   const mockQuestionRepo = { create: jest.fn(), save: jest.fn() };
   const mockAttemptRepo = {
-    create: jest.fn(), save: jest.fn(), findOne: jest.fn(),
+    create: jest.fn(),
+    save: jest.fn(),
+    findOne: jest.fn(),
     createQueryBuilder: jest.fn(),
   };
   const mockAttemptAnswerRepo = { create: jest.fn(), save: jest.fn(), findOne: jest.fn() };
@@ -95,7 +97,7 @@ describe('QuizzesService', () => {
       mockQuizRepo.findOne.mockResolvedValue(quiz);
       mockAttemptRepo.create.mockReturnValue(attempt);
       mockAttemptRepo.save
-        .mockResolvedValueOnce(attempt)    // first save (create attempt)
+        .mockResolvedValueOnce(attempt) // first save (create attempt)
         .mockResolvedValueOnce(savedAttempt); // second save (update score)
       const answerEntity = { attemptId: 'at1', questionId: 'qn1', points: 10 };
       mockAttemptAnswerRepo.create.mockReturnValue(answerEntity);
@@ -139,9 +141,7 @@ describe('QuizzesService', () => {
     it('does not auto-grade essay questions (isGraded stays false)', async () => {
       const quiz = {
         id: 'q1',
-        questions: [
-          { id: 'qn1', type: QuestionType.ESSAY, points: 20, answers: [] },
-        ],
+        questions: [{ id: 'qn1', type: QuestionType.ESSAY, points: 20, answers: [] }],
         passingScore: 60,
       } as unknown as Quiz;
 
@@ -161,9 +161,7 @@ describe('QuizzesService', () => {
     it('skips answers for unknown questionIds', async () => {
       const quiz = {
         id: 'q1',
-        questions: [
-          { id: 'qn1', type: QuestionType.MULTIPLE_CHOICE, points: 5, answers: [] },
-        ],
+        questions: [{ id: 'qn1', type: QuestionType.MULTIPLE_CHOICE, points: 5, answers: [] }],
         passingScore: 60,
       } as unknown as Quiz;
 

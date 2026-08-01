@@ -68,7 +68,7 @@ describe('StringUtils', () => {
     });
 
     it('should escape single quotes', () => {
-      expect(StringUtils.escapeHtml("It's here")).toBe("It&#039;s here");
+      expect(StringUtils.escapeHtml("It's here")).toBe('It&#039;s here');
     });
 
     it('should return unchanged string with no special chars', () => {

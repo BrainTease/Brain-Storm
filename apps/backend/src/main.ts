@@ -48,7 +48,7 @@ async function bootstrap() {
     new TransformInterceptor(),
     new MetricsInterceptor(app.get(MetricsService)),
     // #709: trim response to ?fields= requested keys (reduces payload by up to 85 %)
-    new SparseFieldsInterceptor(),
+    new SparseFieldsInterceptor()
   );
 
   const corsOrigins = configService.get<string[]>('cors.origins') || ['http://localhost:3001'];

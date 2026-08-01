@@ -31,7 +31,9 @@ const EMPTY_FORM: PasswordForm = {
 };
 
 export default function SecuritySettings({ userId, email }: Props) {
-  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(
+    null
+  );
   const [showCurrentPw, setShowCurrentPw] = useState(false);
   const [showNewPw, setShowNewPw] = useState(false);
 
@@ -59,15 +61,14 @@ export default function SecuritySettings({ userId, email }: Props) {
       setFeedback({ type: 'success', message: 'Password updated successfully.' });
       reset(EMPTY_FORM);
     } catch (err: any) {
-      const msg =
-        err?.response?.data?.message ?? 'Failed to update password. Please try again.';
+      const msg = err?.response?.data?.message ?? 'Failed to update password. Please try again.';
       setFeedback({ type: 'error', message: msg });
     }
   };
 
   const strengthScore = (pw: string): number => {
     let score = 0;
-    if (pw.length >= 8)  score++;
+    if (pw.length >= 8) score++;
     if (pw.length >= 12) score++;
     if (/[A-Z]/.test(pw)) score++;
     if (/[0-9]/.test(pw)) score++;
@@ -77,7 +78,9 @@ export default function SecuritySettings({ userId, email }: Props) {
 
   const strength = strengthScore(newPassword || '');
   const strengthLabel = ['', 'Very Weak', 'Weak', 'Fair', 'Strong', 'Very Strong'][strength] || '';
-  const strengthColor = ['', 'bg-red-500', 'bg-orange-500', 'bg-yellow-500', 'bg-blue-500', 'bg-green-500'][strength] || '';
+  const strengthColor =
+    ['', 'bg-red-500', 'bg-orange-500', 'bg-yellow-500', 'bg-blue-500', 'bg-green-500'][strength] ||
+    '';
 
   return (
     <section
@@ -96,9 +99,7 @@ export default function SecuritySettings({ userId, email }: Props) {
 
       {/* Change password form */}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
-        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-          Change Password
-        </h3>
+        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Change Password</h3>
 
         {/* Current password */}
         <div>

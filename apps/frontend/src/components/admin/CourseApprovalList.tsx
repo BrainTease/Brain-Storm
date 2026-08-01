@@ -48,17 +48,32 @@ export function CourseApprovalList() {
         <div key={course.id} className="border rounded-lg p-4 flex items-center justify-between">
           <div>
             <p className="font-medium">{course.title}</p>
-            <p className="text-sm text-gray-500">{course.instructorName} · Submitted {new Date(course.submittedAt).toLocaleDateString()}</p>
+            <p className="text-sm text-gray-500">
+              {course.instructorName} · Submitted{' '}
+              {new Date(course.submittedAt).toLocaleDateString()}
+            </p>
           </div>
           <div className="flex gap-2">
             <Button onClick={() => handleApprove(course)}>Approve</Button>
-            <Button variant="outline" onClick={() => { setRejectTarget(course); setRejectReason(''); }}>Reject</Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setRejectTarget(course);
+                setRejectReason('');
+              }}
+            >
+              Reject
+            </Button>
           </div>
         </div>
       ))}
 
       {rejectTarget && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" role="dialog" aria-modal="true">
+        <div
+          className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
+          role="dialog"
+          aria-modal="true"
+        >
           <div className="bg-white rounded-xl p-6 max-w-sm w-full shadow-xl space-y-4">
             <h2 className="font-semibold text-lg">Reject &ldquo;{rejectTarget.title}&rdquo;</h2>
             <textarea
@@ -69,8 +84,12 @@ export function CourseApprovalList() {
               onChange={(e) => setRejectReason(e.target.value)}
             />
             <div className="flex gap-3">
-              <Button disabled={!rejectReason.trim()} onClick={handleReject}>Confirm Rejection</Button>
-              <Button variant="outline" onClick={() => setRejectTarget(null)}>Cancel</Button>
+              <Button disabled={!rejectReason.trim()} onClick={handleReject}>
+                Confirm Rejection
+              </Button>
+              <Button variant="outline" onClick={() => setRejectTarget(null)}>
+                Cancel
+              </Button>
             </div>
           </div>
         </div>

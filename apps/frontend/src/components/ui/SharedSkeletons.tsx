@@ -48,9 +48,7 @@ export const GridSkeleton: React.FC<{
 /**
  * Detail page skeleton with header and content sections
  */
-export const DetailPageSkeleton: React.FC<{ hasAside?: boolean }> = ({
-  hasAside = true,
-}) => (
+export const DetailPageSkeleton: React.FC<{ hasAside?: boolean }> = ({ hasAside = true }) => (
   <div className="max-w-7xl mx-auto px-4 py-8 space-y-8" aria-busy="true" role="status">
     {/* Header */}
     <div className="space-y-4">
@@ -141,14 +139,21 @@ export const TableSkeleton: React.FC<{ rows?: number; columns?: number }> = ({
 }) => (
   <div className="border rounded-lg overflow-hidden" role="status" aria-label="Loading table">
     {/* Header */}
-    <div className="grid gap-4 p-4 border-b bg-gray-50" style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}>
+    <div
+      className="grid gap-4 p-4 border-b bg-gray-50"
+      style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}
+    >
       {Array.from({ length: columns }).map((_, i) => (
         <Skeleton key={i} height={20} width="80%" />
       ))}
     </div>
     {/* Rows */}
     {Array.from({ length: rows }).map((_, rowIdx) => (
-      <div key={rowIdx} className="grid gap-4 p-4 border-b" style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}>
+      <div
+        key={rowIdx}
+        className="grid gap-4 p-4 border-b"
+        style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}
+      >
         {Array.from({ length: columns }).map((_, colIdx) => (
           <Skeleton key={colIdx} height={16} width={`${60 + Math.random() * 40}%`} />
         ))}

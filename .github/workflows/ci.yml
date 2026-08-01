@@ -35,6 +35,9 @@ jobs:
       - name: Check shared types
         run: npm run type-check --workspace=packages/types
 
+      - name: Check SDK types (strict mode)
+        run: npm run type-check --workspace=packages/sdk
+
       - name: Run unit tests with coverage
         run: npx jest --coverage --passWithNoTests
         working-directory: apps/backend

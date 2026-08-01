@@ -51,7 +51,9 @@ describe('ValidationExceptionFilter', () => {
   });
 
   it('exposes the error key as errors when the array key is absent', () => {
-    const { body } = run(new BadRequestException({ message: 'Validation failed', error: 'Bad Request' }));
+    const { body } = run(
+      new BadRequestException({ message: 'Validation failed', error: 'Bad Request' })
+    );
     expect(body.errors).toBe('Bad Request');
   });
 

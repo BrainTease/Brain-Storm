@@ -47,14 +47,7 @@ describe('ReplyItem', () => {
       error: null,
     });
 
-    render(
-      <ReplyItem
-        reply={mockReply}
-        isAnswer={false}
-        courseId="course-1"
-        postId="post-1"
-      />
-    );
+    render(<ReplyItem reply={mockReply} isAnswer={false} courseId="course-1" postId="post-1" />);
 
     expect(screen.getByText('alice')).toBeInTheDocument();
     expect(screen.getByText(/this is a great solution/i)).toBeInTheDocument();
@@ -77,14 +70,7 @@ describe('ReplyItem', () => {
       error: null,
     });
 
-    render(
-      <ReplyItem
-        reply={mockReply}
-        isAnswer={true}
-        courseId="course-1"
-        postId="post-1"
-      />
-    );
+    render(<ReplyItem reply={mockReply} isAnswer={true} courseId="course-1" postId="post-1" />);
 
     expect(screen.getByText(/✓ answer/i)).toBeInTheDocument();
   });
@@ -109,14 +95,7 @@ describe('ReplyItem', () => {
       error: null,
     });
 
-    render(
-      <ReplyItem
-        reply={mockReply}
-        isAnswer={false}
-        courseId="course-1"
-        postId="post-1"
-      />
-    );
+    render(<ReplyItem reply={mockReply} isAnswer={false} courseId="course-1" postId="post-1" />);
 
     const optionsBtn = screen.getByLabelText(/options/i);
     await user.click(optionsBtn);
@@ -156,14 +135,7 @@ describe('ReplyItem', () => {
       error: null,
     });
 
-    render(
-      <ReplyItem
-        reply={otherReply}
-        isAnswer={false}
-        courseId="course-1"
-        postId="post-1"
-      />
-    );
+    render(<ReplyItem reply={otherReply} isAnswer={false} courseId="course-1" postId="post-1" />);
 
     const optionsBtn = screen.getByLabelText(/options/i);
     await user.click(optionsBtn);

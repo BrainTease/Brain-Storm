@@ -13,14 +13,8 @@ export default function ProposalPage() {
   const proposalId = params.id as string;
 
   const { address: walletAddress } = useWalletStore();
-  const {
-    selectedProposal,
-    userVotingPower,
-    loading,
-    loadProposal,
-    checkHasVoted,
-    castVote,
-  } = useGovernance();
+  const { selectedProposal, userVotingPower, loading, loadProposal, checkHasVoted, castVote } =
+    useGovernance();
 
   const [votingInProgress, setVotingInProgress] = useState(false);
   const [hasUserVoted, setHasUserVoted] = useState(false);
@@ -58,12 +52,7 @@ export default function ProposalPage() {
       // For now, we'll use a placeholder transaction
       const signedTransaction = `signed-tx-${Date.now()}`;
 
-      const success = await castVote(
-        proposalId,
-        walletAddress,
-        support,
-        signedTransaction
-      );
+      const success = await castVote(proposalId, walletAddress, support, signedTransaction);
 
       if (success) {
         setHasUserVoted(true);

@@ -4,11 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { ErrorBoundary, ErrorFallback } from '@/components/ui/ErrorBoundary';
 import { ChunkLoadError } from '@/components/ui/ChunkLoadError';
 import { OfflineBanner } from '@/components/ui/OfflineBanner';
-import {
-  categorizeError,
-  isChunkLoadError,
-  isNetworkError,
-} from '@/lib/error-utils';
+import { categorizeError, isChunkLoadError, isNetworkError } from '@/lib/error-utils';
 
 vi.mock('@sentry/nextjs', () => ({
   captureException: vi.fn(),
@@ -32,7 +28,7 @@ describe('ErrorBoundary', () => {
     render(
       <ErrorBoundary>
         <Boom shouldThrow={false} />
-      </ErrorBoundary>,
+      </ErrorBoundary>
     );
     expect(screen.getByText('ok')).toBeInTheDocument();
   });
@@ -41,7 +37,7 @@ describe('ErrorBoundary', () => {
     render(
       <ErrorBoundary>
         <Boom shouldThrow={true} />
-      </ErrorBoundary>,
+      </ErrorBoundary>
     );
     expect(screen.getByRole('alert')).toBeInTheDocument();
     expect(screen.getByText(/something went wrong/i)).toBeInTheDocument();
@@ -52,7 +48,7 @@ describe('ErrorBoundary', () => {
     render(
       <ErrorBoundary onError={onError}>
         <Boom shouldThrow={true} />
-      </ErrorBoundary>,
+      </ErrorBoundary>
     );
     expect(onError).toHaveBeenCalledOnce();
   });
@@ -69,7 +65,7 @@ describe('ErrorBoundary', () => {
     render(
       <ErrorBoundary fallback={(err) => <div>custom: {err.message}</div>}>
         <Boom shouldThrow={true} />
-      </ErrorBoundary>,
+      </ErrorBoundary>
     );
     expect(screen.getByText('custom: boom')).toBeInTheDocument();
   });

@@ -3,11 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import * as Sentry from '@sentry/nextjs';
 import { Button } from './Button';
-import {
-  categorizeError,
-  getErrorDescription,
-  getErrorTitle,
-} from '@/lib/error-utils';
+import { categorizeError, getErrorDescription, getErrorTitle } from '@/lib/error-utils';
 
 export interface RouteErrorProps {
   error: Error & { digest?: string };

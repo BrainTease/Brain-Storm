@@ -1,11 +1,7 @@
 import { Processor, WorkerHost, OnWorkerEvent } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
-import {
-  QUEUE_CERTIFICATE,
-  JOB_ISSUE_CERTIFICATE,
-  JOB_MINT_CREDENTIAL,
-} from './queue.constants';
+import { QUEUE_CERTIFICATE, JOB_ISSUE_CERTIFICATE, JOB_MINT_CREDENTIAL } from './queue.constants';
 
 export interface IssueCertificateJobData {
   userId: string;
@@ -32,7 +28,7 @@ export class CertificateWorker extends WorkerHost {
       case JOB_ISSUE_CERTIFICATE: {
         const data = job.data as IssueCertificateJobData;
         this.logger.log(
-          `Issuing certificate for user ${data.userId} on course ${data.courseId} [jobId=${job.id}]`,
+          `Issuing certificate for user ${data.userId} on course ${data.courseId} [jobId=${job.id}]`
         );
         // The CertificatesModule handles issuance; this job acts as the async
         // trigger so heavy on-chain work leaves the HTTP request path.
@@ -43,7 +39,7 @@ export class CertificateWorker extends WorkerHost {
       case JOB_MINT_CREDENTIAL: {
         const data = job.data as MintCredentialJobData;
         this.logger.log(
-          `Minting on-chain credential for ${data.recipientPublicKey} [jobId=${job.id}]`,
+          `Minting on-chain credential for ${data.recipientPublicKey} [jobId=${job.id}]`
         );
         // In production, inject StellarService here and call mintCertificateNFT.
         break;
@@ -57,7 +53,7 @@ export class CertificateWorker extends WorkerHost {
   @OnWorkerEvent('failed')
   onFailed(job: Job, err: Error) {
     this.logger.error(
-      `Certificate job ${job.id} (${job.name}) failed after ${job.attemptsMade} attempts: ${err.message}`,
+      `Certificate job ${job.id} (${job.name}) failed after ${job.attemptsMade} attempts: ${err.message}`
     );
   }
 

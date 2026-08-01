@@ -2,11 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import api from '@/lib/api';
-import type {
-  ProgressDataPoint,
-  QuizScoreDataPoint,
-  StreakData,
-} from '@/components/analytics';
+import type { ProgressDataPoint, QuizScoreDataPoint, StreakData } from '@/components/analytics';
 import {
   generateMockProgressData,
   generateMockQuizData,

@@ -3,8 +3,7 @@ import { Field, useFieldA11y, type FieldMeta } from './Field';
 import { controlClass, type ControlSize } from './fieldStyles';
 
 export interface TextInputProps
-  extends FieldMeta,
-    Omit<React.InputHTMLAttributes<HTMLInputElement>, 'aria-invalid' | 'size'> {
+  extends FieldMeta, Omit<React.InputHTMLAttributes<HTMLInputElement>, 'aria-invalid' | 'size'> {
   size?: ControlSize;
   fullWidth?: boolean;
 }

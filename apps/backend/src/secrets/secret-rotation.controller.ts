@@ -13,7 +13,7 @@ import { AwsSecretsService } from './aws-secrets.service';
 export class SecretRotationController {
   constructor(
     private readonly rotationService: SecretRotationService,
-    private readonly awsSecretsService: AwsSecretsService,
+    private readonly awsSecretsService: AwsSecretsService
   ) {}
 
   @Post('api-keys/:id/rotate')
@@ -74,7 +74,7 @@ export class SecretRotationController {
   emergencyAccess(
     @Request() req: any,
     @Param('name') name: string,
-    @Body('reason') reason: string,
+    @Body('reason') reason: string
   ) {
     const ip = req.ip as string;
     return this.awsSecretsService

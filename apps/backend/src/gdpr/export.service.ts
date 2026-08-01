@@ -11,7 +11,7 @@ export class ExportService {
 
   constructor(
     @InjectRepository(User) private userRepo: Repository<User>,
-    private auditService: AuditService,
+    private auditService: AuditService
   ) {}
 
   /**
@@ -52,7 +52,7 @@ export class ExportService {
       userId,
       true,
       { exportedAt: new Date().toISOString() },
-      ipAddress,
+      ipAddress
     );
 
     this.logger.log(`GDPR export generated for user ${userId}`);
@@ -65,7 +65,7 @@ export class ExportService {
    */
   async deleteAccount(
     userId: string,
-    ipAddress?: string,
+    ipAddress?: string
   ): Promise<{ success: boolean; onChainCaveat: string }> {
     const user = await this.userRepo.findOne({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
@@ -92,7 +92,7 @@ export class ExportService {
       userId,
       true,
       { deletedAt: new Date().toISOString() },
-      ipAddress,
+      ipAddress
     );
 
     this.logger.log(`GDPR account deletion completed for user ${userId}`);

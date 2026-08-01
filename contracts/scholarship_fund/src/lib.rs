@@ -6,6 +6,15 @@ use soroban_sdk::{
 use brain_storm_shared::access;
 
 #[contracttype]
+#[derive(Clone, PartialEq)]
+pub enum ApplicationStatus {
+    Pending,
+    Approved,
+    Rejected,
+    Distributed,
+}
+
+#[contracttype]
 pub enum DataKey {
     /// Contract administrator address
     Admin,
@@ -320,3 +329,6 @@ impl ScholarshipFundContract {
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod integration_tests;

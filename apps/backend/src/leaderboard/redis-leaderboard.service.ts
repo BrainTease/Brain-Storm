@@ -10,12 +10,7 @@
  * Rankings are O(log n) reads via ZREVRANK/ZREVRANGE.
  * A periodic reconciliation job syncs Redis against the source-of-truth tables.
  */
-import {
-  Injectable,
-  Logger,
-  OnModuleInit,
-  OnModuleDestroy,
-} from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Cron, CronExpression } from '@nestjs/schedule';
@@ -40,9 +35,9 @@ export interface PagedLeaderboard {
 }
 
 // Score weights
-const PROGRESS_WEIGHT = 1;    // 1 point per % of progress
-const COMPLETION_BONUS = 50;  // bonus for full course completion
-const QUIZ_WEIGHT = 10;        // 10 points per quiz point
+const PROGRESS_WEIGHT = 1; // 1 point per % of progress
+const COMPLETION_BONUS = 50; // bonus for full course completion
+const QUIZ_WEIGHT = 10; // 10 points per quiz point
 
 @Injectable()
 export class RedisLeaderboardService implements OnModuleInit, OnModuleDestroy {
@@ -56,7 +51,7 @@ export class RedisLeaderboardService implements OnModuleInit, OnModuleDestroy {
     private readonly configService: ConfigService,
     @InjectRepository(Progress) private readonly progressRepo: Repository<Progress>,
     @InjectRepository(Enrollment) private readonly enrollmentRepo: Repository<Enrollment>,
-    @InjectRepository(User) private readonly userRepo: Repository<User>,
+    @InjectRepository(User) private readonly userRepo: Repository<User>
   ) {}
 
   onModuleInit() {
@@ -81,7 +76,7 @@ export class RedisLeaderboardService implements OnModuleInit, OnModuleDestroy {
     userId: string,
     courseId: string,
     progressPct: number,
-    cohortId?: string,
+    cohortId?: string
   ) {
     const delta = progressPct * PROGRESS_WEIGHT;
     const keys = this.buildKeys(courseId, cohortId);
@@ -99,12 +94,7 @@ export class RedisLeaderboardService implements OnModuleInit, OnModuleDestroy {
   /**
    * Update score from a quiz result.
    */
-  async updateQuizScore(
-    userId: string,
-    courseId: string,
-    score: number,
-    cohortId?: string,
-  ) {
+  async updateQuizScore(userId: string, courseId: string, score: number, cohortId?: string) {
     const delta = score * QUIZ_WEIGHT;
     const keys = this.buildKeys(courseId, cohortId);
     await this.incrementScores(keys, userId, delta);
@@ -129,7 +119,7 @@ export class RedisLeaderboardService implements OnModuleInit, OnModuleDestroy {
   async getTopEntries(
     scope: 'global' | 'course' | 'cohort',
     scopeId: string | null,
-    limit = 50,
+    limit = 50
   ): Promise<LeaderboardEntry[]> {
     const key = this.scopeKey(scope, scopeId);
     const cacheKey = `lb:cache:${key}:${limit}`;
@@ -151,7 +141,7 @@ export class RedisLeaderboardService implements OnModuleInit, OnModuleDestroy {
     scope: 'global' | 'course' | 'cohort',
     scopeId: string | null,
     page = 1,
-    pageSize = 20,
+    pageSize = 20
   ): Promise<PagedLeaderboard> {
     const key = this.scopeKey(scope, scopeId);
     const offset = (page - 1) * pageSize;
@@ -171,7 +161,7 @@ export class RedisLeaderboardService implements OnModuleInit, OnModuleDestroy {
   async getUserRank(
     scope: 'global' | 'course' | 'cohort',
     scopeId: string | null,
-    userId: string,
+    userId: string
   ): Promise<{ rank: number; score: number } | null> {
     const key = this.scopeKey(scope, scopeId);
     const [rank, score] = await Promise.all([
@@ -190,7 +180,7 @@ export class RedisLeaderboardService implements OnModuleInit, OnModuleDestroy {
     scope: 'global' | 'course' | 'cohort',
     scopeId: string | null,
     userId: string,
-    radius = 5,
+    radius = 5
   ): Promise<LeaderboardEntry[]> {
     const key = this.scopeKey(scope, scopeId);
     const rank = await this.redis.zrevrank(key, userId);
@@ -214,10 +204,14 @@ export class RedisLeaderboardService implements OnModuleInit, OnModuleDestroy {
 
     try {
       // Load all progress rows
-      const progressRows = await this.progressRepo.find({ select: ['userId', 'courseId', 'progressPct', 'completedAt'] });
+      const progressRows = await this.progressRepo.find({
+        select: ['userId', 'courseId', 'progressPct', 'completedAt'],
+      });
 
       // Load all enrollments
-      const enrollments = await this.enrollmentRepo.find({ select: ['userId', 'courseId', 'completedAt'] });
+      const enrollments = await this.enrollmentRepo.find({
+        select: ['userId', 'courseId', 'completedAt'],
+      });
 
       // Aggregate scores per user (global) and per course
       const globalScores = new Map<string, number>();
@@ -243,7 +237,9 @@ export class RedisLeaderboardService implements OnModuleInit, OnModuleDestroy {
         await this.rebuildSortedSet(`leaderboard:course:${courseId}`, scores);
       }
 
-      this.logger.log(`Reconciliation complete: ${globalScores.size} users, ${courseScores.size} courses`);
+      this.logger.log(
+        `Reconciliation complete: ${globalScores.size} users, ${courseScores.size} courses`
+      );
     } catch (err) {
       this.logger.error(`Reconciliation failed: ${err.message}`);
     }

@@ -1,5 +1,5 @@
 import * as Linking from 'expo-linking';
-import { secureStorage } from '@brain-storm/mobile';
+import { setSecureItem, getSecureItem, deleteSecureItem } from '../auth/secureStorage';
 
 export interface WalletConnection {
   publicKey: string;
@@ -32,7 +32,7 @@ export class MobileWalletService {
             publicKey: queryParams.publicKey as string,
             provider: 'freighter'
           };
-          await secureStorage.set('wallet_public_key', this.connection.publicKey);
+          await setSecureItem('wallet_public_key' as any, this.connection.publicKey);
           resolve(this.connection);
         } else {
           reject(new Error('Connection failed'));
@@ -87,7 +87,7 @@ export class MobileWalletService {
 
   async disconnect() {
     this.connection = null;
-    await secureStorage.remove('wallet_public_key');
+    await deleteSecureItem('wallet_public_key' as any);
   }
 
   getConnection(): WalletConnection | null {
@@ -95,7 +95,7 @@ export class MobileWalletService {
   }
 
   async restoreConnection(): Promise<WalletConnection | null> {
-    const publicKey = await secureStorage.get('wallet_public_key');
+    const publicKey = await getSecureItem('wallet_public_key' as any);
     if (publicKey) {
       this.connection = { publicKey, provider: 'freighter' };
       return this.connection;

@@ -143,9 +143,7 @@ export function ProposalDetail({
 
         {/* User Voting Section */}
         <Card className="p-6">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
-            Your Vote
-          </h2>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">Your Vote</h2>
 
           <VotingControls
             userVotingPower={userVotingPower}

@@ -48,7 +48,7 @@ export class KycController {
   @UseInterceptors(FileInterceptor('document', { limits: { fileSize: 15 * 1024 * 1024 } }))
   uploadDocument(
     @Body('stellarPublicKey') stellarPublicKey: string,
-    @UploadedFile() file: Express.Multer.File,
+    @UploadedFile() file: Express.Multer.File
   ) {
     return this.kycService.uploadDocument(stellarPublicKey, file);
   }

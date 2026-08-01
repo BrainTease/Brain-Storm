@@ -113,7 +113,7 @@ pub fn execute_proposal(env: &Env, proposal_id: u64) -> bool {
         return false;
     }
 
-    if proposal.approvals.len() as u32 >= proposal.threshold {
+    if proposal.approvals.len() >= proposal.threshold {
         proposal.executed = true;
         env.storage()
             .instance()

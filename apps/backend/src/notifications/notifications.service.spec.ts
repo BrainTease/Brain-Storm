@@ -4,7 +4,10 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { NotificationsService } from './notifications.service';
 import { Notification, NotificationType } from './notification.entity';
 import { NotificationPreference } from './notification-preference.entity';
-import { ScheduledNotification, ScheduledNotificationStatus } from './scheduled-notification.entity';
+import {
+  ScheduledNotification,
+  ScheduledNotificationStatus,
+} from './scheduled-notification.entity';
 import { NotificationsGateway } from './notifications.gateway';
 import { MailService } from '../mail/mail.service';
 
@@ -52,7 +55,7 @@ describe('NotificationsService', () => {
       credentialIssued: true,
       coursePublished: true,
       ...overrides,
-    } as NotificationPreference);
+    }) as NotificationPreference;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -107,7 +110,11 @@ describe('NotificationsService', () => {
 
       expect(mockNotificationRepo.create).not.toHaveBeenCalled();
       expect(mockNotificationRepo.save).not.toHaveBeenCalled();
-      expect(mockGateway.emitToUser).not.toHaveBeenCalledWith(userId, 'notification', expect.anything());
+      expect(mockGateway.emitToUser).not.toHaveBeenCalledWith(
+        userId,
+        'notification',
+        expect.anything()
+      );
     });
 
     it('sends email notification when email pref is true and emailContext provided', async () => {
@@ -116,15 +123,13 @@ describe('NotificationsService', () => {
       mockNotificationRepo.findOne.mockResolvedValue(null);
       mockMailService.sendMail.mockResolvedValue(undefined);
 
-      await service.create(
-        userId,
-        type,
-        message,
-        { to: 'student@example.com', context: { courseName: 'Rust 101' } },
-      );
+      await service.create(userId, type, message, {
+        to: 'student@example.com',
+        context: { courseName: 'Rust 101' },
+      });
 
       expect(mockMailService.sendMail).toHaveBeenCalledWith(
-        expect.objectContaining({ to: 'student@example.com' }),
+        expect.objectContaining({ to: 'student@example.com' })
       );
     });
 
@@ -133,12 +138,10 @@ describe('NotificationsService', () => {
       mockPrefRepo.findOne.mockResolvedValue(prefs);
       mockNotificationRepo.findOne.mockResolvedValue(null);
 
-      await service.create(
-        userId,
-        type,
-        message,
-        { to: 'student@example.com', context: { courseName: 'Rust 101' } },
-      );
+      await service.create(userId, type, message, {
+        to: 'student@example.com',
+        context: { courseName: 'Rust 101' },
+      });
 
       expect(mockMailService.sendMail).not.toHaveBeenCalled();
     });
@@ -187,12 +190,10 @@ describe('NotificationsService', () => {
       mockNotificationRepo.save.mockResolvedValue(saved);
       mockNotificationRepo.findOne.mockResolvedValue(saved);
 
-      await service.create(
-        userId,
-        type,
-        message,
-        { to: 'student@example.com', context: { courseName: 'Rust 101' } },
-      );
+      await service.create(userId, type, message, {
+        to: 'student@example.com',
+        context: { courseName: 'Rust 101' },
+      });
 
       expect(mockMailService.sendMail).not.toHaveBeenCalled();
     });
@@ -208,7 +209,7 @@ describe('NotificationsService', () => {
         service.create(userId, type, message, {
           to: 'student@example.com',
           context: { courseName: 'Rust 101' },
-        }),
+        })
       ).resolves.not.toThrow();
     });
   });
@@ -266,7 +267,7 @@ describe('NotificationsService', () => {
 
       expect(mockNotificationRepo.update).toHaveBeenCalledWith(
         { userId: 'user-1', isRead: false },
-        { isRead: true },
+        { isRead: true }
       );
       expect(result).toEqual({ success: true });
     });

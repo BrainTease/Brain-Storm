@@ -13,13 +13,7 @@ import {
   HttpStatus,
   Request,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiBearerAuth,
-  ApiOperation,
-  ApiResponse,
-  ApiParam,
-} from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { GrantsService } from './grants.service';
 import { CreateGrantDto, UpdateGrantDto, PaginateGrantsDto } from './dto/grant.dto';
@@ -64,7 +58,7 @@ export class GrantsController {
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateGrantDto,
-    @Request() req: { user?: { id?: string; sub?: string } },
+    @Request() req: { user?: { id?: string; sub?: string } }
   ) {
     const requesterId = req.user?.id ?? req.user?.sub ?? '';
     return this.grantsService.update(id, dto, requesterId);

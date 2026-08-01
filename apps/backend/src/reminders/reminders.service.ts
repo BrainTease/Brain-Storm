@@ -16,7 +16,7 @@ export class RemindersService {
     @InjectRepository(Enrollment)
     private enrollmentsRepository: Repository<Enrollment>,
     private mailService: MailService,
-    private configService: ConfigService,
+    private configService: ConfigService
   ) {}
 
   async sendInactiveReminders(): Promise<void> {
@@ -40,20 +40,27 @@ export class RemindersService {
       if (!reminder || !reminder.isActive) continue;
 
       const lastReminder = new Date(reminder.lastReminderSentAt);
-      const reminderFrequencyHours = this.configService.get<number>('REMINDER_FREQUENCY_HOURS', 168);
-      const nextReminderTime = new Date(lastReminder.getTime() + reminderFrequencyHours * 60 * 60 * 1000);
+      const reminderFrequencyHours = this.configService.get<number>(
+        'REMINDER_FREQUENCY_HOURS',
+        168
+      );
+      const nextReminderTime = new Date(
+        lastReminder.getTime() + reminderFrequencyHours * 60 * 60 * 1000
+      );
 
       if (new Date() < nextReminderTime) continue;
 
       await this.mailService.sendReminderEmail(
         enrollment.user.email,
         enrollment.user.username,
-        enrollment.course.title,
+        enrollment.course.title
       );
 
       reminder.lastReminderSentAt = new Date();
       await this.remindersRepository.save(reminder);
-      this.logger.log(`Reminder sent to ${enrollment.user.email} for course ${enrollment.course.title}`);
+      this.logger.log(
+        `Reminder sent to ${enrollment.user.email} for course ${enrollment.course.title}`
+      );
     }
   }
 
@@ -68,20 +75,18 @@ export class RemindersService {
   }
 
   async disableReminder(userId: string, courseId: string): Promise<void> {
-    await this.remindersRepository.update(
-      { userId, courseId },
-      { isActive: false },
-    );
+    await this.remindersRepository.update({ userId, courseId }, { isActive: false });
   }
 
   async enableReminder(userId: string, courseId: string): Promise<void> {
-    await this.remindersRepository.update(
-      { userId, courseId },
-      { isActive: true },
-    );
+    await this.remindersRepository.update({ userId, courseId }, { isActive: true });
   }
 
-  async getReminderStats(): Promise<{ totalReminders: number; activeReminders: number; sentToday: number }> {
+  async getReminderStats(): Promise<{
+    totalReminders: number;
+    activeReminders: number;
+    sentToday: number;
+  }> {
     const totalReminders = await this.remindersRepository.count();
     const activeReminders = await this.remindersRepository.count({ where: { isActive: true } });
 

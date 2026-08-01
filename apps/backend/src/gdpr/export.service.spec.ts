@@ -38,7 +38,7 @@ describe('ExportService', () => {
       referredBy: null,
       deletedAt: null,
       ...overrides,
-    } as User);
+    }) as User;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -97,7 +97,7 @@ describe('ExportService', () => {
       await service.exportUserData('u1');
 
       const profileCall = mockZipInstance.addFile.mock.calls.find(
-        (c: any[]) => c[0] === 'profile.json',
+        (c: any[]) => c[0] === 'profile.json'
       );
       const profileJson = JSON.parse(profileCall[1].toString());
       expect(profileJson).not.toHaveProperty('passwordHash');
@@ -115,7 +115,7 @@ describe('ExportService', () => {
         'u1',
         true,
         expect.any(Object),
-        '1.2.3.4',
+        '1.2.3.4'
       );
     });
   });
@@ -191,7 +191,7 @@ describe('ExportService', () => {
         'u1',
         true,
         expect.any(Object),
-        '10.0.0.1',
+        '10.0.0.1'
       );
     });
   });

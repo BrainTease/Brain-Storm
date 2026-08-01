@@ -28,7 +28,7 @@ describe('Breadcrumb', () => {
           { label: 'Courses', href: '/courses' },
           { label: 'Intro', href: '/courses/intro', current: true },
         ]}
-      />,
+      />
     );
     const nav = screen.getByRole('navigation', { name: /breadcrumb/i });
     expect(nav).toBeInTheDocument();
@@ -44,7 +44,7 @@ describe('Breadcrumb', () => {
           { label: 'Home', href: '/' },
           { label: 'Courses', href: '/courses', current: true },
         ]}
-      />,
+      />
     );
     expect(screen.getByText('Courses').closest('[aria-current="page"]')).toBeTruthy();
   });
@@ -63,10 +63,10 @@ describe('Breadcrumb', () => {
           { label: 'Home', href: '/' },
           { label: 'Courses', href: '/courses' },
         ]}
-      />,
+      />
     );
     expect(
-      container.querySelector('[itemtype="https://schema.org/BreadcrumbList"]'),
+      container.querySelector('[itemtype="https://schema.org/BreadcrumbList"]')
     ).toBeInTheDocument();
   });
 });
@@ -80,16 +80,14 @@ describe('CompactBreadcrumb', () => {
           { label: 'Courses', href: '/courses' },
           { label: 'Intro', href: '/courses/intro', current: true },
         ]}
-      />,
+      />
     );
     expect(screen.getByText('Courses')).toBeInTheDocument();
     expect(screen.getByText('Intro')).toBeInTheDocument();
   });
 
   it('renders nothing for a single-item list', () => {
-    const { container } = render(
-      <CompactBreadcrumb items={[{ label: 'Home', href: '/' }]} />,
-    );
+    const { container } = render(<CompactBreadcrumb items={[{ label: 'Home', href: '/' }]} />);
     expect(container.firstChild).toBeNull();
   });
 });

@@ -21,19 +21,13 @@ With multiple lines`;
 global.fetch = vi.fn(() =>
   Promise.resolve({
     text: () => Promise.resolve(sampleVTT),
-  }),
+  })
 ) as any;
 
 describe('TranscriptPanel', () => {
   it('renders transcript lines after loading', async () => {
     const onSeek = vi.fn();
-    render(
-      <TranscriptPanel
-        src="/test.vtt"
-        currentTime={0}
-        onSeek={onSeek}
-      />,
-    );
+    render(<TranscriptPanel src="/test.vtt" currentTime={0} onSeek={onSeek} />);
 
     await waitFor(() => {
       expect(screen.getByText('Hello and welcome')).toBeInTheDocument();
@@ -44,13 +38,7 @@ describe('TranscriptPanel', () => {
 
   it('highlights active line based on currentTime', async () => {
     const onSeek = vi.fn();
-    render(
-      <TranscriptPanel
-        src="/test.vtt"
-        currentTime={6}
-        onSeek={onSeek}
-      />,
-    );
+    render(<TranscriptPanel src="/test.vtt" currentTime={6} onSeek={onSeek} />);
 
     await waitFor(() => {
       const active = screen.getByText('This is a test transcript');
@@ -61,13 +49,7 @@ describe('TranscriptPanel', () => {
   it('calls onSeek when a line is clicked', async () => {
     const user = userEvent.setup();
     const onSeek = vi.fn();
-    render(
-      <TranscriptPanel
-        src="/test.vtt"
-        currentTime={0}
-        onSeek={onSeek}
-      />,
-    );
+    render(<TranscriptPanel src="/test.vtt" currentTime={0} onSeek={onSeek} />);
 
     await waitFor(() => {
       expect(screen.getByText('Hello and welcome')).toBeInTheDocument();

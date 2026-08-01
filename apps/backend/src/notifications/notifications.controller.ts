@@ -1,4 +1,14 @@
-import { Controller, Get, Patch, Post, Delete, Param, Body, Request, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Patch,
+  Post,
+  Delete,
+  Param,
+  Body,
+  Request,
+  UseGuards,
+} from '@nestjs/common';
 import { NotificationsService } from './notifications.service';
 import { PushNotificationService } from './push-notification.service';
 import { ApiBearerAuth, ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
@@ -28,7 +38,7 @@ class ScheduleNotificationDto {
 export class NotificationsController {
   constructor(
     private notificationsService: NotificationsService,
-    private pushService: PushNotificationService,
+    private pushService: PushNotificationService
   ) {}
 
   @Get()
@@ -64,7 +74,11 @@ export class NotificationsController {
 
   @Patch('preferences')
   @ApiOperation({ summary: 'Update notification preferences' })
-  @ApiBody({ schema: { example: { inApp: true, email: true, push: false, enrollment: true, completion: true } } })
+  @ApiBody({
+    schema: {
+      example: { inApp: true, email: true, push: false, enrollment: true, completion: true },
+    },
+  })
   @ApiResponse({ status: 200, description: 'Preferences updated' })
   updatePreferences(@Request() req, @Body() body: Record<string, boolean>) {
     return this.notificationsService.updatePreferences(req.user.id, body as any);
@@ -76,7 +90,12 @@ export class NotificationsController {
   @ApiOperation({ summary: 'Schedule a notification for future delivery' })
   @ApiResponse({ status: 201, description: 'Notification scheduled' })
   scheduleNotification(@Request() req, @Body() dto: ScheduleNotificationDto) {
-    return this.notificationsService.schedule(req.user.id, dto.type, dto.message, new Date(dto.scheduledAt));
+    return this.notificationsService.schedule(
+      req.user.id,
+      dto.type,
+      dto.message,
+      new Date(dto.scheduledAt)
+    );
   }
 
   @Delete('schedule/:id')
