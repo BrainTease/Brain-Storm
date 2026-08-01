@@ -23,7 +23,8 @@ export function CodeEditor({
     const lines = textareaRef.current.value.split('\n').length;
     lineNumbersRef.current.innerHTML = Array.from(
       { length: lines },
-      (_, i) => `<span class="text-gray-400 dark:text-gray-600 text-xs leading-6 pr-2 select-none">${i + 1}</span>`,
+      (_, i) =>
+        `<span class="text-gray-400 dark:text-gray-600 text-xs leading-6 pr-2 select-none">${i + 1}</span>`
     ).join('');
   }, []);
 
@@ -35,24 +36,26 @@ export function CodeEditor({
     (e: React.ChangeEvent<HTMLTextAreaElement>) => {
       onChange(e.target.value);
     },
-    [onChange],
+    [onChange]
   );
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Tab') {
-      e.preventDefault();
-      const ta = textareaRef.current;
-      if (!ta) return;
-      const start = ta.selectionStart;
-      const end = ta.selectionEnd;
-      const newValue =
-        ta.value.substring(0, start) + '  ' + ta.value.substring(end);
-      onChange(newValue);
-      requestAnimationFrame(() => {
-        ta.selectionStart = ta.selectionEnd = start + 2;
-      });
-    }
-  }, [onChange]);
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        const ta = textareaRef.current;
+        if (!ta) return;
+        const start = ta.selectionStart;
+        const end = ta.selectionEnd;
+        const newValue = ta.value.substring(0, start) + '  ' + ta.value.substring(end);
+        onChange(newValue);
+        requestAnimationFrame(() => {
+          ta.selectionStart = ta.selectionEnd = start + 2;
+        });
+      }
+    },
+    [onChange]
+  );
 
   return (
     <div
@@ -64,9 +67,7 @@ export function CodeEditor({
         <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase">
           {language}
         </span>
-        {readOnly && (
-          <span className="text-xs text-gray-500 dark:text-gray-400">Read-only</span>
-        )}
+        {readOnly && <span className="text-xs text-gray-500 dark:text-gray-400">Read-only</span>}
       </div>
 
       <div className="flex">

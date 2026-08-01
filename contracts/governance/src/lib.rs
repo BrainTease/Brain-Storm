@@ -242,7 +242,7 @@ impl GovernanceContract {
 
     /// Compute the effective vote weight for a balance under a given strategy.
     /// strategy: 0 = Weighted, 1 = Quadratic, 2 = Flat
-    pub fn get_vote_weight(env: Env, balance: i128, strategy: u32) -> i128 {
+    pub fn get_vote_weight(_env: Env, balance: i128, strategy: u32) -> i128 {
         let strat = match strategy {
             1 => VotingStrategy::Quadratic,
             2 => VotingStrategy::Flat,
@@ -742,5 +742,200 @@ mod tests {
     fn test_set_timelock_duration() {
         let (_, client, admin, _) = setup();
         client.set_timelock_duration(&admin, &20_u32);
+    }
+
+    // ── Additional legacy proposal tests ─────────────────────────────────────
+
+    #[test]
+    fn test_get_next_proposal_id_starts_at_1() {
+        let (_, client, _, _) = setup();
+        assert_eq!(client.get_next_proposal_id(), 1);
+    }
+
+    #[test]
+    fn test_get_next_proposal_id_increments_after_create() {
+        let (env, client, _, _) = setup();
+        let proposer = Address::generate(&env);
+        let title = String::from_str(&env, "P1");
+        let desc = String::from_str(&env, "desc");
+        let end = env.ledger().sequence() + 50;
+        client.create_proposal(&proposer, &title, &desc, &end);
+        assert_eq!(client.get_next_proposal_id(), 2);
+    }
+
+    #[test]
+    fn test_has_voted_returns_false_before_vote() {
+        let (env, client, _, _) = setup();
+        let proposer = Address::generate(&env);
+        let voter = Address::generate(&env);
+        let title = String::from_str(&env, "Test");
+        let desc = String::from_str(&env, "desc");
+        let end = env.ledger().sequence() + 50;
+        let id = client.create_proposal(&proposer, &title, &desc, &end);
+        assert!(!client.has_voted(&id, &voter));
+    }
+
+    #[test]
+    fn test_get_vote_returns_none_before_vote() {
+        let (env, client, _, _) = setup();
+        let proposer = Address::generate(&env);
+        let voter = Address::generate(&env);
+        let title = String::from_str(&env, "Test");
+        let desc = String::from_str(&env, "desc");
+        let end = env.ledger().sequence() + 50;
+        let id = client.create_proposal(&proposer, &title, &desc, &end);
+        assert!(client.get_vote(&id, &voter).is_none());
+    }
+
+    #[test]
+    fn test_get_vote_tally_all_zeros_before_votes() {
+        let (env, client, _, _) = setup();
+        let proposer = Address::generate(&env);
+        let title = String::from_str(&env, "Test");
+        let desc = String::from_str(&env, "desc");
+        let end = env.ledger().sequence() + 50;
+        let id = client.create_proposal(&proposer, &title, &desc, &end);
+        let (votes_for, votes_against, total, quorum_met) = client.get_vote_tally(&id);
+        assert_eq!(votes_for, 0);
+        assert_eq!(votes_against, 0);
+        assert_eq!(total, 0);
+        assert!(!quorum_met);
+    }
+
+    #[test]
+    fn test_did_proposal_pass_returns_false_during_voting() {
+        let (env, client, _, _) = setup();
+        let proposer = Address::generate(&env);
+        let title = String::from_str(&env, "Test");
+        let desc = String::from_str(&env, "desc");
+        let end = env.ledger().sequence() + 50;
+        let id = client.create_proposal(&proposer, &title, &desc, &end);
+        // still in voting window
+        assert!(!client.did_proposal_pass(&id));
+    }
+
+    #[test]
+    fn test_is_voting_active_true_during_window() {
+        let (env, client, _, _) = setup();
+        let proposer = Address::generate(&env);
+        let title = String::from_str(&env, "Test");
+        let desc = String::from_str(&env, "desc");
+        let end = env.ledger().sequence() + 50;
+        let id = client.create_proposal(&proposer, &title, &desc, &end);
+        assert!(client.is_voting_active(&id));
+    }
+
+    #[test]
+    fn test_is_voting_active_false_after_window() {
+        let (env, client, _, _) = setup();
+        let proposer = Address::generate(&env);
+        let title = String::from_str(&env, "Test");
+        let desc = String::from_str(&env, "desc");
+        let end = env.ledger().sequence() + 10;
+        let id = client.create_proposal(&proposer, &title, &desc, &end);
+        set_ledger(&env, end + 1);
+        assert!(!client.is_voting_active(&id));
+    }
+
+    #[test]
+    fn test_get_proposal_returns_none_for_missing() {
+        let (_, client, _, _) = setup();
+        assert!(client.get_proposal(&9999).is_none());
+    }
+
+    // ── Upgrade proposal tests ────────────────────────────────────────────────
+
+    #[test]
+    fn test_propose_upgrade_returns_id() {
+        let (env, client, _, _) = setup();
+        let proposer = Address::generate(&env);
+        let contract_addr = Address::generate(&env);
+        let wasm_hash = symbol_short!("abc123");
+        let end = env.ledger().sequence() + 10;
+        let timelock = end + 10;
+        let id = client.propose_upgrade(&proposer, &contract_addr, &wasm_hash, &end, &timelock);
+        assert_eq!(id, 1);
+    }
+
+    #[test]
+    fn test_get_upgrade_proposal_returns_correct_record() {
+        let (env, client, _, _) = setup();
+        let proposer = Address::generate(&env);
+        let contract_addr = Address::generate(&env);
+        let wasm_hash = symbol_short!("abc123");
+        let end = env.ledger().sequence() + 10;
+        let timelock = end + 10;
+        let id = client.propose_upgrade(&proposer, &contract_addr, &wasm_hash, &end, &timelock);
+        let upgrade = client.get_upgrade_proposal(&id).unwrap();
+        assert_eq!(upgrade.id, id);
+        assert_eq!(upgrade.proposer, proposer);
+        assert!(!upgrade.approved);
+        assert!(!upgrade.executed);
+    }
+
+    #[test]
+    fn test_get_upgrade_proposal_returns_none_for_missing() {
+        let (_, client, _, _) = setup();
+        assert!(client.get_upgrade_proposal(&9999).is_none());
+    }
+
+    #[test]
+    #[should_panic(expected = "Voting end must be in future")]
+    fn test_propose_upgrade_past_end_panics() {
+        let (env, client, _, _) = setup();
+        let proposer = Address::generate(&env);
+        let contract_addr = Address::generate(&env);
+        let wasm_hash = symbol_short!("abc123");
+        client.propose_upgrade(&proposer, &contract_addr, &wasm_hash, &0_u32, &100_u32);
+    }
+
+    #[test]
+    #[should_panic(expected = "Timelock must be after voting")]
+    fn test_propose_upgrade_timelock_before_voting_end_panics() {
+        let (env, client, _, _) = setup();
+        let proposer = Address::generate(&env);
+        let contract_addr = Address::generate(&env);
+        let wasm_hash = symbol_short!("abc123");
+        let end = env.ledger().sequence() + 100;
+        // timelock == end — not strictly after
+        client.propose_upgrade(&proposer, &contract_addr, &wasm_hash, &end, &(end - 1));
+    }
+
+    #[test]
+    fn test_set_total_supply_snapshot() {
+        let (_, client, admin, _) = setup();
+        client.set_total_supply_snapshot(&admin, &1_000_000_i128);
+        // No panic = stored correctly
+    }
+
+    #[test]
+    #[should_panic(expected = "Unauthorized: admin required")]
+    fn test_non_admin_cannot_set_total_supply() {
+        let (env, client, _, _) = setup();
+        let rando = Address::generate(&env);
+        client.set_total_supply_snapshot(&rando, &1_000_000_i128);
+    }
+
+    #[test]
+    #[should_panic(expected = "Unauthorized: admin required")]
+    fn test_non_admin_cannot_set_voting_delay() {
+        let (env, client, _, _) = setup();
+        let rando = Address::generate(&env);
+        client.set_voting_delay(&rando, &5_u32);
+    }
+
+    #[test]
+    #[should_panic(expected = "Unauthorized: admin required")]
+    fn test_non_admin_cannot_set_timelock_duration() {
+        let (env, client, _, _) = setup();
+        let rando = Address::generate(&env);
+        client.set_timelock_duration(&rando, &20_u32);
+    }
+
+    #[test]
+    #[should_panic(expected = "Quorum must be 1-100")]
+    fn test_quorum_over_100_panics() {
+        let (_, client, admin, _) = setup();
+        client.set_quorum_percentage(&admin, &101_i128);
     }
 }

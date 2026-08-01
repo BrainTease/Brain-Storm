@@ -3,7 +3,9 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
 export class AddImportJobTypeAndKycDocument1725000000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`CREATE TYPE "import_jobs_type_enum" AS ENUM ('course', 'user')`);
-    await queryRunner.query(`ALTER TABLE "import_jobs" ADD "type" "import_jobs_type_enum" NOT NULL DEFAULT 'course'`);
+    await queryRunner.query(
+      `ALTER TABLE "import_jobs" ADD "type" "import_jobs_type_enum" NOT NULL DEFAULT 'course'`
+    );
 
     await queryRunner.query(`CREATE TABLE "kyc_documents" (
       "id" uuid NOT NULL DEFAULT uuid_generate_v4(),

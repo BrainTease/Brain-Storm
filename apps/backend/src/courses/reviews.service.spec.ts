@@ -11,7 +11,10 @@ describe('ReviewsService', () => {
   let service: ReviewsService;
 
   const mockReviewRepo = {
-    create: jest.fn(), save: jest.fn(), findOne: jest.fn(), findAndCount: jest.fn(),
+    create: jest.fn(),
+    save: jest.fn(),
+    findOne: jest.fn(),
+    findAndCount: jest.fn(),
   };
   const mockEnrollmentRepo = { findOne: jest.fn() };
   const mockCourseRepo = { findOne: jest.fn() };
@@ -33,14 +36,17 @@ describe('ReviewsService', () => {
   // ── create ────────────────────────────────────────────────────────────────────
 
   describe('create', () => {
-    const courseId = 'c1', userId = 'u1';
+    const courseId = 'c1',
+      userId = 'u1';
     const dto: CreateReviewDto = { rating: 5, comment: 'Great course!' };
 
     it('creates a review for a completed enrollment', async () => {
       mockCourseRepo.findOne.mockResolvedValue({ id: courseId } as Course);
       mockReviewRepo.findOne.mockResolvedValue(null);
       mockEnrollmentRepo.findOne.mockResolvedValue({
-        courseId, userId, completedAt: new Date(),
+        courseId,
+        userId,
+        completedAt: new Date(),
       } as Enrollment);
       const review = { id: 'r1', courseId, userId, rating: 5 } as Review;
       mockReviewRepo.create.mockReturnValue(review);
@@ -50,7 +56,7 @@ describe('ReviewsService', () => {
 
       expect(result).toEqual(review);
       expect(mockReviewRepo.create).toHaveBeenCalledWith(
-        expect.objectContaining({ courseId, userId, rating: 5 }),
+        expect.objectContaining({ courseId, userId, rating: 5 })
       );
     });
 
@@ -64,7 +70,7 @@ describe('ReviewsService', () => {
       await service.create(courseId, userId, { rating: 4, comment: '  Good  ' });
 
       expect(mockReviewRepo.create).toHaveBeenCalledWith(
-        expect.objectContaining({ comment: 'Good' }),
+        expect.objectContaining({ comment: 'Good' })
       );
     });
 
@@ -78,7 +84,7 @@ describe('ReviewsService', () => {
       await service.create(courseId, userId, { rating: 3, comment: '' });
 
       expect(mockReviewRepo.create).toHaveBeenCalledWith(
-        expect.objectContaining({ comment: null }),
+        expect.objectContaining({ comment: null })
       );
     });
 
@@ -102,7 +108,9 @@ describe('ReviewsService', () => {
       mockReviewRepo.findOne.mockResolvedValue(null);
       mockEnrollmentRepo.findOne.mockResolvedValue(null);
 
-      await expect(service.create(courseId, userId, dto)).rejects.toThrow(UnprocessableEntityException);
+      await expect(service.create(courseId, userId, dto)).rejects.toThrow(
+        UnprocessableEntityException
+      );
     });
 
     it('throws UnprocessableEntityException when enrollment not yet completed', async () => {
@@ -110,7 +118,9 @@ describe('ReviewsService', () => {
       mockReviewRepo.findOne.mockResolvedValue(null);
       mockEnrollmentRepo.findOne.mockResolvedValue({ completedAt: null } as Enrollment);
 
-      await expect(service.create(courseId, userId, dto)).rejects.toThrow(UnprocessableEntityException);
+      await expect(service.create(courseId, userId, dto)).rejects.toThrow(
+        UnprocessableEntityException
+      );
     });
   });
 
@@ -144,7 +154,7 @@ describe('ReviewsService', () => {
       await service.findByCourse('c1', { page: 3, limit: 10 });
 
       expect(mockReviewRepo.findAndCount).toHaveBeenCalledWith(
-        expect.objectContaining({ skip: 20, take: 10 }),
+        expect.objectContaining({ skip: 20, take: 10 })
       );
     });
 

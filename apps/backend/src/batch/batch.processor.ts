@@ -20,7 +20,7 @@ export class BatchProcessor {
     private readonly usersService: UsersService,
     private readonly coursesService: CoursesService,
     private readonly certificatesService: CertificatesService,
-    private readonly mailService: MailService,
+    private readonly mailService: MailService
   ) {}
 
   @OnQueueActive()

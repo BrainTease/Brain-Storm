@@ -14,30 +14,20 @@ export class CdnController {
       data.lessonId,
       data.fileName,
       data.contentType as ContentType,
-      data.fileSize,
+      data.fileSize
     );
   }
 
   @Get(':assetId/signed-url')
-  async getSignedUrl(
-    @Param('assetId') assetId: string,
-    @Body() data?: any,
-  ) {
+  async getSignedUrl(@Param('assetId') assetId: string, @Body() data?: any) {
     const expirationMinutes = data?.expirationMinutes || 60;
     const signedUrl = this.cdnService.generateSignedUrl(assetId, expirationMinutes);
     return { signedUrl };
   }
 
   @Post(':assetId/transcode')
-  async markTranscoded(
-    @Param('assetId') assetId: string,
-    @Body() data: any,
-  ) {
-    return this.cdnService.markAsTranscoded(
-      assetId,
-      data.bitrates,
-      data.thumbnailUrl,
-    );
+  async markTranscoded(@Param('assetId') assetId: string, @Body() data: any) {
+    return this.cdnService.markAsTranscoded(assetId, data.bitrates, data.thumbnailUrl);
   }
 
   @Post(':assetId/invalidate')

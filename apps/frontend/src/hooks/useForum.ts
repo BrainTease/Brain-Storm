@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import useSWR from 'swr';
-import { forumApi, Post, Reply, PostWithReplies, PaginatedPosts } from '@/lib/forumApi';
+import { forumApi, PostWithReplies, PaginatedPosts } from '@/lib/forumApi';
 
 export function useForumPosts(courseId: string, page = 1) {
   const { data, error, isLoading, mutate } = useSWR<PaginatedPosts>(

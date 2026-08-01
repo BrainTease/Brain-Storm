@@ -2,7 +2,6 @@
 
 import React, { useMemo } from 'react';
 import { Card } from '@/components/ui/Card';
-import { CHART_COLORS } from '@/lib/chart-colors';
 
 export interface StreakData {
   date: string;
@@ -61,7 +60,7 @@ export function StreakHeatmapChart({
     const grouped: Record<number, Record<number, number>> = {};
     let maxValue = 1;
 
-    data.forEach(item => {
+    data.forEach((item) => {
       if (!grouped[item.weekNumber]) {
         grouped[item.weekNumber] = {};
       }
@@ -109,7 +108,7 @@ export function StreakHeatmapChart({
           {/* Day headers */}
           <div className="mb-2 flex gap-1">
             <div className="w-12" /> {/* Week number column */}
-            {DAYS_OF_WEEK.map(day => (
+            {DAYS_OF_WEEK.map((day) => (
               <div
                 key={day}
                 className="flex h-8 w-8 items-center justify-center text-xs font-medium"
@@ -121,7 +120,7 @@ export function StreakHeatmapChart({
           </div>
 
           {/* Heatmap grid */}
-          {weeks.map(weekNum => (
+          {weeks.map((weekNum) => (
             <div key={weekNum} className="mb-1 flex items-center gap-1">
               <div className="w-12 text-xs text-gray-500 dark:text-gray-400">W{weekNum}</div>
               {DAYS_OF_WEEK.map((_, dayIdx) => {
@@ -162,15 +161,24 @@ export function StreakHeatmapChart({
           <span style={{ color: textColor }}>None</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="h-4 w-4 rounded border border-gray-300 dark:border-gray-600" style={{ backgroundColor: '#B0D9FF' }} />
+          <div
+            className="h-4 w-4 rounded border border-gray-300 dark:border-gray-600"
+            style={{ backgroundColor: '#B0D9FF' }}
+          />
           <span style={{ color: textColor }}>Low</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="h-4 w-4 rounded border border-gray-300 dark:border-gray-600" style={{ backgroundColor: '#56B4E9' }} />
+          <div
+            className="h-4 w-4 rounded border border-gray-300 dark:border-gray-600"
+            style={{ backgroundColor: '#56B4E9' }}
+          />
           <span style={{ color: textColor }}>Medium</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="h-4 w-4 rounded border border-gray-300 dark:border-gray-600" style={{ backgroundColor: '#0173B2' }} />
+          <div
+            className="h-4 w-4 rounded border border-gray-300 dark:border-gray-600"
+            style={{ backgroundColor: '#0173B2' }}
+          />
           <span style={{ color: textColor }}>High</span>
         </div>
       </div>

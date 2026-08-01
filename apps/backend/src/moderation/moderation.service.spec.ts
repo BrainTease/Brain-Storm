@@ -61,7 +61,7 @@ describe('ModerationService', () => {
       createdAt: new Date(),
       updatedAt: new Date(),
       ...overrides,
-    } as ModerationItem);
+    }) as ModerationItem;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -111,7 +111,7 @@ describe('ModerationService', () => {
         },
       });
       expect(mockItemRepo.create).toHaveBeenCalledWith(
-        expect.objectContaining({ contentId: flagDto.contentId, reportedByUserId: userId }),
+        expect.objectContaining({ contentId: flagDto.contentId, reportedByUserId: userId })
       );
       expect(result).toEqual(newItem);
     });
@@ -138,7 +138,7 @@ describe('ModerationService', () => {
       await service.flagContent(flagDto, userId);
 
       expect(mockLogRepo.create).toHaveBeenCalledWith(
-        expect.objectContaining({ action: ModerationAction.FLAG }),
+        expect.objectContaining({ action: ModerationAction.FLAG })
       );
       expect(mockLogRepo.save).toHaveBeenCalled();
     });
@@ -206,7 +206,9 @@ describe('ModerationService', () => {
       mockItemRepo.findOne.mockResolvedValue(null);
 
       const dto: ReviewItemDto = { status: ModerationStatus.APPROVED };
-      await expect(service.reviewItem('nonexistent', dto, adminId)).rejects.toThrow(NotFoundException);
+      await expect(service.reviewItem('nonexistent', dto, adminId)).rejects.toThrow(
+        NotFoundException
+      );
     });
   });
 
@@ -237,7 +239,9 @@ describe('ModerationService', () => {
       const item = makeItem({ status: ModerationStatus.PENDING });
       mockItemRepo.findOne.mockResolvedValue(item);
 
-      await expect(service.submitAppeal('item-1', appealDto, userId)).rejects.toThrow(BadRequestException);
+      await expect(service.submitAppeal('item-1', appealDto, userId)).rejects.toThrow(
+        BadRequestException
+      );
     });
 
     it('throws BadRequestException when appeal already submitted', async () => {
@@ -247,13 +251,17 @@ describe('ModerationService', () => {
       });
       mockItemRepo.findOne.mockResolvedValue(item);
 
-      await expect(service.submitAppeal('item-1', appealDto, userId)).rejects.toThrow(BadRequestException);
+      await expect(service.submitAppeal('item-1', appealDto, userId)).rejects.toThrow(
+        BadRequestException
+      );
     });
 
     it('throws NotFoundException when item does not exist', async () => {
       mockItemRepo.findOne.mockResolvedValue(null);
 
-      await expect(service.submitAppeal('nonexistent', appealDto, userId)).rejects.toThrow(NotFoundException);
+      await expect(service.submitAppeal('nonexistent', appealDto, userId)).rejects.toThrow(
+        NotFoundException
+      );
     });
   });
 
@@ -297,13 +305,17 @@ describe('ModerationService', () => {
       const item = makeItem({ status: ModerationStatus.REJECTED });
       mockItemRepo.findOne.mockResolvedValue(item);
 
-      await expect(service.resolveAppeal('item-1', true, adminId)).rejects.toThrow(BadRequestException);
+      await expect(service.resolveAppeal('item-1', true, adminId)).rejects.toThrow(
+        BadRequestException
+      );
     });
 
     it('throws NotFoundException when item does not exist', async () => {
       mockItemRepo.findOne.mockResolvedValue(null);
 
-      await expect(service.resolveAppeal('nonexistent', true, adminId)).rejects.toThrow(NotFoundException);
+      await expect(service.resolveAppeal('nonexistent', true, adminId)).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('logs APPEAL_APPROVED action when appeal is approved', async () => {
@@ -316,7 +328,7 @@ describe('ModerationService', () => {
       await service.resolveAppeal('item-1', true, adminId);
 
       expect(mockLogRepo.create).toHaveBeenCalledWith(
-        expect.objectContaining({ action: ModerationAction.APPEAL_APPROVED }),
+        expect.objectContaining({ action: ModerationAction.APPEAL_APPROVED })
       );
     });
 
@@ -330,7 +342,7 @@ describe('ModerationService', () => {
       await service.resolveAppeal('item-1', false, adminId);
 
       expect(mockLogRepo.create).toHaveBeenCalledWith(
-        expect.objectContaining({ action: ModerationAction.APPEAL_REJECTED }),
+        expect.objectContaining({ action: ModerationAction.APPEAL_REJECTED })
       );
     });
   });

@@ -4,6 +4,8 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User } from './user.entity';
 import { ImportJob, ImportJobStatus, ImportJobType } from '../import-export/import-job.entity';
+import { UserQueryDto } from './dto/user-query.dto';
+import { PaginatedResponseDto } from '../common/dto/api-response.dto';
 
 @Injectable()
 export class UsersService {
@@ -11,7 +13,7 @@ export class UsersService {
 
   constructor(
     @InjectRepository(User) private repo: Repository<User>,
-    @InjectRepository(ImportJob) private importJobRepo: Repository<ImportJob>,
+    @InjectRepository(ImportJob) private importJobRepo: Repository<ImportJob>
   ) {}
 
   findByEmail(email: string) {
@@ -47,25 +49,17 @@ export class UsersService {
   async uploadAvatar(userId: string, file: Express.Multer.File) {
     const user = await this.findById(userId);
     if (!user) throw new NotFoundException('User not found');
-    
+
     // In production, upload to S3/CDN and return URL
     // For now, return a placeholder
     const avatarUrl = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
-    
+
     await this.repo.save({ ...user, avatar: avatarUrl });
     return { avatarUrl };
   }
 
-  async findAll(
-    options: {
-      page?: number;
-      limit?: number;
-      role?: string;
-      isVerified?: boolean;
-      search?: string;
-    } = {}
-  ) {
-    const { page = 1, limit = 10, role, isVerified, search } = options;
+  async findAll(options: UserQueryDto = {}): Promise<PaginatedResponseDto<User>> {
+    const { page = 1, limit = 20, role, isVerified, search } = options;
 
     const query = this.repo.createQueryBuilder('user');
 
@@ -89,15 +83,7 @@ export class UsersService {
       .orderBy('user.createdAt', 'DESC')
       .getManyAndCount();
 
-    return {
-      data: users,
-      meta: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
-      },
-    };
+    return new PaginatedResponseDto(users, 200, page, limit, total);
   }
 
   async banUser(id: string, isBanned: boolean) {
@@ -145,7 +131,7 @@ export class UsersService {
         total: rows.length,
         processed: 0,
         result: {},
-      }),
+      })
     );
 
     this.processUserImportJob(job.id, rows).catch((err) => {

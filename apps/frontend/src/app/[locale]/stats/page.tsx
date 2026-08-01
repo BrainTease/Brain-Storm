@@ -26,8 +26,19 @@ export default function StatsPage() {
   const [interval, setInterval] = useState<MetricInterval>('day');
   const [metric, setMetric] = useState<MetricName>('registrations');
 
-  const { summary, loading: sumLoading, error: sumError, refresh: refreshSummary } = useProtocolSummary();
-  const { series, lastAggregatedAt, loading: tsLoading, error: tsError, refresh: refreshSeries } = useProtocolMetrics({ metric, interval });
+  const {
+    summary,
+    loading: sumLoading,
+    error: sumError,
+    refresh: refreshSummary,
+  } = useProtocolSummary();
+  const {
+    series,
+    lastAggregatedAt,
+    loading: tsLoading,
+    error: tsError,
+    refresh: refreshSeries,
+  } = useProtocolMetrics({ metric, interval });
 
   const metaMeta = METRICS.find((m) => m.value === metric);
 
@@ -43,20 +54,44 @@ export default function StatsPage() {
       {/* Summary cards */}
       <section aria-labelledby="summary-heading">
         <div className="flex items-center justify-between mb-4">
-          <h2 id="summary-heading" className="text-lg font-semibold text-gray-800 dark:text-gray-200">
+          <h2
+            id="summary-heading"
+            className="text-lg font-semibold text-gray-800 dark:text-gray-200"
+          >
             All-time Summary
           </h2>
-          <FreshnessIndicator ts={summary?.lastAggregatedAt ?? null} loading={sumLoading} onRefresh={refreshSummary} />
+          <FreshnessIndicator
+            ts={summary?.lastAggregatedAt ?? null}
+            loading={sumLoading}
+            onRefresh={refreshSummary}
+          />
         </div>
 
         {sumError ? (
           <ErrorBanner message={sumError} />
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <SummaryCard label="Registrations" value={summary?.registrations} loading={sumLoading} />
-            <SummaryCard label="Tip Volume (XLM)" value={summary?.tipVolumeXlm} loading={sumLoading} decimals={2} />
-            <SummaryCard label="Escrow Events" value={summary?.escrowThroughput} loading={sumLoading} />
-            <SummaryCard label="Disputes Resolved" value={summary?.disputeResolved} loading={sumLoading} />
+            <SummaryCard
+              label="Registrations"
+              value={summary?.registrations}
+              loading={sumLoading}
+            />
+            <SummaryCard
+              label="Tip Volume (XLM)"
+              value={summary?.tipVolumeXlm}
+              loading={sumLoading}
+              decimals={2}
+            />
+            <SummaryCard
+              label="Escrow Events"
+              value={summary?.escrowThroughput}
+              loading={sumLoading}
+            />
+            <SummaryCard
+              label="Disputes Resolved"
+              value={summary?.disputeResolved}
+              loading={sumLoading}
+            />
           </div>
         )}
       </section>
@@ -64,12 +99,19 @@ export default function StatsPage() {
       {/* Time-series chart */}
       <section aria-labelledby="timeseries-heading">
         <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-4">
-          <h2 id="timeseries-heading" className="text-lg font-semibold text-gray-800 dark:text-gray-200 flex-1">
+          <h2
+            id="timeseries-heading"
+            className="text-lg font-semibold text-gray-800 dark:text-gray-200 flex-1"
+          >
             Time Series
           </h2>
 
           {/* Metric selector */}
-          <div role="tablist" aria-label="Metric" className="inline-flex rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div
+            role="tablist"
+            aria-label="Metric"
+            className="inline-flex rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden"
+          >
             {METRICS.map((m) => (
               <button
                 key={m.value}
@@ -89,7 +131,11 @@ export default function StatsPage() {
           </div>
 
           {/* Interval selector */}
-          <div role="tablist" aria-label="Interval" className="inline-flex rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div
+            role="tablist"
+            aria-label="Interval"
+            className="inline-flex rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden"
+          >
             {INTERVALS.map((iv) => (
               <button
                 key={iv.value}
@@ -116,7 +162,9 @@ export default function StatsPage() {
         ) : tsLoading ? (
           <ChartSkeleton />
         ) : series.length === 0 ? (
-          <p className="text-center py-16 text-gray-500 dark:text-gray-400">No data available yet.</p>
+          <p className="text-center py-16 text-gray-500 dark:text-gray-400">
+            No data available yet.
+          </p>
         ) : (
           <BarChart series={series} unit={metaMeta?.unit} />
         )}
@@ -140,7 +188,9 @@ function SummaryCard({
 }) {
   return (
     <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-5 space-y-1">
-      <p className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">{label}</p>
+      <p className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+        {label}
+      </p>
       {loading ? (
         <div className="h-7 w-24 rounded bg-gray-200 dark:bg-gray-700 animate-pulse" />
       ) : (
@@ -252,7 +302,10 @@ function ChartSkeleton() {
 
 function ErrorBanner({ message }: { message: string }) {
   return (
-    <div role="alert" className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 p-4 text-sm text-red-700 dark:text-red-400">
+    <div
+      role="alert"
+      className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 p-4 text-sm text-red-700 dark:text-red-400"
+    >
       Failed to load data: {message}
     </div>
   );

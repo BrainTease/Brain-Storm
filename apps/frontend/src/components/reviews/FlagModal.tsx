@@ -20,7 +20,9 @@ interface FlagModalProps {
 }
 
 export function FlagModal({ onConfirm, onCancel }: FlagModalProps) {
-  const [reason, setReason] = useState<FlagReason>(createInitialDisputeState().reason as FlagReason);
+  const [reason, setReason] = useState<FlagReason>(
+    createInitialDisputeState().reason as FlagReason
+  );
   const [customReason, setCustomReason] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -67,11 +69,7 @@ export function FlagModal({ onConfirm, onCancel }: FlagModalProps) {
           )}
 
           <div className="flex gap-2 pt-1">
-            <Button
-              type="submit"
-              disabled={loading || !effectiveReason}
-              className="flex-1"
-            >
+            <Button type="submit" disabled={loading || !effectiveReason} className="flex-1">
               {loading ? 'Submitting…' : 'Submit Flag'}
             </Button>
             <Button

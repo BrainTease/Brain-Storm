@@ -6,7 +6,11 @@ const GOVERNANCE_BASE = '/governance';
 /**
  * Fetch all proposals with optional filtering and pagination
  */
-export async function fetchProposals(status?: string, page: number = 1, limit: number = 10): Promise<Proposal[]> {
+export async function fetchProposals(
+  status?: string,
+  page: number = 1,
+  limit: number = 10
+): Promise<Proposal[]> {
   const params = new URLSearchParams();
   if (status) params.append('status', status);
   params.append('page', page.toString());
@@ -69,9 +73,7 @@ export async function fetchProposalStats(proposalId: string): Promise<{
   quorumRequired: number;
   totalVoters: number;
 }> {
-  const response = await api.get(
-    `${GOVERNANCE_BASE}/proposals/${proposalId}/stats`
-  );
+  const response = await api.get(`${GOVERNANCE_BASE}/proposals/${proposalId}/stats`);
   return response.data;
 }
 

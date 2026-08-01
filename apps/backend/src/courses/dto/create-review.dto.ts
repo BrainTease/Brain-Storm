@@ -10,7 +10,10 @@ export class CreateReviewDto {
   @Max(5)
   rating: number;
 
-  @ApiPropertyOptional({ example: 'Excellent course! Very well structured.', description: 'Optional review comment' })
+  @ApiPropertyOptional({
+    example: 'Excellent course! Very well structured.',
+    description: 'Optional review comment',
+  })
   @IsOptional()
   @IsString()
   @Trim()

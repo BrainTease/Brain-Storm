@@ -77,7 +77,11 @@ export class DIContainer {
    * Get all registered services
    */
   getAll(): string[] {
-    const all = new Set([...this.services.keys(), ...this.factories.keys(), ...this.singletons.keys()]);
+    const all = new Set([
+      ...this.services.keys(),
+      ...this.factories.keys(),
+      ...this.singletons.keys(),
+    ]);
     return Array.from(all);
   }
 }

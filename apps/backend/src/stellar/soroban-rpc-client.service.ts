@@ -48,21 +48,16 @@ export class SorobanRpcClientService {
   readonly contractId: string;
 
   constructor(private readonly configService: ConfigService) {
-    const isTestnet =
-      this.configService.get<string>('stellar.network') !== 'mainnet';
+    const isTestnet = this.configService.get<string>('stellar.network') !== 'mainnet';
 
     this.networkPassphrase = isTestnet ? Networks.TESTNET : Networks.PUBLIC;
 
-    const rpcUrl =
-      this.configService.get<string>('stellar.sorobanRpcUrl') ?? '';
+    const rpcUrl = this.configService.get<string>('stellar.sorobanRpcUrl') ?? '';
     this.server = new SorobanRpc.Server(rpcUrl);
 
-    this.contractId =
-      this.configService.get<string>('stellar.contractId') ?? '';
-    this.analyticsContractId =
-      this.configService.get<string>('stellar.analyticsContractId') ?? '';
-    this.tokenContractId =
-      this.configService.get<string>('stellar.tokenContractId') ?? '';
+    this.contractId = this.configService.get<string>('stellar.contractId') ?? '';
+    this.analyticsContractId = this.configService.get<string>('stellar.analyticsContractId') ?? '';
+    this.tokenContractId = this.configService.get<string>('stellar.tokenContractId') ?? '';
   }
 
   // ── Account ───────────────────────────────────────────────────────────────
@@ -83,14 +78,8 @@ export class SorobanRpcClientService {
    *
    * Uses retryWithBackoff so transient RPC errors are handled transparently.
    */
-  async invokeContract(
-    contractId: string,
-    method: string,
-    args: any[],
-  ): Promise<string> {
-    return this.retryWithBackoff(() =>
-      this.invokeContractOnce(contractId, method, args),
-    );
+  async invokeContract(contractId: string, method: string, args: any[]): Promise<string> {
+    return this.retryWithBackoff(() => this.invokeContractOnce(contractId, method, args));
   }
 
   /**
@@ -100,7 +89,7 @@ export class SorobanRpcClientService {
   async simulateContract(
     contractId: string,
     method: string,
-    args: any[],
+    args: any[]
   ): Promise<SorobanRpc.Api.SimulateTransactionSuccessResponse> {
     const issuerKeypair = this.getIssuerKeypair();
     const source = await this.server.getAccount(issuerKeypair.publicKey());
@@ -114,7 +103,7 @@ export class SorobanRpcClientService {
           contract: contractId,
           function: method,
           args,
-        }),
+        })
       )
       .setTimeout(30)
       .build();
@@ -122,9 +111,7 @@ export class SorobanRpcClientService {
     const simResult = await this.server.simulateTransaction(tx);
 
     if (SorobanRpc.Api.isSimulationError(simResult)) {
-      throw new Error(
-        `Soroban simulation error for ${method}@${contractId}: ${simResult.error}`,
-      );
+      throw new Error(`Soroban simulation error for ${method}@${contractId}: ${simResult.error}`);
     }
 
     return simResult as SorobanRpc.Api.SimulateTransactionSuccessResponse;
@@ -138,17 +125,13 @@ export class SorobanRpcClientService {
   async recordProgress(
     studentPublicKey: string,
     courseId: string,
-    progressPct: number,
+    progressPct: number
   ): Promise<string> {
-    return this.invokeContract(
-      this.analyticsContractId || this.contractId,
-      'record_progress',
-      [
-        new Address(studentPublicKey).toScVal(),
-        nativeToScVal(courseId, { type: 'symbol' }),
-        nativeToScVal(progressPct, { type: 'i32' }),
-      ],
-    );
+    return this.invokeContract(this.analyticsContractId || this.contractId, 'record_progress', [
+      new Address(studentPublicKey).toScVal(),
+      nativeToScVal(courseId, { type: 'symbol' }),
+      nativeToScVal(progressPct, { type: 'i32' }),
+    ]);
   }
 
   /**
@@ -164,18 +147,13 @@ export class SorobanRpcClientService {
     ]);
 
     const retVal = simResult.result?.retval;
-    return retVal
-      ? BigInt(retVal.value() as unknown as bigint).toString()
-      : '0';
+    return retVal ? BigInt(retVal.value() as unknown as bigint).toString() : '0';
   }
 
   /**
    * Mint reward tokens to a recipient via the Token contract.
    */
-  async mintReward(
-    recipientPublicKey: string,
-    amount: number,
-  ): Promise<string> {
+  async mintReward(recipientPublicKey: string, amount: number): Promise<string> {
     if (!this.tokenContractId) {
       throw new Error('TOKEN_CONTRACT_ID not configured');
     }
@@ -190,7 +168,7 @@ export class SorobanRpcClientService {
   private async invokeContractOnce(
     contractId: string,
     method: string,
-    args: any[],
+    args: any[]
   ): Promise<string> {
     const issuerKeypair = this.getIssuerKeypair();
     const source = await this.server.getAccount(issuerKeypair.publicKey());
@@ -204,7 +182,7 @@ export class SorobanRpcClientService {
           contract: contractId,
           function: method,
           args,
-        }),
+        })
       )
       .setTimeout(30)
       .build();
@@ -216,17 +194,14 @@ export class SorobanRpcClientService {
     return result.hash;
   }
 
-  private async retryWithBackoff<T>(
-    fn: () => Promise<T>,
-    attempt = 1,
-  ): Promise<T> {
+  private async retryWithBackoff<T>(fn: () => Promise<T>, attempt = 1): Promise<T> {
     try {
       return await fn();
     } catch (error) {
       if (attempt >= MAX_RETRIES) throw error;
       const delay = BASE_DELAY_MS * Math.pow(2, attempt - 1);
       this.logger.warn(
-        `Soroban RPC attempt ${attempt} failed (${error.message}), retrying in ${delay}ms`,
+        `Soroban RPC attempt ${attempt} failed (${error.message}), retrying in ${delay}ms`
       );
       await new Promise((r) => setTimeout(r, delay));
       return this.retryWithBackoff(fn, attempt + 1);

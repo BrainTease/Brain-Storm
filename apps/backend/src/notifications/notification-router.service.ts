@@ -21,7 +21,7 @@ export class NotificationRouterService {
     @InjectRepository(NotificationPreference)
     private prefRepo: Repository<NotificationPreference>,
     private notificationsService: NotificationsService,
-    private mailService: MailService,
+    private mailService: MailService
   ) {}
 
   async route(payload: NotificationPayload): Promise<void> {
@@ -44,7 +44,7 @@ export class NotificationRouterService {
   private async dispatch(
     channel: NotificationChannel,
     payload: NotificationPayload,
-    pref: NotificationPreference | null,
+    pref: NotificationPreference | null
   ): Promise<void> {
     try {
       switch (channel) {

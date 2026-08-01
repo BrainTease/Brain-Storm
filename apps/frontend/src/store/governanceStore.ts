@@ -54,12 +54,13 @@ export const useGovernanceStore = create<GovernanceState>((set) => ({
     })),
   setLoading: (loading) => set({ loading }),
   setError: (error) => set({ error }),
-  reset: () => set({
-    proposals: [],
-    selectedProposal: null,
-    userVotingPower: null,
-    userVotes: {},
-    loading: false,
-    error: null,
-  }),
+  reset: () =>
+    set({
+      proposals: [],
+      selectedProposal: null,
+      userVotingPower: null,
+      userVotes: {},
+      loading: false,
+      error: null,
+    }),
 }));

@@ -23,7 +23,10 @@ export class ErrorHandlingMiddleware implements ExceptionFilter {
       context = exception.context || {};
       this.logger.warn(`AppError: ${code}`, { message, context });
     } else if (exception instanceof Error) {
-      this.logger.error('Unhandled exception', { error: exception.message, stack: exception.stack });
+      this.logger.error('Unhandled exception', {
+        error: exception.message,
+        stack: exception.stack,
+      });
     }
 
     response.status(statusCode).json({

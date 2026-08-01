@@ -6,9 +6,8 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "generate": "node ../../scripts/generate-sdk.js",
-    "test": "jest",
-    "test:coverage": "jest --coverage"
+    "type-check": "tsc --noEmit",
+    "generate": "node ../../scripts/generate-sdk.js"
   },
   "peerDependencies": {
     "axios": ">=1.0.0"

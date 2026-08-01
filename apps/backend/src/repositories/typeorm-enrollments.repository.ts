@@ -6,9 +6,7 @@ import { EnrollmentsRepository } from './enrollments-repository.interface';
 
 @Injectable()
 export class TypeOrmEnrollmentsRepository implements EnrollmentsRepository {
-  constructor(
-    @InjectRepository(Enrollment) private readonly repo: Repository<Enrollment>,
-  ) {}
+  constructor(@InjectRepository(Enrollment) private readonly repo: Repository<Enrollment>) {}
 
   findById(id: string): Promise<Enrollment | null> {
     return this.repo.findOne({ where: { id } });

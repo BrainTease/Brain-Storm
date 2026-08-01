@@ -92,10 +92,8 @@
     "helmet": "^8.0.0",
     "@nestjs/graphql": "^10.0.0",
     "graphql": "^16.7.1",
-    "apollo-server-express": "^3.10.4",
     "dataloader": "^2.2.2",
     "graphql-depth-limit": "^1.1.0",
-    "graphql-query-complexity": "^0.8.0",
     "compression": "^1.7.4"
   },
   "devDependencies": {

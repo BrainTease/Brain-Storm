@@ -31,7 +31,7 @@ export class RedisLeaderboardController {
   @ApiResponse({ status: 200, description: 'Paginated global leaderboard' })
   getGlobal(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
-    @Query('pageSize', new DefaultValuePipe(20), ParseIntPipe) pageSize: number,
+    @Query('pageSize', new DefaultValuePipe(20), ParseIntPipe) pageSize: number
   ) {
     return this.service.getPage('global', null, page, Math.min(pageSize, 100));
   }
@@ -45,7 +45,7 @@ export class RedisLeaderboardController {
   getCourse(
     @Param('courseId') courseId: string,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
-    @Query('pageSize', new DefaultValuePipe(20), ParseIntPipe) pageSize: number,
+    @Query('pageSize', new DefaultValuePipe(20), ParseIntPipe) pageSize: number
   ) {
     return this.service.getPage('course', courseId, page, Math.min(pageSize, 100));
   }
@@ -59,7 +59,7 @@ export class RedisLeaderboardController {
   getCohort(
     @Param('cohortId') cohortId: string,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
-    @Query('pageSize', new DefaultValuePipe(20), ParseIntPipe) pageSize: number,
+    @Query('pageSize', new DefaultValuePipe(20), ParseIntPipe) pageSize: number
   ) {
     return this.service.getPage('cohort', cohortId, page, Math.min(pageSize, 100));
   }
@@ -67,7 +67,9 @@ export class RedisLeaderboardController {
   @Get('me')
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
-  @ApiOperation({ summary: 'Get the authenticated user\'s rank and surrounding entries (around-me)' })
+  @ApiOperation({
+    summary: "Get the authenticated user's rank and surrounding entries (around-me)",
+  })
   @ApiQuery({ name: 'scope', required: false, enum: ['global', 'course', 'cohort'] })
   @ApiQuery({ name: 'scopeId', required: false, type: String })
   @ApiQuery({ name: 'radius', required: false, type: Number })
@@ -76,7 +78,7 @@ export class RedisLeaderboardController {
     @Request() req: any,
     @Query('scope') scope: 'global' | 'course' | 'cohort' = 'global',
     @Query('scopeId') scopeId: string | undefined,
-    @Query('radius', new DefaultValuePipe(5), ParseIntPipe) radius: number,
+    @Query('radius', new DefaultValuePipe(5), ParseIntPipe) radius: number
   ) {
     const userId: string = req.user.userId;
     const [userRank, nearby] = await Promise.all([
@@ -95,7 +97,7 @@ export class RedisLeaderboardController {
   getTop(
     @Query('scope') scope: 'global' | 'course' | 'cohort' = 'global',
     @Query('scopeId') scopeId: string | undefined,
-    @Query('limit', new DefaultValuePipe(50), ParseIntPipe) limit: number,
+    @Query('limit', new DefaultValuePipe(50), ParseIntPipe) limit: number
   ) {
     return this.service.getTopEntries(scope, scopeId ?? null, Math.min(limit, 100));
   }

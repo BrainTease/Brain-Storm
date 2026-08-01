@@ -46,7 +46,9 @@ describe('GlobalExceptionFilter', () => {
 
   it('includes details when AppError has them', () => {
     const details = { field: 'email' };
-    const { body } = run(new AppError(ErrorCode.VALIDATION_ERROR, 'Validation failed', 400, details));
+    const { body } = run(
+      new AppError(ErrorCode.VALIDATION_ERROR, 'Validation failed', 400, details)
+    );
     expect(body.details).toEqual(details);
   });
 

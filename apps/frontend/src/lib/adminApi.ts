@@ -38,12 +38,15 @@ export const adminApi = {
   getStats: () => api.get<PlatformStats>('/admin/stats').then((r) => r.data),
   getActivity: () => api.get<ActivityEvent[]>('/admin/activity').then((r) => r.data),
   getUsers: (page: number, search?: string) =>
-    api.get<{ users: AdminUser[]; total: number }>('/admin/users', { params: { page, search } }).then((r) => r.data),
+    api
+      .get<{ users: AdminUser[]; total: number }>('/admin/users', { params: { page, search } })
+      .then((r) => r.data),
   banUser: (userId: string) => api.post(`/admin/users/${userId}/ban`).then((r) => r.data),
   updateUserRole: (userId: string, role: AdminUser['role']) =>
     api.patch(`/admin/users/${userId}/role`, { role }).then((r) => r.data),
   getPendingCourses: () => api.get<PendingCourse[]>('/admin/courses/pending').then((r) => r.data),
-  approveCourse: (courseId: string) => api.post(`/admin/courses/${courseId}/approve`).then((r) => r.data),
+  approveCourse: (courseId: string) =>
+    api.post(`/admin/courses/${courseId}/approve`).then((r) => r.data),
   rejectCourse: (courseId: string, reason: string) =>
     api.post(`/admin/courses/${courseId}/reject`, { reason }).then((r) => r.data),
   getHealth: () => api.get<HealthStatus>('/health').then((r) => r.data),

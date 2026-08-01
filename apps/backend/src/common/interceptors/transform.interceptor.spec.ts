@@ -13,9 +13,7 @@ function buildCtx(statusCode = 200): ExecutionContext {
 /** Run the interceptor and collect the emitted value */
 async function run(interceptor: TransformInterceptor<any>, ctx: ExecutionContext, data: unknown) {
   return new Promise((resolve) => {
-    interceptor
-      .intercept(ctx, { handle: () => of(data) } as any)
-      .subscribe(resolve);
+    interceptor.intercept(ctx, { handle: () => of(data) } as any).subscribe(resolve);
   });
 }
 

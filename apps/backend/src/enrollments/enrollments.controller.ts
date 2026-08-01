@@ -45,13 +45,13 @@ export class EnrollmentsController {
   @ApiResponse({ status: 409, description: 'Already enrolled' })
   createEnrollment(
     @Body() body: { courseId: string; adminOverride?: boolean },
-    @Request() req: { user: { id: string; role: string } },
+    @Request() req: { user: { id: string; role: string } }
   ) {
     const isAdmin = req.user.role === 'admin';
     return this.enrollmentsService.enroll(
       req.user.id,
       body.courseId,
-      isAdmin && !!body.adminOverride,
+      isAdmin && !!body.adminOverride
     );
   }
 

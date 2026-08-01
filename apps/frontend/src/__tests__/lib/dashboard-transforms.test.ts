@@ -154,7 +154,9 @@ describe('computeStats', () => {
   });
 
   it('treats courses without a duration as zero hours', () => {
-    const noDuration: EnrolledCourse[] = [{ id: 'p-1', courseId: 'c-1', progressPct: 10, title: 'X' }];
+    const noDuration: EnrolledCourse[] = [
+      { id: 'p-1', courseId: 'c-1', progressPct: 10, title: 'X' },
+    ];
     expect(computeStats(noDuration, []).totalHours).toBe(0);
   });
 });

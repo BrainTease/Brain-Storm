@@ -26,8 +26,8 @@ export default function GovernancePage() {
   useEffect(() => {
     if (walletAddress) {
       setVotingPowerLoading(true);
-      Promise.all([loadVotingPower(walletAddress), loadUserVotes(walletAddress)]).finally(
-        () => setVotingPowerLoading(false)
+      Promise.all([loadVotingPower(walletAddress), loadUserVotes(walletAddress)]).finally(() =>
+        setVotingPowerLoading(false)
       );
     }
   }, [walletAddress, loadVotingPower, loadUserVotes]);
@@ -75,12 +75,7 @@ export default function GovernancePage() {
       </div>
 
       {/* Proposals List */}
-      <ProposalList
-        proposals={proposals}
-        loading={loading}
-        error={error}
-        filter={filter}
-      />
+      <ProposalList proposals={proposals} loading={loading} error={error} filter={filter} />
     </main>
   );
 }

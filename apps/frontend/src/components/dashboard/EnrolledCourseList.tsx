@@ -52,10 +52,7 @@ export function EnrolledCourseList({ courses, isLoading = false }: EnrolledCours
     return (
       <div className="rounded-xl border border-dashed border-gray-300 dark:border-gray-600 p-8 text-center text-gray-500 dark:text-gray-400">
         <p>No courses found.</p>
-        <Link
-          href="/courses"
-          className="mt-2 inline-block text-blue-600 hover:underline text-sm"
-        >
+        <Link href="/courses" className="mt-2 inline-block text-blue-600 hover:underline text-sm">
           Browse courses →
         </Link>
       </div>

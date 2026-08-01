@@ -37,8 +37,16 @@ export default function StudentDashboardPage() {
   const [sort, setSort] = useState<CourseSortKey>('progress');
   const [filter, setFilter] = useState<CourseFilterKey>('all');
 
-  const { user, tokenBalance, enrolledCourses, credentials, stats, isLoading, error, patchProgress } =
-    useDashboardData();
+  const {
+    user,
+    tokenBalance,
+    enrolledCourses,
+    credentials,
+    stats,
+    isLoading,
+    error,
+    patchProgress,
+  } = useDashboardData();
   const analytics = useLearningAnalytics(authUser?.id);
 
   const handleProgressUpdate = useCallback(

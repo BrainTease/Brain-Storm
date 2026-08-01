@@ -1,14 +1,27 @@
-import { Injectable, NotFoundException, Inject, forwardRef, Logger, OnModuleInit } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  Inject,
+  forwardRef,
+  Logger,
+  OnModuleInit,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThanOrEqual } from 'typeorm';
 import { Notification, NotificationType } from './notification.entity';
 import { NotificationPreference } from './notification-preference.entity';
-import { ScheduledNotification, ScheduledNotificationStatus } from './scheduled-notification.entity';
+import {
+  ScheduledNotification,
+  ScheduledNotificationStatus,
+} from './scheduled-notification.entity';
 import { NotificationsGateway } from './notifications.gateway';
 import { MailService } from '../mail/mail.service';
 
 // Notification templates
-const TEMPLATES: Record<NotificationType, (ctx: Record<string, string>) => { subject: string; html: string }> = {
+const TEMPLATES: Record<
+  NotificationType,
+  (ctx: Record<string, string>) => { subject: string; html: string }
+> = {
   [NotificationType.ENROLLMENT]: (ctx) => ({
     subject: `Enrolled in ${ctx.courseName}`,
     html: `<p>You have been enrolled in <strong>${ctx.courseName}</strong>. Start learning now!</p>`,
@@ -34,10 +47,11 @@ export class NotificationsService implements OnModuleInit {
   constructor(
     @InjectRepository(Notification) private repo: Repository<Notification>,
     @InjectRepository(NotificationPreference) private prefRepo: Repository<NotificationPreference>,
-    @InjectRepository(ScheduledNotification) private scheduledRepo: Repository<ScheduledNotification>,
+    @InjectRepository(ScheduledNotification)
+    private scheduledRepo: Repository<ScheduledNotification>,
     @Inject(forwardRef(() => NotificationsGateway))
     private gateway: NotificationsGateway,
-    private mailService: MailService,
+    private mailService: MailService
   ) {}
 
   onModuleInit() {
@@ -45,7 +59,12 @@ export class NotificationsService implements OnModuleInit {
     setInterval(() => this.processScheduled(), 60_000);
   }
 
-  async create(userId: string, type: NotificationType, message: string, emailContext?: { to: string; context: Record<string, string> }) {
+  async create(
+    userId: string,
+    type: NotificationType,
+    message: string,
+    emailContext?: { to: string; context: Record<string, string> }
+  ) {
     const prefs = await this.getOrCreatePrefs(userId);
 
     // In-app notification
@@ -59,7 +78,8 @@ export class NotificationsService implements OnModuleInit {
     if (prefs.email && emailContext && this.isTypeEnabled(prefs, type)) {
       const tpl = TEMPLATES[type]?.(emailContext.context);
       if (tpl) {
-        await this.mailService.sendMail({ to: emailContext.to, subject: tpl.subject, html: tpl.html })
+        await this.mailService
+          .sendMail({ to: emailContext.to, subject: tpl.subject, html: tpl.html })
           .catch((err) => this.logger.error(`Email notification failed: ${err.message}`));
       }
     }
@@ -97,7 +117,10 @@ export class NotificationsService implements OnModuleInit {
     return this.getOrCreatePrefs(userId);
   }
 
-  async updatePreferences(userId: string, updates: Partial<NotificationPreference>): Promise<NotificationPreference> {
+  async updatePreferences(
+    userId: string,
+    updates: Partial<NotificationPreference>
+  ): Promise<NotificationPreference> {
     const prefs = await this.getOrCreatePrefs(userId);
     Object.assign(prefs, updates);
     return this.prefRepo.save(prefs);
@@ -105,8 +128,15 @@ export class NotificationsService implements OnModuleInit {
 
   // ── Scheduling ───────────────────────────────────────────────────────────
 
-  async schedule(userId: string, type: NotificationType, message: string, scheduledAt: Date): Promise<ScheduledNotification> {
-    return this.scheduledRepo.save(this.scheduledRepo.create({ userId, type, message, scheduledAt }));
+  async schedule(
+    userId: string,
+    type: NotificationType,
+    message: string,
+    scheduledAt: Date
+  ): Promise<ScheduledNotification> {
+    return this.scheduledRepo.save(
+      this.scheduledRepo.create({ userId, type, message, scheduledAt })
+    );
   }
 
   async cancelScheduled(id: string): Promise<ScheduledNotification> {
@@ -118,7 +148,10 @@ export class NotificationsService implements OnModuleInit {
 
   async processScheduled(): Promise<void> {
     const due = await this.scheduledRepo.find({
-      where: { status: ScheduledNotificationStatus.PENDING, scheduledAt: LessThanOrEqual(new Date()) },
+      where: {
+        status: ScheduledNotificationStatus.PENDING,
+        scheduledAt: LessThanOrEqual(new Date()),
+      },
     });
     for (const item of due) {
       try {
@@ -134,18 +167,30 @@ export class NotificationsService implements OnModuleInit {
   // ── Event handlers ───────────────────────────────────────────────────────
 
   async onEnrollmentCreated(userId: string, courseName: string, userEmail?: string) {
-    return this.create(userId, NotificationType.ENROLLMENT, `You have been enrolled in ${courseName}`,
-      userEmail ? { to: userEmail, context: { courseName } } : undefined);
+    return this.create(
+      userId,
+      NotificationType.ENROLLMENT,
+      `You have been enrolled in ${courseName}`,
+      userEmail ? { to: userEmail, context: { courseName } } : undefined
+    );
   }
 
   async onCredentialIssued(userId: string, courseName: string, userEmail?: string) {
-    return this.create(userId, NotificationType.CREDENTIAL_ISSUED, `Your credential for ${courseName} has been issued!`,
-      userEmail ? { to: userEmail, context: { courseName } } : undefined);
+    return this.create(
+      userId,
+      NotificationType.CREDENTIAL_ISSUED,
+      `Your credential for ${courseName} has been issued!`,
+      userEmail ? { to: userEmail, context: { courseName } } : undefined
+    );
   }
 
   async onProgressCompleted(userId: string, courseName: string, userEmail?: string) {
-    return this.create(userId, NotificationType.COMPLETION, `Congratulations! You have completed ${courseName}`,
-      userEmail ? { to: userEmail, context: { courseName } } : undefined);
+    return this.create(
+      userId,
+      NotificationType.COMPLETION,
+      `Congratulations! You have completed ${courseName}`,
+      userEmail ? { to: userEmail, context: { courseName } } : undefined
+    );
   }
 
   // ── Helpers ──────────────────────────────────────────────────────────────

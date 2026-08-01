@@ -17,7 +17,7 @@ export class RecommendationsService {
     @InjectRepository(Course) private courseRepo: Repository<Course>,
     @InjectRepository(Progress) private progressRepo: Repository<Progress>,
     @Inject(CACHE_MANAGER) private cache: Cache,
-    @Optional() private readonly signalsService?: RecommendationSignalsService,
+    @Optional() private readonly signalsService?: RecommendationSignalsService
   ) {}
 
   async getRecommendations(userId: string, limit = 10): Promise<Course[]> {
@@ -135,7 +135,10 @@ export class RecommendationsService {
       .limit(limit + exclude.size)
       .getRawMany<{ courseId: string }>();
 
-    const ids = popular.map((p) => p.courseId).filter((id) => !exclude.has(id)).slice(0, limit);
+    const ids = popular
+      .map((p) => p.courseId)
+      .filter((id) => !exclude.has(id))
+      .slice(0, limit);
     if (!ids.length) return [];
     return this.courseRepo.findByIds(ids);
   }

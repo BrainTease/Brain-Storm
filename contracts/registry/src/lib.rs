@@ -425,7 +425,7 @@ impl RegistryContract {
 mod fuzz_tests;
 
 #[cfg(test)]
-mod test;
+mod tests;
 
 // #862 — lookup-function unit tests
 #[cfg(test)]

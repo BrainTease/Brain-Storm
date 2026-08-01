@@ -19,10 +19,7 @@ describe('CouponsService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        CouponsService,
-        { provide: getRepositoryToken(Coupon), useValue: mockRepo },
-      ],
+      providers: [CouponsService, { provide: getRepositoryToken(Coupon), useValue: mockRepo }],
     }).compile();
 
     service = module.get<CouponsService>(CouponsService);
@@ -63,7 +60,7 @@ describe('CouponsService', () => {
       await service.create(dtoWithExpiry);
 
       expect(mockRepo.create).toHaveBeenCalledWith(
-        expect.objectContaining({ expiresAt: new Date(expiresAt) }),
+        expect.objectContaining({ expiresAt: new Date(expiresAt) })
       );
     });
 
@@ -75,9 +72,7 @@ describe('CouponsService', () => {
 
       await service.create(dto);
 
-      expect(mockRepo.create).toHaveBeenCalledWith(
-        expect.objectContaining({ expiresAt: null }),
-      );
+      expect(mockRepo.create).toHaveBeenCalledWith(expect.objectContaining({ expiresAt: null }));
     });
 
     it('throws BadRequestException when coupon code already exists', async () => {
@@ -172,7 +167,10 @@ describe('CouponsService', () => {
       } as Coupon;
       mockRepo.findOne.mockResolvedValue(coupon);
 
-      await expect(service.validate(validateDto)).resolves.toMatchObject({ valid: true, discount: 15 });
+      await expect(service.validate(validateDto)).resolves.toMatchObject({
+        valid: true,
+        discount: 15,
+      });
     });
 
     it('does not check usage limit when maxUsage is null', async () => {

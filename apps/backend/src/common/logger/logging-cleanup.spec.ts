@@ -73,7 +73,7 @@ describe('Issue #802 – logging cleanup', () => {
       const content = fs.readFileSync(file, 'utf8');
       const lines = content
         .split('\n')
-        .filter((line) => !line.trimStart().startsWith('//'))  // ignore comments
+        .filter((line) => !line.trimStart().startsWith('//')) // ignore comments
         .filter((line) => CONSOLE_CALL_REGEX.test(line));
       expect(lines).toEqual([]);
     });

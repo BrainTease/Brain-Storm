@@ -92,7 +92,9 @@ describe('CourseCard', () => {
 
     it('gives the thumbnail a descriptive alt text', () => {
       render(<CourseCard {...props} imageUrl="/thumb.png" />);
-      expect(screen.getByRole('img', { name: `${props.title} course thumbnail` })).toBeInTheDocument();
+      expect(
+        screen.getByRole('img', { name: `${props.title} course thumbnail` })
+      ).toBeInTheDocument();
     });
 
     it('keeps the title link tabbable by default', () => {

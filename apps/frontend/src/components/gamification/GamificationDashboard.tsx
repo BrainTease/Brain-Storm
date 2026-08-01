@@ -13,7 +13,11 @@ export function GamificationDashboard({ userId }: GamificationDashboardProps) {
 
   if (isLoading) {
     return (
-      <div className="space-y-6 animate-pulse" aria-busy="true" aria-label="Loading gamification data">
+      <div
+        className="space-y-6 animate-pulse"
+        aria-busy="true"
+        aria-label="Loading gamification data"
+      >
         <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded-lg w-3/4" />
         <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded-lg" />
         <div className="grid grid-cols-3 gap-4">
@@ -29,10 +33,7 @@ export function GamificationDashboard({ userId }: GamificationDashboardProps) {
     return (
       <div className="text-center py-8 space-y-3">
         <p className="text-sm text-red-600">{error}</p>
-        <button
-          className="text-sm text-blue-600 underline"
-          onClick={refresh}
-        >
+        <button className="text-sm text-blue-600 underline" onClick={refresh}>
           Retry
         </button>
       </div>
@@ -52,9 +53,7 @@ export function GamificationDashboard({ userId }: GamificationDashboardProps) {
       />
 
       <section aria-label="Badges">
-        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-          Badges
-        </h3>
+        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Badges</h3>
         <BadgeGrid badges={data.badges} />
       </section>
     </div>

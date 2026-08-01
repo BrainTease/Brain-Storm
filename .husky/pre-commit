@@ -1,0 +1,7 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+npm run lint --workspace=apps/frontend -- --max-warnings=0
+npm run format:check --workspace=apps/frontend
+npm run lint --workspace=apps/backend -- --max-warnings=0
+npm run format:check --workspace=apps/backend

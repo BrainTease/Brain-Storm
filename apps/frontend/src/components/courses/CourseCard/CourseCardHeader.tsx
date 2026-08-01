@@ -30,7 +30,11 @@ function StarRating({ rating }: { rating: number }) {
   return (
     // role="img" makes the label authoritative: assistive tech reads the
     // rating instead of announcing five unlabelled decorative stars.
-    <span className="flex items-center gap-0.5" role="img" aria-label={`Rating: ${rating} out of 5`}>
+    <span
+      className="flex items-center gap-0.5"
+      role="img"
+      aria-label={`Rating: ${rating} out of 5`}
+    >
       {Array.from({ length: 5 }).map((_, i) => (
         <svg
           key={i}
@@ -83,9 +87,7 @@ export function CourseCardHeader({
       </h3>
 
       {/* Description */}
-      <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 flex-1">
-        {description}
-      </p>
+      <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 flex-1">{description}</p>
 
       {/* Instructor */}
       <p className="text-xs text-gray-600 dark:text-gray-400">

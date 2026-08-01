@@ -16,13 +16,18 @@ export class AddSurveys1720000000000 implements MigrationInterface {
           { name: 'courseId', type: 'uuid' },
           { name: 'title', type: 'varchar' },
           { name: 'description', type: 'text' },
-          { name: 'triggerType', type: 'enum', enum: ['completion', 'milestone'], default: "'completion'" },
+          {
+            name: 'triggerType',
+            type: 'enum',
+            enum: ['completion', 'milestone'],
+            default: "'completion'",
+          },
           { name: 'triggerMilestone', type: 'int', isNullable: true },
           { name: 'isActive', type: 'boolean', default: true },
           { name: 'createdAt', type: 'timestamp', default: 'CURRENT_TIMESTAMP' },
         ],
       }),
-      true,
+      true
     );
 
     await queryRunner.createForeignKey(
@@ -32,7 +37,7 @@ export class AddSurveys1720000000000 implements MigrationInterface {
         referencedColumnNames: ['id'],
         referencedTableName: 'courses',
         onDelete: 'CASCADE',
-      }),
+      })
     );
 
     await queryRunner.createTable(
@@ -54,7 +59,7 @@ export class AddSurveys1720000000000 implements MigrationInterface {
           { name: 'required', type: 'boolean', default: true },
         ],
       }),
-      true,
+      true
     );
 
     await queryRunner.createForeignKey(
@@ -64,7 +69,7 @@ export class AddSurveys1720000000000 implements MigrationInterface {
         referencedColumnNames: ['id'],
         referencedTableName: 'surveys',
         onDelete: 'CASCADE',
-      }),
+      })
     );
 
     await queryRunner.createTable(
@@ -84,7 +89,7 @@ export class AddSurveys1720000000000 implements MigrationInterface {
           { name: 'submittedAt', type: 'timestamp', default: 'CURRENT_TIMESTAMP' },
         ],
       }),
-      true,
+      true
     );
 
     await queryRunner.createForeignKey(
@@ -94,7 +99,7 @@ export class AddSurveys1720000000000 implements MigrationInterface {
         referencedColumnNames: ['id'],
         referencedTableName: 'surveys',
         onDelete: 'CASCADE',
-      }),
+      })
     );
 
     await queryRunner.createForeignKey(
@@ -104,7 +109,7 @@ export class AddSurveys1720000000000 implements MigrationInterface {
         referencedColumnNames: ['id'],
         referencedTableName: 'users',
         onDelete: 'CASCADE',
-      }),
+      })
     );
   }
 

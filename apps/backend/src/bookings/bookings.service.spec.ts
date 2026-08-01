@@ -39,7 +39,7 @@ describe('BookingService', () => {
       endTime: new Date('2030-01-01T10:00:00Z'),
       status: BookingStatus.PENDING,
       ...overrides,
-    } as BookingRequest);
+    }) as BookingRequest;
 
   beforeEach(async () => {
     mockBookingRepo.createQueryBuilder.mockReturnValue(qb);
@@ -69,7 +69,10 @@ describe('BookingService', () => {
       mockBookingRepo.save.mockResolvedValue(booking);
 
       const result = await service.createBooking(
-        'req-1', 'wrk-1', '2030-01-01T09:00:00Z', '2030-01-01T10:00:00Z',
+        'req-1',
+        'wrk-1',
+        '2030-01-01T09:00:00Z',
+        '2030-01-01T10:00:00Z'
       );
 
       expect(result).toEqual(booking);
@@ -80,7 +83,7 @@ describe('BookingService', () => {
       qb.getOne.mockResolvedValue(makeBooking({ status: BookingStatus.CONFIRMED }));
 
       await expect(
-        service.createBooking('req-1', 'wrk-1', '2030-01-01T09:00:00Z', '2030-01-01T10:00:00Z'),
+        service.createBooking('req-1', 'wrk-1', '2030-01-01T09:00:00Z', '2030-01-01T10:00:00Z')
       ).rejects.toThrow(ConflictException);
 
       expect(mockBookingRepo.save).not.toHaveBeenCalled();
@@ -118,7 +121,7 @@ describe('BookingService', () => {
       mockBookingRepo.findOne.mockResolvedValue(null);
 
       await expect(service.respondToBooking('wrk-1', 'missing', true)).rejects.toThrow(
-        NotFoundException,
+        NotFoundException
       );
     });
 
@@ -127,7 +130,7 @@ describe('BookingService', () => {
       mockBookingRepo.findOne.mockResolvedValue(booking);
 
       await expect(service.respondToBooking('wrk-1', 'b1', true)).rejects.toThrow(
-        ForbiddenException,
+        ForbiddenException
       );
     });
 
@@ -136,7 +139,7 @@ describe('BookingService', () => {
       mockBookingRepo.findOne.mockResolvedValue(booking);
 
       await expect(service.respondToBooking('wrk-1', 'b1', true)).rejects.toThrow(
-        ConflictException,
+        ConflictException
       );
     });
   });

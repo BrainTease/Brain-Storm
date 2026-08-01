@@ -50,83 +50,53 @@ describe('Auth module – barrel file structure (Issue #801)', () => {
 
 describe('Auth module – barrel re-export content', () => {
   it('guards/index.ts re-exports JwtAuthGuard', () => {
-    const content = fs.readFileSync(
-      path.join(AUTH_SRC, 'guards', 'index.ts'),
-      'utf8',
-    );
+    const content = fs.readFileSync(path.join(AUTH_SRC, 'guards', 'index.ts'), 'utf8');
     expect(content).toMatch(/JwtAuthGuard/);
   });
 
   it('guards/index.ts re-exports RolesGuard', () => {
-    const content = fs.readFileSync(
-      path.join(AUTH_SRC, 'guards', 'index.ts'),
-      'utf8',
-    );
+    const content = fs.readFileSync(path.join(AUTH_SRC, 'guards', 'index.ts'), 'utf8');
     expect(content).toMatch(/RolesGuard/);
   });
 
   it('guards/index.ts re-exports ApiKeyAuthGuard', () => {
-    const content = fs.readFileSync(
-      path.join(AUTH_SRC, 'guards', 'index.ts'),
-      'utf8',
-    );
+    const content = fs.readFileSync(path.join(AUTH_SRC, 'guards', 'index.ts'), 'utf8');
     expect(content).toMatch(/ApiKeyAuthGuard/);
   });
 
   it('guards/index.ts re-exports GoogleAuthGuard', () => {
-    const content = fs.readFileSync(
-      path.join(AUTH_SRC, 'guards', 'index.ts'),
-      'utf8',
-    );
+    const content = fs.readFileSync(path.join(AUTH_SRC, 'guards', 'index.ts'), 'utf8');
     expect(content).toMatch(/GoogleAuthGuard/);
   });
 
   it('strategies/index.ts re-exports JwtStrategy', () => {
-    const content = fs.readFileSync(
-      path.join(AUTH_SRC, 'strategies', 'index.ts'),
-      'utf8',
-    );
+    const content = fs.readFileSync(path.join(AUTH_SRC, 'strategies', 'index.ts'), 'utf8');
     expect(content).toMatch(/JwtStrategy/);
   });
 
   it('strategies/index.ts re-exports ApiKeyStrategy', () => {
-    const content = fs.readFileSync(
-      path.join(AUTH_SRC, 'strategies', 'index.ts'),
-      'utf8',
-    );
+    const content = fs.readFileSync(path.join(AUTH_SRC, 'strategies', 'index.ts'), 'utf8');
     expect(content).toMatch(/ApiKeyStrategy/);
   });
 
   it('strategies/index.ts re-exports GoogleStrategy', () => {
-    const content = fs.readFileSync(
-      path.join(AUTH_SRC, 'strategies', 'index.ts'),
-      'utf8',
-    );
+    const content = fs.readFileSync(path.join(AUTH_SRC, 'strategies', 'index.ts'), 'utf8');
     expect(content).toMatch(/GoogleStrategy/);
   });
 
   it('decorators/index.ts re-exports CurrentUser', () => {
-    const content = fs.readFileSync(
-      path.join(AUTH_SRC, 'decorators', 'index.ts'),
-      'utf8',
-    );
+    const content = fs.readFileSync(path.join(AUTH_SRC, 'decorators', 'index.ts'), 'utf8');
     expect(content).toMatch(/CurrentUser/);
   });
 
   it('decorators/index.ts re-exports Roles and ROLES_KEY', () => {
-    const content = fs.readFileSync(
-      path.join(AUTH_SRC, 'decorators', 'index.ts'),
-      'utf8',
-    );
+    const content = fs.readFileSync(path.join(AUTH_SRC, 'decorators', 'index.ts'), 'utf8');
     expect(content).toMatch(/Roles/);
     expect(content).toMatch(/ROLES_KEY/);
   });
 
   it('entities/index.ts re-exports all four entity types', () => {
-    const content = fs.readFileSync(
-      path.join(AUTH_SRC, 'entities', 'index.ts'),
-      'utf8',
-    );
+    const content = fs.readFileSync(path.join(AUTH_SRC, 'entities', 'index.ts'), 'utf8');
     expect(content).toMatch(/ApiKey/);
     expect(content).toMatch(/RefreshToken/);
     expect(content).toMatch(/PasswordResetToken/);
@@ -134,10 +104,7 @@ describe('Auth module – barrel re-export content', () => {
   });
 
   it('top-level index.ts re-exports AuthService and AuthModule', () => {
-    const content = fs.readFileSync(
-      path.join(AUTH_SRC, 'index.ts'),
-      'utf8',
-    );
+    const content = fs.readFileSync(path.join(AUTH_SRC, 'index.ts'), 'utf8');
     expect(content).toMatch(/AuthService/);
     expect(content).toMatch(/AuthModule/);
     expect(content).toMatch(/TokenBlacklistService/);
@@ -174,15 +141,12 @@ describe('RolesGuard', () => {
   let guard: typeof RolesGuard.prototype;
   let reflector: Reflector;
 
-  const makeCtx = (
-    user: any,
-    handler: Function = () => {},
-  ): ExecutionContext =>
+  const makeCtx = (user: any, handler: Function = () => {}): ExecutionContext =>
     ({
       getHandler: () => handler,
       getClass: () => () => {},
       switchToHttp: () => ({ getRequest: () => ({ user }) }),
-    } as unknown as ExecutionContext);
+    }) as unknown as ExecutionContext;
 
   beforeEach(() => {
     reflector = new Reflector();

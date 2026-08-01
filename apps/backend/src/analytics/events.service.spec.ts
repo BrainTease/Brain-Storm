@@ -129,9 +129,19 @@ describe('EventsService — consent gating', () => {
 
 describe('EventsService — PII scrubbing before storage', () => {
   const PII_FIELDS = [
-    'email', 'name', 'fullName', 'firstName', 'lastName',
-    'phone', 'address', 'dateOfBirth', 'ssn', 'password',
-    'secret', 'token', 'privateKey',
+    'email',
+    'name',
+    'fullName',
+    'firstName',
+    'lastName',
+    'phone',
+    'address',
+    'dateOfBirth',
+    'ssn',
+    'password',
+    'secret',
+    'token',
+    'privateKey',
   ];
 
   it.each(PII_FIELDS)('strips the PII field "%s" from the persisted payload', async (field) => {
@@ -207,9 +217,7 @@ describe('EventsService — error resilience', () => {
     const { service, repo } = buildService();
     repo.save.mockRejectedValue(new Error('DB connection lost'));
 
-    await expect(
-      service.handleEvent('auth_login', { courseId: 'c1' }),
-    ).resolves.not.toThrow();
+    await expect(service.handleEvent('auth_login', { courseId: 'c1' })).resolves.not.toThrow();
   });
 });
 
@@ -225,10 +233,9 @@ describe('EventsService.findEvents', () => {
 
     const [events, total] = await service.findEvents({ eventType: 'auth_login' });
 
-    expect(qb.andWhere).toHaveBeenCalledWith(
-      'event.eventType = :eventType',
-      { eventType: 'auth_login' },
-    );
+    expect(qb.andWhere).toHaveBeenCalledWith('event.eventType = :eventType', {
+      eventType: 'auth_login',
+    });
     expect(total).toBe(1);
     expect(events[0].eventType).toBe('auth_login');
   });
@@ -240,10 +247,7 @@ describe('EventsService.findEvents', () => {
 
     await service.findEvents({ userId: 'u42' });
 
-    expect(qb.andWhere).toHaveBeenCalledWith(
-      'event.userId = :userId',
-      { userId: 'u42' },
-    );
+    expect(qb.andWhere).toHaveBeenCalledWith('event.userId = :userId', { userId: 'u42' });
   });
 
   it('applies courseId filter', async () => {
@@ -253,10 +257,7 @@ describe('EventsService.findEvents', () => {
 
     await service.findEvents({ courseId: 'c99' });
 
-    expect(qb.andWhere).toHaveBeenCalledWith(
-      'event.courseId = :courseId',
-      { courseId: 'c99' },
-    );
+    expect(qb.andWhere).toHaveBeenCalledWith('event.courseId = :courseId', { courseId: 'c99' });
   });
 
   it('applies startDate filter', async () => {
@@ -267,10 +268,7 @@ describe('EventsService.findEvents', () => {
 
     await service.findEvents({ startDate });
 
-    expect(qb.andWhere).toHaveBeenCalledWith(
-      'event.timestamp >= :startDate',
-      { startDate },
-    );
+    expect(qb.andWhere).toHaveBeenCalledWith('event.timestamp >= :startDate', { startDate });
   });
 
   it('applies endDate filter', async () => {
@@ -281,10 +279,7 @@ describe('EventsService.findEvents', () => {
 
     await service.findEvents({ endDate });
 
-    expect(qb.andWhere).toHaveBeenCalledWith(
-      'event.timestamp <= :endDate',
-      { endDate },
-    );
+    expect(qb.andWhere).toHaveBeenCalledWith('event.timestamp <= :endDate', { endDate });
   });
 
   it('applies limit and offset for pagination', async () => {

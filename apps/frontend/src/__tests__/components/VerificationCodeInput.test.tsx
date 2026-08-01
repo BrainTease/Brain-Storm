@@ -13,9 +13,7 @@ describe('VerificationCodeInput', () => {
     const user = userEvent.setup();
     const onComplete = vi.fn();
     const onChange = vi.fn();
-    render(
-      <VerificationCodeInput length={4} onChange={onChange} onComplete={onComplete} />,
-    );
+    render(<VerificationCodeInput length={4} onChange={onChange} onComplete={onComplete} />);
     const inputs = screen.getAllByRole('textbox');
     await user.type(inputs[0], '1');
     await user.type(inputs[1], '2');
