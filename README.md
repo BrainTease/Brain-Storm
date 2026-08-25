@@ -296,6 +296,7 @@ GitHub Actions workflows in `.github/workflows/` run on every push and PR:
 - **[docs/adr/README.md](./docs/adr/README.md)** — Architecture Decision Records, including why `contracts/` is split into 19 separate crates instead of a monolith
 - **[docs/contract-interfaces.md](./docs/contract-interfaces.md)** — public interface reference for every Soroban contract, cross-contract call conventions, and worked examples
 - **[docs/api/README.md](./docs/api/README.md)** — REST API route reference and how to regenerate the OpenAPI spec
+- **[docs/api/sdk/README.md](./docs/api/sdk/README.md)** — generated API reference for `@brain-storm/sdk` public surface (client classes, methods, DTOs, and error types)
 
 ## Contributing
 
