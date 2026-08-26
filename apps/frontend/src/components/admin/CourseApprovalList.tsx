@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { adminApi, PendingCourse } from '@/lib/adminApi';
 import { Button } from '@/components/ui/Button';
+import { formatDateShort } from '@/lib/date-utils';
 
 export function CourseApprovalList() {
   const [courses, setCourses] = useState<PendingCourse[]>([]);
@@ -50,7 +51,7 @@ export function CourseApprovalList() {
             <p className="font-medium">{course.title}</p>
             <p className="text-sm text-gray-500">
               {course.instructorName} · Submitted{' '}
-              {new Date(course.submittedAt).toLocaleDateString()}
+              {formatDateShort(course.submittedAt)}
             </p>
           </div>
           <div className="flex gap-2">

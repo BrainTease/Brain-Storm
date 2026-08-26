@@ -5,6 +5,7 @@
 
 import React from 'react';
 import { Badge } from './Badge';
+import { formatDateShort } from '@/lib/date-utils';
 
 /**
  * Badge interface for consistency across the application
@@ -86,7 +87,7 @@ export const BadgeDisplay: React.FC<BadgeDisplayProps> = ({
               </p>
               {unlocked && badge.unlockedAt && (
                 <time dateTime={badge.unlockedAt} className="text-[10px] text-gray-400">
-                  {new Date(badge.unlockedAt).toLocaleDateString()}
+                  {formatDateShort(badge.unlockedAt)}
                 </time>
               )}
             </div>

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { useWallet } from '@/lib/wallet';
+import { formatXlm } from '@/lib/amount-utils';
 
 interface WalletMenuProps {
   onClose: () => void;
@@ -65,13 +66,13 @@ export function WalletMenu({ onClose }: WalletMenuProps) {
             </button>
           </p>
         ) : (
-          <p className="text-sm font-medium">{balance ?? '—'} XLM</p>
+          <p className="text-sm font-medium">{formatXlm(balance)} XLM</p>
         )}
       </div>
 
       <div>
         <p className="text-xs text-gray-500 mb-0.5">BST Balance</p>
-        <p className="text-sm font-medium">{bstBalance ?? '—'} BST</p>
+        <p className="text-sm font-medium">{formatXlm(bstBalance)} BST</p>
       </div>
 
       <div className="flex gap-2 pt-2 border-t border-gray-100 dark:border-gray-700">

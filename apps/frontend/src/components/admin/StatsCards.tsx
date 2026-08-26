@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { adminApi, PlatformStats, ActivityEvent } from '@/lib/adminApi';
+import { formatDateShort } from '@/lib/date-utils';
 
 function SkeletonCard() {
   return (
@@ -78,7 +79,7 @@ export function StatsCards() {
           {activity.map((e) => (
             <li key={e.id} className="text-sm text-gray-600 flex justify-between">
               <span>{e.description}</span>
-              <span className="text-gray-400">{new Date(e.createdAt).toLocaleDateString()}</span>
+              <span className="text-gray-400">{formatDateShort(e.createdAt)}</span>
             </li>
           ))}
         </ul>

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import useSWR from 'swr';
+import { formatDateShort } from '@/lib/date-utils';
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -199,7 +200,7 @@ export function RewardsDisplay() {
                   </div>
                 )}
                 <div className="text-xs text-gray-500 dark:text-gray-500">
-                  {new Date(reward.date).toLocaleDateString()}
+                  {formatDateShort(reward.date)}
                 </div>
               </div>
 

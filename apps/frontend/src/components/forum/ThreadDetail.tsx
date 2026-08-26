@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Post, Reply } from '@/lib/forumApi';
+import { formatDateTime } from '@/lib/date-utils';
 import { useAuthStore } from '@/store/auth.store';
 import { useCreateReply, useFlagContent, useDeletePost } from '@/hooks/useForum';
 import { MarkdownEditor } from './MarkdownEditor';
@@ -91,8 +92,7 @@ export function ThreadDetail({
               <div>
                 <p className="font-semibold text-gray-900">{post.user?.username || 'Unknown'}</p>
                 <p className="text-xs text-gray-500">
-                  {new Date(post.createdAt).toLocaleDateString()} at{' '}
-                  {new Date(post.createdAt).toLocaleTimeString()}
+                  {formatDateTime(post.createdAt)}
                 </p>
               </div>
             </div>

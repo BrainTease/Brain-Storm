@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import api from '@/lib/api';
 import { ProgressBar } from '@/components/ui/ProgressBar';
+import { formatDateShort, formatMonthYear } from '@/lib/date-utils';
 import { Badge } from '@/components/ui/Badge';
 import { Spinner } from '@/components/ui/Spinner';
 
@@ -117,7 +118,7 @@ export default function LearningStats({ userId }: Props) {
                 {stats.achievements.map((a) => (
                   <div
                     key={a.id}
-                    title={`${a.description} — earned ${new Date(a.earnedAt).toLocaleDateString()}`}
+                    title={`${a.description} — earned ${formatDateShort(a.earnedAt)}`}
                     className="flex items-center gap-1.5 rounded-full bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 px-3 py-1"
                   >
                     <span aria-hidden="true">{a.icon}</span>
@@ -125,10 +126,7 @@ export default function LearningStats({ userId }: Props) {
                       {a.title}
                     </span>
                     <Badge variant="warning" className="text-xs py-0 px-1.5">
-                      {new Date(a.earnedAt).toLocaleDateString(undefined, {
-                        month: 'short',
-                        year: 'numeric',
-                      })}
+                      {formatMonthYear(a.earnedAt)}
                     </Badge>
                   </div>
                 ))}

@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useWallet } from '@/lib/wallet';
+import { formatXlm } from '@/lib/amount-utils';
 import { WalletMenu } from './WalletMenu';
 
 export interface AccountBadgeProps {
@@ -62,7 +63,7 @@ export function AccountBadge({
 
         {showBalance && balance !== null && (
           <span className="text-xs text-gray-500 dark:text-gray-400 border-l border-gray-200 dark:border-gray-700 pl-2">
-            {balance} XLM
+            {formatXlm(balance)} XLM
           </span>
         )}
       </button>
