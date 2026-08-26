@@ -23,6 +23,7 @@ import { PrerequisitesController } from './prerequisites.controller';
 import { CourseSchedulerService } from './course-scheduler.service';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { CacheManagementModule } from '../cache/cache-management.module';
+import { RepositoriesModule } from '../repositories';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { CacheManagementModule } from '../cache/cache-management.module';
     SearchModule,
     NotificationsModule,
     CacheManagementModule,
+    RepositoriesModule,
   ],
   providers: [
     CoursesService,

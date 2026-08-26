@@ -11,17 +11,24 @@ import { Request, Response } from 'express';
 import { AppError } from '../errors/app.error';
 
 /**
- * GlobalExceptionFilter — the single, canonical exception filter (#799).
+ * GlobalExceptionFilter — the single, canonical exception filter (#799, #974).
  *
  * Handles every exception type in one place so the response envelope is
- * always consistent:
+ * always consistent and matches the platform-standard error schema:
+ *
+ *   { code, message, details }
+ *
+ * `details` is always present (an empty object when there is no extra
+ * context) so clients never have to branch on whether the field exists.
+ * A few extra, additive fields are kept for backwards compatibility and
+ * observability:
  *
  *   {
- *     statusCode: number,      // HTTP status
  *     code:       string,      // machine-readable error code
  *     message:    string,      // human-readable message
+ *     details:    object,      // extra context from AppError subclasses (or {})
+ *     statusCode: number,      // HTTP status
  *     errors?:    any,         // validation constraint list (BadRequest only)
- *     details?:   object,      // extra context from AppError subclasses
  *     timestamp:  string,      // ISO-8601
  *     path:       string,      // request URL
  *   }
@@ -50,14 +57,14 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     let code = 'INTERNAL_ERROR';
     let message = 'Internal server error';
     let errors: unknown = undefined;
-    let details: Record<string, unknown> | undefined = undefined;
+    let details: Record<string, unknown> = {};
 
     // ── 1. Business / domain errors ─────────────────────────────────────────
     if (exception instanceof AppError) {
       statusCode = exception.statusCode;
       code = exception.code;
       message = exception.message;
-      details = exception.details;
+      details = exception.details ?? {};
       this.logger.warn(`AppError [${code}]: ${message}`, exception.stack);
 
       // ── 2. Validation errors (BadRequestException from class-validator) ──────
@@ -100,15 +107,15 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     }
 
     const body: Record<string, unknown> = {
-      statusCode,
       code,
       message,
+      details,
+      statusCode,
       timestamp: new Date().toISOString(),
       path: request.url,
     };
 
     if (errors !== undefined) body['errors'] = errors;
-    if (details !== undefined) body['details'] = details;
 
     response.status(statusCode).json(body);
   }

@@ -4,6 +4,8 @@ import { DataSource } from 'typeorm';
 import { UsersService } from './users.service';
 import { User } from './user.entity';
 import { setupTestDatabase, teardownTestDatabase } from '../test/integration-test.setup';
+import { USERS_REPOSITORY_TOKEN } from '../repositories';
+import { TypeOrmUsersRepository } from '../repositories/typeorm-users.repository';
 
 describe('UsersService (Integration)', () => {
   let service: UsersService;
@@ -15,7 +17,10 @@ describe('UsersService (Integration)', () => {
 
     module = await Test.createTestingModule({
       imports: [TypeOrmModule.forFeature([User])],
-      providers: [UsersService],
+      providers: [
+        UsersService,
+        { provide: USERS_REPOSITORY_TOKEN, useClass: TypeOrmUsersRepository },
+      ],
     })
       .overrideProvider('DataSource')
       .useValue(dataSource)

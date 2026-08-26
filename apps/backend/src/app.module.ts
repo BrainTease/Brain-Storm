@@ -1,7 +1,6 @@
 import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { ShutdownMiddleware } from './health/shutdown.middleware';
-import { CacheHeadersMiddleware } from './common/middleware/cache-headers.middleware';
+import { ShutdownMiddleware, CacheHeadersMiddleware } from './middleware';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CacheModule } from '@nestjs/cache-manager';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';

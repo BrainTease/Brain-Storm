@@ -13,15 +13,13 @@
  * The `CACHE_MANAGER` injection token is no longer used in this class.
  */
 
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Inject, Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { Course, CourseStatus } from './course.entity';
 import { CourseQueryDto } from './dto/course-query.dto';
 import { SearchService } from '../search/search.service';
 import { PaginatedResponseDto } from '../common/dto/api-response.dto';
-import { QueryOptimizer } from '../common/database/query-optimizer';
 import { CacheService } from '../cache/cache.service';
+import { COURSES_REPOSITORY_TOKEN, CoursesRepository } from '../repositories';
 
 /** Base cache key for all-courses queries. */
 const CACHE_KEY = 'courses:all';
@@ -33,7 +31,7 @@ const CACHE_TTL = 60;
 @Injectable()
 export class CoursesService {
   constructor(
-    @InjectRepository(Course) private repo: Repository<Course>,
+    @Inject(COURSES_REPOSITORY_TOKEN) private readonly coursesRepository: CoursesRepository,
     private readonly cacheService: CacheService,
     private readonly searchService: SearchService
   ) {}
@@ -44,38 +42,11 @@ export class CoursesService {
 
     const result = await this.cacheService.getOrSet(
       cacheKey,
-      () => this.queryCourses(query),
+      () => this.coursesRepository.findAll(query),
       CACHE_TTL
     );
 
     return new PaginatedResponseDto(result.data, 200, result.page, result.limit, result.total);
-  }
-
-  private async queryCourses(query: CourseQueryDto = {}) {
-    const { search, level, page = 1, limit = 20 } = query;
-
-    let qb = this.repo
-      .createQueryBuilder('course')
-      .where('course.isPublished = :isPublished', { isPublished: true })
-      .andWhere('course.isDeleted = :isDeleted', { isDeleted: false });
-
-    if (search) {
-      qb = qb.andWhere('(course.title ILIKE :search OR course.description ILIKE :search)', {
-        search: `%${search}%`,
-      });
-    }
-
-    if (level) {
-      qb = qb.andWhere('course.level = :level', { level });
-    }
-
-    qb = QueryOptimizer.eagerLoadRelations(qb, ['modules', 'reviews']);
-    const total = await qb.clone().getCount();
-    qb = QueryOptimizer.paginate(qb, page, limit);
-    qb = QueryOptimizer.sort(qb, 'createdAt', 'DESC');
-    const courses = await qb.getMany();
-
-    return { data: courses, total, page, limit };
   }
 
   async findOne(id: string): Promise<Course> {
@@ -83,7 +54,7 @@ export class CoursesService {
     return this.cacheService.getOrSet<Course>(
       cacheKey,
       async () => {
-        const course = await this.repo.findOne({ where: { id, isDeleted: false } });
+        const course = await this.coursesRepository.findById(id);
         if (!course) throw new NotFoundException('Course not found');
         return course;
       },
@@ -92,7 +63,7 @@ export class CoursesService {
   }
 
   async create(data: Partial<Course>) {
-    const course = await this.repo.save(this.repo.create(data));
+    const course = await this.coursesRepository.save(data);
     await this.invalidateCache();
     await this.searchService.indexCourse(course).catch(() => {});
     return course;
@@ -100,7 +71,7 @@ export class CoursesService {
 
   async update(id: string, data: Partial<Course>) {
     const course = await this.findOne(id);
-    const updated = await this.repo.save({ ...course, ...data });
+    const updated = await this.coursesRepository.save({ ...course, ...data });
     await this.invalidateCache(id);
     await this.searchService.indexCourse(updated).catch(() => {});
     return updated;
@@ -108,7 +79,7 @@ export class CoursesService {
 
   async delete(id: string) {
     const course = await this.findOne(id);
-    const removed = await this.repo.remove(course);
+    const removed = await this.coursesRepository.remove(course);
     await this.invalidateCache(id);
     await this.searchService.deleteFromIndex('courses', id).catch(() => {});
     return removed;
@@ -124,7 +95,7 @@ export class CoursesService {
       throw new BadRequestException('scheduledAt must be in the future');
     }
     const course = await this.findOne(id);
-    return this.repo.save({
+    return this.coursesRepository.save({
       ...course,
       status: CourseStatus.SCHEDULED,
       scheduledAt,
@@ -135,7 +106,7 @@ export class CoursesService {
   async publishNow(id: string): Promise<Course> {
     const course = await this.findOne(id);
     const now = new Date();
-    return this.repo.save({
+    return this.coursesRepository.save({
       ...course,
       status: CourseStatus.PUBLISHED,
       isPublished: true,

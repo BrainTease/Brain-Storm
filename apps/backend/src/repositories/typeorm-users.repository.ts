@@ -16,6 +16,18 @@ export class TypeOrmUsersRepository implements UsersRepository {
     return this.repo.findOne({ where: { verificationToken: hash } });
   }
 
+  findByStellarPublicKey(stellarPublicKey: string): Promise<User | null> {
+    return this.repo.findOne({ where: { stellarPublicKey } });
+  }
+
+  findByReferralCode(code: string): Promise<User | null> {
+    return this.repo.findOne({ where: { referralCode: code } });
+  }
+
+  countReferredBy(userId: string): Promise<number> {
+    return this.repo.count({ where: { referredBy: userId } });
+  }
+
   findById(id: string): Promise<User | null> {
     return this.repo.findOne({ where: { id } });
   }
@@ -42,21 +54,7 @@ export class TypeOrmUsersRepository implements UsersRepository {
   ) {
     const { page = 1, limit = 10, role, isVerified, search } = options;
 
-    const query = this.repo
-      .createQueryBuilder('user')
-      .select([
-        'user.id',
-        'user.email',
-        'user.username',
-        'user.avatar',
-        'user.role',
-        'user.isVerified',
-        'user.isBanned',
-        'user.stellarPublicKey',
-        'user.referralCode',
-        'user.createdAt',
-        'user.updatedAt',
-      ]);
+    const query = this.repo.createQueryBuilder('user');
 
     if (role) {
       query.andWhere('user.role = :role', { role });
@@ -67,9 +65,7 @@ export class TypeOrmUsersRepository implements UsersRepository {
     }
 
     if (search) {
-      query.andWhere('(user.email ILIKE :search OR user.username ILIKE :search)', {
-        search: `%${search}%`,
-      });
+      query.andWhere('user.email ILIKE :search', { search: `%${search}%` });
     }
 
     query.andWhere('user.deletedAt IS NULL');

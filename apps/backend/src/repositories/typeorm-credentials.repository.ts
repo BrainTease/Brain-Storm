@@ -50,4 +50,12 @@ export class TypeOrmCredentialsRepository implements CredentialsRepository {
   findByTxHash(txHash: string): Promise<Credential | null> {
     return this.repo.findOne({ where: { txHash } });
   }
+
+  findByIdWithRelations(id: string): Promise<Credential | null> {
+    return this.repo.findOne({ where: { id }, relations: ['user', 'course'] });
+  }
+
+  findByTxHashWithRelations(txHash: string): Promise<Credential | null> {
+    return this.repo.findOne({ where: { txHash }, relations: ['user', 'course'] });
+  }
 }
