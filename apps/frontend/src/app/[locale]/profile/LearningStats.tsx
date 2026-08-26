@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import api from '@/lib/api';
 import { ProgressBar } from '@/components/ui/ProgressBar';
-import { Badge } from '@/components/ui/Badge';
+import { BadgeDisplay } from '@/components/ui/BadgeDisplay';
 import { Spinner } from '@/components/ui/Spinner';
 
 interface Achievement {
@@ -113,26 +113,16 @@ export default function LearningStats({ userId }: Props) {
               <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                 🏆 Achievements
               </h3>
-              <div className="flex flex-wrap gap-2">
-                {stats.achievements.map((a) => (
-                  <div
-                    key={a.id}
-                    title={`${a.description} — earned ${new Date(a.earnedAt).toLocaleDateString()}`}
-                    className="flex items-center gap-1.5 rounded-full bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 px-3 py-1"
-                  >
-                    <span aria-hidden="true">{a.icon}</span>
-                    <span className="text-xs font-medium text-yellow-800 dark:text-yellow-300">
-                      {a.title}
-                    </span>
-                    <Badge variant="warning" className="text-xs py-0 px-1.5">
-                      {new Date(a.earnedAt).toLocaleDateString(undefined, {
-                        month: 'short',
-                        year: 'numeric',
-                      })}
-                    </Badge>
-                  </div>
-                ))}
-              </div>
+              <BadgeDisplay
+                variant="pill"
+                badges={stats.achievements.map((a) => ({
+                  id: a.id,
+                  name: a.title,
+                  description: `${a.description} — earned ${new Date(a.earnedAt).toLocaleDateString()}`,
+                  icon: a.icon,
+                  unlockedAt: a.earnedAt,
+                }))}
+              />
             </div>
           )}
         </>
