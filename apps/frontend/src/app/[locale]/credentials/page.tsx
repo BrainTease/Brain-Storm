@@ -3,41 +3,23 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
-import api from '@/lib/api';
+import { useCertificateData, type CertificateRecord } from '@/hooks/useCertificateData';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Spinner } from '@/components/ui/Spinner';
 import { CertificateViewer } from '@/components/courses/CertificateViewer';
 
-interface Credential {
-  id: string;
-  courseId: string;
-  courseName: string;
-  issuedAt: string;
-  expiresAt?: string;
-  txHash: string;
-  studentName?: string;
-  instructorName?: string;
-  description?: string;
-}
-
 export default function CredentialsPage() {
   const { user, isAuthenticated } = useAuth();
   const router = useRouter();
-  const [credentials, setCredentials] = useState<Credential[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedCert, setSelectedCert] = useState<Credential | null>(null);
+  const { certificates: credentials, loading } = useCertificateData(user?.id);
+  const [selectedCert, setSelectedCert] = useState<CertificateRecord | null>(null);
 
   useEffect(() => {
     if (!isAuthenticated) {
       router.replace('/auth/login');
-      return;
     }
-    api
-      .get<Credential[]>(`/credentials/${user!.id}`)
-      .then((r) => setCredentials(r.data))
-      .finally(() => setLoading(false));
-  }, [isAuthenticated, user, router]);
+  }, [isAuthenticated, router]);
 
   if (!isAuthenticated) return null;
 
