@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { memo, useMemo } from 'react';
 import {
   BarChart,
   Bar,
@@ -51,7 +51,7 @@ function getScoreColor(score: number): string {
   return CHART_COLORS.poor; // Purple - needs improvement
 }
 
-export function QuizScoreChart({
+function QuizScoreChartBase({
   data,
   isLoading = false,
   error = null,
@@ -215,3 +215,6 @@ export function QuizScoreChart({
     </Card>
   );
 }
+
+export const QuizScoreChart = memo(QuizScoreChartBase);
+QuizScoreChart.displayName = 'QuizScoreChart';

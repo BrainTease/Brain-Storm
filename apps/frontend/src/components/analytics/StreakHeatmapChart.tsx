@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { memo, useMemo } from 'react';
 import { Card } from '@/components/ui/Card';
 import { CHART_COLORS } from '@/lib/chart-colors';
 
@@ -47,7 +47,7 @@ function getHeatmapColor(value: number, maxValue: number, isDarkMode: boolean): 
   return isDarkMode ? '#4B5563' : '#E5EDF5'; // Very light blue
 }
 
-export function StreakHeatmapChart({
+function StreakHeatmapChartBase({
   data,
   isLoading = false,
   error = null,
@@ -208,3 +208,6 @@ export function StreakHeatmapChart({
     </Card>
   );
 }
+
+export const StreakHeatmapChart = memo(StreakHeatmapChartBase);
+StreakHeatmapChart.displayName = 'StreakHeatmapChart';

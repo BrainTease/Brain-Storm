@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { memo, useMemo } from 'react';
 import {
   LineChart,
   Line,
@@ -41,7 +41,13 @@ function ChartSkeleton() {
   );
 }
 
-export function ProgressOverTimeChart({
+function ProgressOverTimeChartBase({
+  data,
+  isLoading = false,
+  error = null,
+  isDarkMode = false,
+  title = 'Learning Progress Over Time',
+}: ProgressOverTimeChartProps) {
   data,
   isLoading = false,
   error = null,
@@ -182,3 +188,6 @@ export function ProgressOverTimeChart({
     </Card>
   );
 }
+
+export const ProgressOverTimeChart = memo(ProgressOverTimeChartBase);
+ProgressOverTimeChart.displayName = 'ProgressOverTimeChart';

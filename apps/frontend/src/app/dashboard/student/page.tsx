@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, memo } from 'react';
 import dynamic from 'next/dynamic';
 import { useTheme } from 'next-themes';
 import { useAuth } from '@/lib/auth-context';
@@ -199,6 +199,55 @@ function generateMockQuizData(setData: (data: QuizScoreDataPoint[]) => void) {
   setData(data.reverse());
 }
 
+// ─── Memoized AnalyticsSection ────────────────────────────────────────────────
+// Extracted so that sort/filter/token state changes in the parent do not
+// cause the three heavy chart components to re-render.
+
+interface AnalyticsSectionProps {
+  progressData: import('@/components/analytics').ProgressDataPoint[];
+  streakData: import('@/components/analytics').StreakData[];
+  quizData: import('@/components/analytics').QuizScoreDataPoint[];
+  isDarkMode: boolean;
+  isLoading: boolean;
+}
+
+const AnalyticsSection = memo(function AnalyticsSection({
+  progressData,
+  streakData,
+  quizData,
+  isDarkMode,
+  isLoading,
+}: AnalyticsSectionProps) {
+  return (
+    <section aria-label="Learning analytics">
+      <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
+        Learning Analytics
+      </h2>
+      <div className="space-y-6">
+        <ProgressOverTimeChart
+          data={progressData}
+          isLoading={isLoading}
+          isDarkMode={isDarkMode}
+          title="Learning Progress Over Time (30 days)"
+        />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <StreakHeatmapChart
+            data={streakData}
+            isLoading={isLoading}
+            isDarkMode={isDarkMode}
+            title="Learning Streak Heatmap (12 weeks)"
+          />
+          <QuizScoreChart
+            data={quizData}
+            isLoading={isLoading}
+            isDarkMode={isDarkMode}
+            title="Quiz Performance"
+          />
+        </div>
+      </div>
+    </section>
+  );
+});
 
 export default function StudentDashboardPage() {
   const { state } = useAuth();
@@ -365,33 +414,13 @@ export default function StudentDashboardPage() {
         </section>
 
         {/* Analytics Charts */}
-        <section aria-label="Learning analytics">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
-            Learning Analytics
-          </h2>
-          <div className="space-y-6">
-            <ProgressOverTimeChart
-              data={progressOverTimeData}
-              isLoading={chartDataLoading}
-              isDarkMode={isDarkMode}
-              title="Learning Progress Over Time (30 days)"
-            />
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <StreakHeatmapChart
-                data={streakData}
-                isLoading={chartDataLoading}
-                isDarkMode={isDarkMode}
-                title="Learning Streak Heatmap (12 weeks)"
-              />
-              <QuizScoreChart
-                data={quizScoreData}
-                isLoading={chartDataLoading}
-                isDarkMode={isDarkMode}
-                title="Quiz Performance"
-              />
-            </div>
-          </div>
-        </section>
+        <AnalyticsSection
+          progressData={progressOverTimeData}
+          streakData={streakData}
+          quizData={quizScoreData}
+          isDarkMode={isDarkMode}
+          isLoading={chartDataLoading}
+        />
 
         {/* Enrolled courses */}
         <section aria-label="Enrolled courses">
