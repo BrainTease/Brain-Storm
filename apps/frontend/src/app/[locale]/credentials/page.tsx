@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useAuth } from '@/hooks/useAuth';
 import api from '@/lib/api';
 import { NFTGrid, type NFTItem } from '@/components/nft';
@@ -20,6 +21,7 @@ interface Credential {
 }
 
 export default function CredentialsPage() {
+  const t = useTranslations('credentials');
   const { user, isAuthenticated } = useAuth();
   const router = useRouter();
   const [credentials, setCredentials] = useState<Credential[]>([]);
@@ -43,13 +45,15 @@ export default function CredentialsPage() {
         id: cred.id,
         title: cred.courseName,
         courseName: cred.courseName,
-        description: cred.description ?? 'Official on-chain verified course certificate.',
+        description: cred.description ?? t('defaultDescription'),
         issuedAt: cred.issuedAt,
         txHash: cred.txHash,
         isCompleted: true,
-        owner: user?.name || user?.username,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        owner: (user as any)?.name || user?.username,
       })),
-    [credentials, user]
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    [credentials, user, t]
   );
 
   if (!isAuthenticated) return null;
@@ -57,22 +61,21 @@ export default function CredentialsPage() {
   return (
     <main className="max-w-5xl mx-auto p-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2 text-gray-900 dark:text-white">My Credentials & NFTs</h1>
-        <p className="text-gray-500 dark:text-gray-400">
-          Verifiable on-chain certificates and NFT credentials earned by completing courses.
-        </p>
+        <h1 className="text-3xl font-bold mb-2 text-gray-900 dark:text-white">{t('title')}</h1>
+        <p className="text-gray-500 dark:text-gray-400">{t('subtitle')}</p>
       </div>
 
       <NFTGrid
         items={nftItems}
         isLoading={loading}
         columns={3}
-        emptyTitle="No credentials yet"
-        emptyDescription="Complete a course to earn your first verifiable on-chain NFT certificate!"
+        emptyTitle={t('emptyNftTitle')}
+        emptyDescription={t('emptyNft')}
         onView={(item) => {
           const matched = credentials.find((c) => c.id === item.id);
           if (matched) {
-            setSelectedCert({ ...matched, studentName: user?.name || 'Student' });
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            setSelectedCert({ ...matched, studentName: (user as any)?.name || t('defaultStudentName') });
           }
         }}
       />
@@ -81,7 +84,8 @@ export default function CredentialsPage() {
         <CertificateViewer
           certificate={{
             ...selectedCert,
-            studentName: selectedCert.studentName || user?.name || 'Student',
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            studentName: selectedCert.studentName || (user as any)?.name || t('defaultStudentName'),
           }}
           isOpen={!!selectedCert}
           onClose={() => setSelectedCert(null)}
