@@ -7,7 +7,9 @@
   "scripts": {
     "build": "tsc",
     "type-check": "tsc --noEmit",
-    "generate": "node ../../scripts/generate-sdk.js"
+    "generate": "node ../../scripts/generate-sdk.js",
+    "docs": "node scripts/generate-docs.js",
+    "docs:typedoc": "typedoc --out ../../docs/api/sdk src/index.ts"
   },
   "peerDependencies": {
     "axios": ">=1.0.0"
