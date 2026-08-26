@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useWallet } from '@/lib/wallet';
+import { TokenBalance } from '@/components/ui/TokenBalance';
 import { WalletMenu } from './WalletMenu';
 
 export interface AccountBadgeProps {
@@ -61,9 +62,12 @@ export function AccountBadge({
         </span>
 
         {showBalance && balance !== null && (
-          <span className="text-xs text-gray-500 dark:text-gray-400 border-l border-gray-200 dark:border-gray-700 pl-2">
-            {balance} XLM
-          </span>
+          <TokenBalance
+            balance={balance}
+            symbol="XLM"
+            decimals={7}
+            className="text-xs text-gray-500 dark:text-gray-400 border-l border-gray-200 dark:border-gray-700 pl-2"
+          />
         )}
       </button>
 

@@ -240,6 +240,57 @@ export interface ApiError {
   error?: string;
 }
 
+// ─── Network configuration ─────────────────────────────────────────────────────
+
+/** Supported Stellar network identifiers. */
+export type StellarNetwork = 'testnet' | 'mainnet';
+
+/** Network passphrase and endpoint URLs for a single Stellar network. */
+export interface StellarNetworkConfig {
+  /** Network identifier. */
+  network: StellarNetwork;
+  /** Passphrase used to sign and verify transactions on this network. */
+  passphrase: string;
+  /** Horizon (classic API) base URL. */
+  horizonUrl: string;
+  /** Soroban RPC base URL, for smart-contract invocation. */
+  sorobanRpcUrl: string;
+}
+
+/**
+ * Single source of truth for Stellar network configuration, keyed by network.
+ *
+ * @remarks
+ * Consumers (the SDK, `apps/frontend`, etc.) should read from this map rather
+ * than hardcoding passphrases or endpoint URLs, so testnet and mainnet values
+ * stay in sync everywhere they're used.
+ */
+export const STELLAR_NETWORK_CONFIGS: Record<StellarNetwork, StellarNetworkConfig> = {
+  testnet: {
+    network: 'testnet',
+    passphrase: 'Test SDF Network ; September 2015',
+    horizonUrl: 'https://horizon-testnet.stellar.org',
+    sorobanRpcUrl: 'https://soroban-testnet.stellar.org',
+  },
+  mainnet: {
+    network: 'mainnet',
+    passphrase: 'Public Global Stellar Network ; September 2015',
+    horizonUrl: 'https://horizon.stellar.org',
+    sorobanRpcUrl: 'https://mainnet.sorobanrpc.com',
+  },
+};
+
+/**
+ * Looks up the {@link StellarNetworkConfig} for `network`.
+ *
+ * @param network - Network identifier, case-insensitive. Falls back to
+ * `'testnet'` when omitted or unrecognized.
+ */
+export function getStellarNetworkConfig(network: string | null | undefined): StellarNetworkConfig {
+  const key = (network ?? 'testnet').toLowerCase();
+  return STELLAR_NETWORK_CONFIGS[key as StellarNetwork] ?? STELLAR_NETWORK_CONFIGS.testnet;
+}
+
 // ─── HTTP adapter ─────────────────────────────────────────────────────────────
 
 /**

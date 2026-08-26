@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { useWallet } from '@/lib/wallet';
+import { TokenBalance } from '@/components/ui/TokenBalance';
 
 interface WalletMenuProps {
   onClose: () => void;
@@ -65,13 +66,17 @@ export function WalletMenu({ onClose }: WalletMenuProps) {
             </button>
           </p>
         ) : (
-          <p className="text-sm font-medium">{balance ?? '—'} XLM</p>
+          <p className="text-sm font-medium">
+            <TokenBalance balance={balance} symbol="XLM" decimals={7} />
+          </p>
         )}
       </div>
 
       <div>
         <p className="text-xs text-gray-500 mb-0.5">BST Balance</p>
-        <p className="text-sm font-medium">{bstBalance ?? '—'} BST</p>
+        <p className="text-sm font-medium">
+          <TokenBalance balance={bstBalance} symbol="BST" decimals={7} />
+        </p>
       </div>
 
       <div className="flex gap-2 pt-2 border-t border-gray-100 dark:border-gray-700">

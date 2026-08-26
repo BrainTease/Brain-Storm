@@ -4,6 +4,7 @@ import React from 'react';
 import Image from 'next/image';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { TokenBalance } from '@/components/ui/TokenBalance';
 import { NFTMetadataBadge } from './NFTMetadataBadge';
 
 export interface NFTItem {
@@ -133,9 +134,12 @@ export function NFTCard({
             {nft.price !== undefined ? (
               <div>
                 <span className="text-xs text-gray-400 block">Price</span>
-                <span className="text-base font-bold text-blue-600 dark:text-blue-400">
-                  {nft.price} {nft.currency ?? 'BST'}
-                </span>
+                <TokenBalance
+                  balance={nft.price}
+                  symbol={nft.currency ?? 'BST'}
+                  decimals={7}
+                  className="text-base font-bold text-blue-600 dark:text-blue-400"
+                />
               </div>
             ) : nft.issuedAt ? (
               <div>

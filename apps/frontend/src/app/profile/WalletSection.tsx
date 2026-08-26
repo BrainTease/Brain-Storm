@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import api from '@/lib/api';
 import { Button } from '@/components/ui/Button';
+import { TokenBalance } from '@/components/ui/TokenBalance';
 
 interface Props {
   userId: string;
@@ -86,7 +87,7 @@ export default function WalletSection({ userId, stellarPublicKey, onLinked, onUn
           </div>
           {bstBalance !== null && (
             <p className="text-sm">
-              BST Balance: <span className="font-semibold">{bstBalance} BST</span>
+              BST Balance: <TokenBalance balance={bstBalance} symbol="BST" decimals={7} className="font-semibold" />
             </p>
           )}
           <Button variant="outline" onClick={unlinkWallet}>

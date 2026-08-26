@@ -1,22 +1,28 @@
 /**
- * Single source of truth for Stellar network configuration.
+ * Single source of truth for Stellar network configuration in the frontend.
  *
  * Horizon URLs, network passphrases and explorer links were previously derived
  * independently in `walletApi`, `walletAdapters` and `TransactionModal`, which
- * meant three places to update when a network was added.
+ * meant three places to update when a network was added. The passphrase and
+ * Horizon URL themselves now come from `@brain-storm/sdk`'s
+ * `STELLAR_NETWORK_CONFIGS`, so this module and the SDK can't drift apart.
  */
+import { getStellarNetworkConfig, type StellarNetwork } from '@brain-storm/sdk';
 
-export const STELLAR_NETWORK = (process.env.NEXT_PUBLIC_STELLAR_NETWORK || 'testnet').toLowerCase();
+export const STELLAR_NETWORK = (
+  process.env.NEXT_PUBLIC_STELLAR_NETWORK || 'testnet'
+).toLowerCase() as StellarNetwork;
 
 export const IS_MAINNET = STELLAR_NETWORK === 'mainnet';
 
-export const NETWORK_PASSPHRASE = IS_MAINNET
-  ? 'Public Global Stellar Network ; September 2015'
-  : 'Test SDF Network ; September 2015';
+const NETWORK_CONFIG = getStellarNetworkConfig(STELLAR_NETWORK);
 
-export const HORIZON_URL = IS_MAINNET
-  ? 'https://horizon.stellar.org'
-  : 'https://horizon-testnet.stellar.org';
+export const NETWORK_PASSPHRASE = NETWORK_CONFIG.passphrase;
+
+export const HORIZON_URL = NETWORK_CONFIG.horizonUrl;
+
+/** Soroban RPC base URL for the active network. */
+export const SOROBAN_RPC_URL = NETWORK_CONFIG.sorobanRpcUrl;
 
 const EXPLORER_TX_BASE = IS_MAINNET
   ? 'https://stellar.expert/explorer/public/tx'
