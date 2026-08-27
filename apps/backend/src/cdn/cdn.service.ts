@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -7,6 +7,7 @@ import * as crypto from 'crypto';
 
 @Injectable()
 export class CdnService {
+  private readonly logger = new Logger(CdnService.name);
   private cdnProvider: string;
   private cdnDomain: string;
   private cdnAccessKey: string;
@@ -14,7 +15,7 @@ export class CdnService {
 
   constructor(
     private configService: ConfigService,
-    @InjectRepository(CdnAsset) private assetRepo: Repository<CdnAsset>,
+    @InjectRepository(CdnAsset) private assetRepo: Repository<CdnAsset>
   ) {
     this.cdnProvider = this.configService.get('CDN_PROVIDER', 'cloudfront');
     this.cdnDomain = this.configService.get('CDN_DOMAIN');
@@ -26,7 +27,7 @@ export class CdnService {
     lessonId: string,
     fileName: string,
     contentType: ContentType,
-    fileSize: number,
+    fileSize: number
   ) {
     const cdnUrl = `${this.cdnDomain}/${lessonId}/${fileName}`;
 
@@ -65,7 +66,7 @@ export class CdnService {
         isTranscoded: true,
         availableBitrates: bitrates,
         thumbnailUrl,
-      },
+      }
     );
   }
 
@@ -76,7 +77,7 @@ export class CdnService {
     // Invalidate CDN cache (implementation depends on CDN provider)
     // For CloudFront: create invalidation request
     // For Cloudflare: purge cache
-    console.log(`Invalidating cache for ${asset.cdnUrl}`);
+    this.logger.log(`Invalidating CDN cache for ${asset.cdnUrl}`);
 
     return { success: true, assetId };
   }

@@ -18,10 +18,7 @@
         { "type": "build", "section": "Build System" },
         { "type": "ci", "section": "CI/CD" }
       ],
-      "extra-files": [
-        "apps/backend/package.json",
-        "apps/frontend/package.json"
-      ]
+      "extra-files": ["apps/backend/package.json", "apps/frontend/package.json"]
     }
   }
 }

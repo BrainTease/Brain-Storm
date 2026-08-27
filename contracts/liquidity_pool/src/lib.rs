@@ -1,75 +1,14 @@
 #![no_std]
-use soroban_sdk::{
-    contract, contractimpl, contracttype, symbol_short, Address, Env, String, Symbol, Vec,
+use soroban_sdk::{contract, contractimpl, symbol_short, Address, Env, Symbol, Vec};
+
+use brain_storm_shared::access;
+use brain_storm_shared::math::{
+    checked_add_i128, checked_add_u32, checked_div_i128, checked_mul_div_i128, checked_mul_i128,
+    checked_sub_i128, checked_sub_u32,
 };
 
-// =============================================================================
-// Storage keys
-// =============================================================================
-
-#[contracttype]
-pub enum DataKey {
-    Admin,
-    TokenA,                               // BST token contract
-    TokenB,                               // XLM (native asset)
-    ReserveA,                             // BST reserve
-    ReserveB,                             // XLM reserve
-    TotalLiquidity,                       // Total LP tokens minted
-    Liquidity(Address),                   // user → liquidity balance
-    FeeCollector,                         // Address to collect fees
-    PoolConfig,                          // PoolConfig
-    SwapHistory(u32),                    // index → SwapRecord
-    SwapHistoryCount,                    // u32
-    MiningRewards(Address),              // user → accumulated rewards
-    MiningConfig,                        // MiningConfig
-    AccumulatedFees,                     // i128 — total fees not yet collected
-    EmergencyDrained,                    // bool
-}
-
-// =============================================================================
-// Types
-// =============================================================================
-
-#[contracttype]
-#[derive(Clone)]
-pub struct PoolConfig {
-    pub fee_numerator: u32,               // Fee as fraction (e.g., 3 for 0.3%)
-    pub fee_denominator: u32,             // Fee denominator (e.g., 1000)
-    pub swap_enabled: bool,
-    pub add_liquidity_enabled: bool,
-    pub remove_liquidity_enabled: bool,
-}
-
-#[contracttype]
-#[derive(Clone)]
-pub struct SwapRecord {
-    pub timestamp: u64,
-    pub user: Address,
-    pub token_in: Symbol,                 // 'bst' or 'xlm'
-    pub amount_in: i128,
-    pub token_out: Symbol,
-    pub amount_out: i128,
-    pub fee: i128,
-}
-
-#[contracttype]
-#[derive(Clone)]
-pub struct MiningConfig {
-    pub enabled: bool,
-    pub reward_rate: i128,                // BST tokens per ledger per liquidity unit
-    pub reward_token: Address,            // BST token contract
-}
-
-#[contracttype]
-#[derive(Clone)]
-pub struct PoolStats {
-    pub reserve_a: i128,
-    pub reserve_b: i128,
-    pub total_liquidity: i128,
-    pub volume_24h: i128,
-    pub fees_24h: i128,
-    pub price_bst_xlm: i128,             // BST price in XLM (scaled)
-}
+mod types;
+use types::{DataKey, MiningConfig, PoolConfig, PoolStats, SwapRecord};
 
 // =============================================================================
 // Events
@@ -161,6 +100,14 @@ impl LiquidityPoolContract {
 
         let config: PoolConfig = env.storage().instance().get(&DataKey::PoolConfig).unwrap();
         assert!(config.add_liquidity_enabled, "Adding liquidity is disabled");
+        assert!(
+            amount_a_desired > 0 && amount_b_desired > 0,
+            "Desired amounts must be positive"
+        );
+        assert!(
+            amount_a_min >= 0 && amount_b_min >= 0,
+            "Minimum amounts must be non-negative"
+        );
 
         let reserve_a: i128 = env.storage().instance().get(&DataKey::ReserveA).unwrap_or(0);
         let reserve_b: i128 = env.storage().instance().get(&DataKey::ReserveB).unwrap_or(0);
@@ -191,29 +138,39 @@ impl LiquidityPoolContract {
         // Mint liquidity tokens
         let liquidity_minted = if total_liquidity == 0 {
             // First liquidity provision
-            let initial_liquidity = Self::sqrt(amount_a * amount_b).checked_sub(MINIMUM_LIQUIDITY).unwrap_or(0);
+            let root = Self::sqrt(checked_mul_i128(amount_a, amount_b));
+            assert!(
+                root > MINIMUM_LIQUIDITY,
+                "Initial liquidity below minimum"
+            );
             // Mint MINIMUM_LIQUIDITY to the pool itself to avoid division by zero
             env.storage().instance().set(&DataKey::Liquidity(env.current_contract_address()), &MINIMUM_LIQUIDITY);
-            initial_liquidity
+            checked_sub_i128(root, MINIMUM_LIQUIDITY)
         } else {
-            let liquidity_minted_a = (amount_a * total_liquidity) / reserve_a;
-            let liquidity_minted_b = (amount_b * total_liquidity) / reserve_b;
+            // `total_liquidity > 0` implies both reserves were funded, but the
+            // divisors are load-bearing so they are checked rather than assumed.
+            assert!(reserve_a > 0 && reserve_b > 0, "Insufficient reserves");
+            let liquidity_minted_a = checked_mul_div_i128(amount_a, total_liquidity, reserve_a);
+            let liquidity_minted_b = checked_mul_div_i128(amount_b, total_liquidity, reserve_b);
             liquidity_minted_a.min(liquidity_minted_b)
         };
 
         assert!(liquidity_minted > 0, "Insufficient liquidity minted");
 
         // Update reserves
-        env.storage().instance().set(&DataKey::ReserveA, &(reserve_a + amount_a));
-        env.storage().instance().set(&DataKey::ReserveB, &(reserve_b + amount_b));
+        env.storage().instance().set(&DataKey::ReserveA, &checked_add_i128(reserve_a, amount_a));
+        env.storage().instance().set(&DataKey::ReserveB, &checked_add_i128(reserve_b, amount_b));
 
         // Update total liquidity
-        let new_total_liquidity = total_liquidity + liquidity_minted;
+        let new_total_liquidity = checked_add_i128(total_liquidity, liquidity_minted);
         env.storage().instance().set(&DataKey::TotalLiquidity, &new_total_liquidity);
 
         // Update user liquidity
         let user_liquidity: i128 = env.storage().persistent().get(&DataKey::Liquidity(provider.clone())).unwrap_or(0);
-        env.storage().persistent().set(&DataKey::Liquidity(provider.clone()), &(user_liquidity + liquidity_minted));
+        env.storage().persistent().set(
+            &DataKey::Liquidity(provider.clone()),
+            &checked_add_i128(user_liquidity, liquidity_minted),
+        );
 
         env.events()
             .publish((ADD_LIQUIDITY, symbol_short!("provider")), (provider, amount_a, amount_b, liquidity_minted));
@@ -230,6 +187,7 @@ impl LiquidityPoolContract {
 
         let config: PoolConfig = env.storage().instance().get(&DataKey::PoolConfig).unwrap();
         assert!(config.remove_liquidity_enabled, "Removing liquidity is disabled");
+        assert!(liquidity > 0, "Liquidity must be positive");
 
         let user_liquidity: i128 = env.storage().persistent().get(&DataKey::Liquidity(provider.clone())).unwrap_or(0);
         assert!(user_liquidity >= liquidity, "Insufficient liquidity");
@@ -238,21 +196,28 @@ impl LiquidityPoolContract {
         let reserve_b: i128 = env.storage().instance().get(&DataKey::ReserveB).unwrap_or(0);
         let total_liquidity: i128 = env.storage().instance().get(&DataKey::TotalLiquidity).unwrap_or(0);
 
-        let amount_a = (liquidity * reserve_a) / total_liquidity;
-        let amount_b = (liquidity * reserve_b) / total_liquidity;
+        // Without this guard the two divisions below are a division by zero,
+        // reachable whenever the total-liquidity slot is empty or drained.
+        assert!(total_liquidity > 0, "Pool has no liquidity");
+
+        let amount_a = checked_mul_div_i128(liquidity, reserve_a, total_liquidity);
+        let amount_b = checked_mul_div_i128(liquidity, reserve_b, total_liquidity);
 
         assert!(amount_a > 0 && amount_b > 0, "Insufficient amounts");
 
         // Update user liquidity
-        env.storage().persistent().set(&DataKey::Liquidity(provider.clone()), &(user_liquidity - liquidity));
+        env.storage().persistent().set(
+            &DataKey::Liquidity(provider.clone()),
+            &checked_sub_i128(user_liquidity, liquidity),
+        );
 
         // Update total liquidity
-        let new_total_liquidity = total_liquidity - liquidity;
+        let new_total_liquidity = checked_sub_i128(total_liquidity, liquidity);
         env.storage().instance().set(&DataKey::TotalLiquidity, &new_total_liquidity);
 
         // Update reserves
-        env.storage().instance().set(&DataKey::ReserveA, &(reserve_a - amount_a));
-        env.storage().instance().set(&DataKey::ReserveB, &(reserve_b - amount_b));
+        env.storage().instance().set(&DataKey::ReserveA, &checked_sub_i128(reserve_a, amount_a));
+        env.storage().instance().set(&DataKey::ReserveB, &checked_sub_i128(reserve_b, amount_b));
 
         // Transfer tokens back to user (this would require implementing token transfer logic)
 
@@ -278,6 +243,12 @@ impl LiquidityPoolContract {
         let config: PoolConfig = env.storage().instance().get(&DataKey::PoolConfig).unwrap();
         assert!(config.swap_enabled, "Swapping is disabled");
         assert!(amount_in > 0, "Amount in must be positive");
+        assert!(amount_out_min >= 0, "Minimum output must be non-negative");
+        assert!(config.fee_denominator > 0, "Invalid fee denominator");
+        assert!(
+            config.fee_numerator <= config.fee_denominator,
+            "Fee exceeds 100%"
+        );
         assert!(
             !env.storage().instance().get::<DataKey, bool>(&DataKey::EmergencyDrained).unwrap_or(false),
             "Pool has been emergency drained"
@@ -297,31 +268,49 @@ impl LiquidityPoolContract {
             panic!("Invalid token")
         };
 
+        // An unfunded side makes `denominator` zero when `amount_in_with_fee`
+        // is also zero, and lets the pool be swapped against for nothing.
+        assert!(
+            reserve_in > 0 && reserve_out > 0,
+            "Insufficient liquidity"
+        );
+
         // Calculate output amount with fee
-        let amount_in_with_fee = amount_in * (config.fee_denominator - config.fee_numerator) as i128;
-        let numerator = amount_in_with_fee * reserve_out;
-        let denominator = (reserve_in * config.fee_denominator as i128) + amount_in_with_fee;
-        let amount_out = numerator / denominator;
+        let fee_complement = checked_sub_u32(config.fee_denominator, config.fee_numerator) as i128;
+        let amount_in_with_fee = checked_mul_i128(amount_in, fee_complement);
+        let numerator = checked_mul_i128(amount_in_with_fee, reserve_out);
+        let denominator = checked_add_i128(
+            checked_mul_i128(reserve_in, config.fee_denominator as i128),
+            amount_in_with_fee,
+        );
+        let amount_out = checked_div_i128(numerator, denominator);
 
         assert!(amount_out >= amount_out_min, "Insufficient output amount");
         assert!(amount_out <= reserve_out, "Insufficient liquidity");
 
         // Update reserves
         if token_in == bst {
-            env.storage().instance().set(&DataKey::ReserveA, &(reserve_a + amount_in));
-            env.storage().instance().set(&DataKey::ReserveB, &(reserve_b - amount_out));
+            env.storage().instance().set(&DataKey::ReserveA, &checked_add_i128(reserve_a, amount_in));
+            env.storage().instance().set(&DataKey::ReserveB, &checked_sub_i128(reserve_b, amount_out));
         } else {
-            env.storage().instance().set(&DataKey::ReserveB, &(reserve_b + amount_in));
-            env.storage().instance().set(&DataKey::ReserveA, &(reserve_a - amount_out));
+            env.storage().instance().set(&DataKey::ReserveB, &checked_add_i128(reserve_b, amount_in));
+            env.storage().instance().set(&DataKey::ReserveA, &checked_sub_i128(reserve_a, amount_out));
         }
 
         // Calculate fee
-        let fee = (amount_in * config.fee_numerator as i128) / config.fee_denominator as i128;
+        let fee = checked_mul_div_i128(
+            amount_in,
+            config.fee_numerator as i128,
+            config.fee_denominator as i128,
+        );
 
-        // Accumulate fees for collection
-        let mut accumulated: i128 = env.storage().instance().get(&DataKey::AccumulatedFees).unwrap_or(0);
-        accumulated = accumulated.saturating_add(fee);
-        env.storage().instance().set(&DataKey::AccumulatedFees, &accumulated);
+        // Accumulate fees for collection. This used to saturate, which would
+        // silently under-report fees owed to the collector once the counter
+        // reached i128::MAX; overflow is now surfaced instead.
+        let accumulated: i128 = env.storage().instance().get(&DataKey::AccumulatedFees).unwrap_or(0);
+        env.storage()
+            .instance()
+            .set(&DataKey::AccumulatedFees, &checked_add_i128(accumulated, fee));
 
         // Record swap history
         let history_count: u32 = env.storage().instance().get(&DataKey::SwapHistoryCount).unwrap_or(0);
@@ -336,7 +325,9 @@ impl LiquidityPoolContract {
             fee,
         };
         env.storage().instance().set(&DataKey::SwapHistory(history_count), &record);
-        env.storage().instance().set(&DataKey::SwapHistoryCount, &(history_count + 1));
+        env.storage()
+            .instance()
+            .set(&DataKey::SwapHistoryCount, &checked_add_u32(history_count, 1));
 
         // Transfer tokens (this would require implementing token transfer logic)
 
@@ -362,7 +353,7 @@ impl LiquidityPoolContract {
         }
 
         // Calculate rewards (simplified - would need more complex logic for time-based rewards)
-        let rewards = (user_liquidity * mining_config.reward_rate) / 1_000_000; // Scale down
+        let rewards = checked_mul_div_i128(user_liquidity, mining_config.reward_rate, 1_000_000); // Scale down
 
         // Reset accumulated rewards
         env.storage().persistent().set(&DataKey::MiningRewards(user.clone()), &0_i128);
@@ -386,7 +377,7 @@ impl LiquidityPoolContract {
 
         // Calculate BST price in XLM (reserve_b / reserve_a, scaled)
         let price_bst_xlm = if reserve_a > 0 {
-            (reserve_b * 1_000_000) / reserve_a
+            checked_mul_div_i128(reserve_b, 1_000_000, reserve_a)
         } else {
             0
         };
@@ -408,7 +399,9 @@ impl LiquidityPoolContract {
     pub fn get_swap_history(env: Env, start_index: u32, limit: u32) -> Vec<SwapRecord> {
         let history_count: u32 = env.storage().instance().get(&DataKey::SwapHistoryCount).unwrap_or(0);
         let mut history = Vec::new(&env);
-        let end_index = (start_index + limit).min(history_count);
+        // Read-only pagination: saturate rather than panic on a caller-supplied
+        // range that would overflow u32.
+        let end_index = start_index.saturating_add(limit).min(history_count);
 
         for i in start_index..end_index {
             if let Some(record) = env.storage().instance().get(&DataKey::SwapHistory(i)) {
@@ -424,9 +417,7 @@ impl LiquidityPoolContract {
     // -------------------------------------------------------------------------
 
     pub fn collect_fees(env: Env, admin: Address) -> i128 {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can collect fees");
+        access::require_admin(&env, &admin, &DataKey::Admin);
 
         let fees: i128 = env.storage().instance().get(&DataKey::AccumulatedFees).unwrap_or(0);
         assert!(fees > 0, "No fees to collect");
@@ -451,9 +442,7 @@ impl LiquidityPoolContract {
     // -------------------------------------------------------------------------
 
     pub fn emergency_drain(env: Env, admin: Address) -> (i128, i128) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can emergency drain");
+        access::require_admin(&env, &admin, &DataKey::Admin);
         assert!(
             !env.storage().instance().get::<DataKey, bool>(&DataKey::EmergencyDrained).unwrap_or(false),
             "Already drained"
@@ -487,17 +476,24 @@ impl LiquidityPoolContract {
 
     fn quote(amount_a: i128, reserve_a: i128, reserve_b: i128) -> i128 {
         assert!(reserve_a > 0 && reserve_b > 0, "Insufficient reserves");
-        (amount_a * reserve_b) / reserve_a
+        checked_mul_div_i128(amount_a, reserve_b, reserve_a)
     }
 
+    /// Integer square root by Newton's method.
+    ///
+    /// Rejects negative input (which would loop or return nonsense) and uses a
+    /// checked `x + 1` so `i128::MAX` panics instead of wrapping negative.
     fn sqrt(x: i128) -> i128 {
-        if x == 0 || x == 1 {
+        assert!(x >= 0, "sqrt: negative input");
+        if x < 2 {
             return x;
         }
-        let mut z = (x + 1) / 2;
+        let mut z = checked_add_i128(x, 1) / 2;
         let mut y = x;
         while z < y {
             y = z;
+            // `x / z + z` peaks on the first iteration at roughly `2 + x/2`,
+            // which is below `x` for every `x >= 5`, so this cannot overflow.
             z = (x / z + z) / 2;
         }
         y

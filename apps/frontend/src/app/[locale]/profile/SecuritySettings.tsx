@@ -1,19 +1,28 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useState } from 'react';
+import { z } from 'zod';
 import api from '@/lib/api';
 import { Button } from '@/components/ui/Button';
+import { useZodForm } from '@/components/forms';
 
 interface Props {
   userId: string;
   email: string;
 }
 
-interface PasswordForm {
-  currentPassword: string;
-  newPassword: string;
-  confirmPassword: string;
-}
+const passwordSchema = z
+  .object({
+    currentPassword: z.string().min(1, 'Current password is required.'),
+    newPassword: z.string().min(8, 'New password must be at least 8 characters.'),
+    confirmPassword: z.string().min(1, 'Please confirm your new password.'),
+  })
+  .refine((v) => v.newPassword === v.confirmPassword, {
+    path: ['confirmPassword'],
+    message: 'Passwords do not match.',
+  });
+
+type PasswordForm = z.infer<typeof passwordSchema>;
 
 const EMPTY_FORM: PasswordForm = {
   currentPassword: '',
@@ -22,52 +31,44 @@ const EMPTY_FORM: PasswordForm = {
 };
 
 export default function SecuritySettings({ userId, email }: Props) {
-  const [form, setForm] = useState<PasswordForm>(EMPTY_FORM);
-  const [saving, setSaving] = useState(false);
-  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(
+    null
+  );
   const [showCurrentPw, setShowCurrentPw] = useState(false);
   const [showNewPw, setShowNewPw] = useState(false);
 
-  const handleChange = (field: keyof PasswordForm, value: string) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
-    setFeedback(null);
-  };
+  const {
+    register,
+    handleSubmit,
+    watch,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useZodForm<PasswordForm>({
+    schema: passwordSchema,
+    defaultValues: EMPTY_FORM,
+  });
 
-  const validate = (): string | null => {
-    if (!form.currentPassword) return 'Current password is required.';
-    if (form.newPassword.length < 8) return 'New password must be at least 8 characters.';
-    if (form.newPassword !== form.confirmPassword) return 'Passwords do not match.';
-    return null;
-  };
+  const newPassword = watch('newPassword');
+  const clearFeedback = () => setFeedback(null);
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    const err = validate();
-    if (err) {
-      setFeedback({ type: 'error', message: err });
-      return;
-    }
-    setSaving(true);
+  const onSubmit = async (values: PasswordForm) => {
     setFeedback(null);
     try {
       await api.post(`/users/${userId}/change-password`, {
-        currentPassword: form.currentPassword,
-        newPassword: form.newPassword,
+        currentPassword: values.currentPassword,
+        newPassword: values.newPassword,
       });
       setFeedback({ type: 'success', message: 'Password updated successfully.' });
-      setForm(EMPTY_FORM);
+      reset(EMPTY_FORM);
     } catch (err: any) {
-      const msg =
-        err?.response?.data?.message ?? 'Failed to update password. Please try again.';
+      const msg = err?.response?.data?.message ?? 'Failed to update password. Please try again.';
       setFeedback({ type: 'error', message: msg });
-    } finally {
-      setSaving(false);
     }
   };
 
   const strengthScore = (pw: string): number => {
     let score = 0;
-    if (pw.length >= 8)  score++;
+    if (pw.length >= 8) score++;
     if (pw.length >= 12) score++;
     if (/[A-Z]/.test(pw)) score++;
     if (/[0-9]/.test(pw)) score++;
@@ -75,9 +76,11 @@ export default function SecuritySettings({ userId, email }: Props) {
     return score; // 0–5
   };
 
-  const strength = strengthScore(form.newPassword);
+  const strength = strengthScore(newPassword || '');
   const strengthLabel = ['', 'Very Weak', 'Weak', 'Fair', 'Strong', 'Very Strong'][strength] || '';
-  const strengthColor = ['', 'bg-red-500', 'bg-orange-500', 'bg-yellow-500', 'bg-blue-500', 'bg-green-500'][strength] || '';
+  const strengthColor =
+    ['', 'bg-red-500', 'bg-orange-500', 'bg-yellow-500', 'bg-blue-500', 'bg-green-500'][strength] ||
+    '';
 
   return (
     <section
@@ -95,10 +98,8 @@ export default function SecuritySettings({ userId, email }: Props) {
       </div>
 
       {/* Change password form */}
-      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-          Change Password
-        </h3>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Change Password</h3>
 
         {/* Current password */}
         <div>
@@ -112,12 +113,10 @@ export default function SecuritySettings({ userId, email }: Props) {
             <input
               id="current-password"
               type={showCurrentPw ? 'text' : 'password'}
-              value={form.currentPassword}
-              onChange={(e) => handleChange('currentPassword', e.target.value)}
               autoComplete="current-password"
-              disabled={saving}
-              required
+              disabled={isSubmitting}
               className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 pr-10 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              {...register('currentPassword', { onChange: clearFeedback })}
             />
             <button
               type="button"
@@ -128,6 +127,9 @@ export default function SecuritySettings({ userId, email }: Props) {
               {showCurrentPw ? '🙈' : '👁️'}
             </button>
           </div>
+          {errors.currentPassword && (
+            <p className="mt-1 text-xs text-red-500">{errors.currentPassword.message}</p>
+          )}
         </div>
 
         {/* New password */}
@@ -142,13 +144,10 @@ export default function SecuritySettings({ userId, email }: Props) {
             <input
               id="new-password"
               type={showNewPw ? 'text' : 'password'}
-              value={form.newPassword}
-              onChange={(e) => handleChange('newPassword', e.target.value)}
               autoComplete="new-password"
-              disabled={saving}
-              required
-              minLength={8}
+              disabled={isSubmitting}
               className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 pr-10 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              {...register('newPassword', { onChange: clearFeedback })}
             />
             <button
               type="button"
@@ -160,7 +159,7 @@ export default function SecuritySettings({ userId, email }: Props) {
             </button>
           </div>
           {/* Strength bar */}
-          {form.newPassword && (
+          {newPassword && (
             <div className="mt-1 space-y-0.5">
               <div className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                 <div
@@ -171,9 +170,13 @@ export default function SecuritySettings({ userId, email }: Props) {
               <p className="text-xs text-gray-500 dark:text-gray-400">{strengthLabel}</p>
             </div>
           )}
-          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            Minimum 8 characters; use uppercase, numbers, and symbols for a stronger password.
-          </p>
+          {errors.newPassword ? (
+            <p className="mt-1 text-xs text-red-500">{errors.newPassword.message}</p>
+          ) : (
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              Minimum 8 characters; use uppercase, numbers, and symbols for a stronger password.
+            </p>
+          )}
         </div>
 
         {/* Confirm password */}
@@ -187,18 +190,14 @@ export default function SecuritySettings({ userId, email }: Props) {
           <input
             id="confirm-password"
             type="password"
-            value={form.confirmPassword}
-            onChange={(e) => handleChange('confirmPassword', e.target.value)}
             autoComplete="new-password"
-            disabled={saving}
-            required
+            disabled={isSubmitting}
             className={`w-full border rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm
-              ${form.confirmPassword && form.confirmPassword !== form.newPassword
-                ? 'border-red-500'
-                : 'border-gray-300 dark:border-gray-600'}`}
+              ${errors.confirmPassword ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}`}
+            {...register('confirmPassword', { onChange: clearFeedback })}
           />
-          {form.confirmPassword && form.confirmPassword !== form.newPassword && (
-            <p className="mt-1 text-xs text-red-500">Passwords do not match.</p>
+          {errors.confirmPassword && (
+            <p className="mt-1 text-xs text-red-500">{errors.confirmPassword.message}</p>
           )}
         </div>
 
@@ -216,8 +215,8 @@ export default function SecuritySettings({ userId, email }: Props) {
           </div>
         )}
 
-        <Button type="submit" disabled={saving}>
-          {saving ? 'Updating…' : 'Update Password'}
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? 'Updating…' : 'Update Password'}
         </Button>
       </form>
     </section>

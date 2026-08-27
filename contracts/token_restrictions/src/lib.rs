@@ -3,6 +3,8 @@ use soroban_sdk::{
     contract, contractimpl, contracttype, symbol_short, Address, Env, Symbol,
 };
 
+use brain_storm_shared::access;
+
 #[contracttype]
 pub enum DataKey {
     Admin,
@@ -45,9 +47,7 @@ impl TokenRestrictionsContract {
     }
 
     pub fn add_to_whitelist(env: Env, admin: Address, account: Address) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can manage whitelist");
+        access::require_admin(&env, &admin, &DataKey::Admin);
 
         env.storage()
             .instance()
@@ -58,9 +58,7 @@ impl TokenRestrictionsContract {
     }
 
     pub fn remove_from_whitelist(env: Env, admin: Address, account: Address) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can manage whitelist");
+        access::require_admin(&env, &admin, &DataKey::Admin);
 
         env.storage()
             .instance()
@@ -78,9 +76,7 @@ impl TokenRestrictionsContract {
     }
 
     pub fn add_to_blacklist(env: Env, admin: Address, account: Address) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can manage blacklist");
+        access::require_admin(&env, &admin, &DataKey::Admin);
 
         env.storage()
             .instance()
@@ -91,9 +87,7 @@ impl TokenRestrictionsContract {
     }
 
     pub fn remove_from_blacklist(env: Env, admin: Address, account: Address) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can manage blacklist");
+        access::require_admin(&env, &admin, &DataKey::Admin);
 
         env.storage()
             .instance()
@@ -111,9 +105,7 @@ impl TokenRestrictionsContract {
     }
 
     pub fn set_transfer_limit(env: Env, admin: Address, account: Address, limit: i128) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can set limits");
+        access::require_admin(&env, &admin, &DataKey::Admin);
         assert!(limit > 0, "Limit must be positive");
 
         env.storage()
@@ -131,6 +123,8 @@ impl TokenRestrictionsContract {
             .unwrap_or(i128::MAX)
     }
 
+    /// Request approval for a transfer from `from` to `to`.
+    /// The transfer is blocked until admin approves it via approve_transfer().
     pub fn request_transfer_approval(
         env: Env,
         from: Address,
@@ -148,10 +142,10 @@ impl TokenRestrictionsContract {
             .publish((APPROVAL_REQ, symbol_short!("xfer")), (from, to, amount));
     }
 
+    /// Admin approval to allow a transfer from `from` to `to`.
+    /// Clears the pending approval flag, allowing transfers between these addresses.
     pub fn approve_transfer(env: Env, admin: Address, from: Address, to: Address) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can approve transfers");
+        access::require_admin(&env, &admin, &DataKey::Admin);
 
         env.storage()
             .instance()
@@ -162,16 +156,14 @@ impl TokenRestrictionsContract {
     }
 
     pub fn is_transfer_approved(env: Env, from: Address, to: Address) -> bool {
-        !env.storage()
+        env.storage()
             .instance()
             .get::<_, bool>(&DataKey::PendingApprovals(from, to))
             .unwrap_or(true)
     }
 
     pub fn activate_emergency_override(env: Env, admin: Address) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can activate override");
+        access::require_admin(&env, &admin, &DataKey::Admin);
 
         env.storage()
             .instance()
@@ -183,9 +175,7 @@ impl TokenRestrictionsContract {
     }
 
     pub fn deactivate_emergency_override(env: Env, admin: Address) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can deactivate override");
+        access::require_admin(&env, &admin, &DataKey::Admin);
 
         env.storage()
             .instance()
@@ -203,15 +193,58 @@ impl TokenRestrictionsContract {
             .unwrap_or(false)
     }
 
+    /// Comprehensive transfer authorization check.
+    /// Verifies: emergency override, blacklist, whitelist, approvals.
+    /// For amount-based limits, use can_transfer_amount().
     pub fn can_transfer(env: Env, from: Address, to: Address) -> bool {
+        // Emergency override bypasses all checks
         if Self::is_emergency_override_active(env.clone()) {
             return true;
         }
+
+        // Blacklist blocks transfer
         if Self::is_blacklisted(env.clone(), from.clone())
             || Self::is_blacklisted(env.clone(), to.clone())
         {
             return false;
         }
+
+        // Whitelist enforcement (if whitelist exists)
+        let to_whitelisted = Self::is_whitelisted(env.clone(), to.clone());
+        let from_whitelisted = Self::is_whitelisted(env.clone(), from.clone());
+
+        // If either is whitelisted, check that both are in whitelist
+        if (to_whitelisted || from_whitelisted) && (!to_whitelisted || !from_whitelisted) {
+            return false;
+        }
+
+        // Check transfer approval status
+        if !Self::is_transfer_approved(env, from, to) {
+            return false;
+        }
+
+        true
+    }
+
+    /// Check if transfer is allowed with a specific amount.
+    /// Verifies: can_transfer() checks + transfer limit for sender.
+    pub fn can_transfer_amount(
+        env: Env,
+        from: Address,
+        to: Address,
+        amount: i128,
+    ) -> bool {
+        // First check all basic transfer restrictions
+        if !Self::can_transfer(env.clone(), from.clone(), to) {
+            return false;
+        }
+
+        // Then check transfer limit if one is set
+        let limit = Self::get_transfer_limit(env, from);
+        if limit != i128::MAX && amount > limit {
+            return false;
+        }
+
         true
     }
 

@@ -29,22 +29,6 @@
       scroll-behavior: auto !important;
     }
   }
-
-  /* RTL-specific animation mirroring for directional indicators */
-  [dir='rtl'] .animate-pulse-rtl-mirror {
-    animation: pulse-rtl 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  }
-
-  @keyframes pulse-rtl {
-    0%,
-    100% {
-      opacity: 1;
-    }
-    50% {
-      opacity: 0.5;
-      transform: scaleX(-1);
-    }
-  }
 }
 
 /* Skip-to-content link — visually hidden until focused */

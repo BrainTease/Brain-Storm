@@ -14,7 +14,10 @@ interface FacetedSearchProps {
   language: string;
   price: string;
   sort: SortOption;
-  onFilterChange: (key: 'level' | 'category' | 'duration' | 'language' | 'price' | 'sort', value: string) => void;
+  onFilterChange: (
+    key: 'level' | 'category' | 'duration' | 'language' | 'price' | 'sort',
+    value: string
+  ) => void;
   onClearAll: () => void;
 }
 
@@ -31,7 +34,7 @@ export function FacetedSearch({
   onClearAll,
 }: FacetedSearchProps) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" role="search" aria-label="Course search and filters">
       <SearchInput value={query} onChange={onQueryChange} />
       <CourseFilters
         level={level}

@@ -2,6 +2,8 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { reviewsApi } from '@/lib/reviewsApi';
+import { TextArea } from '@/components/ui/form';
+import { formatDateShort } from '@/lib/date-utils';
 
 const MAX_REPLY_CHARS = 500;
 
@@ -12,19 +14,28 @@ interface InstructorReplyProps {
   isInstructor: boolean;
 }
 
-export function InstructorReply({ courseId, reviewId, existingReply, isInstructor }: InstructorReplyProps) {
+export function InstructorReply({
+  courseId,
+  reviewId,
+  existingReply,
+  isInstructor,
+}: InstructorReplyProps) {
   const [showForm, setShowForm] = useState(false);
   const [replyText, setReplyText] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [submitted, setSubmitted] = useState<{ text: string; createdAt: string } | null>(existingReply ?? null);
+  const [submitted, setSubmitted] = useState<{ text: string; createdAt: string } | null>(
+    existingReply ?? null
+  );
 
   if (submitted) {
     return (
       <div className="mt-3 pl-4 border-l-2 border-blue-300 bg-blue-50 rounded p-3">
         <p className="text-xs font-semibold text-blue-700 mb-1">Instructor Response</p>
         <p className="text-sm text-gray-700">{submitted.text}</p>
-        <p className="text-xs text-gray-400 mt-1">{new Date(submitted.createdAt).toLocaleDateString()}</p>
+        <p className="text-xs text-gray-400 mt-1">
+          {formatDateShort(submitted.createdAt)}
+        </p>
       </div>
     );
   }
@@ -59,16 +70,19 @@ export function InstructorReply({ courseId, reviewId, existingReply, isInstructo
 
   return (
     <form onSubmit={handleSubmit} className="mt-3 space-y-2">
-      <textarea
-        className="w-full border rounded-lg p-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+      <TextArea
+        id="instructor-reply"
+        size="sm"
         rows={3}
         maxLength={MAX_REPLY_CHARS}
         value={replyText}
         onChange={(e) => setReplyText(e.target.value)}
         placeholder="Write your response..."
+        aria-label="Instructor response"
+        helperText={`${MAX_REPLY_CHARS - replyText.length} characters remaining`}
+        error={error ?? undefined}
+        className="resize-none"
       />
-      <p className="text-xs text-gray-400">{MAX_REPLY_CHARS - replyText.length} characters remaining</p>
-      {error && <p className="text-red-600 text-sm">{error}</p>}
       <div className="flex gap-2">
         <Button type="submit" disabled={loading || !replyText.trim()}>
           {loading ? 'Submitting…' : 'Submit Response'}

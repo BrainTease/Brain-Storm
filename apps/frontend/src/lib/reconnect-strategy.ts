@@ -29,7 +29,7 @@ export class ReconnectStrategy {
   getDelay(attemptNumber: number): number {
     const exponentialDelay = Math.min(
       this.config.initialDelayMs * Math.pow(this.config.backoffMultiplier, attemptNumber),
-      this.config.maxDelayMs,
+      this.config.maxDelayMs
     );
 
     // Add jitter: ±jitterFactor%

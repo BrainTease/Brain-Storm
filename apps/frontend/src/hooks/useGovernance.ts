@@ -101,8 +101,7 @@ export function useGovernance() {
   const checkHasVoted = async (proposalId: string, walletAddress: string): Promise<boolean> => {
     try {
       return await hasVoted(proposalId, walletAddress);
-    } catch (err) {
-      console.error('Error checking vote status:', err);
+    } catch {
       return false;
     }
   };

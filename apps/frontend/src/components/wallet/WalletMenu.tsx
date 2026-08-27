@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { useWallet } from '@/hooks/useWallet';
+import { useWallet } from '@/lib/wallet';
+import { formatXlm } from '@/lib/amount-utils';
 
 interface WalletMenuProps {
   onClose: () => void;
@@ -40,15 +41,15 @@ export function WalletMenu({ onClose }: WalletMenuProps) {
       <div>
         <p className="text-xs text-gray-500 mb-0.5">Connected Wallet</p>
         <p className="font-mono text-xs break-all">{address}</p>
-        {walletType && (
-          <p className="text-xs text-gray-400 mt-0.5 capitalize">{walletType}</p>
-        )}
+        {walletType && <p className="text-xs text-gray-400 mt-0.5 capitalize">{walletType}</p>}
       </div>
 
       {network && (
         <div>
           <p className="text-xs text-gray-500 mb-0.5">Network</p>
-          <p className={`text-xs font-medium ${networkMismatch ? 'text-amber-600' : 'text-gray-700 dark:text-gray-300'}`}>
+          <p
+            className={`text-xs font-medium ${networkMismatch ? 'text-amber-600' : 'text-gray-700 dark:text-gray-300'}`}
+          >
             {network}
             {networkMismatch && ' — mismatch'}
           </p>
@@ -65,26 +66,31 @@ export function WalletMenu({ onClose }: WalletMenuProps) {
             </button>
           </p>
         ) : (
-          <p className="text-sm font-medium">{balance ?? '—'} XLM</p>
+          <p className="text-sm font-medium">{formatXlm(balance)} XLM</p>
         )}
       </div>
 
       <div>
         <p className="text-xs text-gray-500 mb-0.5">BST Balance</p>
-        <p className="text-sm font-medium">{bstBalance ?? '—'} BST</p>
+        <p className="text-sm font-medium">{formatXlm(bstBalance)} BST</p>
       </div>
 
       <div className="flex gap-2 pt-2 border-t border-gray-100 dark:border-gray-700">
         <button
           className="flex-1 text-sm border border-gray-200 dark:border-gray-600 rounded-lg py-1.5 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-          onClick={() => { onClose(); }}
+          onClick={() => {
+            onClose();
+          }}
           role="menuitem"
         >
           Close
         </button>
         <button
           className="flex-1 text-sm border border-red-200 text-red-600 rounded-lg py-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-          onClick={() => { disconnect(); onClose(); }}
+          onClick={() => {
+            disconnect();
+            onClose();
+          }}
           role="menuitem"
         >
           Disconnect

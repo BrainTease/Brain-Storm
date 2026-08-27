@@ -48,17 +48,23 @@ export class GracefulShutdownService implements OnModuleInit, OnModuleDestroy {
   }
 
   private async shutdown(signal: string): Promise<void> {
-    this.logger.log(`Received ${signal}. Starting graceful shutdown. In-flight: ${this.inFlightCount}`);
+    this.logger.log(
+      `Received ${signal}. Starting graceful shutdown. In-flight: ${this.inFlightCount}`
+    );
     this.isShuttingDown = true;
 
     if (this.inFlightCount > 0) {
       await Promise.race([
-        new Promise<void>((resolve) => { this.drainResolve = resolve; }),
+        new Promise<void>((resolve) => {
+          this.drainResolve = resolve;
+        }),
         new Promise<void>((_, reject) =>
-          setTimeout(() => reject(new Error('Drain timeout')), this.drainTimeoutMs),
+          setTimeout(() => reject(new Error('Drain timeout')), this.drainTimeoutMs)
         ),
       ]).catch((err) => {
-        this.logger.warn(`Graceful shutdown: ${err.message}. Forcing exit with ${this.inFlightCount} in-flight requests.`);
+        this.logger.warn(
+          `Graceful shutdown: ${err.message}. Forcing exit with ${this.inFlightCount} in-flight requests.`
+        );
       });
     }
 

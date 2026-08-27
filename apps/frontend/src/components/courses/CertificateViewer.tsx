@@ -1,21 +1,13 @@
 'use client';
 
-import { useState, useRef, type FormEvent } from 'react';
+import { useRef } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
+import { useCertificateActions, type Certificate } from '@/hooks/useCertificateActions';
+import { formatDateShort, formatDateLong } from '@/lib/date-utils';
 
-interface Certificate {
-  id: string;
-  courseId: string;
-  courseName: string;
-  studentName: string;
-  issuedAt: string;
-  expiresAt?: string;
-  txHash: string;
-  instructorName?: string;
-  description?: string;
-}
+export type { Certificate };
 
 interface CertificateViewerProps {
   certificate: Certificate;
@@ -24,115 +16,58 @@ interface CertificateViewerProps {
 }
 
 export function CertificateViewer({ certificate, isOpen, onClose }: CertificateViewerProps) {
-  const [downloading, setDownloading] = useState(false);
-  const [copyFeedback, setCopyFeedback] = useState(false);
-  const [emailOpen, setEmailOpen] = useState(false);
-  const [emailAddress, setEmailAddress] = useState('');
-  const [emailSending, setEmailSending] = useState(false);
-  const [emailFeedback, setEmailFeedback] = useState<string | null>(null);
   const certRef = useRef<HTMLDivElement>(null);
-
-  const certUrl =
-    typeof window !== 'undefined'
-      ? `${window.location.origin}/credentials/${certificate.id}`
-      : '';
-
-  const isExpired =
-    certificate.expiresAt ? new Date(certificate.expiresAt) < new Date() : false;
-
-  /* ── Download PDF ── */
-  const downloadPDF = async () => {
-    setDownloading(true);
-    try {
-      const response = await fetch(`/api/certificates/${certificate.id}/pdf`);
-      if (!response.ok) throw new Error('Download failed');
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `certificate-${certificate.courseName.replace(/\s+/g, '-')}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-    } catch (error) {
-      console.error('Failed to download PDF:', error);
-    } finally {
-      setDownloading(false);
-    }
-  };
-
-  /* ── Print ── */
-  const handlePrint = () => window.print();
-
-  /* ── Share: LinkedIn ── */
-  const shareLinkedIn = () => {
-    const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(certUrl)}`;
-    window.open(linkedInUrl, '_blank', 'width=600,height=600');
-  };
-
-  /* ── Share: X / Twitter ── */
-  const shareTwitter = () => {
-    const text = `I just earned a certificate for "${certificate.courseName}"! 🎓 #BrainStorm #Blockchain`;
-    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(certUrl)}`;
-    window.open(twitterUrl, '_blank', 'width=600,height=600');
-  };
-
-  /* ── Share: Facebook ── */
-  const shareFacebook = () => {
-    const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(certUrl)}`;
-    window.open(fbUrl, '_blank', 'width=600,height=600');
-  };
-
-  /* ── Copy link ── */
-  const copyLink = async () => {
-    try {
-      await navigator.clipboard.writeText(certUrl);
-      setCopyFeedback(true);
-      setTimeout(() => setCopyFeedback(false), 2000);
-    } catch {
-      console.error('Failed to copy link');
-    }
-  };
-
-  /* ── Send via email ── */
-  const sendEmail = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!emailAddress.trim()) return;
-    setEmailSending(true);
-    setEmailFeedback(null);
-    try {
-      const res = await fetch(`/api/certificates/${certificate.id}/share-email`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: emailAddress, certUrl }),
-      });
-      setEmailFeedback(res.ok ? 'Email sent successfully!' : 'Failed to send email. Try again.');
-    } catch {
-      setEmailFeedback('Failed to send email. Try again.');
-    } finally {
-      setEmailSending(false);
-    }
-  };
+  const {
+    isExpired,
+    downloading,
+    downloadPDF,
+    handlePrint,
+    shareLinkedIn,
+    shareTwitter,
+    shareFacebook,
+    copyLink,
+    copyFeedback,
+    emailOpen,
+    toggleEmailOpen,
+    emailAddress,
+    setEmailAddress,
+    emailSending,
+    emailFeedback,
+    sendEmail,
+  } = useCertificateActions(certificate);
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Certificate of Completion">
       <div className="space-y-6 max-h-[80vh] overflow-y-auto">
-
         {/* ── Certificate Template ── */}
         <div
           ref={certRef}
           className="print:shadow-none relative overflow-hidden rounded-xl border-4 border-blue-600 dark:border-blue-500 bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-indigo-950 p-8 text-center"
         >
           {/* Decorative corner accents */}
-          <div className="absolute top-2 left-2 w-8 h-8 border-t-4 border-l-4 border-blue-400 rounded-tl-md" aria-hidden="true" />
-          <div className="absolute top-2 right-2 w-8 h-8 border-t-4 border-r-4 border-blue-400 rounded-tr-md" aria-hidden="true" />
-          <div className="absolute bottom-2 left-2 w-8 h-8 border-b-4 border-l-4 border-blue-400 rounded-bl-md" aria-hidden="true" />
-          <div className="absolute bottom-2 right-2 w-8 h-8 border-b-4 border-r-4 border-blue-400 rounded-br-md" aria-hidden="true" />
+          <div
+            className="absolute top-2 left-2 w-8 h-8 border-t-4 border-l-4 border-blue-400 rounded-tl-md"
+            aria-hidden="true"
+          />
+          <div
+            className="absolute top-2 right-2 w-8 h-8 border-t-4 border-r-4 border-blue-400 rounded-tr-md"
+            aria-hidden="true"
+          />
+          <div
+            className="absolute bottom-2 left-2 w-8 h-8 border-b-4 border-l-4 border-blue-400 rounded-bl-md"
+            aria-hidden="true"
+          />
+          <div
+            className="absolute bottom-2 right-2 w-8 h-8 border-b-4 border-r-4 border-blue-400 rounded-br-md"
+            aria-hidden="true"
+          />
 
           {/* Logo / seal */}
           <div className="flex justify-center mb-4">
-            <div className="w-16 h-16 rounded-full bg-blue-600 flex items-center justify-center shadow-lg" aria-hidden="true">
+            <div
+              className="w-16 h-16 rounded-full bg-blue-600 flex items-center justify-center shadow-lg"
+              aria-hidden="true"
+            >
               <span className="text-white text-2xl font-bold">BS</span>
             </div>
           </div>
@@ -166,21 +101,13 @@ export function CertificateViewer({ certificate, isOpen, onClose }: CertificateV
           <div className="flex flex-wrap justify-center gap-4 text-sm text-gray-600 dark:text-gray-300 mt-4 mb-4">
             <span>
               <span className="font-medium">Issued:</span>{' '}
-              {new Date(certificate.issuedAt).toLocaleDateString(undefined, {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-              })}
+              {formatDateLong(certificate.issuedAt)}
             </span>
             {certificate.expiresAt && (
               <span>
                 <span className="font-medium">Expires:</span>{' '}
                 <span className={isExpired ? 'text-red-500' : ''}>
-                  {new Date(certificate.expiresAt).toLocaleDateString(undefined, {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                  })}
+                  {formatDateLong(certificate.expiresAt)}
                 </span>
               </span>
             )}
@@ -212,12 +139,12 @@ export function CertificateViewer({ certificate, isOpen, onClose }: CertificateV
           </h3>
           <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-gray-600 dark:text-gray-300">
             <span className="text-gray-400 dark:text-gray-500">Issue Date</span>
-            <span>{new Date(certificate.issuedAt).toLocaleDateString()}</span>
+            <span>{formatDateShort(certificate.issuedAt)}</span>
             {certificate.expiresAt && (
               <>
                 <span className="text-gray-400 dark:text-gray-500">Expiry Date</span>
                 <span className={isExpired ? 'text-red-500 font-medium' : ''}>
-                  {new Date(certificate.expiresAt).toLocaleDateString()}
+                  {formatDateShort(certificate.expiresAt)}
                   {isExpired && ' (Expired)'}
                 </span>
               </>
@@ -273,7 +200,7 @@ export function CertificateViewer({ certificate, isOpen, onClose }: CertificateV
             {/* Email share */}
             <button
               className="text-sm text-blue-600 dark:text-blue-400 hover:underline mt-1"
-              onClick={() => setEmailOpen((o) => !o)}
+              onClick={toggleEmailOpen}
               type="button"
             >
               ✉️ Share via Email {emailOpen ? '▲' : '▼'}

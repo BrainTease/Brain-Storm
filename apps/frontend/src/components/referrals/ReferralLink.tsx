@@ -25,7 +25,7 @@ export function ReferralLink() {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error('Failed to copy:', err);
+      // Failed to copy to clipboard
     }
   };
 
@@ -54,9 +54,7 @@ export function ReferralLink() {
         </div>
 
         <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
-          <h3 className="font-medium text-blue-900 dark:text-blue-100 mb-2">
-            How it works
-          </h3>
+          <h3 className="font-medium text-blue-900 dark:text-blue-100 mb-2">How it works</h3>
           <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
             <li>• Share your unique referral link</li>
             <li>• Friends sign up using your link</li>

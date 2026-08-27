@@ -56,7 +56,7 @@ function ProgressOverTimeChartBase({
 }: ProgressOverTimeChartProps) {
   const chartData = useMemo(() => {
     if (!data || data.length === 0) return [];
-    
+
     // Group by date and calculate average if multiple courses
     const grouped = data.reduce(
       (acc, item) => {
@@ -68,7 +68,7 @@ function ProgressOverTimeChartBase({
         }
         return acc;
       },
-      {} as Record<string, ProgressDataPoint>,
+      {} as Record<string, ProgressDataPoint>
     );
 
     return Object.values(grouped);
@@ -101,16 +101,13 @@ function ProgressOverTimeChartBase({
     );
   }
 
-  const maxProgress = Math.max(...chartData.map(d => d.progress), 100);
+  const maxProgress = Math.max(...chartData.map((d) => d.progress), 100);
 
   return (
     <Card className="p-6">
       <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">{title}</h3>
       <ResponsiveContainer width="100%" height={300}>
-        <AreaChart
-          data={chartData}
-          margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-        >
+        <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
           <defs>
             <linearGradient id="progressGradient" x1="0" y1="0" x2="0" y2="1">
               {GRADIENT_STOPS.primary.map((stop, idx) => (
@@ -124,11 +121,7 @@ function ProgressOverTimeChartBase({
             </linearGradient>
           </defs>
           <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
-          <XAxis
-            dataKey="date"
-            stroke={textColor}
-            style={{ fontSize: '12px' }}
-          />
+          <XAxis dataKey="date" stroke={textColor} style={{ fontSize: '12px' }} />
           <YAxis
             stroke={textColor}
             domain={[0, Math.min(100, maxProgress * 1.1)]}

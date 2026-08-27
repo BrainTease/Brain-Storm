@@ -153,7 +153,7 @@ fn test_double_initialize_rejected() {
 // ── mint: auth failures ───────────────────────────────────────────────────────
 
 #[test]
-#[should_panic(expected = "Only admin can mint")]
+#[should_panic(expected = "Unauthorized: admin required")]
 fn test_non_admin_mint_reward_rejected() {
     let (env, _admin, client) = setup();
     let rando = Address::generate(&env);
@@ -287,7 +287,7 @@ fn test_vesting_claim_after_cliff() {
 }
 
 #[test]
-#[should_panic(expected = "Only admin can create vesting")]
+#[should_panic(expected = "Unauthorized: admin required")]
 fn test_non_admin_cannot_create_vesting() {
     let (env, _admin, client) = setup();
     let rando = Address::generate(&env);

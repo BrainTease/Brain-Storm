@@ -2,11 +2,31 @@
 
 import { useEffect, useRef, useId } from 'react';
 
-interface ModalProps {
+export type ModalSize = 'sm' | 'md' | 'lg' | 'xl';
+
+const SIZE_CLASSES: Record<ModalSize, string> = {
+  sm: 'max-w-sm',
+  md: 'max-w-md',
+  lg: 'max-w-2xl',
+  xl: 'max-w-5xl',
+};
+
+export interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
-  title: string;
-  children: React.ReactNode;
+  /** Renders the default header (title + close button). Ignored if `header` is provided. */
+  title?: string;
+  /** Custom header, replacing the default title/close-button row. */
+  header?: ReactNode;
+  /** Rendered below the body, outside its padding — for action bars with distinct styling. */
+  footer?: ReactNode;
+  children: ReactNode;
+  size?: ModalSize;
+  closeOnBackdrop?: boolean;
+  closeOnEscape?: boolean;
+  showCloseButton?: boolean;
+  /** aria-label for the dialog when no `title` is set (and `header` doesn't supply its own labelling). */
+  ariaLabel?: string;
 }
 
 const FOCUSABLE_SELECTORS =
@@ -98,6 +118,8 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
 
   if (!isOpen) return null;
 
+  const showDefaultHeader = !header && (title || showCloseButton);
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="fixed inset-0 bg-black bg-opacity-50" onClick={onClose} aria-hidden="true" />
@@ -122,6 +144,7 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
           </button>
         </div>
         <div className="p-6">{children}</div>
+        {footer}
       </div>
     </div>
   );

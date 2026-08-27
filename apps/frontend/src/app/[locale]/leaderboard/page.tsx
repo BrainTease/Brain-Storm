@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useAuth } from '@/hooks/useAuth';
 import { useLeaderboard, type LeaderboardPeriod } from '@/hooks/useLeaderboard';
 import { useDateFormatter, useNumberFormatter } from '@/lib/format';
+import { BadgeDisplay } from '@/components/ui/BadgeDisplay';
 
 const PERIODS: LeaderboardPeriod[] = ['week', 'month', 'all'];
 const PAGE_SIZE = 10;
@@ -137,17 +138,7 @@ export default function LeaderboardPage() {
                       {numberFmt.decimal(e.coursesCompleted)}
                     </td>
                     <td className="px-4 py-3 text-sm">
-                      <div className="flex flex-wrap gap-1">
-                        {e.badges.map((b) => (
-                          <span
-                            key={b}
-                            title={b}
-                            className="inline-block rounded bg-gray-100 dark:bg-gray-800 px-2 py-0.5 text-xs text-gray-700 dark:text-gray-300"
-                          >
-                            {b}
-                          </span>
-                        ))}
-                      </div>
+                      <BadgeDisplay variant="inline" items={e.badges} />
                     </td>
                   </tr>
                 );

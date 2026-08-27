@@ -1,19 +1,28 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Dispute, DisputeStatus } from './dispute.entity';
+/**
+ * AdminService (#813)
+ *
+ * Responsibility: Platform-level user management (ban, suspend, role change).
+ * Dispute-resolution logic has been extracted into DisputeResolutionService
+ * to reduce cyclomatic complexity and give each concern a focused boundary.
+ *
+ * Dispute methods are thin delegators kept here for backwards-compatibility
+ * with AdminController — the real logic lives in DisputeResolutionService.
+ */
+
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { AuditService } from '../audit/audit.service';
 import { UsersService } from '../users/users.service';
 import { CreateDisputeDto, ResolveDisputeDto, SuspendUserDto } from './admin.dto';
 import { AuditAction } from '../audit/audit-log.entity';
+import { Dispute, DisputeStatus } from './dispute.entity';
+import { DisputeResolutionService } from './dispute-resolution.service';
 
 @Injectable()
 export class AdminService {
   constructor(
-    @InjectRepository(Dispute)
-    private readonly disputeRepo: Repository<Dispute>,
     private readonly auditService: AuditService,
-    private readonly usersService: UsersService
+    private readonly usersService: UsersService,
+    private readonly disputeResolutionService: DisputeResolutionService
   ) {}
 
   // ── User management ───────────────────────────────────────────────────────
@@ -33,7 +42,6 @@ export class AdminService {
     const user = await this.usersService.findById(targetId);
     if (!user) throw new NotFoundException('User not found');
 
-    // Store suspension as ban with metadata in audit log (no separate field needed)
     const updated = await this.usersService.update(targetId, { isBanned: true });
     await this.auditService.log('admin.user_suspended', adminId, true, {
       targetUserId: targetId,
@@ -52,45 +60,21 @@ export class AdminService {
     return user;
   }
 
-  // ── Dispute management ────────────────────────────────────────────────────
+  // ── Dispute management (delegated) ────────────────────────────────────────
 
   async createDispute(dto: CreateDisputeDto, userId: string): Promise<Dispute> {
-    const dispute = this.disputeRepo.create({
-      ...dto,
-      submittedByUserId: userId,
-      status: DisputeStatus.OPEN,
-    });
-    const saved = await this.disputeRepo.save(dispute);
-    await this.auditService.log('admin.dispute_created', userId, true, { disputeId: saved.id });
-    return saved;
+    return this.disputeResolutionService.createDispute(dto, userId);
   }
 
   async listDisputes(status?: DisputeStatus): Promise<Dispute[]> {
-    const where = status ? { status } : {};
-    return this.disputeRepo.find({ where, order: { createdAt: 'DESC' } });
+    return this.disputeResolutionService.listDisputes(status);
   }
 
   async resolveDispute(id: string, dto: ResolveDisputeDto, adminId: string): Promise<Dispute> {
-    const dispute = await this.getDisputeOrThrow(id);
-    if (dispute.status === DisputeStatus.RESOLVED || dispute.status === DisputeStatus.CLOSED) {
-      throw new BadRequestException('Dispute already resolved or closed');
-    }
-
-    dispute.status = dto.status;
-    dispute.resolution = dto.resolution;
-    dispute.resolvedByUserId = adminId;
-    const saved = await this.disputeRepo.save(dispute);
-
-    await this.auditService.log('admin.dispute_resolved', adminId, true, {
-      disputeId: id,
-      status: dto.status,
-    });
-    return saved;
+    return this.disputeResolutionService.resolveDispute(id, dto, adminId);
   }
 
   async getDisputeOrThrow(id: string): Promise<Dispute> {
-    const dispute = await this.disputeRepo.findOne({ where: { id } });
-    if (!dispute) throw new NotFoundException('Dispute not found');
-    return dispute;
+    return this.disputeResolutionService.getDisputeOrThrow(id);
   }
 }

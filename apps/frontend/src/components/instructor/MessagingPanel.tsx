@@ -25,8 +25,20 @@ const MOCK: Thread[] = [
     studentName: 'Alice Johnson',
     courseTitle: 'Intro to Stellar',
     messages: [
-      { id: 'm1', from: 'Alice Johnson', text: 'Hi, I have a question about lesson 3.', createdAt: '2026-05-26T10:00:00Z', isInstructor: false },
-      { id: 'm2', from: 'You', text: 'Sure, what would you like to know?', createdAt: '2026-05-26T10:05:00Z', isInstructor: true },
+      {
+        id: 'm1',
+        from: 'Alice Johnson',
+        text: 'Hi, I have a question about lesson 3.',
+        createdAt: '2026-05-26T10:00:00Z',
+        isInstructor: false,
+      },
+      {
+        id: 'm2',
+        from: 'You',
+        text: 'Sure, what would you like to know?',
+        createdAt: '2026-05-26T10:05:00Z',
+        isInstructor: true,
+      },
     ],
   },
   {
@@ -34,7 +46,13 @@ const MOCK: Thread[] = [
     studentName: 'Bob Smith',
     courseTitle: 'Intro to Stellar',
     messages: [
-      { id: 'm3', from: 'Bob Smith', text: 'When will the next module be available?', createdAt: '2026-05-25T09:00:00Z', isInstructor: false },
+      {
+        id: 'm3',
+        from: 'Bob Smith',
+        text: 'When will the next module be available?',
+        createdAt: '2026-05-25T09:00:00Z',
+        isInstructor: false,
+      },
     ],
   },
 ];
@@ -48,7 +66,8 @@ export function MessagingPanel() {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    api.get('/instructor/messages')
+    api
+      .get('/instructor/messages')
       .then((r) => setThreads(r.data ?? []))
       .catch(() => setThreads(MOCK))
       .finally(() => setLoading(false));
@@ -105,7 +124,9 @@ export function MessagingPanel() {
                 key={t.studentId}
                 onClick={() => setSelected(t.studentId)}
                 className={`w-full text-left px-3 py-2.5 text-sm border-b border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
-                  selected === t.studentId ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300' : 'text-gray-700 dark:text-gray-300'
+                  selected === t.studentId
+                    ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
+                    : 'text-gray-700 dark:text-gray-300'
                 }`}
               >
                 <p className="font-medium truncate">{t.studentName}</p>
@@ -125,12 +146,17 @@ export function MessagingPanel() {
             <>
               <div className="flex-1 overflow-y-auto p-3 space-y-2">
                 {activeThread.messages.map((m) => (
-                  <div key={m.id} className={`flex ${m.isInstructor ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[75%] rounded-lg px-3 py-2 text-sm ${
-                      m.isInstructor
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100'
-                    }`}>
+                  <div
+                    key={m.id}
+                    className={`flex ${m.isInstructor ? 'justify-end' : 'justify-start'}`}
+                  >
+                    <div
+                      className={`max-w-[75%] rounded-lg px-3 py-2 text-sm ${
+                        m.isInstructor
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+                      }`}
+                    >
                       {m.text}
                     </div>
                   </div>
@@ -146,7 +172,11 @@ export function MessagingPanel() {
                   placeholder="Type a message…"
                   className="flex-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-1.5 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
-                <Button onClick={send} disabled={sending || !text.trim()} className="text-sm py-1.5 px-3">
+                <Button
+                  onClick={send}
+                  disabled={sending || !text.trim()}
+                  className="text-sm py-1.5 px-3"
+                >
                   Send
                 </Button>
               </div>

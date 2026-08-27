@@ -12,7 +12,7 @@ export class DatabasePerformanceService {
 
   constructor(
     private readonly dataSource: DataSource,
-    private readonly loggerFactory: LoggerFactory,
+    private readonly loggerFactory: LoggerFactory
   ) {
     this.setupQueryLogging();
   }

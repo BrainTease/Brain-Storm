@@ -1,7 +1,20 @@
 #![no_std]
+//! Shared RBAC contract and common Soroban patterns (pause, reentrancy guard, multisig, timelocked upgrade).
+//!
+//! Full interface reference: [docs/contract-interfaces.md § Shared / RBAC Contract](../../../docs/contract-interfaces.md#shared--rbac-contract).
+//! Cross-contract call conventions used across `contracts/`: [docs/contract-interfaces.md § Cross-Contract Call Conventions](../../../docs/contract-interfaces.md#cross-contract-call-conventions).
+//! Rationale for this crate's existence and how it relates to other contracts: [ADR-007](../../../docs/adr/ADR-007-shared-crate-for-common-code.md).
 use soroban_sdk::{contract, contractimpl, contracttype, symbol_short, Address, BytesN, Env, Symbol};
 
+pub mod admin;
+
+pub mod errors;
+pub mod math;
 pub mod pausable;
+pub mod reentrancy;
+pub mod validation;
+
+pub mod access;
 
 #[contracttype]
 #[derive(Clone, PartialEq)]
@@ -42,10 +55,20 @@ pub enum DataKey {
     AuthorizedCallers(Address),          // contract → Vec<Address> (authorized callers)
 }
 
+/// The RBAC contract itself.
+///
+/// Gated behind the default-on `contract` feature. Other contracts in this
+/// workspace depend on this crate only for its helper modules (`access`,
+/// `math`, `validation`, ...) and must do so with `default-features = false`:
+/// linking a `#[contractimpl]` block into another contract's wasm would export
+/// this contract's entry points (`assign_role`, `upgrade`, `pause_contract`, ...)
+/// from that contract, operating on *its* storage.
+#[cfg(feature = "contract")]
 #[contract]
 pub struct SharedContract;
 
 /// Returns true if `role` grants `permission`.
+#[cfg(feature = "contract")]
 fn role_has_permission(role: &Role, permission: &Permission) -> bool {
     match role {
         Role::Admin => true, // Admin has all permissions
@@ -57,6 +80,7 @@ fn role_has_permission(role: &Role, permission: &Permission) -> bool {
     }
 }
 
+#[cfg(feature = "contract")]
 #[contractimpl]
 impl SharedContract {
     /// Initialize the contract with an admin address
@@ -70,9 +94,7 @@ impl SharedContract {
 
     /// Assign a role to an address (admin only). Emits ("rbac", "role_assigned").
     pub fn assign_role(env: Env, caller: Address, target: Address, role: Role) {
-        caller.require_auth();
-        let admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(caller == admin, "Only admin can assign roles");
+        crate::access::require_admin(&env, &caller, &DataKey::Admin);
         env.storage()
             .instance()
             .set(&DataKey::Role(target.clone()), &role);
@@ -86,12 +108,7 @@ impl SharedContract {
     /// Check if an address has a specific role
     pub fn has_role(env: Env, addr: Address, role: Role) -> bool {
         let stored: Option<Role> = env.storage().instance().get(&DataKey::Role(addr));
-        match (stored, role) {
-            (Some(Role::Admin), Role::Admin) => true,
-            (Some(Role::Instructor), Role::Instructor) => true,
-            (Some(Role::Student), Role::Student) => true,
-            _ => false,
-        }
+        matches!((stored, role), (Some(Role::Admin), Role::Admin) | (Some(Role::Instructor), Role::Instructor) | (Some(Role::Student), Role::Student))
     }
 
     /// Check if an address has a specific permission based on its assigned role
@@ -105,9 +122,7 @@ impl SharedContract {
 
     /// Upgrade the contract wasm (admin only). Emits ("shared", "upgraded").
     pub fn upgrade(env: Env, admin: Address, new_wasm_hash: BytesN<32>) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can upgrade");
+        crate::access::require_admin(&env, &admin, &DataKey::Admin);
 
         env.events().publish(
             (symbol_short!("shared"), symbol_short!("upgraded")),
@@ -128,9 +143,7 @@ impl SharedContract {
         target_contract: Address,
         caller: Address,
     ) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can authorize");
+        crate::access::require_admin(&env, &admin, &DataKey::Admin);
 
         let key = DataKey::AuthorizedCallers(target_contract.clone());
         let mut callers: soroban_sdk::Vec<Address> = env
@@ -278,16 +291,12 @@ impl SharedContract {
     // -------------------------------------------------------------------------
 
     pub fn pause_contract(env: Env, admin: Address, auto_unpause_ledgers: u32) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can pause");
+        crate::access::require_admin(&env, &admin, &DataKey::Admin);
         pausable::pause(&env, &admin, auto_unpause_ledgers);
     }
 
     pub fn unpause_contract(env: Env, admin: Address) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can unpause");
+        crate::access::require_admin(&env, &admin, &DataKey::Admin);
         pausable::unpause(&env, &admin);
     }
 
@@ -305,25 +314,19 @@ impl SharedContract {
 
     /// Schedule a WASM upgrade with a timelock delay (admin only).
     pub fn schedule_upgrade(env: Env, admin: Address, new_wasm_hash: BytesN<32>, timelock_ledgers: u32) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can schedule upgrades");
+        crate::access::require_admin(&env, &admin, &DataKey::Admin);
         upgrade::schedule_upgrade(&env, &admin, new_wasm_hash, timelock_ledgers);
     }
 
     /// Execute a previously scheduled upgrade once its timelock has expired (admin only).
     pub fn execute_upgrade(env: Env, admin: Address) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can execute upgrades");
+        crate::access::require_admin(&env, &admin, &DataKey::Admin);
         upgrade::execute_upgrade(&env, &admin);
     }
 
     /// Cancel a pending upgrade before it executes (admin only).
     pub fn cancel_upgrade(env: Env, admin: Address) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can cancel upgrades");
+        crate::access::require_admin(&env, &admin, &DataKey::Admin);
         upgrade::cancel_upgrade(&env, &admin);
     }
 
@@ -346,6 +349,7 @@ impl SharedContract {
 pub mod multisig;
 pub mod upgrade;
 
+#[cfg(all(test, feature = "contract"))]
 mod tests;
-#[cfg(test)]
+#[cfg(all(test, feature = "contract"))]
 mod upgrade_tests;

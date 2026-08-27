@@ -11,6 +11,7 @@ import { Progress } from '../progress/progress.entity';
 import { Review } from '../courses/review.entity';
 import { Course } from '../courses/course.entity';
 import { User } from '../users/user.entity';
+
 import { AnalyticsService } from './analytics.service';
 import { AnalyticsController } from './analytics.controller';
 import { EventsService } from './events.service';
@@ -22,6 +23,13 @@ import { AdminAnalyticsService } from './admin-analytics.service';
 import { AdminAnalyticsController } from './admin-analytics.controller';
 import { ProtocolMetricsService } from './protocol-metrics.service';
 import { ProtocolMetricsController } from './protocol-metrics.controller';
+
+// Pipeline stages
+import { DataCollectionStage } from './pipeline/data-collection.stage';
+import { AggregationStage } from './pipeline/aggregation.stage';
+import { PersistenceStage } from './pipeline/persistence.stage';
+import { CacheStage } from './pipeline/cache.stage';
+import { AnalyticsPipeline } from './pipeline/analytics.pipeline';
 
 @Module({
   imports: [
@@ -39,8 +47,36 @@ import { ProtocolMetricsController } from './protocol-metrics.controller';
       User,
     ]),
   ],
-  providers: [AnalyticsService, EventsService, PlatformAnalyticsService, InstructorAnalyticsService, AdminAnalyticsService, ProtocolMetricsService],
-  controllers: [AnalyticsController, PlatformAnalyticsController, InstructorAnalyticsController, AdminAnalyticsController, ProtocolMetricsController],
-  exports: [AnalyticsService, EventsService, PlatformAnalyticsService, InstructorAnalyticsService, AdminAnalyticsService, ProtocolMetricsService],
+  providers: [
+    // Pipeline stages
+    DataCollectionStage,
+    AggregationStage,
+    PersistenceStage,
+    CacheStage,
+    AnalyticsPipeline,
+    // Feature services
+    AnalyticsService,
+    EventsService,
+    PlatformAnalyticsService,
+    InstructorAnalyticsService,
+    AdminAnalyticsService,
+    ProtocolMetricsService,
+  ],
+  controllers: [
+    AnalyticsController,
+    PlatformAnalyticsController,
+    InstructorAnalyticsController,
+    AdminAnalyticsController,
+    ProtocolMetricsController,
+  ],
+  exports: [
+    AnalyticsPipeline,
+    AnalyticsService,
+    EventsService,
+    PlatformAnalyticsService,
+    InstructorAnalyticsService,
+    AdminAnalyticsService,
+    ProtocolMetricsService,
+  ],
 })
 export class AnalyticsModule {}

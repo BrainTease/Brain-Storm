@@ -123,10 +123,13 @@ export class KycService {
       .groupBy('customer.status')
       .getRawMany();
 
-    return results.reduce((acc, row) => {
-      acc[row.status] = Number(row.count);
-      return acc;
-    }, {} as Record<string, number>);
+    return results.reduce(
+      (acc, row) => {
+        acc[row.status] = Number(row.count);
+        return acc;
+      },
+      {} as Record<string, number>
+    );
   }
 
   /** Called by the webhook endpoint when the provider sends a status update */

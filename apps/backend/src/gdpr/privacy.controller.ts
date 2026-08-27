@@ -1,13 +1,4 @@
-import {
-  Controller,
-  Delete,
-  Get,
-  Req,
-  Res,
-  UseGuards,
-  HttpCode,
-  HttpStatus,
-} from '@nestjs/common';
+import { Controller, Delete, Get, Req, Res, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
 import { Response, Request } from 'express';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
@@ -31,10 +22,7 @@ export class PrivacyController {
   @ApiOperation({ summary: 'Export all off-chain personal data (GDPR Art. 20)' })
   @ApiResponse({ status: 200, description: 'ZIP archive stream' })
   async exportData(@Req() req: Request & { user: { id: string } }, @Res() res: Response) {
-    const buffer = await this.exportService.exportUserData(
-      req.user.id,
-      req.ip,
-    );
+    const buffer = await this.exportService.exportUserData(req.user.id, req.ip);
 
     res.set({
       'Content-Type': 'application/zip',

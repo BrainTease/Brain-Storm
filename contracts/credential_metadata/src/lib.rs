@@ -4,6 +4,7 @@ use soroban_sdk::{
 };
 
 pub mod linkage;
+pub mod validation;
 pub use linkage::{
     set_nft_contract, get_credential_nft_link, get_nft_credential, is_linked,
     CredentialNftLink,
@@ -76,6 +77,7 @@ impl CredentialMetadataContract {
     ///
     /// # Returns
     /// The minted NFT ID.
+    #[allow(clippy::too_many_arguments)]
     pub fn issue_with_nft(
         env: Env,
         admin: Address,
@@ -89,10 +91,10 @@ impl CredentialMetadataContract {
         course_id: soroban_sdk::Symbol,
         instructor: Address,
         royalty_basis: u32,
+
     ) -> u32 {
         admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can issue credentials");
+        validation::validate_admin(&env, &admin);
 
         // Store credential metadata first
         let metadata = MetadataRecord {
@@ -145,8 +147,7 @@ impl CredentialMetadataContract {
         ipfs_hash: String,
     ) {
         admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can store metadata");
+        validation::validate_admin(&env, &admin);
 
         let metadata = MetadataRecord {
             credential_id,
@@ -173,14 +174,9 @@ impl CredentialMetadataContract {
         grade: String,
     ) {
         admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can update metadata");
+        validation::validate_admin(&env, &admin);
 
-        let mut metadata: MetadataRecord = env
-            .storage()
-            .persistent()
-            .get(&DataKey::Metadata(credential_id))
-            .expect("Metadata not found");
+        let mut metadata: MetadataRecord = validation::get_metadata_or_panic(&env, credential_id);
 
         let history_count: u32 = env
             .storage()
@@ -237,14 +233,7 @@ impl CredentialMetadataContract {
     }
 
     pub fn can_renew(env: Env, credential_id: u64) -> bool {
-        let metadata = Self::get_metadata(env.clone(), credential_id);
-        match metadata {
-            Some(record) => {
-                let current_time = env.ledger().timestamp();
-                current_time <= record.expiry_timestamp + GRACE_PERIOD_SECONDS
-            },
-            None => false,
-        }
+        validation::is_renewable(&env, credential_id, GRACE_PERIOD_SECONDS)
     }
 
     pub fn renew_credential(
@@ -254,24 +243,16 @@ impl CredentialMetadataContract {
         new_expiry_timestamp: u64,
     ) {
         admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can renew credentials");
+        validation::validate_admin(&env, &admin);
 
-        let mut metadata: MetadataRecord = env
-            .storage()
-            .persistent()
-            .get(&DataKey::Metadata(credential_id))
-            .expect("Credential not found");
+        let mut metadata: MetadataRecord = validation::get_metadata_or_panic(&env, credential_id);
 
         assert!(
             Self::can_renew(env.clone(), credential_id),
             "Credential not eligible for renewal"
         );
 
-        assert!(
-            new_expiry_timestamp > env.ledger().timestamp(),
-            "New expiry must be in the future"
-        );
+        validation::validate_future_timestamp(&env, new_expiry_timestamp);
 
         metadata.expiry_timestamp = new_expiry_timestamp;
 
@@ -290,8 +271,7 @@ impl CredentialMetadataContract {
 
     pub fn store_metadata_hash(env: Env, admin: Address, credential_id: u64, hash: Bytes) {
         admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can store hash");
+        validation::validate_admin(&env, &admin);
 
         env.storage()
             .persistent()
@@ -329,3 +309,6 @@ impl CredentialMetadataContract {
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod validation_tests;

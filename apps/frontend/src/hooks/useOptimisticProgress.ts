@@ -28,10 +28,7 @@ export function useOptimisticProgress(courseId: string, lessonId: string) {
       });
     } catch (err: unknown) {
       store.markLesson(courseId, lessonId, rollbackRef.current);
-      const msg =
-        err instanceof Error
-          ? err.message
-          : 'Failed to save progress. Changes reverted.';
+      const msg = err instanceof Error ? err.message : 'Failed to save progress. Changes reverted.';
       toast.error(msg);
     } finally {
       setPending(false);

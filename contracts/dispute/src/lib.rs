@@ -1,10 +1,18 @@
 #![no_std]
 //! Dispute resolution contract (#659).
 //! Lifecycle: Open → Evidence → Decision → Settled.
+//!
+//! State Transition Safety:
+//! - Explicit authorization checks for all mutations
+//! - Only arbiter can transition to Decision or Settled states
+//! - Only parties can submit evidence
+//! - Once settled, no further state changes allowed
 
 use soroban_sdk::{
     contract, contractimpl, contracttype, symbol_short, Address, BytesN, Env, Symbol,
 };
+
+use brain_storm_shared::access;
 
 // ── Storage keys ──────────────────────────────────────────────────────────────
 
@@ -75,9 +83,7 @@ impl DisputeContract {
 
     /// Admin can update the arbiter.
     pub fn set_arbiter(env: Env, admin: Address, arbiter: Address) {
-        admin.require_auth();
-        let stored: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored, "Only admin");
+        access::require_admin(&env, &admin, &DataKey::Admin);
         env.storage().instance().set(&DataKey::Arbiter, &arbiter);
     }
 
@@ -122,6 +128,9 @@ impl DisputeContract {
             .get(&DataKey::Dispute(dispute_id))
             .expect("Dispute not found");
 
+        // Prevent modifications to settled disputes
+        Self::assert_not_settled(&dispute);
+
         assert!(dispute.status == DisputeStatus::Open, "Must be in Open status");
         assert!(
             caller == dispute.claimant || caller == dispute.respondent,
@@ -136,15 +145,16 @@ impl DisputeContract {
 
     /// Arbiter records their decision (moves to Decision phase).
     pub fn record_decision(env: Env, arbiter: Address, dispute_id: u64, outcome: Outcome) {
-        arbiter.require_auth();
-        let stored_arbiter: Address = env.storage().instance().get(&DataKey::Arbiter).unwrap();
-        assert!(arbiter == stored_arbiter, "Only arbiter");
+        access::require_authority(&env, &arbiter, &DataKey::Arbiter);
 
         let mut dispute: Dispute = env
             .storage()
             .persistent()
             .get(&DataKey::Dispute(dispute_id))
             .expect("Dispute not found");
+
+        // Prevent modifications to settled disputes
+        Self::assert_not_settled(&dispute);
 
         assert!(
             dispute.status == DisputeStatus::Evidence
@@ -162,9 +172,7 @@ impl DisputeContract {
     /// Enforce settlement: compute payouts based on outcome, mark as Settled.
     /// Returns (claimant_amount, respondent_amount).
     pub fn settle(env: Env, arbiter: Address, dispute_id: u64) -> (i128, i128) {
-        arbiter.require_auth();
-        let stored_arbiter: Address = env.storage().instance().get(&DataKey::Arbiter).unwrap();
-        assert!(arbiter == stored_arbiter, "Only arbiter");
+        access::require_authority(&env, &arbiter, &DataKey::Arbiter);
 
         let mut dispute: Dispute = env
             .storage()
@@ -194,9 +202,21 @@ impl DisputeContract {
     pub fn get_dispute(env: Env, dispute_id: u64) -> Option<Dispute> {
         env.storage().persistent().get(&DataKey::Dispute(dispute_id))
     }
+
+    // ── Internal helpers ──────────────────────────────────────────────
+    /// Prevents unauthorized state transitions on settled disputes.
+    fn assert_not_settled(dispute: &Dispute) {
+        assert!(
+            dispute.status != DisputeStatus::Settled,
+            "Dispute already settled; no further modifications allowed"
+        );
+    }
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
+
+#[cfg(test)]
+mod tests_extra;
 
 #[cfg(test)]
 mod tests {
@@ -269,7 +289,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Only arbiter")]
+    #[should_panic(expected = "Unauthorized: authority required")]
     fn test_non_arbiter_cannot_decide() {
         let (env, client, _, _) = setup();
         let claimant = Address::generate(&env);

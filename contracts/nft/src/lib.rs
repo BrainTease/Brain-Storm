@@ -1,26 +1,27 @@
 #![no_std]
-#![no_std]
 use soroban_sdk::{
     contract, contractimpl, contracttype, symbol_short, Address, Env, String, Symbol, Vec,
 };
 
+use brain_storm_shared::access;
+
 #[contracttype]
 pub enum DataKey {
     Admin,
-    NFTOwner(u32),                    // nft_id -> owner
-    NFTMetadata(u32),                 // nft_id -> metadata
-    CourseNFTs(Address),              // owner -> Vec<nft_id>
-    NextNFTId,
+    NftOwner(u32),                    // nft_id -> owner
+    NftMetadata(u32),                 // nft_id -> metadata
+    CourseNfts(Address),              // owner -> Vec<nft_id>
+    NextNftId,
     RoyaltyBasis(u32),                // nft_id -> royalty basis points
     RoyaltyRecipient(u32),            // nft_id -> instructor address
     AccessRights(u32, Address),       // (nft_id, holder) -> has_access
     Listing(u32),                     // nft_id -> Listing
-    BurnedNFT(u32),                   // nft_id -> bool
+    BurnedNft(u32),                   // nft_id -> bool
 }
 
 #[contracttype]
 #[derive(Clone)]
-pub struct NFTMetadata {
+pub struct NftMetadata {
     pub nft_id: u32,
     pub course_id: Symbol,
     pub course_name: String,
@@ -31,7 +32,7 @@ pub struct NFTMetadata {
 
 #[contracttype]
 #[derive(Clone)]
-pub struct CourseNFT {
+pub struct CourseNft {
     pub nft_id: u32,
     pub course_id: Symbol,
     pub owner: Address,
@@ -49,10 +50,10 @@ pub struct Listing {
 }
 
 #[contract]
-pub struct NFTContract;
+pub struct NftContract;
 
 #[contractimpl]
-impl NFTContract {
+impl NftContract {
     pub fn initialize(env: Env, admin: Address) {
         assert!(
             !env.storage().instance().has(&DataKey::Admin),
@@ -60,13 +61,14 @@ impl NFTContract {
         );
         admin.require_auth();
         env.storage().instance().set(&DataKey::Admin, &admin);
-        env.storage().instance().set(&DataKey::NextNFTId, &0_u32);
+        env.storage().instance().set(&DataKey::NextNftId, &0_u32);
     }
 
     pub fn get_admin(env: Env) -> Address {
         env.storage().instance().get(&DataKey::Admin).unwrap()
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn mint_course_nft(
         env: Env,
         admin: Address,
@@ -77,15 +79,13 @@ impl NFTContract {
         purchase_price: i128,
         royalty_basis: u32,
     ) -> u32 {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can mint");
+        access::require_admin(&env, &admin, &DataKey::Admin);
         assert!(royalty_basis <= 10000, "Royalty basis must be <= 10000");
 
-        let nft_id_key = DataKey::NextNFTId;
+        let nft_id_key = DataKey::NextNftId;
         let nft_id: u32 = env.storage().instance().get(&nft_id_key).unwrap_or(0);
 
-        let metadata = NFTMetadata {
+        let metadata = NftMetadata {
             nft_id,
             course_id: course_id.clone(),
             course_name,
@@ -96,10 +96,10 @@ impl NFTContract {
 
         env.storage()
             .instance()
-            .set(&DataKey::NFTMetadata(nft_id), &metadata);
+            .set(&DataKey::NftMetadata(nft_id), &metadata);
         env.storage()
             .instance()
-            .set(&DataKey::NFTOwner(nft_id), &owner);
+            .set(&DataKey::NftOwner(nft_id), &owner);
         env.storage()
             .instance()
             .set(&DataKey::RoyaltyBasis(nft_id), &royalty_basis);
@@ -108,7 +108,7 @@ impl NFTContract {
             .set(&DataKey::RoyaltyRecipient(nft_id), &instructor);
 
         // Add to owner's NFT list
-        let owner_key = DataKey::CourseNFTs(owner.clone());
+        let owner_key = DataKey::CourseNfts(owner.clone());
         let mut nfts: Vec<u32> = env
             .storage()
             .instance()
@@ -135,22 +135,20 @@ impl NFTContract {
     }
 
     pub fn transfer_nft(env: Env, from: Address, to: Address, nft_id: u32) {
-        from.require_auth();
-
-        let owner_key = DataKey::NFTOwner(nft_id);
+        let owner_key = DataKey::NftOwner(nft_id);
         let current_owner: Address = env
             .storage()
             .instance()
             .get(&owner_key)
             .expect("NFT not found");
-        assert!(current_owner == from, "Not NFT owner");
+        access::require_owner(&from, &current_owner);
 
         // Update owner
         env.storage().instance().set(&owner_key, &to);
 
         // Update metadata
-        let metadata_key = DataKey::NFTMetadata(nft_id);
-        let mut metadata: NFTMetadata = env
+        let metadata_key = DataKey::NftMetadata(nft_id);
+        let mut metadata: NftMetadata = env
             .storage()
             .instance()
             .get(&metadata_key)
@@ -159,7 +157,7 @@ impl NFTContract {
         env.storage().instance().set(&metadata_key, &metadata);
 
         // Update owner's NFT list
-        let from_key = DataKey::CourseNFTs(from.clone());
+        let from_key = DataKey::CourseNfts(from.clone());
         if let Some(mut nfts) = env.storage().instance().get::<DataKey, Vec<u32>>(&from_key) {
             if let Some(pos) = nfts.iter().position(|id| id == nft_id) {
                 nfts.remove(pos as u32);
@@ -167,7 +165,7 @@ impl NFTContract {
             }
         }
 
-        let to_key = DataKey::CourseNFTs(to.clone());
+        let to_key = DataKey::CourseNfts(to.clone());
         let mut to_nfts: Vec<u32> = env
             .storage()
             .instance()
@@ -188,15 +186,13 @@ impl NFTContract {
     }
 
     pub fn grant_access(env: Env, nft_owner: Address, nft_id: u32, holder: Address) {
-        nft_owner.require_auth();
-
-        let owner_key = DataKey::NFTOwner(nft_id);
+        let owner_key = DataKey::NftOwner(nft_id);
         let current_owner: Address = env
             .storage()
             .instance()
             .get(&owner_key)
             .expect("NFT not found");
-        assert!(current_owner == nft_owner, "Not NFT owner");
+        access::require_owner(&nft_owner, &current_owner);
 
         env.storage()
             .instance()
@@ -209,15 +205,13 @@ impl NFTContract {
     }
 
     pub fn revoke_access(env: Env, nft_owner: Address, nft_id: u32, holder: Address) {
-        nft_owner.require_auth();
-
-        let owner_key = DataKey::NFTOwner(nft_id);
+        let owner_key = DataKey::NftOwner(nft_id);
         let current_owner: Address = env
             .storage()
             .instance()
             .get(&owner_key)
             .expect("NFT not found");
-        assert!(current_owner == nft_owner, "Not NFT owner");
+        access::require_owner(&nft_owner, &current_owner);
 
         env.storage()
             .instance()
@@ -236,22 +230,22 @@ impl NFTContract {
             .unwrap_or(false)
     }
 
-    pub fn get_nft_metadata(env: Env, nft_id: u32) -> Option<NFTMetadata> {
+    pub fn get_nft_metadata(env: Env, nft_id: u32) -> Option<NftMetadata> {
         env.storage()
             .instance()
-            .get(&DataKey::NFTMetadata(nft_id))
+            .get(&DataKey::NftMetadata(nft_id))
     }
 
     pub fn get_nft_owner(env: Env, nft_id: u32) -> Option<Address> {
         env.storage()
             .instance()
-            .get(&DataKey::NFTOwner(nft_id))
+            .get(&DataKey::NftOwner(nft_id))
     }
 
     pub fn get_owner_nfts(env: Env, owner: Address) -> Vec<u32> {
         env.storage()
             .instance()
-            .get(&DataKey::CourseNFTs(owner))
+            .get(&DataKey::CourseNfts(owner))
             .unwrap_or_else(|| Vec::new(&env))
     }
 
@@ -276,21 +270,19 @@ impl NFTContract {
     // -------------------------------------------------------------------------
 
     pub fn burn_nft(env: Env, owner: Address, nft_id: u32) {
-        owner.require_auth();
-
         let current_owner: Address = env
             .storage()
             .instance()
-            .get(&DataKey::NFTOwner(nft_id))
+            .get(&DataKey::NftOwner(nft_id))
             .expect("NFT not found");
-        assert!(current_owner == owner, "Not NFT owner");
+        access::require_owner(&owner, &current_owner);
         assert!(
-            !env.storage().instance().get::<DataKey, bool>(&DataKey::BurnedNFT(nft_id)).unwrap_or(false),
+            !env.storage().instance().get::<DataKey, bool>(&DataKey::BurnedNft(nft_id)).unwrap_or(false),
             "Already burned"
         );
 
         // Remove from owner's list
-        let owner_key = DataKey::CourseNFTs(owner.clone());
+        let owner_key = DataKey::CourseNfts(owner.clone());
         if let Some(mut nfts) = env.storage().instance().get::<DataKey, Vec<u32>>(&owner_key) {
             if let Some(pos) = nfts.iter().position(|id| id == nft_id) {
                 nfts.remove(pos as u32);
@@ -302,9 +294,9 @@ impl NFTContract {
         env.storage().instance().remove(&DataKey::Listing(nft_id));
 
         // Mark burned, remove owner + metadata
-        env.storage().instance().set(&DataKey::BurnedNFT(nft_id), &true);
-        env.storage().instance().remove(&DataKey::NFTOwner(nft_id));
-        env.storage().instance().remove(&DataKey::NFTMetadata(nft_id));
+        env.storage().instance().set(&DataKey::BurnedNft(nft_id), &true);
+        env.storage().instance().remove(&DataKey::NftOwner(nft_id));
+        env.storage().instance().remove(&DataKey::NftMetadata(nft_id));
 
         env.events().publish(
             (symbol_short!("nft"), symbol_short!("burned")),
@@ -317,15 +309,14 @@ impl NFTContract {
     // -------------------------------------------------------------------------
 
     pub fn list_nft(env: Env, seller: Address, nft_id: u32, price: i128) {
-        seller.require_auth();
         assert!(price > 0, "Price must be positive");
 
         let current_owner: Address = env
             .storage()
             .instance()
-            .get(&DataKey::NFTOwner(nft_id))
+            .get(&DataKey::NftOwner(nft_id))
             .expect("NFT not found");
-        assert!(current_owner == seller, "Not NFT owner");
+        access::require_owner(&seller, &current_owner);
         assert!(
             !env.storage().instance().has(&DataKey::Listing(nft_id)),
             "Already listed"
@@ -346,14 +337,12 @@ impl NFTContract {
     }
 
     pub fn delist_nft(env: Env, seller: Address, nft_id: u32) {
-        seller.require_auth();
-
         let listing: Listing = env
             .storage()
             .instance()
             .get(&DataKey::Listing(nft_id))
             .expect("Not listed");
-        assert!(listing.seller == seller, "Not the seller");
+        access::require_owner(&seller, &listing.seller);
 
         env.storage().instance().remove(&DataKey::Listing(nft_id));
 

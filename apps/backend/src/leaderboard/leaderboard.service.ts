@@ -1,10 +1,21 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Cache } from 'cache-manager';
+/**
+ * LeaderboardService – Issue #817 refactor
+ *
+ * Previously injected CACHE_MANAGER directly and duplicated the get/set
+ * pattern that CacheService already abstracts.
+ *
+ * Now delegates all cache reads and writes to CacheService, which
+ * - provides a consistent getOrSet helper
+ * - tracks cache hit/miss Prometheus metrics
+ * - handles Redis prefix-based invalidation centrally
+ */
+
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../users/user.entity';
 import { StellarService } from '../stellar/stellar.service';
+import { CacheService } from '../cache/cache.service';
 
 type LeaderboardEntry = {
   userId: string;
@@ -14,25 +25,29 @@ type LeaderboardEntry = {
   balance: string;
 };
 
+/** Cache key for the top-50 leaderboard snapshot. */
+const LEADERBOARD_TOP50_KEY = 'leaderboard:top50';
+/** TTL in seconds (5 minutes). */
+const LEADERBOARD_CACHE_TTL = 300;
+
 @Injectable()
 export class LeaderboardService {
-  private readonly cacheKey = 'leaderboard:top50';
-  private readonly cacheTtlMs = 300_000;
-
   constructor(
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
     private readonly stellarService: StellarService,
-    @Inject(CACHE_MANAGER)
-    private readonly cacheManager: Cache
+    private readonly cacheService: CacheService
   ) {}
 
-  async getTopUsers() {
-    const cached = await this.cacheManager.get<LeaderboardEntry[]>(this.cacheKey);
-    if (cached) {
-      return cached;
-    }
+  async getTopUsers(): Promise<LeaderboardEntry[]> {
+    return this.cacheService.getOrSet<LeaderboardEntry[]>(
+      LEADERBOARD_TOP50_KEY,
+      () => this.computeTopUsers(),
+      LEADERBOARD_CACHE_TTL
+    );
+  }
 
+  private async computeTopUsers(): Promise<LeaderboardEntry[]> {
     const users = await this.userRepo.find({
       where: {},
       order: { createdAt: 'DESC' },
@@ -63,18 +78,13 @@ export class LeaderboardService {
       })
     );
 
-    const leaderboard = balances
+    return balances
       .sort((a, b) => {
         const left = BigInt(a.balance);
         const right = BigInt(b.balance);
-        if (left === right) {
-          return a.email.localeCompare(b.email);
-        }
+        if (left === right) return a.email.localeCompare(b.email);
         return right > left ? 1 : -1;
       })
       .slice(0, 50);
-
-    await this.cacheManager.set(this.cacheKey, leaderboard, this.cacheTtlMs);
-    return leaderboard;
   }
 }

@@ -10,7 +10,14 @@ import {
   Request,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiOperation,
+  ApiQuery,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RecommendationSignalsService, RecSignal } from './recommendation-signals.service';
 import { SignalType } from './recommendation-signal.entity';
@@ -38,7 +45,7 @@ export class RecommendationSignalsController {
   @ApiResponse({ status: 201, description: 'Signal recorded' })
   async recordSignal(
     @Request() req: any,
-    @Body() body: { courseId: string; signalType: SignalType; value?: number },
+    @Body() body: { courseId: string; signalType: SignalType; value?: number }
   ) {
     const signal: RecSignal = {
       userId: req.user.userId,
@@ -57,7 +64,7 @@ export class RecommendationSignalsController {
   @ApiResponse({ status: 200, description: 'Signal-based recommendations' })
   async getSignalRecommendations(
     @Request() req: any,
-    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number
   ) {
     return this.signalsService.getSignalRecommendations(req.user.userId, Math.min(limit, 50));
   }
@@ -79,7 +86,7 @@ export class RecommendationSignalsController {
   @ApiResponse({ status: 200, description: 'Precision@k result' })
   async evaluate(
     @Query('k', new DefaultValuePipe(10), ParseIntPipe) k: number,
-    @Query('holdoutDays', new DefaultValuePipe(7), ParseIntPipe) holdoutDays: number,
+    @Query('holdoutDays', new DefaultValuePipe(7), ParseIntPipe) holdoutDays: number
   ) {
     return this.signalsService.evaluatePrecisionAtK(Math.min(k, 50), holdoutDays);
   }

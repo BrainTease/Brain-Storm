@@ -2,10 +2,11 @@
 
 import { useState } from 'react';
 import api from '@/lib/api';
-import { useAuth } from '@/lib/auth-context';
+import { useAuth } from '@/hooks/useAuth';
+import { TextInput } from '@/components/ui/form';
 
 export function PrivacySettings() {
-  const { state } = useAuth();
+  const { user } = useAuth();
   const [exporting, setExporting] = useState(false);
   const [exportReady, setExportReady] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState('');
@@ -21,7 +22,7 @@ export function PrivacySettings() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `brain-storm-data-export-${state.user?.username ?? 'user'}.json`;
+      a.download = `brain-storm-data-export-${user?.username ?? 'user'}.json`;
       a.click();
       URL.revokeObjectURL(url);
       setExportReady(true);
@@ -39,9 +40,15 @@ export function PrivacySettings() {
     setMessage(null);
     try {
       await api.delete('/users/me');
-      setMessage({ type: 'success', text: 'Account deletion request submitted. You will receive a confirmation email.' });
+      setMessage({
+        type: 'success',
+        text: 'Account deletion request submitted. You will receive a confirmation email.',
+      });
     } catch {
-      setMessage({ type: 'error', text: 'Failed to submit deletion request. Please contact support.' });
+      setMessage({
+        type: 'error',
+        text: 'Failed to submit deletion request. Please contact support.',
+      });
     } finally {
       setDeleting(false);
     }
@@ -62,8 +69,8 @@ export function PrivacySettings() {
       <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-5 space-y-3">
         <h3 className="text-base font-medium text-gray-900 dark:text-white">Data Export</h3>
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          Download all your personal data, including profile information, course progress, credentials, and activity logs.
-          This export is provided in JSON format.
+          Download all your personal data, including profile information, course progress,
+          credentials, and activity logs. This export is provided in JSON format.
         </p>
         <button
           type="button"
@@ -83,15 +90,16 @@ export function PrivacySettings() {
           Your credentials and certificates on the Stellar blockchain will remain due to the
           immutable nature of the ledger.
         </p>
-        <div className="flex items-center gap-3">
-          <input
-            type="text"
-            value={deleteConfirm}
-            onChange={(e) => setDeleteConfirm(e.target.value)}
-            placeholder="Type DELETE to confirm"
-            className="flex-1 rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-red-500"
-            aria-label="Type DELETE to confirm account deletion"
-          />
+        <div className="flex items-start gap-3">
+          <div className="flex-1">
+            <TextInput
+              id="delete-confirm"
+              value={deleteConfirm}
+              onChange={(e) => setDeleteConfirm(e.target.value)}
+              placeholder="Type DELETE to confirm"
+              aria-label="Type DELETE to confirm account deletion"
+            />
+          </div>
           <button
             type="button"
             onClick={handleDeleteAccount}

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import api from '@/lib/api';
+import { formatDateShort } from '@/lib/date-utils';
 import { Button } from '@/components/ui/Button';
 import WalletSection from './WalletSection';
 
@@ -36,10 +37,17 @@ export default function ProfilePage() {
 
   if (!user)
     return (
-      <main className="max-w-2xl mx-auto p-8 space-y-6" aria-busy="true" aria-label="Loading profile">
+      <main
+        className="max-w-2xl mx-auto p-8 space-y-6"
+        aria-busy="true"
+        aria-label="Loading profile"
+      >
         {/* Skeleton sized to match real content — prevents CLS */}
         <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse" style={{ width: 64, height: 64, flexShrink: 0 }} />
+          <div
+            className="w-16 h-16 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse"
+            style={{ width: 64, height: 64, flexShrink: 0 }}
+          />
           <div className="space-y-2">
             <div className="h-6 w-40 rounded bg-gray-200 dark:bg-gray-700 animate-pulse" />
             <div className="h-4 w-56 rounded bg-gray-200 dark:bg-gray-700 animate-pulse" />
@@ -92,7 +100,7 @@ export default function ProfilePage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{user.username}</h1>
           <p className="text-gray-500 dark:text-gray-400 text-sm">
-            {user.email} · {user.role} · Joined {new Date(user.createdAt).toLocaleDateString()}
+            {user.email} · {user.role} · Joined {formatDateShort(user.createdAt)}
           </p>
         </div>
       </div>

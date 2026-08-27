@@ -134,10 +134,295 @@ mod tests {
 
     // Security: zero-liquidity pool cannot be swapped against
     #[test]
-    #[should_panic]
+    #[should_panic(expected = "Insufficient liquidity")]
     fn test_swap_against_empty_pool_panics() {
         let (env, client, _) = setup();
         let user = Address::generate(&env);
         client.swap(&user, &symbol_short!("bst"), &1_000, &0);
+    }
+
+    // ── Arithmetic safety (#823) ──────────────────────────────────────────────
+
+    #[test]
+    #[should_panic(expected = "Desired amounts must be positive")]
+    fn test_add_liquidity_rejects_zero_amount() {
+        let (env, client, _) = setup();
+        let provider = Address::generate(&env);
+        client.add_liquidity(&provider, &0, &10_000, &0, &0);
+    }
+
+    #[test]
+    #[should_panic(expected = "Desired amounts must be positive")]
+    fn test_add_liquidity_rejects_negative_amount() {
+        let (env, client, _) = setup();
+        let provider = Address::generate(&env);
+        client.add_liquidity(&provider, &10_000, &-1, &0, &0);
+    }
+
+    #[test]
+    #[should_panic(expected = "Initial liquidity below minimum")]
+    fn test_first_provision_below_minimum_liquidity_panics() {
+        let (env, client, _) = setup();
+        let provider = Address::generate(&env);
+        // sqrt(10 * 10) == 10, which is under MINIMUM_LIQUIDITY (1000).
+        client.add_liquidity(&provider, &10, &10, &0, &0);
+    }
+
+    #[test]
+    #[should_panic(expected = "math: i128 multiplication overflow")]
+    fn test_add_liquidity_overflow_is_reported_not_wrapped() {
+        let (env, client, _) = setup();
+        let provider = Address::generate(&env);
+        // amount_a * amount_b overflows i128 before sqrt() ever sees it.
+        client.add_liquidity(&provider, &i128::MAX, &i128::MAX, &0, &0);
+    }
+
+    #[test]
+    #[should_panic(expected = "Liquidity must be positive")]
+    fn test_remove_zero_liquidity_panics() {
+        let (env, client, _) = setup();
+        let provider = Address::generate(&env);
+        client.add_liquidity(&provider, &10_000, &10_000, &0, &0);
+        client.remove_liquidity(&provider, &0);
+    }
+
+    #[test]
+    #[should_panic(expected = "math: i128 multiplication overflow")]
+    fn test_swap_overflow_is_reported_not_wrapped() {
+        let (env, client, _) = setup();
+        let provider = Address::generate(&env);
+        client.add_liquidity(&provider, &100_000, &100_000, &0, &0);
+
+        let user = Address::generate(&env);
+        // amount_in * (fee_denominator - fee_numerator) overflows i128.
+        client.swap(&user, &symbol_short!("bst"), &i128::MAX, &0);
+    }
+
+    #[test]
+    fn test_remove_liquidity_is_proportional() {
+        let (env, client, _) = setup();
+        let provider = Address::generate(&env);
+        // sqrt(10_000 * 10_000) - MINIMUM_LIQUIDITY == 10_000 - 1_000 == 9_000
+        let minted = client.add_liquidity(&provider, &10_000, &10_000, &0, &0);
+        assert_eq!(minted, 9_000);
+
+        let (amount_a, amount_b) = client.remove_liquidity(&provider, &4_500);
+        // 4_500 * 10_000 / 9_000 == 5_000
+        assert_eq!(amount_a, 5_000);
+        assert_eq!(amount_b, 5_000);
+
+        let stats = client.get_pool_stats();
+        assert_eq!(stats.reserve_a, 5_000);
+        assert_eq!(stats.total_liquidity, 4_500);
+    }
+
+    #[test]
+    fn test_swap_history_pagination_does_not_overflow() {
+        let (env, client, _) = setup();
+        let provider = Address::generate(&env);
+        client.add_liquidity(&provider, &100_000, &100_000, &0, &0);
+        let user = Address::generate(&env);
+        client.swap(&user, &symbol_short!("bst"), &1_000, &0);
+
+        // start_index + limit would wrap u32; the view saturates instead.
+        let history = client.get_swap_history(&u32::MAX, &10);
+        assert_eq!(history.len(), 0);
+    }
+
+    // ── Mining rewards (#847) ───────────────────────────────────────────────
+
+    #[test]
+    fn test_claim_mining_rewards_proportional_to_liquidity() {
+        let (env, client, _) = setup();
+        let provider = Address::generate(&env);
+        client.add_liquidity(&provider, &1_000_000, &1_000_000, &0, &0);
+        let rewards = client.claim_mining_rewards(&provider);
+        assert!(rewards > 0);
+    }
+
+    #[test]
+    fn test_claim_mining_rewards_zero_liquidity_returns_zero() {
+        let (env, client, _) = setup();
+        let user = Address::generate(&env);
+        let rewards = client.claim_mining_rewards(&user);
+        assert_eq!(rewards, 0);
+    }
+
+    // ── Fee collection (#847) ────────────────────────────────────────────────
+
+    #[test]
+    fn test_get_accumulated_fees_zero_before_any_swap() {
+        let (_, client, _) = setup();
+        assert_eq!(client.get_accumulated_fees(), 0);
+    }
+
+    #[test]
+    fn test_collect_fees_after_swap_resets_accumulated_fees() {
+        let (env, client, admin) = setup();
+        let provider = Address::generate(&env);
+        client.add_liquidity(&provider, &100_000, &100_000, &0, &0);
+
+        let user = Address::generate(&env);
+        client.swap(&user, &symbol_short!("bst"), &1_000, &0);
+
+        let accumulated = client.get_accumulated_fees();
+        assert!(accumulated > 0);
+
+        let collected = client.collect_fees(&admin);
+        assert_eq!(collected, accumulated);
+        assert_eq!(client.get_accumulated_fees(), 0);
+    }
+
+    #[test]
+    #[should_panic(expected = "Unauthorized: admin required")]
+    fn test_collect_fees_non_admin_panics() {
+        let (env, client, _) = setup();
+        let provider = Address::generate(&env);
+        client.add_liquidity(&provider, &100_000, &100_000, &0, &0);
+        let user = Address::generate(&env);
+        client.swap(&user, &symbol_short!("bst"), &1_000, &0);
+
+        let intruder = Address::generate(&env);
+        client.collect_fees(&intruder);
+    }
+
+    #[test]
+    #[should_panic(expected = "No fees to collect")]
+    fn test_collect_fees_with_no_accumulated_fees_panics() {
+        let (_, client, admin) = setup();
+        client.collect_fees(&admin);
+    }
+
+    // ── Emergency drain (#847) ───────────────────────────────────────────────
+
+    #[test]
+    fn test_emergency_drain_zeros_reserves_and_liquidity() {
+        let (env, client, admin) = setup();
+        let provider = Address::generate(&env);
+        client.add_liquidity(&provider, &100_000, &100_000, &0, &0);
+
+        let (drained_a, drained_b) = client.emergency_drain(&admin);
+        assert_eq!(drained_a, 100_000);
+        assert_eq!(drained_b, 100_000);
+
+        let stats = client.get_pool_stats();
+        assert_eq!(stats.reserve_a, 0);
+        assert_eq!(stats.reserve_b, 0);
+        assert_eq!(stats.total_liquidity, 0);
+    }
+
+    #[test]
+    // `emergency_drain` flips `swap_enabled` to false in the same call that
+    // sets `EmergencyDrained`, and `swap` checks `swap_enabled` first — so the
+    // dedicated "Pool has been emergency drained" assert later in `swap` is
+    // unreachable through the public API today. This test documents the
+    // actual observed behavior: swapping after a drain is blocked, via the
+    // "Swapping is disabled" check.
+    #[should_panic(expected = "Swapping is disabled")]
+    fn test_swap_after_emergency_drain_panics() {
+        let (env, client, admin) = setup();
+        let provider = Address::generate(&env);
+        client.add_liquidity(&provider, &100_000, &100_000, &0, &0);
+        client.emergency_drain(&admin);
+
+        let user = Address::generate(&env);
+        client.swap(&user, &symbol_short!("bst"), &1_000, &0);
+    }
+
+    #[test]
+    #[should_panic(expected = "Adding liquidity is disabled")]
+    fn test_add_liquidity_after_emergency_drain_panics() {
+        let (env, client, admin) = setup();
+        let provider = Address::generate(&env);
+        client.add_liquidity(&provider, &100_000, &100_000, &0, &0);
+        client.emergency_drain(&admin);
+
+        client.add_liquidity(&provider, &1_000, &1_000, &0, &0);
+    }
+
+    #[test]
+    #[should_panic(expected = "Removing liquidity is disabled")]
+    fn test_remove_liquidity_after_emergency_drain_panics() {
+        let (env, client, admin) = setup();
+        let provider = Address::generate(&env);
+        let minted = client.add_liquidity(&provider, &100_000, &100_000, &0, &0);
+        client.emergency_drain(&admin);
+
+        client.remove_liquidity(&provider, &minted);
+    }
+
+    #[test]
+    #[should_panic(expected = "Already drained")]
+    fn test_emergency_drain_twice_panics() {
+        let (env, client, admin) = setup();
+        let provider = Address::generate(&env);
+        client.add_liquidity(&provider, &100_000, &100_000, &0, &0);
+        client.emergency_drain(&admin);
+        client.emergency_drain(&admin);
+    }
+
+    #[test]
+    #[should_panic(expected = "Unauthorized: admin required")]
+    fn test_emergency_drain_non_admin_panics() {
+        let (env, client, _) = setup();
+        let provider = Address::generate(&env);
+        client.add_liquidity(&provider, &100_000, &100_000, &0, &0);
+        let intruder = Address::generate(&env);
+        client.emergency_drain(&intruder);
+    }
+
+    // ── Swap token validation (#847) ─────────────────────────────────────────
+
+    #[test]
+    #[should_panic(expected = "Invalid token")]
+    fn test_swap_invalid_token_panics() {
+        let (env, client, _) = setup();
+        let provider = Address::generate(&env);
+        client.add_liquidity(&provider, &100_000, &100_000, &0, &0);
+        let user = Address::generate(&env);
+        client.swap(&user, &symbol_short!("eth"), &1_000, &0);
+    }
+
+    // ── Second liquidity provision quote branches (#847) ────────────────────
+
+    #[test]
+    fn test_second_provision_primary_quote_branch() {
+        let (env, client, _) = setup();
+        let provider = Address::generate(&env);
+        let first_minted = client.add_liquidity(&provider, &10_000, &10_000, &0, &0);
+        assert_eq!(first_minted, 9_000);
+
+        // Reserves are 1:1, so quote(5_000, 10_000, 10_000) == 5_000, which is
+        // <= amount_b_desired (6_000) — the primary "amount_b_optimal" branch.
+        let second_minted = client.add_liquidity(&provider, &5_000, &6_000, &0, &0);
+        assert_eq!(second_minted, 4_500);
+
+        let stats = client.get_pool_stats();
+        assert_eq!(stats.reserve_a, 15_000);
+        assert_eq!(stats.reserve_b, 15_000);
+        assert_eq!(stats.total_liquidity, 13_500);
+    }
+
+    #[test]
+    #[should_panic(expected = "Insufficient B amount")]
+    fn test_second_provision_insufficient_b_amount_panics() {
+        let (env, client, _) = setup();
+        let provider = Address::generate(&env);
+        client.add_liquidity(&provider, &10_000, &10_000, &0, &0);
+
+        // amount_b_optimal quotes to 5_000, but amount_b_min demands more.
+        client.add_liquidity(&provider, &5_000, &6_000, &0, &5_001);
+    }
+
+    #[test]
+    #[should_panic(expected = "Insufficient A amount")]
+    fn test_second_provision_insufficient_a_amount_panics() {
+        let (env, client, _) = setup();
+        let provider = Address::generate(&env);
+        client.add_liquidity(&provider, &10_000, &10_000, &0, &0);
+
+        // amount_b_optimal (6_000) > amount_b_desired (5_000) drops into the
+        // "amount_a_optimal" branch, which quotes to 5_000 — below amount_a_min.
+        client.add_liquidity(&provider, &6_000, &5_000, &5_001, &0);
     }
 }

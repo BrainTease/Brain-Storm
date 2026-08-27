@@ -66,6 +66,7 @@ dependencies = [
 name = "badges"
 version = "0.1.0"
 dependencies = [
+ "brain-storm-shared",
  "soroban-sdk",
 ]
 
@@ -133,6 +134,7 @@ dependencies = [
 name = "brain-storm-analytics"
 version = "0.1.0"
 dependencies = [
+ "brain-storm-shared",
  "proptest",
  "soroban-sdk",
 ]
@@ -141,6 +143,7 @@ dependencies = [
 name = "brain-storm-certificate"
 version = "0.1.0"
 dependencies = [
+ "brain-storm-shared",
  "proptest",
  "soroban-sdk",
 ]
@@ -149,6 +152,7 @@ dependencies = [
 name = "brain-storm-governance"
 version = "0.1.0"
 dependencies = [
+ "brain-storm-shared",
  "soroban-sdk",
 ]
 
@@ -156,6 +160,17 @@ dependencies = [
 name = "brain-storm-grants"
 version = "0.1.0"
 dependencies = [
+ "brain-storm-shared",
+ "soroban-sdk",
+]
+
+[[package]]
+name = "brain-storm-integration"
+version = "0.1.0"
+dependencies = [
+ "brain-storm-analytics",
+ "brain-storm-shared",
+ "brain-storm-token",
  "soroban-sdk",
 ]
 
@@ -163,6 +178,7 @@ dependencies = [
 name = "brain-storm-nft"
 version = "0.1.0"
 dependencies = [
+ "brain-storm-shared",
  "soroban-sdk",
 ]
 
@@ -177,6 +193,7 @@ dependencies = [
 name = "brain-storm-token"
 version = "0.1.0"
 dependencies = [
+ "brain-storm-shared",
  "proptest",
  "soroban-sdk",
 ]
@@ -191,6 +208,7 @@ checksum = "5d20789868f4b01b2f2caec9f5c4e0213b41e3e5702a50157d699ae31ced2fcb"
 name = "buyback"
 version = "0.1.0"
 dependencies = [
+ "brain-storm-shared",
  "soroban-sdk",
 ]
 
@@ -270,6 +288,7 @@ dependencies = [
 name = "credential_metadata"
 version = "0.1.0"
 dependencies = [
+ "brain-storm-shared",
  "soroban-sdk",
 ]
 
@@ -445,6 +464,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "dispute"
+version = "0.1.0"
+dependencies = [
+ "brain-storm-shared",
+ "soroban-sdk",
+]
+
+[[package]]
 name = "downcast-rs"
 version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -542,9 +569,9 @@ checksum = "2bfcf67fea2815c2fc3b90873fae90957be12ff417335dfadc7f52927feb03b2"
 
 [[package]]
 name = "ethnum"
-version = "1.5.2"
+version = "1.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ca81e6b4777c89fd810c25a4be2b1bd93ea034fbe58e6a75216a34c6b82c539b"
+checksum = "40404c3f5f511ec4da6fe866ddf6a717c309fdbb69fbbad7b0f3edab8f2e835f"
 
 [[package]]
 name = "fastrand"
@@ -842,6 +869,7 @@ checksum = "32a66949e030da00e8c7d4434b251670a91556f4144941d37452769c25d58a53"
 name = "liquidity_pool"
 version = "0.1.0"
 dependencies = [
+ "brain-storm-shared",
  "soroban-sdk",
 ]
 
@@ -850,6 +878,15 @@ name = "log"
 version = "0.4.29"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5e5032e24019045c762d3c0f28f5b6b8bbf38563a65908389bf7978758920897"
+
+[[package]]
+name = "market"
+version = "0.1.0"
+dependencies = [
+ "brain-storm-shared",
+ "proptest",
+ "soroban-sdk",
+]
 
 [[package]]
 name = "memchr"
@@ -1138,9 +1175,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dc897dd8d9e8bd1ed8cdad82b5966c3e0ecae09fb1907d58efaa013543185d0a"
 
 [[package]]
+name = "registry"
+version = "0.1.0"
+dependencies = [
+ "brain-storm-shared",
+ "proptest",
+ "soroban-sdk",
+]
+
+[[package]]
 name = "reputation"
 version = "0.1.0"
 dependencies = [
+ "brain-storm-shared",
  "soroban-sdk",
 ]
 
@@ -1152,6 +1199,14 @@ checksum = "f8dd2a808d456c4a54e300a23e9f5a67e122c3024119acbfd73e3bf664491cb2"
 dependencies = [
  "hmac",
  "subtle",
+]
+
+[[package]]
+name = "royalty_distribution"
+version = "0.1.0"
+dependencies = [
+ "brain-storm-shared",
+ "soroban-sdk",
 ]
 
 [[package]]
@@ -1228,6 +1283,7 @@ dependencies = [
 name = "scholarship_fund"
 version = "0.1.0"
 dependencies = [
+ "brain-storm-shared",
  "soroban-sdk",
 ]
 
@@ -1693,6 +1749,7 @@ dependencies = [
 name = "token_restrictions"
 version = "0.1.0"
 dependencies = [
+ "brain-storm-shared",
  "soroban-sdk",
 ]
 

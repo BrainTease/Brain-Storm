@@ -4,7 +4,10 @@ import * as crypto from 'crypto';
 const makeRepo = (entries: any[] = []) => ({
   findOne: jest.fn(async () => entries[entries.length - 1] ?? null),
   create: jest.fn((data: any) => ({ ...data })),
-  save: jest.fn(async (entry: any) => { entries.push(entry); return entry; }),
+  save: jest.fn(async (entry: any) => {
+    entries.push(entry);
+    return entry;
+  }),
   createQueryBuilder: jest.fn(() => ({
     andWhere: jest.fn().mockReturnThis(),
     orderBy: jest.fn().mockReturnThis(),
@@ -30,7 +33,11 @@ describe('AuditService', () => {
 
   beforeEach(() => {
     entries = [];
-    service = new AuditService(makeRepo(entries) as any, makeLogger() as any, makeEncryption() as any);
+    service = new AuditService(
+      makeRepo(entries) as any,
+      makeLogger() as any,
+      makeEncryption() as any
+    );
   });
 
   it('should save an audit entry with entryHash', async () => {

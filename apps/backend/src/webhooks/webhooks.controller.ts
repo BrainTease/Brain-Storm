@@ -92,7 +92,9 @@ export class WebhooksController {
 
   @Post('verify-signature')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Verify a webhook HMAC signature (supports old secret during rotation grace period)' })
+  @ApiOperation({
+    summary: 'Verify a webhook HMAC signature (supports old secret during rotation grace period)',
+  })
   async verifySignature(@Request() req: any, @Body() dto: VerifySignatureDto) {
     const webhook = await this.service.getWebhookForUser(dto.webhookId, req.user.userId);
     const valid = this.service.verifySignature(
@@ -101,7 +103,7 @@ export class WebhooksController {
       dto.signature,
       dto.timestamp,
       webhook.previousSecret,
-      webhook.secretRotatedAt,
+      webhook.secretRotatedAt
     );
     if (!valid) throw new UnauthorizedException('Invalid signature or timestamp');
     return { valid: true };

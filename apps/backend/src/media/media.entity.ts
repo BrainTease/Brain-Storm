@@ -1,6 +1,11 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, Index } from 'typeorm';
 
-export enum MediaStatus { PENDING = 'pending', READY = 'ready', FAILED = 'failed', DELETED = 'deleted' }
+export enum MediaStatus {
+  PENDING = 'pending',
+  READY = 'ready',
+  FAILED = 'failed',
+  DELETED = 'deleted',
+}
 
 @Entity('media')
 @Index(['ownerId'])

@@ -3,6 +3,8 @@ use soroban_sdk::{
     contract, contractimpl, contracttype, symbol_short, Address, Env, String, Symbol,
 };
 
+use brain_storm_shared::access;
+
 // =============================================================================
 // Storage keys
 // =============================================================================
@@ -97,9 +99,7 @@ impl CertificateContract {
         course_id: Symbol,
         metadata_url: String,
     ) -> u64 {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can mint");
+        access::require_admin(&env, &admin, &DataKey::Admin);
 
         let id: u64 = env.storage().instance().get(&DataKey::NextId).unwrap();
         let cert = CertificateRecord {
@@ -166,9 +166,7 @@ impl CertificateContract {
     // -------------------------------------------------------------------------
 
     pub fn revoke_certificate(env: Env, admin: Address, cert_id: u64, reason: String) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can revoke");
+        access::require_admin(&env, &admin, &DataKey::Admin);
         assert!(
             env.storage()
                 .persistent()
@@ -215,9 +213,7 @@ impl CertificateContract {
     /// Enable transferability for a specific certificate (admin only).
     /// By default certificates are soulbound; this opt-in allows transfer.
     pub fn enable_transfer(env: Env, admin: Address, cert_id: u64) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can enable transfer");
+        access::require_admin(&env, &admin, &DataKey::Admin);
         assert!(
             env.storage().persistent().has(&DataKey::Certificate(cert_id)),
             "Certificate not found"
@@ -299,9 +295,7 @@ impl CertificateContract {
         grade: String,
         expiry_timestamp: u64,
     ) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can set metadata");
+        access::require_admin(&env, &admin, &DataKey::Admin);
         assert!(
             env.storage().persistent().has(&DataKey::Certificate(cert_id)),
             "Certificate not found"
@@ -358,7 +352,7 @@ impl CertificateContract {
             .persistent()
             .get(&key)
             .unwrap_or_else(|| soroban_sdk::vec![&env]);
-        ids.len() as u32
+        ids.len()
     }
 
     /// Check whether a certificate is transferable.
@@ -376,6 +370,9 @@ impl CertificateContract {
 
 #[cfg(test)]
 mod fuzz_tests;
+
+#[cfg(test)]
+mod tests_ext;
 
 #[cfg(test)]
 mod tests {
@@ -436,7 +433,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Only admin can mint")]
+    #[should_panic(expected = "Unauthorized: admin required")]
     fn test_non_admin_cannot_mint() {
         let (env, client, _) = setup();
         let rando = Address::generate(&env);
@@ -504,7 +501,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Only admin can revoke")]
+    #[should_panic(expected = "Unauthorized: admin required")]
     fn test_non_admin_cannot_revoke() {
         let (env, client, admin) = setup();
         let owner = Address::generate(&env);

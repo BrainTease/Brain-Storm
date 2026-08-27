@@ -7,6 +7,21 @@ import {
   type FieldPath,
   type RegisterOptions,
 } from 'react-hook-form';
+import {
+  Checkbox,
+  SelectInput,
+  TextArea,
+  TextInput,
+  type SelectOption,
+} from '@/components/ui/form';
+
+/**
+ * react-hook-form adapters over the shared form-input library.
+ *
+ * These components own only the binding concern — reading the field error out of
+ * the form state and registering the control. All markup, styling and aria wiring
+ * comes from `components/ui/form`.
+ */
 
 type BaseProps<T extends FieldValues> = {
   name: FieldPath<T>;
@@ -14,6 +29,23 @@ type BaseProps<T extends FieldValues> = {
   helperText?: string;
   rules?: RegisterOptions<T, FieldPath<T>>;
 };
+
+/** Reads the error message for `name` plus the registration props for its control. */
+function useField<T extends FieldValues>(
+  name: FieldPath<T>,
+  rules?: RegisterOptions<T, FieldPath<T>>
+) {
+  const {
+    register,
+    formState: { errors },
+  } = useFormContext<T>();
+
+  return {
+    error: getError(errors, name),
+    fieldId: `field-${String(name)}`,
+    registration: register(name, rules),
+  };
+}
 
 type TextFieldProps<T extends FieldValues> = BaseProps<T> &
   Omit<React.InputHTMLAttributes<HTMLInputElement>, 'name' | 'defaultValue'>;
@@ -23,39 +55,19 @@ export function TextField<T extends FieldValues>({
   label,
   helperText,
   rules,
-  className = '',
-  type = 'text',
   ...rest
 }: TextFieldProps<T>) {
-  const {
-    register,
-    formState: { errors },
-  } = useFormContext<T>();
-  const error = getError(errors, name);
-  const id = `field-${String(name)}`;
+  const { error, fieldId, registration } = useField<T>(name, rules);
 
   return (
-    <div className="flex flex-col gap-1">
-      {label && (
-        <label htmlFor={id} className="text-sm font-medium text-gray-700 dark:text-gray-300">
-          {label}
-        </label>
-      )}
-      <input
-        id={id}
-        type={type}
-        aria-invalid={!!error}
-        aria-describedby={error ? `${id}-error` : helperText ? `${id}-helper` : undefined}
-        {...register(name, rules)}
-        className={`w-full border rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
-          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500
-          disabled:opacity-50 disabled:cursor-not-allowed
-          ${error ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}
-          ${className}`}
-        {...rest}
-      />
-      <FieldFeedback id={id} error={error} helperText={helperText} />
-    </div>
+    <TextInput
+      id={fieldId}
+      label={label}
+      helperText={helperText}
+      error={error}
+      {...rest}
+      {...registration}
+    />
   );
 }
 
@@ -67,45 +79,25 @@ export function TextareaField<T extends FieldValues>({
   label,
   helperText,
   rules,
-  className = '',
-  rows = 4,
   ...rest
 }: TextareaFieldProps<T>) {
-  const {
-    register,
-    formState: { errors },
-  } = useFormContext<T>();
-  const error = getError(errors, name);
-  const id = `field-${String(name)}`;
+  const { error, fieldId, registration } = useField<T>(name, rules);
 
   return (
-    <div className="flex flex-col gap-1">
-      {label && (
-        <label htmlFor={id} className="text-sm font-medium text-gray-700 dark:text-gray-300">
-          {label}
-        </label>
-      )}
-      <textarea
-        id={id}
-        rows={rows}
-        aria-invalid={!!error}
-        aria-describedby={error ? `${id}-error` : helperText ? `${id}-helper` : undefined}
-        {...register(name, rules)}
-        className={`w-full border rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
-          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500
-          disabled:opacity-50 disabled:cursor-not-allowed
-          ${error ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}
-          ${className}`}
-        {...rest}
-      />
-      <FieldFeedback id={id} error={error} helperText={helperText} />
-    </div>
+    <TextArea
+      id={fieldId}
+      label={label}
+      helperText={helperText}
+      error={error}
+      {...rest}
+      {...registration}
+    />
   );
 }
 
 type SelectFieldProps<T extends FieldValues> = BaseProps<T> &
-  Omit<React.SelectHTMLAttributes<HTMLSelectElement>, 'name' | 'defaultValue'> & {
-    options: { value: string; label: string }[];
+  Omit<React.SelectHTMLAttributes<HTMLSelectElement>, 'name' | 'defaultValue' | 'children'> & {
+    options: SelectOption[];
   };
 
 export function SelectField<T extends FieldValues>({
@@ -114,72 +106,50 @@ export function SelectField<T extends FieldValues>({
   helperText,
   rules,
   options,
-  className = '',
   ...rest
 }: SelectFieldProps<T>) {
-  const {
-    register,
-    formState: { errors },
-  } = useFormContext<T>();
-  const error = getError(errors, name);
-  const id = `field-${String(name)}`;
+  const { error, fieldId, registration } = useField<T>(name, rules);
 
   return (
-    <div className="flex flex-col gap-1">
-      {label && (
-        <label htmlFor={id} className="text-sm font-medium text-gray-700 dark:text-gray-300">
-          {label}
-        </label>
-      )}
-      <select
-        id={id}
-        aria-invalid={!!error}
-        aria-describedby={error ? `${id}-error` : helperText ? `${id}-helper` : undefined}
-        {...register(name, rules)}
-        className={`w-full border rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
-          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500
-          disabled:opacity-50 disabled:cursor-not-allowed
-          ${error ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}
-          ${className}`}
-        {...rest}
-      >
-        {options.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
-          </option>
-        ))}
-      </select>
-      <FieldFeedback id={id} error={error} helperText={helperText} />
-    </div>
+    <SelectInput
+      id={fieldId}
+      label={label}
+      helperText={helperText}
+      error={error}
+      options={options}
+      {...rest}
+      {...registration}
+    />
   );
 }
 
-function FieldFeedback({
-  id,
-  error,
+type CheckboxFieldProps<T extends FieldValues> = BaseProps<T> &
+  Omit<React.InputHTMLAttributes<HTMLInputElement>, 'name' | 'defaultValue' | 'type'> & {
+    variant?: 'inline' | 'row';
+  };
+
+export function CheckboxField<T extends FieldValues>({
+  name,
+  label,
   helperText,
-}: {
-  id: string;
-  error?: string;
-  helperText?: string;
-}) {
-  if (error) {
-    return (
-      <p id={`${id}-error`} role="alert" className="text-xs text-red-600">
-        {error}
-      </p>
-    );
-  }
-  if (helperText) {
-    return (
-      <p id={`${id}-helper`} className="text-xs text-gray-500 dark:text-gray-400">
-        {helperText}
-      </p>
-    );
-  }
-  return null;
+  rules,
+  ...rest
+}: CheckboxFieldProps<T>) {
+  const { error, fieldId, registration } = useField<T>(name, rules);
+
+  return (
+    <Checkbox
+      id={fieldId}
+      label={label}
+      helperText={helperText}
+      error={error}
+      {...rest}
+      {...registration}
+    />
+  );
 }
 
+/** Resolves a possibly nested error path (`address.city`) to its message string. */
 function getError(errors: Record<string, unknown>, name: string): string | undefined {
   const parts = name.split('.');
   let node: unknown = errors;

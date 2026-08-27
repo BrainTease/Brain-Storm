@@ -3,9 +3,9 @@
 import { useFormContext } from 'react-hook-form';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/Button';
+import { BaseButtonProps } from '@/types/componentProps';
 
-interface SubmitButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'outline';
+interface SubmitButtonProps extends Omit<BaseButtonProps, 'children'> {
   label?: string;
   submittingLabel?: string;
 }
@@ -14,6 +14,8 @@ export function SubmitButton({
   label,
   submittingLabel,
   variant = 'primary',
+  isLoading,
+  isDisabled,
   ...rest
 }: SubmitButtonProps) {
   const t = useTranslations('forms');
@@ -21,9 +23,11 @@ export function SubmitButton({
     formState: { isSubmitting },
   } = useFormContext();
 
+  const submitting = isLoading || isSubmitting;
+
   return (
-    <Button type="submit" variant={variant} disabled={isSubmitting} {...rest}>
-      {isSubmitting ? (submittingLabel ?? t('submitting')) : (label ?? t('submit'))}
+    <Button type="submit" variant={variant} isDisabled={submitting || isDisabled} {...rest}>
+      {submitting ? (submittingLabel ?? t('submitting')) : (label ?? t('submit'))}
     </Button>
   );
 }

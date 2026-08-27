@@ -3,6 +3,8 @@ use soroban_sdk::{
     contract, contractimpl, contracttype, symbol_short, Address, Env, Symbol, Vec,
 };
 
+use brain_storm_shared::access;
+
 mod reputation;
 
 #[contracttype]
@@ -206,9 +208,7 @@ impl ReputationContract {
     }
 
     pub fn set_decay_config(env: Env, admin: Address, enabled: bool, decay_rate: i128, decay_interval: u32) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can set decay config");
+        access::require_admin(&env, &admin, &DataKey::Admin);
         env.storage().instance().set(&DataKey::DecayConfig, &DecayConfig { enabled, decay_rate, decay_interval });
     }
 

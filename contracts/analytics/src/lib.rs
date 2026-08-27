@@ -3,6 +3,8 @@ use soroban_sdk::{
     contract, contractimpl, contracttype, symbol_short, vec, Address, Env, Symbol, Vec,
 };
 
+use brain_storm_shared::access;
+
 // TTL thresholds (in ledgers)
 const TTL_THRESHOLD: u32 = 100;
 const TTL_EXTEND_TO: u32 = 500;
@@ -98,7 +100,8 @@ impl AnalyticsContract {
     }
 
     pub fn set_admin(env: Env, new_admin: Address) {
-        let admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
+        // The *current* admin authorizes the handover.
+        let admin = access::read_authority(&env, &DataKey::Admin);
         admin.require_auth();
         env.storage().instance().set(&DataKey::Admin, &new_admin);
     }
@@ -113,9 +116,7 @@ impl AnalyticsContract {
 
     /// Grant a contract/address permission to record progress on behalf of students.
     pub fn authorize_caller(env: Env, admin: Address, caller: Address) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can authorize callers");
+        access::require_admin(&env, &admin, &DataKey::Admin);
         env.storage()
             .instance()
             .set(&DataKey::AuthorizedCaller(caller.clone()), &true);
@@ -127,9 +128,7 @@ impl AnalyticsContract {
 
     /// Revoke a previously authorized caller.
     pub fn revoke_caller(env: Env, admin: Address, caller: Address) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can revoke callers");
+        access::require_admin(&env, &admin, &DataKey::Admin);
         env.storage()
             .instance()
             .remove(&DataKey::AuthorizedCaller(caller.clone()));
@@ -161,7 +160,7 @@ impl AnalyticsContract {
         progress_pct: u32,
     ) {
         caller.require_auth();
-        let admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
+        let admin = access::read_authority(&env, &DataKey::Admin);
         let is_authorized: bool = env
             .storage()
             .instance()
@@ -237,9 +236,7 @@ impl AnalyticsContract {
 
     /// Reset a student's progress for a specific course (admin only).
     pub fn reset_progress(env: Env, admin: Address, student: Address, course_id: Symbol) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can reset progress");
+        access::require_admin(&env, &admin, &DataKey::Admin);
 
         let progress_key = DataKey::Progress(student.clone(), course_id.clone());
         env.storage().persistent().remove(&progress_key);
@@ -316,7 +313,7 @@ impl AnalyticsContract {
             .unwrap_or_else(|| vec![&env]);
 
         for milestone in milestones.iter() {
-            if progress_pct >= milestone && !achieved.contains(&milestone) {
+            if progress_pct >= milestone && !achieved.contains(milestone) {
                 achieved.push_back(milestone);
                 let record = MilestoneRecord {
                     student: student.clone(),
@@ -434,9 +431,7 @@ impl AnalyticsContract {
     }
 
     pub fn update_aggregates(env: Env, admin: Address) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can update aggregates");
+        access::require_admin(&env, &admin, &DataKey::Admin);
 
         // Update completion stats
         let stats = CompletionStats {
@@ -505,7 +500,7 @@ impl AnalyticsContract {
     /// Get the average progress percentage across all students in a course.
     pub fn get_course_average_progress(env: Env, course_id: Symbol) -> u32 {
         let records = Self::get_course_progress(env, course_id);
-        if records.len() == 0 {
+        if records.is_empty() {
             return 0;
         }
         let mut total: u64 = 0;
@@ -521,9 +516,9 @@ impl AnalyticsContract {
 
     /// Get completed courses for a student (filtered by completion status).
     pub fn get_completed_courses(env: Env, student: Address) -> Vec<ProgressRecord> {
-        let all_progress = Self::get_all_progress(env, student);
+        let all_progress = Self::get_all_progress(env.clone(), student);
         let mut completed = vec![&env];
-        
+
         for record in all_progress.iter() {
             if record.completed {
                 completed.push_back(record.clone());
@@ -534,9 +529,9 @@ impl AnalyticsContract {
 
     /// Get in-progress courses for a student (filtered by completion status).
     pub fn get_in_progress_courses(env: Env, student: Address) -> Vec<ProgressRecord> {
-        let all_progress = Self::get_all_progress(env, student);
+        let all_progress = Self::get_all_progress(env.clone(), student);
         let mut in_progress = vec![&env];
-        
+
         for record in all_progress.iter() {
             if !record.completed {
                 in_progress.push_back(record.clone());
@@ -553,13 +548,13 @@ impl AnalyticsContract {
         offset: u32,
         limit: u32,
     ) -> Vec<ProgressRecord> {
-        let all_progress = Self::get_all_progress(env, student);
+        let all_progress = Self::get_all_progress(env.clone(), student);
         let mut result = vec![&env];
-        
+
         let start = offset as usize;
-        let end = (offset as usize + limit as usize).min(all_progress.len());
-        
-        if start < all_progress.len() {
+        let end = (offset as usize + limit as usize).min(all_progress.len() as usize);
+
+        if start < all_progress.len() as usize {
             for i in start..end {
                 result.push_back(all_progress.get(i as u32).unwrap().clone());
             }
@@ -574,7 +569,7 @@ impl AnalyticsContract {
         min_progress_pct: u32,
     ) -> Vec<ProgressRecord> {
         assert!(min_progress_pct <= 100, "Threshold must be 0-100");
-        let all_progress = Self::get_all_progress(env, student);
+        let all_progress = Self::get_all_progress(env.clone(), student);
         let mut filtered = vec![&env];
         
         for record in all_progress.iter() {
@@ -588,13 +583,13 @@ impl AnalyticsContract {
     /// Count total completed courses for a student.
     pub fn count_completed_courses(env: Env, student: Address) -> u32 {
         let completed = Self::get_completed_courses(env, student);
-        completed.len() as u32
+        completed.len()
     }
 
     /// Get average progress across all courses for a student.
     pub fn get_average_progress(env: Env, student: Address) -> u32 {
         let all_progress = Self::get_all_progress(env, student);
-        if all_progress.len() == 0 {
+        if all_progress.is_empty() {
             return 0;
         }
         
@@ -827,7 +822,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Unauthorized: must be student or admin")]
+    #[should_panic(expected = "Unauthorized: must be student, admin, or authorized caller")]
     fn test_unauthorized_caller_rejected() {
         let (env, client, _, student) = setup();
         let rando = Address::generate(&env);
@@ -836,7 +831,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Unauthorized: must be student or admin")]
+    #[should_panic(expected = "Unauthorized: must be student, admin, or authorized caller")]
     fn test_third_party_cannot_record_for_other_student() {
         let (env, client, _, student) = setup();
         let other_student = Address::generate(&env);
@@ -942,7 +937,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Only admin can reset progress")]
+    #[should_panic(expected = "Unauthorized: admin required")]
     fn test_non_admin_cannot_reset_progress() {
         let (env, client, _, student) = setup();
         let rando = Address::generate(&env);

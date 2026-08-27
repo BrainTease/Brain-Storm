@@ -38,21 +38,13 @@ export function useSearchAnalytics(
       timestamp: new Date().toISOString(),
     };
 
-    // Log to console in development
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[Search Analytics]', event);
-    }
-
     // Send to analytics endpoint (placeholder)
     fetch('/api/analytics/search', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(event),
-    }).catch((err) => {
+    }).catch(() => {
       // Silently fail - analytics should not break user experience
-      if (process.env.NODE_ENV === 'development') {
-        console.warn('[Search Analytics] Failed to send event:', err);
-      }
     });
   }, [query, filters, resultsCount]);
 }

@@ -40,7 +40,7 @@ fn test_schedule_upgrade_stores_pending() {
 }
 
 #[test]
-#[should_panic(expected = "Only admin can schedule upgrades")]
+#[should_panic(expected = "Unauthorized: admin required")]
 fn test_non_admin_cannot_schedule_upgrade() {
     let (env, _, client) = setup();
     let rando = Address::generate(&env);
@@ -57,7 +57,7 @@ fn test_cancel_upgrade_removes_pending() {
 }
 
 #[test]
-#[should_panic(expected = "Only admin can cancel upgrades")]
+#[should_panic(expected = "Unauthorized: admin required")]
 fn test_non_admin_cannot_cancel_upgrade() {
     let (env, admin, client) = setup();
     client.schedule_upgrade(&admin, &fake_hash(&env, 4), &10);
@@ -102,7 +102,7 @@ fn test_execute_after_timelock_succeeds_and_records_history() {
 }
 
 #[test]
-#[should_panic(expected = "Only admin can execute upgrades")]
+#[should_panic(expected = "Unauthorized: admin required")]
 fn test_non_admin_cannot_execute_upgrade() {
     let (env, admin, client) = setup();
     client.schedule_upgrade(&admin, &fake_hash(&env, 7), &1);
@@ -192,7 +192,7 @@ fn test_no_pending_upgrade_initially() {
 // ── Unauthorised direct upgrade (#665 AC: unauthorised upgrade rejected) ──────
 
 #[test]
-#[should_panic(expected = "Only admin can upgrade")]
+#[should_panic(expected = "Unauthorized: admin required")]
 fn test_direct_upgrade_non_admin_rejected() {
     let (env, _, client) = setup();
     let rando = Address::generate(&env);

@@ -36,11 +36,11 @@ export default function AdminDashboard() {
       const params = new URLSearchParams();
       if (dateRange.startDate) params.append('startDate', dateRange.startDate);
       if (dateRange.endDate) params.append('endDate', dateRange.endDate);
-      
+
       const response = await adminApi.get(`/admin/analytics/dashboard?${params}`);
       setMetrics(response.data);
     } catch (error) {
-      console.error('Failed to fetch dashboard metrics:', error);
+      // Failed to fetch dashboard metrics
     } finally {
       setLoading(false);
     }
@@ -52,11 +52,11 @@ export default function AdminDashboard() {
       const params = new URLSearchParams();
       if (dateRange.startDate) params.append('startDate', dateRange.startDate);
       if (dateRange.endDate) params.append('endDate', dateRange.endDate);
-      
+
       const response = await adminApi.get(`/admin/analytics/export?${params}`, {
         responseType: 'blob',
       });
-      
+
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
@@ -65,7 +65,7 @@ export default function AdminDashboard() {
       link.click();
       link.remove();
     } catch (error) {
-      console.error('Failed to export metrics:', error);
+      // Failed to export metrics
     } finally {
       setExporting(false);
     }
@@ -87,19 +87,19 @@ export default function AdminDashboard() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-        
+
         <div className="flex flex-wrap items-center gap-2">
           <input
             type="date"
             value={dateRange.startDate}
-            onChange={(e) => setDateRange(prev => ({ ...prev, startDate: e.target.value }))}
+            onChange={(e) => setDateRange((prev) => ({ ...prev, startDate: e.target.value }))}
             className="px-3 py-2 border rounded-md text-sm"
             placeholder="Start Date"
           />
           <input
             type="date"
             value={dateRange.endDate}
-            onChange={(e) => setDateRange(prev => ({ ...prev, endDate: e.target.value }))}
+            onChange={(e) => setDateRange((prev) => ({ ...prev, endDate: e.target.value }))}
             className="px-3 py-2 border rounded-md text-sm"
             placeholder="End Date"
           />
@@ -120,11 +120,7 @@ export default function AdminDashboard() {
           trend={metrics.growth}
           subtitle="Platform users"
         />
-        <MetricCard
-          title="Active Workers"
-          value={metrics.activeWorkers}
-          subtitle="Last 30 days"
-        />
+        <MetricCard title="Active Workers" value={metrics.activeWorkers} subtitle="Last 30 days" />
         <MetricCard
           title="Tip Volume"
           value={`$${metrics.tipVolume.toLocaleString()}`}
@@ -149,9 +145,14 @@ export default function AdminDashboard() {
   );
 }
 
-function MetricCard({ title, value, trend, subtitle }: { 
-  title: string; 
-  value: string | number; 
+function MetricCard({
+  title,
+  value,
+  trend,
+  subtitle,
+}: {
+  title: string;
+  value: string | number;
   trend?: number;
   subtitle: string;
 }) {

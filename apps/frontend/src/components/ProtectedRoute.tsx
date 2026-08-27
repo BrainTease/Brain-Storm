@@ -2,27 +2,27 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import { useAuth } from '@/lib/auth-context';
+import { useAuth } from '@/hooks/useAuth';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { state } = useAuth();
+  const { isLoading, token } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!state.isLoading && !state.token) {
+    if (!isLoading && !token) {
       router.push('/auth/login');
     }
-  }, [state.isLoading, state.token, router]);
+  }, [isLoading, token, router]);
 
-  if (state.isLoading) {
+  if (isLoading) {
     return <div>Loading...</div>; // Or a proper loading component
   }
 
-  if (!state.token) {
+  if (!token) {
     return null; // Or redirect component
   }
 

@@ -33,8 +33,7 @@ export function useOptimisticEnroll(courseId: string, initialEnrolled = false) {
       toast.success('Enrolled successfully!');
     } catch (err: unknown) {
       setState(rollbackRef.current);
-      const msg =
-        err instanceof Error ? err.message : 'Enrollment failed. Changes reverted.';
+      const msg = err instanceof Error ? err.message : 'Enrollment failed. Changes reverted.';
       toast.error(msg);
     } finally {
       setPending(false);

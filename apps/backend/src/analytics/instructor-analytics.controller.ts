@@ -14,10 +14,7 @@ export class InstructorAnalyticsController {
 
   @Get()
   @Cacheable(3600, CacheKeys.INSTRUCTOR_ANALYTICS) // Cache for 1 hour
-  async getAnalytics(
-    @CurrentUser() user: any,
-    @Query() query: AnalyticsQueryDto,
-  ) {
+  async getAnalytics(@CurrentUser() user: any, @Query() query: AnalyticsQueryDto) {
     return this.analyticsService.getInstructorAnalytics(user.id, query);
   }
 
@@ -25,13 +22,13 @@ export class InstructorAnalyticsController {
   async exportToCSV(
     @CurrentUser() user: any,
     @Query() query: AnalyticsQueryDto,
-    @Res() response: Response,
+    @Res() response: Response
   ) {
     const csv = await this.analyticsService.exportAnalyticsToCSV(user.id, query);
     response.setHeader('Content-Type', 'text/csv');
     response.setHeader(
       'Content-Disposition',
-      `attachment; filename="analytics-${new Date().toISOString()}.csv"`,
+      `attachment; filename="analytics-${new Date().toISOString()}.csv"`
     );
     response.send(csv);
   }

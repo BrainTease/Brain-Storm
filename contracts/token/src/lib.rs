@@ -1,4 +1,28 @@
 #![no_std]
+use brain_storm_shared::access;
+use brain_storm_shared::math::{checked_add_i128, checked_sub_i128};
+use soroban_sdk::{contract, contractimpl, contracttype, Address, Env, String};
+
+#[contracttype]
+pub struct AllowanceDataKey {
+    pub from: Address,
+    pub spender: Address,
+}
+
+#[contracttype]
+pub struct AllowanceValue {
+    pub amount: i128,
+    pub expiration_ledger: u32,
+}
+
+#[contracttype]
+pub enum DataKey {
+    Balance(Address),
+    Allowance(AllowanceDataKey),
+    Admin,
+    Name,
+    Symbol,
+    Decimals,
 use soroban_sdk::{
     contract, contractimpl, contracttype, symbol_short, Address, Env, String, Symbol,
 };
@@ -147,6 +171,19 @@ fn set_allowance(env: &Env, owner: &Address, spender: &Address, amount: i128) {
 
 #[contractimpl]
 impl TokenContract {
+    /// Initialize the token with an admin address and SEP-41 metadata
+    pub fn initialize(env: Env, admin: Address, name: String, symbol: String, decimals: u32) {
+        admin.require_auth();
+        env.storage().instance().set(&DataKey::Admin, &admin);
+        env.storage().instance().set(&DataKey::Name, &name);
+        env.storage().instance().set(&DataKey::Symbol, &symbol);
+        env.storage().instance().set(&DataKey::Decimals, &decimals);
+    }
+
+    /// Mint reward tokens to a student upon course completion (admin-only)
+    pub fn mint(env: Env, to: Address, amount: i128) {
+        let admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
+        admin.require_auth();
     // -------------------------------------------------------------------------
     // SEP-0041: Metadata
     // -------------------------------------------------------------------------
@@ -225,6 +262,130 @@ impl TokenContract {
         Self::sub_balance(&env, &from, amount);
         Self::sub_supply(&env, amount);
 
+        let balance = Self::balance(env.clone(), to.clone());
+        env.storage()
+            .instance()
+            .set(&DataKey::Balance(to), &checked_add_i128(balance, amount));
+    }
+
+    /// Get the balance of an address
+    pub fn balance(env: Env, id: Address) -> i128 {
+        env.storage()
+            .instance()
+            .get(&DataKey::Balance(id))
+            .unwrap_or(0)
+    }
+
+    /// Transfer tokens from the caller to another address
+    pub fn transfer(env: Env, from: Address, to: Address, amount: i128) {
+        from.require_auth();
+        Self::spend_balance(&env, from, amount);
+        Self::receive_balance(&env, to, amount);
+    }
+
+    /// Transfer tokens on behalf of `from`, spending the caller's allowance
+    pub fn transfer_from(env: Env, spender: Address, from: Address, to: Address, amount: i128) {
+        spender.require_auth();
+        Self::spend_allowance(&env, from.clone(), spender, amount);
+        Self::spend_balance(&env, from, amount);
+        Self::receive_balance(&env, to, amount);
+    }
+
+    /// Burn tokens from the caller's balance
+    pub fn burn(env: Env, from: Address, amount: i128) {
+        from.require_auth();
+        Self::spend_balance(&env, from, amount);
+    }
+
+    /// Burn tokens from `from`'s balance, spending the caller's allowance
+    pub fn burn_from(env: Env, spender: Address, from: Address, amount: i128) {
+        spender.require_auth();
+        Self::spend_allowance(&env, from.clone(), spender, amount);
+        Self::spend_balance(&env, from, amount);
+    }
+
+    /// Set the amount of tokens `spender` may transfer on behalf of `from`
+    pub fn approve(env: Env, from: Address, spender: Address, amount: i128, expiration_ledger: u32) {
+        from.require_auth();
+        assert!(amount >= 0, "Amount must be non-negative");
+        if amount > 0 {
+            assert!(
+                expiration_ledger >= env.ledger().sequence(),
+                "Expiration ledger must not be in the past"
+            );
+        }
+
+        let key = DataKey::Allowance(AllowanceDataKey { from, spender });
+        env.storage().instance().set(
+            &key,
+            &AllowanceValue {
+                amount,
+                expiration_ledger,
+            },
+        );
+    }
+
+    /// Get the amount `spender` may transfer on behalf of `from`
+    pub fn allowance(env: Env, from: Address, spender: Address) -> i128 {
+        Self::read_allowance(&env, from, spender).amount
+    }
+
+    pub fn decimals(env: Env) -> u32 {
+        env.storage().instance().get(&DataKey::Decimals).unwrap()
+    }
+
+    pub fn name(env: Env) -> String {
+        env.storage().instance().get(&DataKey::Name).unwrap()
+    }
+
+    pub fn symbol(env: Env) -> String {
+        env.storage().instance().get(&DataKey::Symbol).unwrap()
+    }
+}
+
+// Internal helpers, kept out of the #[contractimpl] block since they are
+// not part of the contract's exported interface.
+impl TokenContract {
+    fn read_allowance(env: &Env, from: Address, spender: Address) -> AllowanceValue {
+        let key = DataKey::Allowance(AllowanceDataKey { from, spender });
+        let stored: Option<AllowanceValue> = env.storage().instance().get(&key);
+        match stored {
+            Some(allowance) if allowance.expiration_ledger >= env.ledger().sequence() => allowance,
+            _ => AllowanceValue {
+                amount: 0,
+                expiration_ledger: 0,
+            },
+        }
+    }
+
+    fn spend_allowance(env: &Env, from: Address, spender: Address, amount: i128) {
+        let allowance = Self::read_allowance(env, from.clone(), spender.clone());
+        assert!(allowance.amount >= amount, "Insufficient allowance");
+
+        let key = DataKey::Allowance(AllowanceDataKey { from, spender });
+        env.storage().instance().set(
+            &key,
+            &AllowanceValue {
+                amount: checked_sub_i128(allowance.amount, amount),
+                expiration_ledger: allowance.expiration_ledger,
+            },
+        );
+    }
+
+    fn spend_balance(env: &Env, addr: Address, amount: i128) {
+        assert!(amount > 0, "Amount must be positive");
+        let balance = Self::balance(env.clone(), addr.clone());
+        assert!(balance >= amount, "Insufficient balance");
+        env.storage()
+            .instance()
+            .set(&DataKey::Balance(addr), &checked_sub_i128(balance, amount));
+    }
+
+    fn receive_balance(env: &Env, addr: Address, amount: i128) {
+        let balance = Self::balance(env.clone(), addr.clone());
+        env.storage()
+            .instance()
+            .set(&DataKey::Balance(addr), &checked_add_i128(balance, amount));
         // Update burn stats
         let mut stats: BurnStats = env
             .storage()
@@ -367,9 +528,7 @@ impl TokenContract {
         cliff_ledger: u32,
         end_ledger: u32,
     ) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can create vesting");
+        access::require_admin(&env, &admin, &DataKey::Admin);
         assert!(total_amount > 0, "Amount must be positive");
 
         let start_ledger = env.ledger().sequence();
@@ -448,9 +607,7 @@ impl TokenContract {
         vesting_type: u8, // 0 = linear, 1 = step
         step_count: u32,
     ) -> u32 {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can create vesting");
+        access::require_admin(&env, &admin, &DataKey::Admin);
         assert!(total_amount > 0, "Amount must be positive");
         assert!(vesting_type <= 1, "Invalid vesting type");
 
@@ -544,9 +701,7 @@ impl TokenContract {
         schedule_id: u32,
         new_end_ledger: u32,
     ) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can modify vesting");
+        access::require_admin(&env, &admin, &DataKey::Admin);
 
         let key = DataKey::VestingV2(beneficiary.clone(), schedule_id);
         let mut schedule: VestingScheduleV2 = env
@@ -619,9 +774,7 @@ impl TokenContract {
     /// Configure the staking reward rate (admin only). Rate is in basis points per ledger
     /// e.g. 500 = 0.005% per ledger.
     pub fn set_reward_rate(env: Env, admin: Address, rate: i128) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can set reward rate");
+        access::require_admin(&env, &admin, &DataKey::Admin);
         assert!(rate >= 0, "Rate must be non-negative");
         env.storage()
             .instance()
@@ -630,9 +783,7 @@ impl TokenContract {
 
     /// Configure the early withdrawal penalty (admin only). Penalty in basis points.
     pub fn set_early_withdrawal_penalty(env: Env, admin: Address, penalty: i128) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can set penalty");
+        access::require_admin(&env, &admin, &DataKey::Admin);
         assert!(penalty >= 0 && penalty <= 10_000, "Penalty must be 0-10000 bps");
         env.storage()
             .instance()
@@ -668,9 +819,7 @@ impl TokenContract {
 
     /// Emergency withdrawal: admin can force-return staked tokens to a staker (no rewards, no penalty).
     pub fn emergency_withdraw(env: Env, admin: Address, staker: Address) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can emergency withdraw");
+        access::require_admin(&env, &admin, &DataKey::Admin);
 
         let record = staking::get_stake(&env, staker.clone())
             .expect("No stake found for staker");
@@ -719,9 +868,7 @@ impl TokenContract {
     pub fn mint_reward(env: Env, caller: Address, recipient: Address, amount: i128) {
         acquire_lock(&env);
 
-        caller.require_auth();
-        let admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(caller == admin, "Only admin can mint");
+        access::require_admin(&env, &caller, &DataKey::Admin);
         assert!(amount > 0, "Amount must be positive");
 
         Self::add_balance(&env, &recipient, amount);
@@ -1062,7 +1209,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Only admin can create vesting")]
+    #[should_panic(expected = "Unauthorized: admin required")]
     fn test_only_admin_can_create_vesting() {
         let (env, client, _) = setup();
         let instructor = Address::generate(&env);
@@ -1331,7 +1478,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Only admin can modify vesting")]
+    #[should_panic(expected = "Unauthorized: admin required")]
     fn test_non_admin_cannot_modify_vesting() {
         let (env, client, admin) = setup();
         let instructor = Address::generate(&env);

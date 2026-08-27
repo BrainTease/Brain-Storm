@@ -10,21 +10,8 @@
  * - Provides an embeddable JS widget snippet
  * - Caching via Redis to absorb bursts
  */
-import {
-  Controller,
-  Get,
-  Header,
-  Inject,
-  NotFoundException,
-  Param,
-  Res,
-} from '@nestjs/common';
-import {
-  ApiOperation,
-  ApiParam,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
+import { Controller, Get, Header, Inject, NotFoundException, Param, Res } from '@nestjs/common';
+import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -43,7 +30,7 @@ export class PublicCredentialVerificationController {
     private readonly credentialRepo: Repository<Credential>,
     private readonly stellarService: StellarService,
     @Inject(CACHE_MANAGER)
-    private readonly cache: Cache,
+    private readonly cache: Cache
   ) {}
 
   // ── Verify by credential ID ───────────────────────────────────────────────
@@ -51,7 +38,8 @@ export class PublicCredentialVerificationController {
   @Get(':id/verify')
   @ApiOperation({
     summary: 'Public: verify a credential by its UUID',
-    description: 'No authentication required. Returns issuer, course, issue date, and on-chain status.',
+    description:
+      'No authentication required. Returns issuer, course, issue date, and on-chain status.',
   })
   @ApiParam({ name: 'id', type: String, description: 'Credential UUID' })
   @ApiResponse({
@@ -103,7 +91,11 @@ export class PublicCredentialVerificationController {
       '<script src="https://api.brain-storm.com/v1/public/credentials/CREDENTIAL_ID/widget"></script>\n```',
   })
   @ApiParam({ name: 'id', type: String })
-  @ApiResponse({ status: 200, description: 'JavaScript widget snippet', content: { 'application/javascript': {} } })
+  @ApiResponse({
+    status: 200,
+    description: 'JavaScript widget snippet',
+    content: { 'application/javascript': {} },
+  })
   async getWidget(@Param('id') id: string, @Res() res: Response) {
     const cacheKey = `widget:${id}`;
     const cached = await this.cache.get<string>(cacheKey);

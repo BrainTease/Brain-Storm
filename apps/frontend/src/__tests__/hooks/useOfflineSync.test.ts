@@ -16,7 +16,7 @@ describe('useOfflineSync', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
-    Object.keys(listeners).forEach(k => delete listeners[k]);
+    Object.keys(listeners).forEach((k) => delete listeners[k]);
   });
 
   it('initial state is online when navigator.onLine is true', () => {
@@ -33,7 +33,7 @@ describe('useOfflineSync', () => {
   it('state changes to offline on offline event', () => {
     const { result } = renderHook(() => useOfflineSync());
     act(() => {
-      listeners['offline']?.forEach(fn => fn(new Event('offline')));
+      listeners['offline']?.forEach((fn) => fn(new Event('offline')));
     });
     expect(result.current.syncStatus).toBe('offline');
   });

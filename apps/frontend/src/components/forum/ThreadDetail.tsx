@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Post, Reply } from '@/lib/forumApi';
+import { formatDateTime } from '@/lib/date-utils';
 import { useAuthStore } from '@/store/auth.store';
 import { useCreateReply, useFlagContent, useDeletePost } from '@/hooks/useForum';
 import { MarkdownEditor } from './MarkdownEditor';
@@ -44,7 +45,7 @@ export function ThreadDetail({
       setShowReplyForm(false);
       onReplyCreated?.();
     } catch (err) {
-      console.error('Failed to create reply:', err);
+      // Failed to create reply
     }
   };
 
@@ -55,7 +56,7 @@ export function ThreadDetail({
       await flagContent('post', post.id, reason);
       alert('Post flagged for review. Thank you!');
     } catch (err) {
-      console.error('Failed to flag post:', err);
+      // Failed to flag post
     }
   };
 
@@ -67,7 +68,7 @@ export function ThreadDetail({
       // Navigate back to forum list
       window.location.href = `/courses/${courseId}/forum`;
     } catch (err) {
-      console.error('Failed to delete post:', err);
+      // Failed to delete post
     }
   };
 
@@ -91,8 +92,7 @@ export function ThreadDetail({
               <div>
                 <p className="font-semibold text-gray-900">{post.user?.username || 'Unknown'}</p>
                 <p className="text-xs text-gray-500">
-                  {new Date(post.createdAt).toLocaleDateString()} at{' '}
-                  {new Date(post.createdAt).toLocaleTimeString()}
+                  {formatDateTime(post.createdAt)}
                 </p>
               </div>
             </div>

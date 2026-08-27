@@ -3,6 +3,8 @@ use soroban_sdk::{
     contract, contractimpl, contracttype, symbol_short, Address, BytesN, Env, Symbol, Vec,
 };
 
+use brain_storm_shared::access;
+
 // =============================================================================
 // Storage keys
 // =============================================================================
@@ -104,8 +106,8 @@ impl BuybackContract {
         let config = BuybackConfig {
             enabled: false,
             price_threshold: 1000,
-            max_buyback_amount: 100_000_0000000,
-            min_reserve_balance: 1_000_0000000,
+            max_buyback_amount: 100_000_000_000_000,
+            min_reserve_balance: 10_000_000_000,
             buyback_interval: 1000,
             dex_pool_id,
         };
@@ -139,9 +141,7 @@ impl BuybackContract {
         min_reserve_balance: Option<i128>,
         buyback_interval: Option<u32>,
     ) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can update config");
+        access::require_admin(&env, &admin, &DataKey::Admin);
 
         let mut config: BuybackConfig =
             env.storage().instance().get(&DataKey::BuybackConfig).unwrap();
@@ -214,7 +214,7 @@ impl BuybackContract {
 
         let available_for_buyback = reserve_balance - config.min_reserve_balance;
         let max_buyback_xlm =
-            available_for_buyback.min(config.max_buyback_amount * bst_price / 1_000_000);
+            Self::calculate_xlm_from_available(&config, available_for_buyback);
 
         if max_buyback_xlm <= 0 {
             return;
@@ -224,14 +224,12 @@ impl BuybackContract {
             env,
             max_buyback_xlm,
             bst_price,
-            symbol_short!("price_thresh"),
+            symbol_short!("price_thr"),
         );
     }
 
     pub fn manual_buyback(env: Env, admin: Address, max_xlm_amount: i128) {
-        admin.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(admin == stored_admin, "Only admin can execute manual buyback");
+        access::require_admin(&env, &admin, &DataKey::Admin);
 
         let config: BuybackConfig = env
             .storage()
@@ -367,6 +365,21 @@ impl BuybackContract {
     // Internal helpers
     // -------------------------------------------------------------------------
 
+    /// Calculates the maximum XLM amount available for buyback based on reserve and config.
+    /// Extracted to eliminate duplicated pricing logic.
+    fn calculate_xlm_from_available(config: &BuybackConfig, available: i128) -> i128 {
+        available.min(config.max_buyback_amount)
+    }
+
+    /// Calculates the BST amount that can be purchased with the given XLM amount at the given price.
+    /// Formula: (xlm_amount * 1_000_000) / bst_price
+    fn calculate_bst_from_xlm(xlm_amount: i128, bst_price: i128) -> i128 {
+        if bst_price == 0 {
+            return 0;
+        }
+        (xlm_amount.checked_mul(1_000_000).unwrap_or(xlm_amount)) / bst_price
+    }
+
     fn get_bst_price(env: &Env) -> i128 {
         // Calls oracle contract; returns mock price for now
         let _oracle_contract: Address = env
@@ -384,7 +397,8 @@ impl BuybackContract {
             .get(&DataKey::BuybackConfig)
             .unwrap();
 
-        let estimated_bst_amount = (xlm_amount * 1_000_000) / bst_price;
+        // Use extracted helper function to calculate BST amount
+        let estimated_bst_amount = Self::calculate_bst_from_xlm(xlm_amount, bst_price);
         let bst_to_buy = estimated_bst_amount.min(config.max_buyback_amount);
 
         let mut reserve_balance: i128 = env

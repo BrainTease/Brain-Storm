@@ -12,7 +12,7 @@ import { LoggingInterceptor } from './logging.interceptor';
     WinstonModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
-        const logLevel = configService.get<string>('LOG_LEVEL', 'info');
+        const logLevel = configService.get<string>('logging.level', 'info');
         const nodeEnv = configService.get<string>('NODE_ENV', 'development');
 
         // Define log format based on environment

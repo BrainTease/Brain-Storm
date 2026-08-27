@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
 import { reviewsApi, Review, SortCriterion } from '@/lib/reviewsApi';
+import { formatDateShort } from '@/lib/date-utils';
 import { StarRating } from './StarRating';
 import { InstructorReply } from './InstructorReply';
 import { FlagModal } from './FlagModal';
@@ -57,7 +58,12 @@ export function ReviewList({ courseId, currentUserId, isInstructor = false }: Re
         setReviews((prev) =>
           prev.map((r) =>
             r.id === reviewId
-              ? { ...r, upvotes: result.upvotes, downvotes: result.downvotes, userVote: result.userVote }
+              ? {
+                  ...r,
+                  upvotes: result.upvotes,
+                  downvotes: result.downvotes,
+                  userVote: result.userVote,
+                }
               : r
           )
         );
@@ -72,9 +78,7 @@ export function ReviewList({ courseId, currentUserId, isInstructor = false }: Re
     async (reason: string) => {
       if (!flagTarget) return;
       await reviewsApi.flagReview(courseId, flagTarget, reason);
-      setReviews((prev) =>
-        prev.map((r) => (r.id === flagTarget ? { ...r, isFlagged: true } : r))
-      );
+      setReviews((prev) => prev.map((r) => (r.id === flagTarget ? { ...r, isFlagged: true } : r)));
       setFlagTarget(null);
     },
     [courseId, flagTarget]
@@ -109,7 +113,10 @@ export function ReviewList({ courseId, currentUserId, isInstructor = false }: Re
               const count = ratingDistribution[star] ?? 0;
               const pct = totalCount > 0 ? Math.round((count / totalCount) * 100) : 0;
               return (
-                <div key={star} className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
+                <div
+                  key={star}
+                  className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300"
+                >
                   <span className="w-3 text-right">{star}</span>
                   <span className="text-yellow-400 text-sm">★</span>
                   <div className="flex-1 h-2 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
@@ -130,11 +137,16 @@ export function ReviewList({ courseId, currentUserId, isInstructor = false }: Re
           <select
             className="border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
             value={sort}
-            onChange={(e) => { setSort(e.target.value as SortCriterion); setPage(1); }}
+            onChange={(e) => {
+              setSort(e.target.value as SortCriterion);
+              setPage(1);
+            }}
             aria-label="Sort reviews"
           >
             {SORT_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
             ))}
           </select>
         </div>
@@ -144,7 +156,10 @@ export function ReviewList({ courseId, currentUserId, isInstructor = false }: Re
       {loading ? (
         <div className="space-y-4">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="animate-pulse border rounded-lg p-4 space-y-2 dark:border-gray-700">
+            <div
+              key={i}
+              className="animate-pulse border rounded-lg p-4 space-y-2 dark:border-gray-700"
+            >
               <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4" />
               <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-full" />
               <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-3/4" />
@@ -152,7 +167,9 @@ export function ReviewList({ courseId, currentUserId, isInstructor = false }: Re
           ))}
         </div>
       ) : reviews.length === 0 ? (
-        <p className="text-gray-500 dark:text-gray-400">No reviews yet. Be the first to review this course!</p>
+        <p className="text-gray-500 dark:text-gray-400">
+          No reviews yet. Be the first to review this course!
+        </p>
       ) : (
         <ul className="space-y-4">
           {reviews.map((review) => (
@@ -165,7 +182,7 @@ export function ReviewList({ courseId, currentUserId, isInstructor = false }: Re
                   {review.authorName}
                 </span>
                 <span className="text-xs text-gray-400">
-                  {new Date(review.createdAt).toLocaleDateString()}
+                  {formatDateShort(review.createdAt)}
                 </span>
               </div>
               <StarRating value={review.rating} readOnly />
@@ -186,7 +203,12 @@ export function ReviewList({ courseId, currentUserId, isInstructor = false }: Re
                   }`}
                 >
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"
+                    />
                   </svg>
                   Yes ({review.upvotes})
                 </button>
@@ -202,7 +224,12 @@ export function ReviewList({ courseId, currentUserId, isInstructor = false }: Re
                   }`}
                 >
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14H5.236a2 2 0 01-1.789-2.894l3.5-7A2 2 0 018.736 3h4.018a2 2 0 01.485.06l3.76.94m-7 10v5a2 2 0 002 2h.095c.5 0 .905-.405.905-.905 0-.714.211-1.412.608-2.006L17 13V4m-7 10h2m5-10h2a2 2 0 012 2v6a2 2 0 01-2 2h-2.5" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M10 14H5.236a2 2 0 01-1.789-2.894l3.5-7A2 2 0 018.736 3h4.018a2 2 0 01.485.06l3.76.94m-7 10v5a2 2 0 002 2h.095c.5 0 .905-.405.905-.905 0-.714.211-1.412.608-2.006L17 13V4m-7 10h2m5-10h2a2 2 0 012 2v6a2 2 0 01-2 2h-2.5"
+                    />
                   </svg>
                   No ({review.downvotes ?? 0})
                 </button>
@@ -216,7 +243,12 @@ export function ReviewList({ courseId, currentUserId, isInstructor = false }: Re
                     className="ml-auto flex items-center gap-1 text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
                   >
                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6H9.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6H9.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"
+                      />
                     </svg>
                     Flag
                   </button>
@@ -244,10 +276,7 @@ export function ReviewList({ courseId, currentUserId, isInstructor = false }: Re
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <nav
-          className="mt-6 flex items-center justify-between"
-          aria-label="Review pagination"
-        >
+        <nav className="mt-6 flex items-center justify-between" aria-label="Review pagination">
           <button
             type="button"
             disabled={page <= 1}
@@ -271,12 +300,7 @@ export function ReviewList({ courseId, currentUserId, isInstructor = false }: Re
       )}
 
       {/* Flag modal */}
-      {flagTarget && (
-        <FlagModal
-          onConfirm={handleFlag}
-          onCancel={() => setFlagTarget(null)}
-        />
-      )}
+      {flagTarget && <FlagModal onConfirm={handleFlag} onCancel={() => setFlagTarget(null)} />}
     </section>
   );
 }

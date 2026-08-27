@@ -52,7 +52,7 @@ export class QuizzesController {
   async submitAttempt(
     @Param('quizId') quizId: string,
     @Body() data: any,
-    @CurrentUser() user: any,
+    @CurrentUser() user: any
   ) {
     return this.quizzesService.submitAttempt(quizId, user.id, data.answers);
   }
@@ -93,16 +93,8 @@ export class QuizzesController {
   }
 
   @Post(':attemptId/grade')
-  async gradeEssay(
-    @Param('attemptId') attemptId: string,
-    @Body() data: any,
-  ) {
-    return this.quizzesService.gradeEssay(
-      attemptId,
-      data.questionId,
-      data.points,
-      data.feedback,
-    );
+  async gradeEssay(@Param('attemptId') attemptId: string, @Body() data: any) {
+    return this.quizzesService.gradeEssay(attemptId, data.questionId, data.points, data.feedback);
   }
 
   @Get(':quizId/attempts')

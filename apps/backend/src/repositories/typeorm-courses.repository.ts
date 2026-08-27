@@ -36,7 +36,8 @@ export class TypeOrmCoursesRepository implements CoursesRepository {
   async findAll(query: CourseQueryDto = {}) {
     const { search, level, page = 1, limit = 20 } = query;
 
-    const qb = this.repo.createQueryBuilder('course')
+    const qb = this.repo
+      .createQueryBuilder('course')
       .select([
         'course.id',
         'course.title',
@@ -55,10 +56,9 @@ export class TypeOrmCoursesRepository implements CoursesRepository {
       .andWhere('course.isDeleted = :isDeleted', { isDeleted: false });
 
     if (search) {
-      qb.andWhere(
-        '(course.title ILIKE :search OR course.description ILIKE :search)',
-        { search: `%${search}%` },
-      );
+      qb.andWhere('(course.title ILIKE :search OR course.description ILIKE :search)', {
+        search: `%${search}%`,
+      });
     }
 
     if (level) {

@@ -56,7 +56,7 @@ export class NotificationStream {
       this.setupSocketListeners();
       this.reconnectStrategy.reset();
     } catch (error) {
-      console.error('Failed to connect to notification stream:', error);
+      // Connection failed, will retry
       this.startPollingFallback();
     }
   }
@@ -78,7 +78,7 @@ export class NotificationStream {
     });
 
     this.socket.on('connect_error', (error: Error) => {
-      console.warn('Connection error, falling back to polling:', error);
+      // Connection error, falling back to polling
       this.startPollingFallback();
     });
 
@@ -189,7 +189,7 @@ export class NotificationStream {
       const notifications = await response.json();
       this.config.onInit?.(notifications);
     } catch (error) {
-      console.warn('Polling failed:', error);
+      // Polling failed silently - will retry on next interval
     }
   }
 

@@ -14,7 +14,8 @@ type Story = StoryObj<typeof CourseCard>;
 const base = {
   id: '1',
   title: 'Introduction to Stellar Blockchain',
-  description: 'Learn the fundamentals of the Stellar network, smart contracts, and decentralized finance.',
+  description:
+    'Learn the fundamentals of the Stellar network, smart contracts, and decentralized finance.',
   instructor: 'Alice Johnson',
   rating: 4.7,
   reviewCount: 1234,

@@ -21,36 +21,36 @@ export const CORE_EVENTS = {
   SEARCH: 'discovery_search',
   COURSE_VIEW: 'discovery_course_view',
   INSTRUCTOR_VIEW: 'discovery_instructor_view',
-  
-  // Profile funnel  
+
+  // Profile funnel
   PROFILE_VIEW: 'profile_view',
   PROFILE_UPDATE: 'profile_update',
-  
+
   // Enrollment funnel
   ENROLLMENT_START: 'enrollment_start',
   ENROLLMENT_COMPLETE: 'enrollment_complete',
   PROGRESS_UPDATE: 'course_progress_update',
-  
+
   // Tip/Transaction funnel
   TIP_INITIATED: 'tip_initiated',
   TIP_SENT: 'tip_sent',
   TIP_RECEIVED: 'tip_received',
-  
+
   // Review funnel
   REVIEW_SUBMITTED: 'review_submitted',
   REVIEW_VOTED: 'review_voted',
-  
+
   // Credential events
   CREDENTIAL_ISSUED: 'credential_issued',
   CREDENTIAL_VERIFIED: 'credential_verified',
-  
+
   // Auth events
   LOGIN: 'auth_login',
   LOGOUT: 'auth_logout',
   REGISTER: 'auth_register',
 } as const;
 
-export type EventType = typeof CORE_EVENTS[keyof typeof CORE_EVENTS];
+export type EventType = (typeof CORE_EVENTS)[keyof typeof CORE_EVENTS];
 
 // PII fields to never send
 const PII_FIELDS = [
@@ -177,7 +177,7 @@ export async function trackEvent(
       keepalive: true,
     });
   } catch (error) {
-    console.debug('Analytics event failed:', error);
+    // Analytics event failed silently
   }
 }
 
@@ -185,36 +185,33 @@ export async function trackEvent(
 export const analytics = {
   trackPageView: (page: string, params?: Record<string, unknown>) =>
     trackEvent(CORE_EVENTS.PAGE_VIEW, { page, ...params }),
-  
+
   trackSearch: (query: string, resultsCount?: number) =>
     trackEvent(CORE_EVENTS.SEARCH, { query, resultsCount }),
-  
+
   trackCourseView: (courseId: string, courseTitle?: string) =>
     trackEvent(CORE_EVENTS.COURSE_VIEW, { courseId, courseTitle }),
-  
+
   trackEnrollmentStart: (courseId: string) =>
     trackEvent(CORE_EVENTS.ENROLLMENT_START, { courseId }),
-  
+
   trackEnrollmentComplete: (courseId: string) =>
     trackEvent(CORE_EVENTS.ENROLLMENT_COMPLETE, { courseId }),
-  
+
   trackProgressUpdate: (courseId: string, progressPct: number) =>
     trackEvent(CORE_EVENTS.PROGRESS_UPDATE, { courseId, progressPct }),
-  
+
   trackTipSent: (amount: number, recipientId: string) =>
     trackEvent(CORE_EVENTS.TIP_SENT, { amount, recipientId }),
-  
+
   trackReviewSubmitted: (courseId: string, rating: number) =>
     trackEvent(CORE_EVENTS.REVIEW_SUBMITTED, { courseId, rating }),
-  
-  trackLogin: (method: string) =>
-    trackEvent(CORE_EVENTS.LOGIN, { method }),
-  
-  trackLogout: () =>
-    trackEvent(CORE_EVENTS.LOGOUT),
-  
-  trackRegister: (method: string) =>
-    trackEvent(CORE_EVENTS.REGISTER, { method }),
+
+  trackLogin: (method: string) => trackEvent(CORE_EVENTS.LOGIN, { method }),
+
+  trackLogout: () => trackEvent(CORE_EVENTS.LOGOUT),
+
+  trackRegister: (method: string) => trackEvent(CORE_EVENTS.REGISTER, { method }),
 };
 
 export default analytics;
