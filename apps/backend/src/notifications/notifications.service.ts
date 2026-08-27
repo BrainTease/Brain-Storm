@@ -18,6 +18,8 @@ import { NotificationsGateway } from './notifications.gateway';
 import { EmailNotifierService, EmailNotificationContext } from './email-notifier.service';
 import { PushNotifierService } from './push-notifier.service';
 import { InAppNotifierService } from './inapp-notifier.service';
+import { PaginationDto } from '../common/dto/pagination.dto';
+import { PaginatedResponseDto } from '../common/dto/api-response.dto';
 
 @Injectable()
 export class NotificationsService implements OnModuleInit {
@@ -74,11 +76,18 @@ export class NotificationsService implements OnModuleInit {
     return this.repo.findOne({ where: { userId, type, message }, order: { createdAt: 'DESC' } });
   }
 
-  async findByUser(userId: string) {
-    return this.repo.find({
+  async findByUser(
+    userId: string,
+    query: PaginationDto
+  ): Promise<PaginatedResponseDto<Notification>> {
+    const { page = 1, limit = 20 } = query;
+    const [notifications, total] = await this.repo.findAndCount({
       where: { userId },
       order: { isRead: 'ASC', createdAt: 'DESC' },
+      skip: (page - 1) * limit,
+      take: limit,
     });
+    return new PaginatedResponseDto(notifications, 200, page, limit, total);
   }
 
   async markAsRead(id: string) {

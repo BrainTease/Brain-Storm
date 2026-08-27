@@ -12,12 +12,14 @@ import {
   RawBodyRequest,
   HttpCode,
   HttpStatus,
+  Query,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { IsString, IsEnum, IsOptional, IsUrl, IsUUID } from 'class-validator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { PaymentsService } from './payments.service';
 import { SubscriptionPlan } from './subscription.entity';
+import { PaginationDto } from '../common/dto/pagination.dto';
 
 class CreateCheckoutDto {
   @IsUUID() courseId: string;
@@ -91,16 +93,16 @@ export class PaymentsController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'List invoices for the current user' })
-  getInvoices(@Request() req: any) {
-    return this.paymentsService.getUserInvoices(req.user.userId);
+  getInvoices(@Request() req: any, @Query() query: PaginationDto) {
+    return this.paymentsService.getUserInvoices(req.user.userId, query);
   }
 
   @Get('history')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'List payment history for the current user' })
-  getPaymentHistory(@Request() req: any) {
-    return this.paymentsService.getUserPayments(req.user.userId);
+  getPaymentHistory(@Request() req: any, @Query() query: PaginationDto) {
+    return this.paymentsService.getUserPayments(req.user.userId, query);
   }
 
   // ─── Stripe webhook (raw body required) ──────────────────────────────────
