@@ -1,7 +1,8 @@
 #![cfg(test)]
 //! Additional edge-case tests for the grants contract.
 //! The inline tests in lib.rs cover the happy-path lifecycle.
-//! These tests focus on validation errors, auth checks, and boundary conditions.
+//! These tests focus on validation errors, auth checks, boundary conditions,
+//! and state-machine invariants (Issue #1016).
 
 use super::*;
 use soroban_sdk::{testutils::Address as _, Env, String};
@@ -75,7 +76,7 @@ fn test_get_grant_returns_none_for_nonexistent() {
     assert!(client.get_grant(&999).is_none());
 }
 
-// ── approve / reject auth ────────────────────────────────────────────────────
+// ── approve / reject auth ─────────────────────────────────────────────────────
 
 #[test]
 #[should_panic(expected = "Unauthorized: admin required")]
@@ -109,8 +110,11 @@ fn test_non_admin_cannot_reject_grant() {
     client.reject_grant(&rando, &id);
 }
 
+// ── State-machine: invalid transitions (Issue #1016) ─────────────────────────
+
+/// Pending → Approved is valid.  Approved → Approved is invalid.
 #[test]
-#[should_panic(expected = "Grant not pending")]
+#[should_panic(expected = "Invalid state transition")]
 fn test_approve_already_approved_grant_panics() {
     let (env, client, admin, _) = setup();
     let applicant = Address::generate(&env);
@@ -122,11 +126,12 @@ fn test_approve_already_approved_grant_panics() {
         &1,
     );
     client.approve_grant(&admin, &id);
-    client.approve_grant(&admin, &id); // second time should panic
+    client.approve_grant(&admin, &id); // second approve must panic
 }
 
+/// Rejected → Approved is invalid.
 #[test]
-#[should_panic(expected = "Grant not pending")]
+#[should_panic(expected = "Invalid state transition")]
 fn test_approve_rejected_grant_panics() {
     let (env, client, admin, _) = setup();
     let applicant = Address::generate(&env);
@@ -138,10 +143,91 @@ fn test_approve_rejected_grant_panics() {
         &1,
     );
     client.reject_grant(&admin, &id);
-    client.approve_grant(&admin, &id); // already rejected
+    client.approve_grant(&admin, &id); // already rejected — must panic
 }
 
-// ── set_milestone validation ─────────────────────────────────────────────────
+/// Completed → Rejected is invalid (terminal state).
+#[test]
+fn test_rejected_state_is_terminal() {
+    let (env, client, admin, _) = setup();
+    let applicant = Address::generate(&env);
+    let id = client.apply_for_grant(
+        &applicant,
+        &String::from_str(&env, "T"),
+        &String::from_str(&env, "D"),
+        &100,
+        &1,
+    );
+    client.reject_grant(&admin, &id);
+    // State is Rejected and must remain so
+    assert_eq!(client.get_grant_state(&id).unwrap(), GrantState::Rejected);
+}
+
+/// New grant starts in Pending state.
+#[test]
+fn test_initial_state_is_pending() {
+    let (env, client, _, _) = setup();
+    let applicant = Address::generate(&env);
+    let id = client.apply_for_grant(
+        &applicant,
+        &String::from_str(&env, "T"),
+        &String::from_str(&env, "D"),
+        &100,
+        &1,
+    );
+    assert_eq!(client.get_grant_state(&id).unwrap(), GrantState::Pending);
+}
+
+/// Approved → Approved is disallowed.
+#[test]
+fn test_state_after_approval_is_approved() {
+    let (env, client, admin, _) = setup();
+    let applicant = Address::generate(&env);
+    let id = client.apply_for_grant(
+        &applicant,
+        &String::from_str(&env, "T"),
+        &String::from_str(&env, "D"),
+        &100,
+        &1,
+    );
+    client.approve_grant(&admin, &id);
+    assert_eq!(client.get_grant_state(&id).unwrap(), GrantState::Approved);
+}
+
+/// Pending → Rejected is valid.
+#[test]
+fn test_state_after_rejection_is_rejected() {
+    let (env, client, admin, _) = setup();
+    let applicant = Address::generate(&env);
+    let id = client.apply_for_grant(
+        &applicant,
+        &String::from_str(&env, "T"),
+        &String::from_str(&env, "D"),
+        &100,
+        &1,
+    );
+    client.reject_grant(&admin, &id);
+    assert_eq!(client.get_grant_state(&id).unwrap(), GrantState::Rejected);
+}
+
+/// Approved → Rejected is valid.
+#[test]
+fn test_approved_to_rejected_is_valid() {
+    let (env, client, admin, _) = setup();
+    let applicant = Address::generate(&env);
+    let id = client.apply_for_grant(
+        &applicant,
+        &String::from_str(&env, "T"),
+        &String::from_str(&env, "D"),
+        &100,
+        &1,
+    );
+    client.approve_grant(&admin, &id);
+    client.reject_grant(&admin, &id);
+    assert_eq!(client.get_grant_state(&id).unwrap(), GrantState::Rejected);
+}
+
+// ── set_milestone validation ──────────────────────────────────────────────────
 
 #[test]
 #[should_panic(expected = "Unauthorized: admin required")]

@@ -318,6 +318,9 @@ impl MarketContract {
 mod fuzz_tests;
 
 #[cfg(test)]
+mod upgrade_safety_tests;
+
+#[cfg(test)]
 mod tests {
     use super::*;
     use soroban_sdk::{testutils::Address as _, vec, Env};

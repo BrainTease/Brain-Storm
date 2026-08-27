@@ -389,3 +389,6 @@ impl NftContract {
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod upgrade_safety_tests;
