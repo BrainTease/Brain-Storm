@@ -33,6 +33,7 @@ import {
   nativeToScVal,
   Address,
 } from '@stellar/stellar-sdk';
+import { decodeBigIntValue } from './soroban-xdr.utils';
 
 const MAX_RETRIES = 3;
 const BASE_DELAY_MS = 1_000;
@@ -146,8 +147,7 @@ export class SorobanRpcClientService {
       new Address(stellarPublicKey).toScVal(),
     ]);
 
-    const retVal = simResult.result?.retval;
-    return retVal ? BigInt(retVal.value() as unknown as bigint).toString() : '0';
+    return decodeBigIntValue(simResult);
   }
 
   /**
