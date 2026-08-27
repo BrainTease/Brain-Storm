@@ -7,6 +7,9 @@ import { ConfigService } from '@nestjs/config';
  * Tracks in-flight requests and delays shutdown until they complete (or the
  * drain timeout is reached). Wire it up by calling `trackRequest()` and
  * `releaseRequest()` from a middleware or interceptor.
+ *
+ * Allows registering cleanup handlers (e.g. close DB/RPC connections) that
+ * run after in-flight requests drain.
  */
 @Injectable()
 export class GracefulShutdownService implements OnModuleInit, OnModuleDestroy {
@@ -18,6 +21,7 @@ export class GracefulShutdownService implements OnModuleInit, OnModuleDestroy {
   private inFlightCount = 0;
   private isShuttingDown = false;
   private drainResolve: (() => void) | null = null;
+  private cleanupHandlers: Array<() => Promise<void>> = [];
 
   constructor(private readonly configService: ConfigService) {
     this.drainTimeoutMs = this.configService.get<number>('shutdown.drainTimeoutMs') ?? 10000;
@@ -48,6 +52,10 @@ export class GracefulShutdownService implements OnModuleInit, OnModuleDestroy {
     return this.isShuttingDown;
   }
 
+  registerCleanup(handler: () => Promise<void>): void {
+    this.cleanupHandlers.push(handler);
+  }
+
   private async shutdown(signal: string): Promise<void> {
     this.logger.log(
       `Received ${signal}. Starting graceful shutdown. In-flight: ${this.inFlightCount}`
@@ -69,6 +77,20 @@ export class GracefulShutdownService implements OnModuleInit, OnModuleDestroy {
       });
     }
 
+    this.logger.log('Draining in-flight requests complete. Running cleanup handlers...');
+
+    for (const handler of this.cleanupHandlers) {
+      try {
+        await handler();
+      } catch (err) {
+        this.logger.error(
+          `Cleanup handler failed: ${(err as Error).message}`,
+          (err as Error).stack
+        );
+      }
+    }
+
     this.logger.log('Graceful shutdown complete.');
+    process.exit(0);
   }
 }
