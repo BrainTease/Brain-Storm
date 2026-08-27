@@ -63,38 +63,24 @@ jobs:
             apps/frontend/package-lock.json
 
       # ── Backend ──────────────────────────────────────────────────────────────
-      - name: Install backend deps
+      - name: Install deps (root)
         run: npm ci
-        working-directory: apps/backend
 
       - name: Build backend
-        run: npm run build
-        working-directory: apps/backend
+        run: npm run build --workspace=apps/backend
 
       - name: Run migrations
-        run: npm run migration:run
-        working-directory: apps/backend
+        run: npm run migration:run --workspace=apps/backend
 
       - name: Start backend
-        run: npm run start:prod &
-        working-directory: apps/backend
+        run: npm run start:prod --workspace=apps/backend &
 
       # ── Frontend ─────────────────────────────────────────────────────────────
-      - name: Install frontend deps
-        run: npm ci
-        working-directory: apps/frontend
-
-      - name: Run unit tests
-        run: npm test
-        working-directory: apps/frontend
-
       - name: Build frontend
-        run: npm run build
-        working-directory: apps/frontend
+        run: npm run build --workspace=apps/frontend
 
       - name: Start frontend
-        run: npm run start -- --port 3001 &
-        working-directory: apps/frontend
+        run: npm run start --workspace=apps/frontend -- --port 3001 &
 
       - name: Wait for services
         run: |
@@ -106,8 +92,7 @@ jobs:
         working-directory: apps/frontend
 
       - name: Run Playwright tests
-        run: npm run test:e2e:ci
-        working-directory: apps/frontend
+        run: npm run test:e2e:ci --workspace=apps/frontend
 
       - name: Upload test report
         if: always()

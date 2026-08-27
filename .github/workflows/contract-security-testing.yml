@@ -27,29 +27,19 @@ jobs:
         uses: Swatinem/rust-cache@v2
       
       - name: Run security tests
-        run: |
-          cd contracts/token
-          cargo test --lib security_tests -- --nocapture
-      
+        run: cargo test --lib security_tests --package token -- --nocapture
+
       - name: Run reentrancy tests
-        run: |
-          cd contracts/token
-          cargo test --lib reentrancy_tests -- --nocapture
-      
+        run: cargo test --lib reentrancy_tests --package token -- --nocapture
+
       - name: Run overflow/underflow tests
-        run: |
-          cd contracts/token
-          cargo test --lib overflow_underflow_tests -- --nocapture
-      
+        run: cargo test --lib overflow_underflow_tests --package token -- --nocapture
+
       - name: Run access control tests
-        run: |
-          cd contracts/token
-          cargo test --lib access_control_tests -- --nocapture
-      
+        run: cargo test --lib access_control_tests --package token -- --nocapture
+
       - name: Run state management tests
-        run: |
-          cd contracts/token
-          cargo test --lib state_management_tests -- --nocapture
+        run: cargo test --lib state_management_tests --package token -- --nocapture
       
       - name: Generate test report
         if: always()

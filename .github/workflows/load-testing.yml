@@ -52,6 +52,7 @@ jobs:
 
       - name: Run smoke tests
         run: |
+          mkdir -p results
           k6 run --env PROFILE=smoke \
             --out json=results/smoke-test.json \
             packages/api/load/scenarios/search-discovery.js

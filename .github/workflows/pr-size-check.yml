@@ -18,13 +18,17 @@ jobs:
       - name: Get PR size
         id: size
         run: |
-          # Get the base and head commits
           BASE_COMMIT=${{ github.event.pull_request.base.sha }}
           HEAD_COMMIT=${{ github.event.pull_request.head.sha }}
-          
-          # Count changed lines (additions + deletions)
-          CHANGED_LINES=$(git diff --stat $BASE_COMMIT..$HEAD_COMMIT | tail -1 | awk '{print $4}' | tr -d ',')
-          
+
+          CHANGED_LINES=$(git diff --stat "$BASE_COMMIT..$HEAD_COMMIT" 2>/dev/null \
+            | tail -1 \
+            | awk '{gsub(/,/, "", $4); print $4}' || echo "0")
+
+          if [ -z "$CHANGED_LINES" ] || [ "$CHANGED_LINES" = "" ]; then
+            CHANGED_LINES=0
+          fi
+
           echo "changed_lines=$CHANGED_LINES" >> $GITHUB_OUTPUT
           echo "PR changed $CHANGED_LINES lines"
 

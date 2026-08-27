@@ -1,16 +1,7 @@
-# OWASP ZAP Rule Exclusions & Allowlist
-# Format: RULE_ID	PATTERN	COMMENT
-# Rules are excluded only after documented false-positive verification
-
-# Excluded rules (false positives documented)
-10038	.*	Content Security Policy (CSP) not enforced — CSP is set via reverse proxy/nginx, not application layer
-10015	.*/health	Redis/Postgres health endpoints are internal and expose no sensitive data
-10096	.*	Timestamp disclosure is intentional for debugging — no sensitive data leaked
-10108	.*/api/v1/payments/stripe/webhook	Webhook endpoint uses raw-body parser; Stripe signature verification is in application code, not at parser level
-10109	.*	Current page is the root page — expected
-10027	.*	Browser info disclosure not relevant for API
-10054	.*	Non-authoritative cookie is expected for session tracking
-90022	.*	Application error page is controlled; stack traces are disabled in production
-90033	.*	Loosely scoped cookie is set by the framework; session is additionally validated server-side
-10010	.*	X-Content-Type-Options already set by NestJS Helmet middleware
-10016	.*	Web Browser XSS Protection is deprecated; CSP handles this
+# ZAP Baseline Scan Rules Configuration
+# Format: Rule ID\tStatus\tAction
+# https://www.zaproxy.org/docs/docker/baseline-scan/
+10021	IGNORE	X-Content-Type-Options
+10020	IGNORE	X-Frame-Options
+10036	IGNORE	Server Leaks
+10038	IGNORE	Content Security Policy

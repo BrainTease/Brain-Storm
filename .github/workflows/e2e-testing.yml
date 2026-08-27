@@ -48,7 +48,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
           cache: 'npm'
       
       - name: Install dependencies
@@ -56,25 +56,64 @@ jobs:
       
       - name: Build backend
         run: npm run build --workspace=apps/backend
-      
+
+      - name: Run migrations
+        run: npm run migration:run --workspace=apps/backend
+        env:
+          DATABASE_HOST: localhost
+          DATABASE_PORT: 5432
+          DATABASE_NAME: brain-storm-test
+          DATABASE_USER: test
+          DATABASE_PASSWORD: test
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
+          JWT_SECRET: test-secret-key
+          STELLAR_NETWORK: testnet
+
       - name: Start backend
         run: npm run start:dev --workspace=apps/backend &
         env:
           DATABASE_HOST: localhost
           DATABASE_PORT: 5432
           DATABASE_NAME: brain-storm-test
-          DATABASE_USERNAME: test
+          DATABASE_USER: test
           DATABASE_PASSWORD: test
           REDIS_HOST: localhost
           REDIS_PORT: 6379
           JWT_SECRET: test-secret-key
           STELLAR_NETWORK: testnet
-      
+
       - name: Wait for backend
-        run: sleep 10
-      
+        run: |
+          for i in {1..30}; do
+            if curl -sf http://localhost:3000/health; then
+              echo "Backend is ready"
+              exit 0
+            fi
+            echo "Waiting for backend... ($i/30)"
+            sleep 2
+          done
+          echo "Backend failed to start"
+          exit 1
+
       - name: Build frontend
         run: npm run build --workspace=apps/frontend
+
+      - name: Start frontend
+        run: npm run start --workspace=apps/frontend &
+
+      - name: Wait for frontend
+        run: |
+          for i in {1..30}; do
+            if curl -sf http://localhost:3001; then
+              echo "Frontend is ready"
+              exit 0
+            fi
+            echo "Waiting for frontend... ($i/30)"
+            sleep 2
+          done
+          echo "Frontend failed to start"
+          exit 1
       
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
