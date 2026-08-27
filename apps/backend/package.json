@@ -13,6 +13,7 @@
     "format": "prettier --write .",
     "test": "jest",
     "test:integration": "jest --config jest-integration.config.js --runInBand",
+    "test:contract-integration": "jest --config jest-contract-integration.config.js --runInBand",
     "test:e2e": "jest --config jest-e2e.config.js --runInBand",
     "test:pact": "jest --testPathPattern=pact",
     "test:unit": "jest --config jest-test.config.js --runInBand",
