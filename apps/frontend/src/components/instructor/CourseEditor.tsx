@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import api from '@/lib/api';
+import { formatDateShort } from '@/lib/date-utils';
 import { Button } from '@/components/ui/Button';
 
 interface Course {
@@ -66,7 +67,7 @@ export function CourseEditor() {
                 <p className="font-medium text-gray-900 dark:text-gray-100 truncate">{c.title}</p>
                 {c.updatedAt && (
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                    Updated {new Date(c.updatedAt).toLocaleDateString()}
+                    Updated {formatDateShort(c.updatedAt)}
                   </p>
                 )}
               </div>

@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { reviewsApi } from '@/lib/reviewsApi';
 import { TextArea } from '@/components/ui/form';
+import { formatDateShort } from '@/lib/date-utils';
 
 const MAX_REPLY_CHARS = 500;
 
@@ -33,7 +34,7 @@ export function InstructorReply({
         <p className="text-xs font-semibold text-blue-700 mb-1">Instructor Response</p>
         <p className="text-sm text-gray-700">{submitted.text}</p>
         <p className="text-xs text-gray-400 mt-1">
-          {new Date(submitted.createdAt).toLocaleDateString()}
+          {formatDateShort(submitted.createdAt)}
         </p>
       </div>
     );

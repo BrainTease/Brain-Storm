@@ -5,6 +5,7 @@ import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { useCertificateActions, type Certificate } from '@/hooks/useCertificateActions';
+import { formatDateShort, formatDateLong } from '@/lib/date-utils';
 
 export type { Certificate };
 
@@ -100,21 +101,13 @@ export function CertificateViewer({ certificate, isOpen, onClose }: CertificateV
           <div className="flex flex-wrap justify-center gap-4 text-sm text-gray-600 dark:text-gray-300 mt-4 mb-4">
             <span>
               <span className="font-medium">Issued:</span>{' '}
-              {new Date(certificate.issuedAt).toLocaleDateString(undefined, {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-              })}
+              {formatDateLong(certificate.issuedAt)}
             </span>
             {certificate.expiresAt && (
               <span>
                 <span className="font-medium">Expires:</span>{' '}
                 <span className={isExpired ? 'text-red-500' : ''}>
-                  {new Date(certificate.expiresAt).toLocaleDateString(undefined, {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                  })}
+                  {formatDateLong(certificate.expiresAt)}
                 </span>
               </span>
             )}
@@ -146,12 +139,12 @@ export function CertificateViewer({ certificate, isOpen, onClose }: CertificateV
           </h3>
           <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-gray-600 dark:text-gray-300">
             <span className="text-gray-400 dark:text-gray-500">Issue Date</span>
-            <span>{new Date(certificate.issuedAt).toLocaleDateString()}</span>
+            <span>{formatDateShort(certificate.issuedAt)}</span>
             {certificate.expiresAt && (
               <>
                 <span className="text-gray-400 dark:text-gray-500">Expiry Date</span>
                 <span className={isExpired ? 'text-red-500 font-medium' : ''}>
-                  {new Date(certificate.expiresAt).toLocaleDateString()}
+                  {formatDateShort(certificate.expiresAt)}
                   {isExpired && ' (Expired)'}
                 </span>
               </>

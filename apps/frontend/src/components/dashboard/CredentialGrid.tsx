@@ -1,4 +1,5 @@
 import type { CredentialRecord } from '@/lib/dashboard';
+import { formatDateShort } from '@/lib/date-utils';
 import { SkeletonBlock } from './SkeletonBlock';
 
 interface CredentialGridProps {
@@ -41,7 +42,7 @@ export function CredentialGrid({ credentials, isLoading = false }: CredentialGri
               {credential.course?.title ?? `Course ${credential.courseId}`}
             </p>
             <p className="text-xs text-gray-400">
-              {new Date(credential.issuedAt).toLocaleDateString()}
+              {formatDateShort(credential.issuedAt)}
             </p>
           </div>
         </li>
