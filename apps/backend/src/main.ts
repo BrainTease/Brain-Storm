@@ -115,7 +115,7 @@ async function bootstrap() {
   SwaggerModule.setup('api/docs', app, document);
 
   // Export OpenAPI spec for static hosting
-  if (process.env.EXPORT_OPENAPI === 'true' || process.argv.includes('--export-openapi')) {
+  if (configService.get<boolean>('exportOpenapi') || process.argv.includes('--export-openapi')) {
     const outputPath = join(__dirname, '..', 'openapi.json');
     writeFileSync(outputPath, JSON.stringify(document, null, 2));
     logger.log(`OpenAPI spec exported to ${outputPath}`);

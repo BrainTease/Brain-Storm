@@ -1,4 +1,5 @@
 import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 
 /**
  * GracefulShutdownService
@@ -18,8 +19,8 @@ export class GracefulShutdownService implements OnModuleInit, OnModuleDestroy {
   private isShuttingDown = false;
   private drainResolve: (() => void) | null = null;
 
-  constructor() {
-    this.drainTimeoutMs = parseInt(process.env.SHUTDOWN_DRAIN_TIMEOUT_MS ?? '10000', 10);
+  constructor(private readonly configService: ConfigService) {
+    this.drainTimeoutMs = this.configService.get<number>('shutdown.drainTimeoutMs') ?? 10000;
   }
 
   onModuleInit() {
