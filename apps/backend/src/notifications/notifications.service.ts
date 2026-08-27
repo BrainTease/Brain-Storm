@@ -15,30 +15,9 @@ import {
   ScheduledNotificationStatus,
 } from './scheduled-notification.entity';
 import { NotificationsGateway } from './notifications.gateway';
-import { MailService } from '../mail/mail.service';
-
-// Notification templates
-const TEMPLATES: Record<
-  NotificationType,
-  (ctx: Record<string, string>) => { subject: string; html: string }
-> = {
-  [NotificationType.ENROLLMENT]: (ctx) => ({
-    subject: `Enrolled in ${ctx.courseName}`,
-    html: `<p>You have been enrolled in <strong>${ctx.courseName}</strong>. Start learning now!</p>`,
-  }),
-  [NotificationType.COMPLETION]: (ctx) => ({
-    subject: `Course Completed: ${ctx.courseName}`,
-    html: `<p>Congratulations! You have completed <strong>${ctx.courseName}</strong>.</p>`,
-  }),
-  [NotificationType.CREDENTIAL_ISSUED]: (ctx) => ({
-    subject: `Credential Issued for ${ctx.courseName}`,
-    html: `<p>Your credential for <strong>${ctx.courseName}</strong> has been issued on the Stellar blockchain!</p>`,
-  }),
-  [NotificationType.COURSE_PUBLISHED]: (ctx) => ({
-    subject: `New Course Available: ${ctx.courseName}`,
-    html: `<p>A new course <strong>${ctx.courseName}</strong> is now available.</p>`,
-  }),
-};
+import { EmailNotifierService, EmailNotificationContext } from './email-notifier.service';
+import { PushNotifierService } from './push-notifier.service';
+import { InAppNotifierService } from './inapp-notifier.service';
 
 @Injectable()
 export class NotificationsService implements OnModuleInit {
@@ -51,7 +30,9 @@ export class NotificationsService implements OnModuleInit {
     private scheduledRepo: Repository<ScheduledNotification>,
     @Inject(forwardRef(() => NotificationsGateway))
     private gateway: NotificationsGateway,
-    private mailService: MailService
+    private readonly emailNotifier: EmailNotifierService,
+    private readonly pushNotifier: PushNotifierService,
+    private readonly inAppNotifier: InAppNotifierService
   ) {}
 
   onModuleInit() {
@@ -63,30 +44,31 @@ export class NotificationsService implements OnModuleInit {
     userId: string,
     type: NotificationType,
     message: string,
-    emailContext?: { to: string; context: Record<string, string> }
+    emailContext?: EmailNotificationContext
   ) {
     const prefs = await this.getOrCreatePrefs(userId);
 
     // In-app notification
     if (prefs.inApp) {
-      const notification = this.repo.create({ userId, type, message });
-      const saved = await this.repo.save(notification);
-      this.gateway.emitToUser(userId, 'notification', saved);
+      await this.inAppNotifier.send(userId, type, message);
     }
 
     // Email notification
     if (prefs.email && emailContext && this.isTypeEnabled(prefs, type)) {
-      const tpl = TEMPLATES[type]?.(emailContext.context);
-      if (tpl) {
-        await this.mailService
-          .sendMail({ to: emailContext.to, subject: tpl.subject, html: tpl.html })
-          .catch((err) => this.logger.error(`Email notification failed: ${err.message}`));
+      try {
+        await this.emailNotifier.send(type, emailContext);
+      } catch (err: any) {
+        this.logger.error(`Email notification failed: ${err.message}`);
       }
     }
 
     // Push notification (WebSocket broadcast — real push would require FCM/APNs integration)
     if (prefs.push) {
-      this.gateway.emitToUser(userId, 'push', { type, message });
+      try {
+        await this.pushNotifier.send(userId, type, message);
+      } catch (err: any) {
+        this.logger.error(`Push notification failed: ${err.message}`);
+      }
     }
 
     return this.repo.findOne({ where: { userId, type, message }, order: { createdAt: 'DESC' } });
