@@ -3,9 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { SorobanRpc } from '@stellar/stellar-sdk';
-import { CredentialsService } from '../credentials/credentials.service';
-import { NotificationsService } from '../notifications/notifications.service';
-import { UsersService } from '../users/users.service';
+import { ContractEventDispatcher } from './event-handlers/contract-event.dispatcher';
 
 const LAST_LEDGER_KEY = 'indexer:last_ledger';
 
@@ -47,9 +45,7 @@ export class StellarIndexerService implements OnModuleInit, OnModuleDestroy {
   constructor(
     private configService: ConfigService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
-    private credentialsService: CredentialsService,
-    private notificationsService: NotificationsService,
-    private usersService: UsersService
+    private eventDispatcher: ContractEventDispatcher
   ) {
     this.sorobanServer = new SorobanRpc.Server(
       this.configService.get<string>('stellar.sorobanRpcUrl') ?? ''
@@ -179,40 +175,9 @@ export class StellarIndexerService implements OnModuleInit, OnModuleDestroy {
     return (await this.cacheManager.get<number>('indexer:lag_ledgers')) ?? 0;
   }
 
-  // ─── Event handlers ───────────────────────────────────────────────────────────
+  // ─── Event handling ───────────────────────────────────────────────────────────
 
   private async handleEvent(event: SorobanRpc.Api.EventResponse) {
-    const topic = (event.topic ?? []).map((t: any) => t?.value?.toString() ?? '');
-    const [contractType, eventName] = topic;
-
-    if (contractType === 'analytics' && eventName === 'completed') {
-      await this.handleAnalyticsCompleted(event);
-    } else if (contractType === 'token' && eventName === 'transfer') {
-      await this.handleTokenTransfer(event);
-    }
-  }
-
-  private async handleAnalyticsCompleted(event: SorobanRpc.Api.EventResponse) {
-    const value = event.value?.value?.() as any;
-    const studentPublicKey: string = value?.student?.toString();
-    const courseId: string = value?.course?.toString();
-
-    if (!studentPublicKey || !courseId) return;
-
-    const user = await this.usersService.findByStellarPublicKey(studentPublicKey);
-    if (!user) return;
-
-    this.logger.log(`analytics:completed — user ${user.id}, course ${courseId}`);
-    await this.credentialsService.issue(user.id, courseId, studentPublicKey);
-    await this.notificationsService.onCredentialIssued(user.id, courseId);
-  }
-
-  private async handleTokenTransfer(event: SorobanRpc.Api.EventResponse) {
-    const value = event.value?.value?.() as any;
-    const toPublicKey: string = value?.to?.toString();
-    if (!toPublicKey) return;
-
-    await this.cacheManager.del(`token_balance:${toPublicKey}`);
-    this.logger.log(`token:transfer — busted BST cache for ${toPublicKey}`);
+    await this.eventDispatcher.dispatch(event);
   }
 }
