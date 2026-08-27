@@ -1,26 +1,6 @@
 import { CoursesService } from './courses.service';
 import { Course } from './course.entity';
 import { PaginatedResponseDto } from '../common/dto/api-response.dto';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-
-/** Minimal Query Builder stub used by CoursesService.queryCourses */
-const makeQb = (courses: Course[], total: number) => {
-  const qb: any = {
-    where: jest.fn().mockReturnThis(),
-    andWhere: jest.fn().mockReturnThis(),
-    leftJoinAndSelect: jest.fn().mockReturnThis(),
-    skip: jest.fn().mockReturnThis(),
-    take: jest.fn().mockReturnThis(),
-    orderBy: jest.fn().mockReturnThis(),
-    clone: jest.fn(),
-    getCount: jest.fn().mockResolvedValue(total),
-    getMany: jest.fn().mockResolvedValue(courses),
-    select: jest.fn().mockReturnThis(),
-  };
-  // clone() must return a qb that also has getCount
-  qb.clone.mockReturnValue({ ...qb, getCount: jest.fn().mockResolvedValue(total) });
-  return qb;
-};
 
 describe('CoursesService', () => {
   let service: CoursesService;
@@ -41,16 +21,16 @@ describe('CoursesService', () => {
     { id: '2', title: 'Advanced Soroban', isPublished: true, isDeleted: false } as Course,
   ];
 
-  let mockRepo: any;
+  /** Mock of the CoursesRepository DAO (#976) — the service no longer talks to TypeORM directly. */
+  let mockCoursesRepository: any;
 
   beforeEach(() => {
     jest.clearAllMocks();
 
-    mockRepo = {
-      createQueryBuilder: jest.fn().mockReturnValue(makeQb(courses, 2)),
-      findOne: jest.fn(),
+    mockCoursesRepository = {
+      findAll: jest.fn().mockResolvedValue({ data: courses, total: 2, page: 1, limit: 20 }),
+      findById: jest.fn(),
       save: jest.fn(),
-      create: jest.fn((d) => ({ ...d })),
       remove: jest.fn(),
     };
 
@@ -60,7 +40,7 @@ describe('CoursesService', () => {
     );
 
     service = new CoursesService(
-      mockRepo,
+      mockCoursesRepository,
       mockCacheManager as unknown as any,
       mockSearchService as unknown as any
     );
@@ -82,41 +62,29 @@ describe('CoursesService', () => {
     });
   });
 
-  it('findAll should honour search and level query params', async () => {
+  it('findAll should forward search and level query params to the repository', async () => {
     await service.findAll({ search: 'stellar', level: 'beginner' });
 
-    const qb = mockRepo.createQueryBuilder.mock.results[0].value;
-    expect(qb.andWhere).toHaveBeenCalledWith(
-      expect.stringContaining('ILIKE'),
-      expect.objectContaining({ search: '%stellar%' })
-    );
-    expect(qb.andWhere).toHaveBeenCalledWith(
-      expect.stringContaining('level'),
-      expect.objectContaining({ level: 'beginner' })
-    );
+    expect(mockCoursesRepository.findAll).toHaveBeenCalledWith({
+      search: 'stellar',
+      level: 'beginner',
+    });
   });
 
   // ── findOne ────────────────────────────────────────────────────────────────
 
   it('findOne should return a course when found', async () => {
     const course = { id: '1', title: 'A', isDeleted: false } as Course;
-    mockRepo.findOne.mockResolvedValue(course);
-    // Bypass cache for findOne too
-    mockCacheManager.wrap.mockImplementation((_key: string, factory: () => Promise<unknown>) =>
-      factory()
-    );
+    mockCoursesRepository.findById.mockResolvedValue(course);
 
     const result = await service.findOne('1');
 
-    expect(mockRepo.findOne).toHaveBeenCalledWith({ where: { id: '1', isDeleted: false } });
+    expect(mockCoursesRepository.findById).toHaveBeenCalledWith('1');
     expect(result).toBe(course);
   });
 
   it('findOne should throw NotFoundException when course is missing', async () => {
-    mockRepo.findOne.mockResolvedValue(null);
-    mockCacheManager.wrap.mockImplementation((_key: string, factory: () => Promise<unknown>) =>
-      factory()
-    );
+    mockCoursesRepository.findById.mockResolvedValue(null);
 
     await expect(service.findOne('missing')).rejects.toThrow('Course not found');
   });
@@ -126,13 +94,11 @@ describe('CoursesService', () => {
   it('create should persist and index the new course', async () => {
     const payload: Partial<Course> = { title: 'New Course' };
     const persisted = { id: 'new', title: 'New Course' } as Course;
-    mockRepo.create.mockReturnValue(persisted);
-    mockRepo.save.mockResolvedValue(persisted);
+    mockCoursesRepository.save.mockResolvedValue(persisted);
 
     const result = await service.create(payload);
 
-    expect(mockRepo.create).toHaveBeenCalledWith(payload);
-    expect(mockRepo.save).toHaveBeenCalledWith(persisted);
+    expect(mockCoursesRepository.save).toHaveBeenCalledWith(payload);
     expect(mockSearchService.indexCourse).toHaveBeenCalledWith(persisted);
     expect(result).toBe(persisted);
   });

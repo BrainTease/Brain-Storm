@@ -6,7 +6,7 @@
  * to reduce cyclomatic complexity and give each concern a focused boundary.
  *
  * Dispute methods are thin delegators kept here for backwards-compatibility
- * with AdminController — the real logic lives in DisputeResolutionService.
+ * with DisputesController — the real logic lives in DisputeResolutionService.
  */
 
 import { Injectable, NotFoundException } from '@nestjs/common';

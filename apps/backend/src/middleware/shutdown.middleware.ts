@@ -1,6 +1,6 @@
 import { Injectable, NestMiddleware, ServiceUnavailableException } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
-import { GracefulShutdownService } from './graceful-shutdown.service';
+import { GracefulShutdownService } from '../health/graceful-shutdown.service';
 
 @Injectable()
 export class ShutdownMiddleware implements NestMiddleware {
