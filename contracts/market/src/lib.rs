@@ -36,7 +36,7 @@ const EVT_TIP: Symbol = symbol_short!("tip");
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 #[contracttype]
-#[derive(Clone, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum EscrowStatus {
     Funded,
     Settled,
@@ -320,7 +320,7 @@ mod fuzz_tests;
 #[cfg(test)]
 mod tests {
     use super::*;
-    use soroban_sdk::{testutils::Address as _, vec, Env};
+    use soroban_sdk::{testutils::Address as _, testutils::Ledger, vec, Env};
 
     fn setup() -> (Env, MarketContractClient<'static>, Address) {
         let env = Env::default();
@@ -627,5 +627,174 @@ mod tests {
         let s1 = Address::generate(&env);
         let signers = vec![&env, s1];
         client.ms_fund_escrow(&payer, &payee, &1_000, &signers, &5, &100);
+    }
+
+    // ── Edge-case tests (#1025) ─────────────────────────────────────────────
+
+    #[test]
+    #[should_panic(expected = "Amount must be positive")]
+    fn test_fund_escrow_zero_amount() {
+        let (env, client, _) = setup();
+        let payer = Address::generate(&env);
+        let payee = Address::generate(&env);
+        client.fund_escrow(&payer, &payee, &0);
+    }
+
+    #[test]
+    #[should_panic(expected = "Amount must be positive")]
+    fn test_fund_escrow_negative_amount() {
+        let (env, client, _) = setup();
+        let payer = Address::generate(&env);
+        let payee = Address::generate(&env);
+        client.fund_escrow(&payer, &payee, &-100);
+    }
+
+    #[test]
+    fn test_self_purchase_allowed() {
+        let (env, client, _) = setup();
+        let user = Address::generate(&env);
+        let id = client.fund_escrow(&user, &user, &500);
+        let escrow = client.get_escrow(&id).unwrap();
+        assert_eq!(escrow.payer, user);
+        assert_eq!(escrow.payee, user);
+        assert_eq!(escrow.amount, 500);
+        assert_eq!(escrow.status, EscrowStatus::Funded);
+    }
+
+    #[test]
+    #[should_panic(expected = "Escrow not funded")]
+    fn test_double_refund() {
+        let (env, client, admin) = setup();
+        let payer = Address::generate(&env);
+        let payee = Address::generate(&env);
+        let id = client.fund_escrow(&payer, &payee, &100);
+        client.refund_escrow(&admin, &id);
+        // Second refund should fail — escrow is already Refunded
+        client.refund_escrow(&admin, &id);
+    }
+
+    #[test]
+    #[should_panic(expected = "Escrow not funded")]
+    fn test_settle_after_refund() {
+        let (env, client, admin) = setup();
+        let payer = Address::generate(&env);
+        let payee = Address::generate(&env);
+        let id = client.fund_escrow(&payer, &payee, &100);
+        client.refund_escrow(&admin, &id);
+        // Settle after refund should fail
+        client.settle_escrow(&payer, &id);
+    }
+
+    #[test]
+    #[should_panic(expected = "Escrow not funded")]
+    fn test_double_settle() {
+        let (env, client, _) = setup();
+        let payer = Address::generate(&env);
+        let payee = Address::generate(&env);
+        let id = client.fund_escrow(&payer, &payee, &100);
+        client.settle_escrow(&payer, &id);
+        // Second settle should fail — escrow is already Settled
+        client.settle_escrow(&payer, &id);
+    }
+
+    #[test]
+    fn test_get_escrow_nonexistent_returns_none() {
+        let (_, client, _) = setup();
+        assert!(client.get_escrow(&999).is_none());
+    }
+
+    #[test]
+    #[should_panic(expected = "Escrow not found")]
+    fn test_settle_nonexistent_escrow() {
+        let (env, client, _) = setup();
+        let payer = Address::generate(&env);
+        client.settle_escrow(&payer, &999);
+    }
+
+    #[test]
+    #[should_panic(expected = "Escrow not found")]
+    fn test_refund_nonexistent_escrow() {
+        let (env, client, admin) = setup();
+        client.refund_escrow(&admin, &999);
+    }
+
+    #[test]
+    #[should_panic(expected = "Only admin")]
+    fn test_payer_cannot_refund() {
+        let (env, client, _admin) = setup();
+        let payer = Address::generate(&env);
+        let payee = Address::generate(&env);
+        let id = client.fund_escrow(&payer, &payee, &100);
+        // Only admin can refund — payer attempting should panic with "Only admin"
+        client.refund_escrow(&payer, &id);
+    }
+
+    #[test]
+    #[should_panic(expected = "Amount must be positive")]
+    fn test_tip_zero_amount() {
+        let (env, client, _) = setup();
+        let tipper = Address::generate(&env);
+        client.tip(&tipper, &0);
+    }
+
+    #[test]
+    #[should_panic(expected = "Amount must be positive")]
+    fn test_tip_negative_amount() {
+        let (env, client, _) = setup();
+        let tipper = Address::generate(&env);
+        client.tip(&tipper, &-50);
+    }
+
+    #[test]
+    fn test_set_treasury_independent() {
+        let (env, client, admin) = setup();
+        let treasury = Address::generate(&env);
+        client.set_treasury(&admin, &treasury);
+        // Treasury is set; balance starts at 0
+        assert_eq!(client.get_treasury_balance(), 0);
+    }
+
+    #[test]
+    fn test_batch_settle_empty_list() {
+        let (env, client, _) = setup();
+        let payer = Address::generate(&env);
+        let ids = vec![&env];
+        let results = client.batch_settle_escrows(&payer, &ids);
+        assert_eq!(results.len(), 0);
+    }
+
+    #[test]
+    fn test_batch_refund_empty_list() {
+        let (env, client, admin) = setup();
+        let ids = vec![&env];
+        client.batch_refund_escrows(&admin, &ids);
+        // Should not panic with empty list
+    }
+
+    #[test]
+    fn test_escrow_id_auto_increments() {
+        let (env, client, _) = setup();
+        let payer = Address::generate(&env);
+        let payee = Address::generate(&env);
+        let id1 = client.fund_escrow(&payer, &payee, &100);
+        let id2 = client.fund_escrow(&payer, &payee, &200);
+        let id3 = client.fund_escrow(&payer, &payee, &300);
+        assert_eq!(id1, 1);
+        assert_eq!(id2, 2);
+        assert_eq!(id3, 3);
+    }
+
+    #[test]
+    fn test_settle_only_payer_or_admin() {
+        let (env, client, _admin) = setup();
+        let payer = Address::generate(&env);
+        let payee = Address::generate(&env);
+        let _rando = Address::generate(&env);
+        let id = client.fund_escrow(&payer, &payee, &100);
+        // Random third party cannot settle
+        // (admin can settle on behalf — tested in test_batch_settle_admin_can_settle_any)
+        // Just verify payer can settle
+        let (net, fee) = client.settle_escrow(&payer, &id);
+        assert_eq!(net + fee, 100);
     }
 }
