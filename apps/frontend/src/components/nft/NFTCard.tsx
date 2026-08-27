@@ -3,6 +3,7 @@
 import React from 'react';
 import Image from 'next/image';
 import { Card } from '@/components/ui/Card';
+import { formatDateShort } from '@/lib/date-utils';
 import { Button } from '@/components/ui/Button';
 import { NFTMetadataBadge } from './NFTMetadataBadge';
 
@@ -141,7 +142,7 @@ export function NFTCard({
               <div>
                 <span className="text-xs text-gray-400 block">Issued</span>
                 <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                  {new Date(nft.issuedAt).toLocaleDateString()}
+                  {formatDateShort(nft.issuedAt)}
                 </span>
               </div>
             ) : (

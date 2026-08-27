@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
 import { reviewsApi, Review, SortCriterion } from '@/lib/reviewsApi';
+import { formatDateShort } from '@/lib/date-utils';
 import { StarRating } from './StarRating';
 import { InstructorReply } from './InstructorReply';
 import { FlagModal } from './FlagModal';
@@ -181,7 +182,7 @@ export function ReviewList({ courseId, currentUserId, isInstructor = false }: Re
                   {review.authorName}
                 </span>
                 <span className="text-xs text-gray-400">
-                  {new Date(review.createdAt).toLocaleDateString()}
+                  {formatDateShort(review.createdAt)}
                 </span>
               </div>
               <StarRating value={review.rating} readOnly />

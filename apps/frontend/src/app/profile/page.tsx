@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import api from '@/lib/api';
+import { formatDateShort } from '@/lib/date-utils';
 import { Button } from '@/components/ui/Button';
 import WalletSection from './WalletSection';
 
@@ -99,7 +100,7 @@ export default function ProfilePage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{user.username}</h1>
           <p className="text-gray-500 dark:text-gray-400 text-sm">
-            {user.email} · {user.role} · Joined {new Date(user.createdAt).toLocaleDateString()}
+            {user.email} · {user.role} · Joined {formatDateShort(user.createdAt)}
           </p>
         </div>
       </div>

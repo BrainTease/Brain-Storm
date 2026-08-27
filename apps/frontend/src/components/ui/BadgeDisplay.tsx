@@ -8,6 +8,7 @@
 
 import React from 'react';
 import { Badge } from './Badge';
+import { formatDateShort } from '@/lib/date-utils';
 
 export type BadgeTone = 'default' | 'success' | 'warning' | 'error';
 
@@ -173,7 +174,7 @@ function GridBadges({
               </p>
               {unlocked && badge.unlockedAt && (
                 <time dateTime={badge.unlockedAt} className="text-[10px] text-gray-400">
-                  {new Date(badge.unlockedAt).toLocaleDateString()}
+                  {formatDateShort(badge.unlockedAt)}
                 </time>
               )}
             </div>

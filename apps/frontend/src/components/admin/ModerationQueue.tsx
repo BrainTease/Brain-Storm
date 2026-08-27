@@ -10,6 +10,7 @@ import {
   type ContentType,
   type ModerationStatus,
 } from '@/lib/moderationApi';
+import { formatDateShort } from '@/lib/date-utils';
 
 const STATUS_COLORS: Record<ModerationStatus, string> = {
   pending: 'bg-yellow-100 text-yellow-800',
@@ -186,7 +187,7 @@ export function ModerationQueue() {
                       {item.status}
                     </span>
                     <span className="text-xs text-gray-400">
-                      {new Date(item.createdAt).toLocaleDateString()}
+                      {formatDateShort(item.createdAt)}
                     </span>
                   </div>
                   <p className="text-sm font-medium text-gray-700">ID: {item.contentId}</p>

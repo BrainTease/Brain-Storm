@@ -8,6 +8,7 @@ import {
   type MetricName,
   type MetricPoint,
 } from '@/hooks/useProtocolMetrics';
+import { formatMonthDay } from '@/lib/date-utils';
 
 const INTERVALS: { value: MetricInterval; label: string }[] = [
   { value: 'hour', label: 'Hourly' },
@@ -256,10 +257,7 @@ function BarChart({ series, unit }: { series: MetricPoint[]; unit?: string }) {
       <div className="flex items-end gap-1 min-w-max h-40">
         {series.map((point) => {
           const heightPct = (point.value / maxVal) * 100;
-          const label = new Date(point.bucketStart).toLocaleDateString(undefined, {
-            month: 'short',
-            day: 'numeric',
-          });
+          const label = formatMonthDay(point.bucketStart);
           return (
             <div key={point.id} className="flex flex-col items-center gap-1 w-10">
               <span className="text-[10px] tabular-nums text-gray-500 dark:text-gray-400">

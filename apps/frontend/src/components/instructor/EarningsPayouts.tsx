@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import api from '@/lib/api';
+import { formatDateShort } from '@/lib/date-utils';
 
 interface EarningsData {
   totalRevenue: number;
@@ -93,7 +94,7 @@ export function EarningsPayouts() {
                 {d.payouts.map((p) => (
                   <tr key={p.id}>
                     <td className="px-4 py-2 text-gray-600 dark:text-gray-300">
-                      {new Date(p.date).toLocaleDateString()}
+                      {formatDateShort(p.date)}
                     </td>
                     <td className="px-4 py-2 font-medium text-gray-900 dark:text-gray-100">
                       ${p.amount.toLocaleString()}

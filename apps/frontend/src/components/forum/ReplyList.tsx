@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { Reply, forumApi } from '@/lib/forumApi';
+import { formatDateShort } from '@/lib/date-utils';
 import { VoteButton } from './VoteButton';
 import { RichTextEditor } from './RichTextEditor';
 import { Button } from '@/components/ui/Button';
@@ -64,7 +65,7 @@ export function ReplyList({
             <span className="font-medium text-sm">{reply.authorName}</span>
             <div className="flex items-center gap-3">
               <span className="text-xs text-gray-400">
-                {new Date(reply.createdAt).toLocaleDateString()}
+                {formatDateShort(reply.createdAt)}
               </span>
               {canModerate && (
                 <button

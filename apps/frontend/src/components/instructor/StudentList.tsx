@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import api from '@/lib/api';
+import { formatDateShort } from '@/lib/date-utils';
 
 interface StudentProgress {
   studentId: string;
@@ -111,7 +112,7 @@ export function StudentList() {
               </div>
               {s.lastActive && (
                 <span className="text-xs text-gray-400 dark:text-gray-500 shrink-0 hidden sm:block">
-                  {new Date(s.lastActive).toLocaleDateString()}
+                  {formatDateShort(s.lastActive)}
                 </span>
               )}
             </div>

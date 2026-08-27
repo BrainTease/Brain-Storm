@@ -1,4 +1,5 @@
 import type { CredentialRecord } from '@/lib/dashboard';
+import { formatDateShort } from '@/lib/date-utils';
 import { SkeletonBlock } from './SkeletonBlock';
 
 interface RecentCredentialListProps {
@@ -35,7 +36,7 @@ export function RecentCredentialList({
           className="flex justify-between items-center text-sm text-gray-700 dark:text-gray-300"
         >
           <span>{credential.course?.title ?? `Course ${credential.courseId}`}</span>
-          <span>{new Date(credential.issuedAt).toLocaleDateString()}</span>
+          <span>{formatDateShort(credential.issuedAt)}</span>
         </div>
       ))}
     </>
