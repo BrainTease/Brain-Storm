@@ -6,7 +6,7 @@ use soroban_sdk::{
 use brain_storm_shared::access;
 
 #[contracttype]
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Debug)]
 pub enum ApplicationStatus {
     Pending,
     Approved,
