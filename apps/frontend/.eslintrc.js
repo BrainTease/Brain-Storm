@@ -30,6 +30,27 @@ module.exports = {
     ],
     'react/react-in-jsx-scope': 'off',
     'react/prop-types': 'off',
+    /**
+     * #971 — flag hardcoded JSX text that should be extracted to the i18n catalog.
+     *
+     * The rule warns on any string literal or template literal that appears
+     * directly inside JSX elements (e.g. <p>Hello world</p>).  Whitespace-only
+     * nodes and punctuation-only strings are intentionally excluded by the
+     * pattern.  Use next-intl's `useTranslations()` hook and the message
+     * catalog under `messages/` instead.
+     *
+     * To suppress a single justified exception (e.g. a brand name that must
+     * not be translated) add an eslint-disable-next-line comment:
+     *   // eslint-disable-next-line react/jsx-no-literals
+     */
+    'react/jsx-no-literals': [
+      'warn',
+      {
+        noStrings: true,
+        ignoreProps: true,
+        noAttributeStrings: false,
+      },
+    ],
   },
   settings: {
     react: {

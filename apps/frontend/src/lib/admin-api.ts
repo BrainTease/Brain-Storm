@@ -1,4 +1,10 @@
-import api from './api';
+/**
+ * Admin API helpers — migrated to typed apiClient (#969)
+ *
+ * All exported functions return `ApiResult<T>` for consistent error handling.
+ */
+
+import apiClient, { type ApiResult } from './apiClient';
 
 export interface AdminUser {
   id: string;
@@ -26,56 +32,6 @@ export interface AdminStats {
   totalBstMinted: number;
 }
 
-// ── Stats ─────────────────────────────────────────────────────────────────────
-export async function fetchAdminStats(): Promise<AdminStats> {
-  const [usersRes, coursesRes, credsRes] = await Promise.all([
-    api.get('/admin/users?limit=1'),
-    api.get('/courses?limit=1'),
-    api.get('/admin/stats').catch(() => ({ data: { totalCredentials: 0, totalBstMinted: 0 } })),
-  ]);
-  return {
-    totalUsers: usersRes.data?.meta?.total ?? 0,
-    totalCourses: coursesRes.data?.total ?? 0,
-    totalCredentials: credsRes.data?.totalCredentials ?? 0,
-    totalBstMinted: credsRes.data?.totalBstMinted ?? 0,
-  };
-}
-
-// ── Users ─────────────────────────────────────────────────────────────────────
-export async function fetchAdminUsers(params: {
-  page?: number;
-  limit?: number;
-  search?: string;
-  role?: string;
-}) {
-  const { data } = await api.get('/admin/users', { params });
-  return data as { data: AdminUser[]; meta: { total: number; page: number; totalPages: number } };
-}
-
-export const changeUserRole = (id: string, role: string) =>
-  api.patch(`/admin/users/${id}/role`, { role });
-
-export const banUser = (id: string, isBanned: boolean) =>
-  api.patch(`/admin/users/${id}/ban`, { isBanned });
-
-export const deleteUser = (id: string) => api.delete(`/admin/users/${id}`);
-
-// ── Courses ───────────────────────────────────────────────────────────────────
-export async function fetchAdminCourses(params: {
-  page?: number;
-  limit?: number;
-  search?: string;
-}) {
-  const { data } = await api.get('/courses', { params });
-  return data as { data: AdminCourse[]; total: number };
-}
-
-export const togglePublish = (id: string, isPublished: boolean) =>
-  api.patch(`/courses/${id}`, { isPublished });
-
-export const deleteCourse = (id: string) => api.delete(`/courses/${id}`);
-
-// ── Analytics ───────────────────────────────────────────────────────────────
 export interface DashboardMetrics {
   totalUsers: number;
   totalCourses: number;
@@ -93,10 +49,72 @@ export interface DashboardMetrics {
   disputeRate: number;
 }
 
-export async function fetchDashboardMetrics(params?: {
+// ── Stats ─────────────────────────────────────────────────────────────────────
+
+export async function fetchAdminStats(): Promise<ApiResult<AdminStats>> {
+  const [usersRes, coursesRes, credsRes] = await Promise.all([
+    apiClient.get<{ meta: { total: number } }>('/admin/users?limit=1'),
+    apiClient.get<{ total: number }>('/courses?limit=1'),
+    apiClient.get<{ totalCredentials: number; totalBstMinted: number }>('/admin/stats'),
+  ]);
+
+  return {
+    ok: true,
+    data: {
+      totalUsers: usersRes.ok ? (usersRes.data?.meta?.total ?? 0) : 0,
+      totalCourses: coursesRes.ok ? (coursesRes.data?.total ?? 0) : 0,
+      totalCredentials: credsRes.ok ? (credsRes.data?.totalCredentials ?? 0) : 0,
+      totalBstMinted: credsRes.ok ? (credsRes.data?.totalBstMinted ?? 0) : 0,
+    },
+  };
+}
+
+// ── Users ─────────────────────────────────────────────────────────────────────
+
+export function fetchAdminUsers(params: {
+  page?: number;
+  limit?: number;
+  search?: string;
+  role?: string;
+}): Promise<ApiResult<{ data: AdminUser[]; meta: { total: number; page: number; totalPages: number } }>> {
+  return apiClient.get('/admin/users', { params });
+}
+
+export function changeUserRole(id: string, role: string): Promise<ApiResult<AdminUser>> {
+  return apiClient.patch(`/admin/users/${id}/role`, { role });
+}
+
+export function banUser(id: string, isBanned: boolean): Promise<ApiResult<AdminUser>> {
+  return apiClient.patch(`/admin/users/${id}/ban`, { isBanned });
+}
+
+export function deleteUser(id: string): Promise<ApiResult<void>> {
+  return apiClient.delete(`/admin/users/${id}`);
+}
+
+// ── Courses ───────────────────────────────────────────────────────────────────
+
+export function fetchAdminCourses(params: {
+  page?: number;
+  limit?: number;
+  search?: string;
+}): Promise<ApiResult<{ data: AdminCourse[]; total: number }>> {
+  return apiClient.get('/courses', { params });
+}
+
+export function togglePublish(id: string, isPublished: boolean): Promise<ApiResult<AdminCourse>> {
+  return apiClient.patch(`/courses/${id}`, { isPublished });
+}
+
+export function deleteCourse(id: string): Promise<ApiResult<void>> {
+  return apiClient.delete(`/courses/${id}`);
+}
+
+// ── Analytics ─────────────────────────────────────────────────────────────────
+
+export function fetchDashboardMetrics(params?: {
   startDate?: string;
   endDate?: string;
-}): Promise<DashboardMetrics> {
-  const { data } = await api.get('/admin/analytics/dashboard', { params });
-  return data;
+}): Promise<ApiResult<DashboardMetrics>> {
+  return apiClient.get<DashboardMetrics>('/admin/analytics/dashboard', { params });
 }

@@ -1,24 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { adminApi } from '@/lib/admin-api';
-
-interface DashboardMetrics {
-  totalUsers: number;
-  totalCourses: number;
-  totalEnrollments: number;
-  totalCompletions: number;
-  completionRate: number;
-  averageRating: number;
-  totalReviews: number;
-  activeLearnersLast30Days: number;
-  newUsersLast30Days: number;
-  newEnrollmentsLast30Days: number;
-  growth: number;
-  activeWorkers: number;
-  tipVolume: number;
-  disputeRate: number;
-}
+import { fetchDashboardMetrics, type DashboardMetrics } from '@/lib/admin-api';
 
 export default function AdminDashboard() {
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
@@ -31,32 +14,30 @@ export default function AdminDashboard() {
   }, [dateRange]);
 
   const fetchMetrics = async () => {
-    try {
-      setLoading(true);
-      const params = new URLSearchParams();
-      if (dateRange.startDate) params.append('startDate', dateRange.startDate);
-      if (dateRange.endDate) params.append('endDate', dateRange.endDate);
-
-      const response = await adminApi.get(`/admin/analytics/dashboard?${params}`);
-      setMetrics(response.data);
-    } catch (error) {
-      // Failed to fetch dashboard metrics
-    } finally {
-      setLoading(false);
+    setLoading(true);
+    const result = await fetchDashboardMetrics({
+      startDate: dateRange.startDate || undefined,
+      endDate: dateRange.endDate || undefined,
+    });
+    if (result.ok) {
+      setMetrics(result.data);
     }
+    // Silently ignore errors — the empty-state UI handles the null metrics case.
+    setLoading(false);
   };
 
   const handleExport = async () => {
-    try {
-      setExporting(true);
-      const params = new URLSearchParams();
-      if (dateRange.startDate) params.append('startDate', dateRange.startDate);
-      if (dateRange.endDate) params.append('endDate', dateRange.endDate);
+    setExporting(true);
+    const params = new URLSearchParams();
+    if (dateRange.startDate) params.append('startDate', dateRange.startDate);
+    if (dateRange.endDate) params.append('endDate', dateRange.endDate);
 
-      const response = await adminApi.get(`/admin/analytics/export?${params}`, {
+    try {
+      // Blob download still uses raw axios for responseType:'blob' support
+      const { default: api } = await import('@/lib/api');
+      const response = await api.get(`/admin/analytics/export?${params}`, {
         responseType: 'blob',
       });
-
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
@@ -64,8 +45,8 @@ export default function AdminDashboard() {
       document.body.appendChild(link);
       link.click();
       link.remove();
-    } catch (error) {
-      // Failed to export metrics
+    } catch {
+      // Export failure is non-critical; a toast from the axios interceptor is sufficient.
     } finally {
       setExporting(false);
     }
