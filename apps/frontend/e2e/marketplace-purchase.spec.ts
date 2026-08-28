@@ -60,7 +60,7 @@ async function setupMarketplaceRoutes(page: import('@playwright/test').Page) {
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify({ data: MOCK_COURSES, total: MOCK_COURSES.length }),
-    }),
+    })
   );
 
   // Single course detail
@@ -69,7 +69,7 @@ async function setupMarketplaceRoutes(page: import('@playwright/test').Page) {
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify(MOCK_COURSES[0]),
-    }),
+    })
   );
 
   // Token / wallet balance
@@ -78,7 +78,7 @@ async function setupMarketplaceRoutes(page: import('@playwright/test').Page) {
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify({ balance: '500' }),
-    }),
+    })
   );
 
   // Order creation (happy-path default)
@@ -87,7 +87,7 @@ async function setupMarketplaceRoutes(page: import('@playwright/test').Page) {
       status: 201,
       contentType: 'application/json',
       body: JSON.stringify(MOCK_ORDER_SUCCESS),
-    }),
+    })
   );
 
   // Enrollment confirmation
@@ -96,7 +96,7 @@ async function setupMarketplaceRoutes(page: import('@playwright/test').Page) {
       status: 201,
       contentType: 'application/json',
       body: JSON.stringify({ enrollmentId: 'enroll-1', courseId: 'course-1', status: 'active' }),
-    }),
+    })
   );
 }
 
@@ -118,7 +118,18 @@ test.describe('Marketplace Purchase Flow', () => {
       const fakeToken = `header.${fakePayload}.signature`;
       localStorage.setItem(
         'auth',
-        JSON.stringify({ state: { token: fakeToken, user: { id: 'user-test-1', username: 'tester', email: 'tester@example.com', role: 'student' }, hasHydrated: true } }),
+        JSON.stringify({
+          state: {
+            token: fakeToken,
+            user: {
+              id: 'user-test-1',
+              username: 'tester',
+              email: 'tester@example.com',
+              role: 'student',
+            },
+            hasHydrated: true,
+          },
+        })
       );
     });
 
@@ -129,7 +140,9 @@ test.describe('Marketplace Purchase Flow', () => {
   test('happy path: browse → preview → purchase → success confirmation', async ({ page }) => {
     // Step 1 — Visit the course catalogue / marketplace
     await page.goto('/courses');
-    await expect(page.getByRole('heading', { name: /courses|browse|marketplace/i })).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole('heading', { name: /courses|browse|marketplace/i })).toBeVisible({
+      timeout: 10_000,
+    });
 
     // Step 2 — At least one course card is visible
     const courseCards = page.locator('[data-testid="course-card"], .course-card, article').first();
@@ -151,15 +164,13 @@ test.describe('Marketplace Purchase Flow', () => {
     await purchaseBtn.click();
 
     // Step 5 — Wallet / payment confirmation dialog
-    const confirmBtn = page
-      .getByRole('button', { name: /confirm|pay|approve|proceed/i })
-      .first();
+    const confirmBtn = page.getByRole('button', { name: /confirm|pay|approve|proceed/i }).first();
     await expect(confirmBtn).toBeVisible({ timeout: 8_000 });
     await confirmBtn.click();
 
     // Step 6 — Success state
     await expect(
-      page.getByText(/success|enrolled|enrollment confirmed|purchase complete|you're in/i),
+      page.getByText(/success|enrolled|enrollment confirmed|purchase complete|you're in/i)
     ).toBeVisible({ timeout: 15_000 });
   });
 
@@ -171,7 +182,7 @@ test.describe('Marketplace Purchase Flow', () => {
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({ balance: '0' }),
-      }),
+      })
     );
 
     // Also override Horizon balance for the wallet provider
@@ -182,7 +193,7 @@ test.describe('Marketplace Purchase Flow', () => {
         body: JSON.stringify({
           balances: [{ asset_type: 'native', balance: '0.0000000' }],
         }),
-      }),
+      })
     );
 
     // Override the order endpoint to simulate insufficient funds rejection
@@ -195,11 +206,13 @@ test.describe('Marketplace Purchase Flow', () => {
           message: 'Insufficient BST balance to complete purchase.',
           error: 'Unprocessable Entity',
         }),
-      }),
+      })
     );
 
     await page.goto('/courses');
-    await expect(page.getByRole('heading', { name: /courses|browse|marketplace/i })).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole('heading', { name: /courses|browse|marketplace/i })).toBeVisible({
+      timeout: 10_000,
+    });
 
     const purchaseBtn = page
       .getByRole('button', { name: /enroll|purchase|buy|get course/i })
@@ -210,23 +223,21 @@ test.describe('Marketplace Purchase Flow', () => {
       await purchaseBtn.click();
 
       // The UI may block purchase upfront with a balance warning or show it post-confirm
-      const confirmBtn = page
-        .getByRole('button', { name: /confirm|pay|approve|proceed/i })
-        .first();
+      const confirmBtn = page.getByRole('button', { name: /confirm|pay|approve|proceed/i }).first();
 
       if (await confirmBtn.isVisible({ timeout: 3_000 }).catch(() => false)) {
         await confirmBtn.click();
       }
 
       // Error message about insufficient balance should surface
-      await expect(
-        page.getByText(/insufficient|balance|not enough|funds/i),
-      ).toBeVisible({ timeout: 10_000 });
+      await expect(page.getByText(/insufficient|balance|not enough|funds/i)).toBeVisible({
+        timeout: 10_000,
+      });
     } else {
       // Balance warning rendered inline before the CTA
-      await expect(
-        page.getByText(/insufficient|balance|not enough|funds/i),
-      ).toBeVisible({ timeout: 10_000 });
+      await expect(page.getByText(/insufficient|balance|not enough|funds/i)).toBeVisible({
+        timeout: 10_000,
+      });
     }
   });
 
@@ -263,11 +274,13 @@ test.describe('Marketplace Purchase Flow', () => {
           message: 'Transaction signature required',
           xdr: 'AAAAAgAAAA...',
         }),
-      }),
+      })
     );
 
     await page.goto('/courses');
-    await expect(page.getByRole('heading', { name: /courses|browse|marketplace/i })).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole('heading', { name: /courses|browse|marketplace/i })).toBeVisible({
+      timeout: 10_000,
+    });
 
     const purchaseBtn = page
       .getByRole('button', { name: /enroll|purchase|buy|get course/i })
@@ -276,23 +289,21 @@ test.describe('Marketplace Purchase Flow', () => {
     if (await purchaseBtn.isVisible({ timeout: 5_000 }).catch(() => false)) {
       await purchaseBtn.click();
 
-      const confirmBtn = page
-        .getByRole('button', { name: /confirm|pay|approve|proceed/i })
-        .first();
+      const confirmBtn = page.getByRole('button', { name: /confirm|pay|approve|proceed/i }).first();
 
       if (await confirmBtn.isVisible({ timeout: 3_000 }).catch(() => false)) {
         await confirmBtn.click();
       }
 
       // Should surface a user-facing cancellation / rejection message
-      await expect(
-        page.getByText(/cancelled|rejected|declined|failed|try again/i),
-      ).toBeVisible({ timeout: 10_000 });
+      await expect(page.getByText(/cancelled|rejected|declined|failed|try again/i)).toBeVisible({
+        timeout: 10_000,
+      });
 
       // Should NOT show a success confirmation
-      await expect(
-        page.getByText(/enrolled|purchase complete|you're in/i),
-      ).not.toBeVisible({ timeout: 3_000 });
+      await expect(page.getByText(/enrolled|purchase complete|you're in/i)).not.toBeVisible({
+        timeout: 3_000,
+      });
     }
   });
 
@@ -307,11 +318,13 @@ test.describe('Marketplace Purchase Flow', () => {
           statusCode: 503,
           message: 'Service temporarily unavailable. Please try again.',
         }),
-      }),
+      })
     );
 
     await page.goto('/courses');
-    await expect(page.getByRole('heading', { name: /courses|browse|marketplace/i })).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole('heading', { name: /courses|browse|marketplace/i })).toBeVisible({
+      timeout: 10_000,
+    });
 
     const purchaseBtn = page
       .getByRole('button', { name: /enroll|purchase|buy|get course/i })
@@ -320,9 +333,7 @@ test.describe('Marketplace Purchase Flow', () => {
     if (await purchaseBtn.isVisible({ timeout: 5_000 }).catch(() => false)) {
       await purchaseBtn.click();
 
-      const confirmBtn = page
-        .getByRole('button', { name: /confirm|pay|approve|proceed/i })
-        .first();
+      const confirmBtn = page.getByRole('button', { name: /confirm|pay|approve|proceed/i }).first();
 
       if (await confirmBtn.isVisible({ timeout: 3_000 }).catch(() => false)) {
         await confirmBtn.click();
@@ -330,7 +341,7 @@ test.describe('Marketplace Purchase Flow', () => {
 
       // A user-friendly error message should appear
       await expect(
-        page.getByText(/error|failed|unavailable|try again|something went wrong/i),
+        page.getByText(/error|failed|unavailable|try again|something went wrong/i)
       ).toBeVisible({ timeout: 10_000 });
 
       // The purchase CTA should still be accessible (not stuck in loading)
@@ -359,16 +370,18 @@ test.describe('Marketplace Purchase Flow', () => {
       await purchaseBtn.click();
 
       // Should prompt user to install a wallet
-      await expect(
-        page.getByText(/freighter|install|wallet not found|no wallet/i),
-      ).toBeVisible({ timeout: 8_000 });
+      await expect(page.getByText(/freighter|install|wallet not found|no wallet/i)).toBeVisible({
+        timeout: 8_000,
+      });
     }
   });
 
   // ── 6. Cart / Modal State Persistence ────────────────────────────────────────
   test('persists cart item when modal is closed and reopened', async ({ page }) => {
     await page.goto('/courses');
-    await expect(page.getByRole('heading', { name: /courses|browse|marketplace/i })).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole('heading', { name: /courses|browse|marketplace/i })).toBeVisible({
+      timeout: 10_000,
+    });
 
     const previewBtn = page
       .getByRole('button', { name: /preview|details|view course/i })
@@ -379,14 +392,10 @@ test.describe('Marketplace Purchase Flow', () => {
       await previewBtn.click();
 
       // Verify the course title is shown in modal/detail
-      await expect(
-        page.getByText(/introduction to stellar/i),
-      ).toBeVisible({ timeout: 5_000 });
+      await expect(page.getByText(/introduction to stellar/i)).toBeVisible({ timeout: 5_000 });
 
       // Close the modal / navigate back
-      const closeBtn = page
-        .getByRole('button', { name: /close|back|×/i })
-        .first();
+      const closeBtn = page.getByRole('button', { name: /close|back|×/i }).first();
 
       if (await closeBtn.isVisible({ timeout: 2_000 }).catch(() => false)) {
         await closeBtn.click();
@@ -397,9 +406,7 @@ test.describe('Marketplace Purchase Flow', () => {
       // Re-open and verify the course is still there
       if (await previewBtn.isVisible({ timeout: 5_000 }).catch(() => false)) {
         await previewBtn.click();
-        await expect(
-          page.getByText(/introduction to stellar/i),
-        ).toBeVisible({ timeout: 5_000 });
+        await expect(page.getByText(/introduction to stellar/i)).toBeVisible({ timeout: 5_000 });
       }
     }
   });

@@ -10,23 +10,23 @@ export enum SecretType {
 @Entity('secret_rotations')
 export class SecretRotation {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  secretType: string;
+  secretType!: string;
 
   @Column({ nullable: true })
-  identifier: string | null; // e.g., API key ID, user ID
+  identifier!: string | null;
 
   @Column()
-  rotatedAt: Date;
+  rotatedAt!: Date;
 
   @Column({ nullable: true })
-  rotatedBy: string | null; // user ID who triggered rotation
+  rotatedBy!: string | null;
 
   @Column({ default: false })
-  automated: boolean;
+  automated!: boolean;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 }

@@ -240,8 +240,10 @@ export class RedisLeaderboardService implements OnModuleInit, OnModuleDestroy {
       this.logger.log(
         `Reconciliation complete: ${globalScores.size} users, ${courseScores.size} courses`
       );
-    } catch (err) {
-      this.logger.error(`Reconciliation failed: ${err.message}`);
+    } catch (err: unknown) {
+      this.logger.error(
+        `Reconciliation failed: ${err instanceof Error ? err.message : String(err)}`
+      );
     }
   }
 

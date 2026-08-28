@@ -19,7 +19,7 @@ export class CertificateMintingService {
   constructor(
     @InjectRepository(Certificate)
     private readonly repo: Repository<Certificate>,
-    private readonly stellarService: StellarService,
+    private readonly stellarService: StellarService
   ) {}
 
   /**
@@ -34,27 +34,23 @@ export class CertificateMintingService {
    */
   async mint(certificate: Certificate, stellarPublicKey: string | undefined): Promise<Certificate> {
     if (!stellarPublicKey) {
-      this.logger.warn(
-        `No Stellar public key for user ${certificate.userId} — skipping minting`,
-      );
+      this.logger.warn(`No Stellar public key for user ${certificate.userId} — skipping minting`);
       return certificate;
     }
 
     try {
       const txId = await this.stellarService.issueCredential(
         stellarPublicKey,
-        certificate.courseId,
+        certificate.courseId
       );
       certificate.stellarTransactionId = txId;
       certificate.status = 'minted';
       const updated = await this.repo.save(certificate);
-      this.logger.log(
-        `Certificate ${certificate.id} minted on Stellar (tx: ${txId})`,
-      );
+      this.logger.log(`Certificate ${certificate.id} minted on Stellar (tx: ${txId})`);
       return updated;
     } catch (error: any) {
       this.logger.error(
-        `Stellar minting failed for certificate ${certificate.id}: ${error?.message}`,
+        `Stellar minting failed for certificate ${certificate.id}: ${error?.message}`
       );
       // Non-fatal: certificate stays in 'pending' status
       return certificate;

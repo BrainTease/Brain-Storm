@@ -7,6 +7,12 @@ import { setupTestDatabase, teardownTestDatabase } from '../test/integration-tes
 import { USERS_REPOSITORY_TOKEN } from '../repositories';
 import { TypeOrmUsersRepository } from '../repositories/typeorm-users.repository';
 
+type TestUserInput = Partial<User> & {
+  firstName?: string;
+  lastName?: string;
+  passwordHash?: string;
+};
+
 describe('UsersService (Integration)', () => {
   let service: UsersService;
   let module: TestingModule;
@@ -96,10 +102,10 @@ describe('UsersService (Integration)', () => {
     it('should find user by id', async () => {
       const created = await service.create({
         email: 'byid@example.com',
-        password: 'hashed-password',
+        passwordHash: 'hashed-password',
         firstName: 'Test',
-        lastName: 'User',
-      });
+        lastName: 'Test',
+      } as TestUserInput);
 
       const found = await service.findById(created.id);
 
@@ -112,19 +118,19 @@ describe('UsersService (Integration)', () => {
     it('should return all users with pagination', async () => {
       await service.create({
         email: 'user1@example.com',
-        password: 'pass',
+        passwordHash: 'pass',
         firstName: 'User',
         lastName: 'One',
         role: 'student',
-      });
+      } as TestUserInput);
 
       await service.create({
         email: 'user2@example.com',
-        password: 'pass',
+        passwordHash: 'pass',
         firstName: 'User',
         lastName: 'Two',
         role: 'instructor',
-      });
+      } as TestUserInput);
 
       const result = await service.findAll({ page: 1, limit: 10 });
 
@@ -135,19 +141,19 @@ describe('UsersService (Integration)', () => {
     it('should filter by role', async () => {
       await service.create({
         email: 'student@example.com',
-        password: 'pass',
+        passwordHash: 'pass',
         firstName: 'Student',
         lastName: 'User',
         role: 'student',
-      });
+      } as TestUserInput);
 
       await service.create({
         email: 'instructor@example.com',
-        password: 'pass',
+        passwordHash: 'pass',
         firstName: 'Instructor',
         lastName: 'User',
         role: 'instructor',
-      });
+      } as TestUserInput);
 
       const result = await service.findAll({ role: 'student' });
 
@@ -158,19 +164,19 @@ describe('UsersService (Integration)', () => {
     it('should filter by verification status', async () => {
       await service.create({
         email: 'verified@example.com',
-        password: 'pass',
+        passwordHash: 'pass',
         firstName: 'Verified',
         lastName: 'User',
         isVerified: true,
-      });
+      } as TestUserInput);
 
       await service.create({
         email: 'unverified@example.com',
-        password: 'pass',
+        passwordHash: 'pass',
         firstName: 'Unverified',
         lastName: 'User',
         isVerified: false,
-      });
+      } as TestUserInput);
 
       const result = await service.findAll({ isVerified: true });
 
@@ -181,10 +187,10 @@ describe('UsersService (Integration)', () => {
     it('should search by email', async () => {
       await service.create({
         email: 'search@example.com',
-        password: 'pass',
+        passwordHash: 'pass',
         firstName: 'Search',
         lastName: 'User',
-      });
+      } as TestUserInput);
 
       const result = await service.findAll({ search: 'search' });
 
@@ -197,10 +203,10 @@ describe('UsersService (Integration)', () => {
     it('should update user', async () => {
       const created = await service.create({
         email: 'update@example.com',
-        password: 'pass',
+        passwordHash: 'pass',
         firstName: 'Original',
         lastName: 'Name',
-      });
+      } as TestUserInput);
 
       const updated = await service.update(created.id, {
         firstName: 'Updated',
@@ -215,11 +221,11 @@ describe('UsersService (Integration)', () => {
     it('should change user role', async () => {
       const created = await service.create({
         email: 'role@example.com',
-        password: 'pass',
+        passwordHash: 'pass',
         firstName: 'Role',
         lastName: 'User',
         role: 'student',
-      });
+      } as TestUserInput);
 
       const updated = await service.changeRole(created.id, 'instructor');
 
@@ -231,11 +237,11 @@ describe('UsersService (Integration)', () => {
     it('should ban a user', async () => {
       const created = await service.create({
         email: 'ban@example.com',
-        password: 'pass',
+        passwordHash: 'pass',
         firstName: 'Ban',
         lastName: 'User',
         isBanned: false,
-      });
+      } as TestUserInput);
 
       const banned = await service.banUser(created.id, true);
 
@@ -247,10 +253,10 @@ describe('UsersService (Integration)', () => {
     it('should soft delete a user', async () => {
       const created = await service.create({
         email: 'delete@example.com',
-        password: 'pass',
+        passwordHash: 'pass',
         firstName: 'Delete',
         lastName: 'User',
-      });
+      } as TestUserInput);
 
       const deleted = await service.softDelete(created.id);
 

@@ -71,6 +71,7 @@ terraform destroy   # staging or prod directory
 ```
 
 Production RDS has `deletion_protection = true` — disable it first:
+
 ```bash
 terraform apply -var environment=prod \
   -target=module.rds.aws_db_instance.main \
@@ -83,7 +84,7 @@ terraform destroy
 State is stored in S3 (`brain-storm-terraform-state-<account_id>`) with locking
 via DynamoDB (`brain-storm-terraform-locks`). All state files are encrypted at rest.
 
-| Environment | State key |
-|-------------|-----------|
+| Environment | State key                   |
+| ----------- | --------------------------- |
 | staging     | `staging/terraform.tfstate` |
-| prod        | `prod/terraform.tfstate` |
+| prod        | `prod/terraform.tfstate`    |

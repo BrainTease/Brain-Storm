@@ -14,24 +14,24 @@ export class AnalyticsQueryDto {
 }
 
 export class AnalyticsReportDto {
-  totalEnrollments: number;
-  totalCompletions: number;
-  completionRate: number;
-  averageRating: number;
-  totalReviews: number;
-  monthlyRevenue: number[];
-  monthlyPayouts: number[];
-  revenueByMonth: { month: string; revenue: number }[];
-  courses: CourseAnalyticsSummary[];
+  totalEnrollments!: number;
+  totalCompletions!: number;
+  completionRate!: number;
+  averageRating!: number;
+  totalReviews!: number;
+  monthlyRevenue!: number[];
+  monthlyPayouts!: number[];
+  revenueByMonth!: { month: string; revenue: number }[];
+  courses!: CourseAnalyticsSummary[];
 }
 
 export class CourseAnalyticsSummary {
-  courseId: string;
-  courseName: string;
-  enrollments: number;
-  completions: number;
-  completionRate: number;
-  averageRating: number;
-  revenue: number;
-  payout: number;
+  courseId!: string;
+  courseName!: string;
+  enrollments!: number;
+  completions!: number;
+  completionRate!: number;
+  averageRating!: number;
+  revenue!: number;
+  payout!: number;
 }

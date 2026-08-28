@@ -5,11 +5,11 @@ import { DisputeStatus, DisputeType } from './dispute.entity';
 export class CreateDisputeDto {
   @ApiProperty({ enum: DisputeType })
   @IsEnum(DisputeType)
-  type: DisputeType;
+  type!: DisputeType;
 
   @ApiProperty()
   @IsString()
-  description: string;
+  description!: string;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -25,17 +25,17 @@ export class CreateDisputeDto {
 export class ResolveDisputeDto {
   @ApiProperty({ enum: DisputeStatus, description: 'Must be resolved or closed' })
   @IsEnum(DisputeStatus)
-  status: DisputeStatus;
+  status!: DisputeStatus;
 
   @ApiProperty()
   @IsString()
-  resolution: string;
+  resolution!: string;
 }
 
 export class SuspendUserDto {
   @ApiProperty()
   @IsString()
-  reason: string;
+  reason!: string;
 
   @ApiPropertyOptional({ description: 'ISO date string for suspension end' })
   @IsOptional()

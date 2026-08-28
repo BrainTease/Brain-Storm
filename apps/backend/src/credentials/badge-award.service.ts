@@ -50,7 +50,7 @@ export class BadgeAwardService {
     private readonly stellarService: StellarService,
     private readonly usersService: UsersService,
     @Inject(PROGRESS_REPOSITORY_TOKEN)
-    private readonly progressRepository: ProgressRepository,
+    private readonly progressRepository: ProgressRepository
   ) {}
 
   /**
@@ -67,7 +67,7 @@ export class BadgeAwardService {
   async awardOnCompletion(
     userId: string,
     courseId: string,
-    stellarPublicKey: string,
+    stellarPublicKey: string
   ): Promise<void> {
     // 1. Issue the credential (idempotent; includes KYC gate and on-chain mint).
     try {
@@ -75,7 +75,7 @@ export class BadgeAwardService {
       this.logger.log(`Credential issued for user=${userId} course=${courseId}`);
     } catch (err) {
       this.logger.error(
-        `Credential issuance failed for user=${userId} course=${courseId}: ${(err as Error).message}`,
+        `Credential issuance failed for user=${userId} course=${courseId}: ${(err as Error).message}`
       );
       // Re-throw so the caller can decide whether to surface the error.
       throw err;
@@ -105,13 +105,11 @@ export class BadgeAwardService {
 
       await this.stellarService.mintReward(referrer.stellarPublicKey, 50);
       this.logger.log(
-        `Referral reward minted: 50 BST → referrer=${referrer.id} for user=${userId}`,
+        `Referral reward minted: 50 BST → referrer=${referrer.id} for user=${userId}`
       );
     } catch (err) {
       // Non-fatal: referral reward failure must not block the credential award.
-      this.logger.warn(
-        `Referral reward mint failed for user=${userId}: ${(err as Error).message}`,
-      );
+      this.logger.warn(`Referral reward mint failed for user=${userId}: ${(err as Error).message}`);
     }
   }
 }

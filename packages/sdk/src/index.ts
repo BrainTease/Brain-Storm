@@ -325,7 +325,7 @@ export interface HttpAdapter {
 class FetchHttpAdapter implements HttpAdapter {
   constructor(
     private readonly baseURL: string,
-    private token?: string,
+    private token?: string
   ) {}
 
   setToken(token: string) {
@@ -460,8 +460,8 @@ class CoursesClient {
       ? '?' +
         new URLSearchParams(
           Object.fromEntries(
-            Object.entries(params).filter(([, value]) => value !== undefined),
-          ) as Record<string, string>,
+            Object.entries(params).filter(([, value]) => value !== undefined)
+          ) as Record<string, string>
         ).toString()
       : '';
     return this.http.get<CourseListResponse>(`/v1/courses${qs}`);

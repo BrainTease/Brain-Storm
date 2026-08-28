@@ -16,7 +16,7 @@ class EvaluateRelevanceDto {
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => LabeledQueryEntry)
-  labeledSet: LabeledQueryEntry[];
+  labeledSet!: LabeledQueryEntry[];
 
   @IsOptional() k?: number;
 }

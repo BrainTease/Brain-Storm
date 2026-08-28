@@ -37,9 +37,7 @@ describe('PdfBuilderService', () => {
   });
 
   it("embeds each line's text into the stream", () => {
-    const result = service.build([
-      { size: 14, x: 72, y: 700, text: 'Hello World' },
-    ]);
+    const result = service.build([{ size: 14, x: 72, y: 700, text: 'Hello World' }]);
     expect(result.toString('utf8')).toContain('Hello World');
   });
 

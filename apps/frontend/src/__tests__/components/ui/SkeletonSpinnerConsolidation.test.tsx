@@ -12,7 +12,10 @@ import React from 'react';
 import { render } from '@testing-library/react';
 
 // ── Canonical primitives ──────────────────────────────────────────────────────
-import { Skeleton, CourseCardSkeleton as CanonicalCourseCardSkeleton } from '@/components/ui/Skeleton';
+import {
+  Skeleton,
+  CourseCardSkeleton as CanonicalCourseCardSkeleton,
+} from '@/components/ui/Skeleton';
 import { Spinner } from '@/components/ui/Spinner';
 
 // ── Thin wrappers ─────────────────────────────────────────────────────────────
@@ -41,9 +44,7 @@ describe('Skeleton consolidation (issue #972)', () => {
     });
 
     it('supports pulse animation', () => {
-      const { container } = render(
-        React.createElement(Skeleton, { animation: 'pulse' })
-      );
+      const { container } = render(React.createElement(Skeleton, { animation: 'pulse' }));
       expect(container.innerHTML).toContain('animate-pulse');
     });
   });
@@ -57,9 +58,7 @@ describe('Skeleton consolidation (issue #972)', () => {
     });
 
     it('passes the className prop through', () => {
-      const { container } = render(
-        React.createElement(SkeletonBlock, { className: 'h-8 w-1/2' })
-      );
+      const { container } = render(React.createElement(SkeletonBlock, { className: 'h-8 w-1/2' }));
       // The class should appear somewhere in the rendered markup
       expect(container.innerHTML).toContain('h-8');
     });
@@ -82,9 +81,7 @@ describe('Skeleton consolidation (issue #972)', () => {
       const { container: canonicalEl } = render(React.createElement(CanonicalCourseCardSkeleton));
       const { container: reExportEl } = render(React.createElement(CoursesCourseCardSkeleton));
       // Both should produce the same outer element type
-      expect(canonicalEl.firstElementChild?.tagName).toBe(
-        reExportEl.firstElementChild?.tagName
-      );
+      expect(canonicalEl.firstElementChild?.tagName).toBe(reExportEl.firstElementChild?.tagName);
     });
   });
 

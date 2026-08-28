@@ -20,9 +20,11 @@ This document provides solutions for the most common accessibility violations fo
 ## Color Contrast
 
 ### Issue: `color-contrast`
+
 **Description**: Text doesn't have sufficient contrast against its background.
 
 **WCAG Requirement**:
+
 - Normal text (under 18pt): 4.5:1 minimum
 - Large text (18pt+): 3:1 minimum
 - UI components: 3:1 minimum
@@ -31,8 +33,8 @@ This document provides solutions for the most common accessibility violations fo
 
 ```css
 .text {
-  color: #777;           /* Light gray */
-  background: #fff;      /* White */
+  color: #777; /* Light gray */
+  background: #fff; /* White */
   /* Ratio: 4.48:1 - FAILS for normal text */
 }
 
@@ -47,19 +49,20 @@ This document provides solutions for the most common accessibility violations fo
 
 ```css
 .text {
-  color: #595959;        /* Darker gray */
-  background: #fff;      /* White */
+  color: #595959; /* Darker gray */
+  background: #fff; /* White */
   /* Ratio: 7:1 - PASSES */
 }
 
 .button {
   color: #fff;
-  background: #0066cc;   /* Blue */
+  background: #0066cc; /* Blue */
   /* Ratio: 7.53:1 - PASSES */
 }
 ```
 
 ### Tools to Check
+
 - [WebAIM Contrast Checker](https://webaim.org/resources/contrastchecker/)
 - Browser DevTools (Lighthouse)
 - axe DevTools Extension
@@ -69,6 +72,7 @@ This document provides solutions for the most common accessibility violations fo
 ## Form Labels
 
 ### Issue: `label`
+
 **Description**: Form inputs don't have associated labels.
 
 ### ❌ Bad Example
@@ -143,6 +147,7 @@ export function EmailInput() {
 ## Button Names
 
 ### Issue: `button-name`
+
 **Description**: Buttons don't have accessible names.
 
 ### ❌ Bad Example
@@ -196,22 +201,14 @@ interface IconButtonProps {
 
 export function IconButton({ icon, label, onClick }: IconButtonProps) {
   return (
-    <button
-      onClick={onClick}
-      aria-label={label}
-      className="icon-button"
-    >
+    <button onClick={onClick} aria-label={label} className="icon-button">
       <span aria-hidden="true">{icon}</span>
     </button>
   );
 }
 
 // Usage
-<IconButton
-  icon={<CloseIcon />}
-  label="Close dialog"
-  onClick={handleClose}
-/>
+<IconButton icon={<CloseIcon />} label="Close dialog" onClick={handleClose} />;
 ```
 
 ---
@@ -219,6 +216,7 @@ export function IconButton({ icon, label, onClick }: IconButtonProps) {
 ## Image Alt Text
 
 ### Issue: `image-alt`
+
 **Description**: Images don't have alternative text.
 
 ### ❌ Bad Example
@@ -273,12 +271,14 @@ export function IconButton({ icon, label, onClick }: IconButtonProps) {
 ### Guidelines for Alt Text
 
 **DO**:
+
 - Describe the content and function
 - Be concise (under 150 characters ideally)
 - Don't repeat nearby text
 - Use empty alt for decorative images
 
 **DON'T**:
+
 - Start with "Image of..." or "Picture of..."
 - Include file names
 - Be redundant
@@ -289,6 +289,7 @@ export function IconButton({ icon, label, onClick }: IconButtonProps) {
 ## Heading Hierarchy
 
 ### Issue: `heading-order`
+
 **Description**: Heading levels are skipped.
 
 ### ❌ Bad Example
@@ -343,6 +344,7 @@ export function CoursePage() {
 ## Keyboard Navigation
 
 ### Issue: `keyboard-navigable`
+
 **Description**: Interactive elements can't be accessed via keyboard.
 
 ### ❌ Bad Example
@@ -416,6 +418,7 @@ export function KeyboardAccessibleButton({ onClick, children }) {
 ## Focus Management
 
 ### Issue: `focus-visible`, `focus-trap`
+
 **Description**: Focus indicators not visible or focus not properly managed.
 
 ### ❌ Bad Example
@@ -469,22 +472,22 @@ export function Modal({ isOpen, onClose, children }) {
     if (isOpen) {
       // Save previous focus
       previousFocusRef.current = document.activeElement as HTMLElement;
-      
+
       // Focus modal
       modalRef.current?.focus();
-      
+
       // Trap focus
       const trapFocus = (e: KeyboardEvent) => {
         if (e.key === 'Tab') {
           const focusableElements = modalRef.current?.querySelectorAll(
             'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
           );
-          
+
           if (!focusableElements) return;
-          
+
           const firstElement = focusableElements[0] as HTMLElement;
           const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
-          
+
           if (e.shiftKey && document.activeElement === firstElement) {
             e.preventDefault();
             lastElement.focus();
@@ -496,7 +499,7 @@ export function Modal({ isOpen, onClose, children }) {
           onClose();
         }
       };
-      
+
       document.addEventListener('keydown', trapFocus);
       return () => {
         document.removeEventListener('keydown', trapFocus);
@@ -509,13 +512,7 @@ export function Modal({ isOpen, onClose, children }) {
   if (!isOpen) return null;
 
   return (
-    <div
-      ref={modalRef}
-      role="dialog"
-      aria-modal="true"
-      tabIndex={-1}
-      className="modal"
-    >
+    <div ref={modalRef} role="dialog" aria-modal="true" tabIndex={-1} className="modal">
       {children}
     </div>
   );
@@ -527,6 +524,7 @@ export function Modal({ isOpen, onClose, children }) {
 ## ARIA Usage
 
 ### Issue: `aria-*` violations
+
 **Description**: Incorrect or unnecessary ARIA usage.
 
 ### ❌ Bad Example
@@ -571,6 +569,7 @@ export function Modal({ isOpen, onClose, children }) {
 ### ARIA Best Practices
 
 **First Rule of ARIA**: Don't use ARIA
+
 - Use semantic HTML instead
 - Only add ARIA when HTML isn't sufficient
 
@@ -620,6 +619,7 @@ export function Modal({ isOpen, onClose, children }) {
 ## Link Text
 
 ### Issue: `link-name`
+
 **Description**: Links don't have descriptive text.
 
 ### ❌ Bad Example
@@ -666,6 +666,7 @@ export function Modal({ isOpen, onClose, children }) {
 ## Form Validation
 
 ### Issue: `aria-invalid`, `error-message`
+
 **Description**: Form errors aren't properly communicated.
 
 ### ❌ Bad Example
@@ -677,11 +678,7 @@ function SignupForm() {
 
   return (
     <>
-      <input
-        type="email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
+      <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
       {error && <span className="error">{error}</span>}
     </>
   );
@@ -732,19 +729,19 @@ export function AccessibleForm() {
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
-    
+
     if (!formData.email) {
       newErrors.email = 'Email is required';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'Email is invalid';
     }
-    
+
     if (!formData.password) {
       newErrors.password = 'Password is required';
     } else if (formData.password.length < 8) {
       newErrors.password = 'Password must be at least 8 characters';
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -816,21 +813,15 @@ export function AccessibleForm() {
 ### Priority by Severity
 
 **Fix Immediately** (Critical):
+
 1. Color contrast issues
 2. Missing form labels
 3. Missing button names
 4. No keyboard access
 
-**Fix Soon** (Serious):
-5. Missing alt text
-6. Heading hierarchy problems
-7. Missing focus indicators
-8. Incorrect ARIA usage
+**Fix Soon** (Serious): 5. Missing alt text 6. Heading hierarchy problems 7. Missing focus indicators 8. Incorrect ARIA usage
 
-**Fix When Convenient** (Moderate):
-9. Non-descriptive link text
-10. Missing landmarks
-11. Poor error messaging
+**Fix When Convenient** (Moderate): 9. Non-descriptive link text 10. Missing landmarks 11. Poor error messaging
 
 ---
 

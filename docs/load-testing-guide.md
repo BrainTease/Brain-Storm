@@ -59,9 +59,11 @@ API_URL=https://api.example.com k6 run scripts/load-tests/user-journey.js
 ### Test Scenarios
 
 #### 1. User Journey Test
+
 **File**: `scripts/load-tests/user-journey.js`
 
 Simulates realistic user flow:
+
 1. Register new user
 2. Login
 3. Browse courses
@@ -71,40 +73,48 @@ Simulates realistic user flow:
 7. Check Stellar balance
 
 **Load Profile**:
+
 - Ramp-up: 100 users over 2 minutes
 - Sustained: 100 users for 5 minutes
 - Spike: 500 users for 3 minutes
 - Ramp-down: 0 users over 2 minutes
 
 **Thresholds**:
+
 - 95th percentile response time < 500ms
 - 99th percentile response time < 1000ms
 - Error rate < 5%
 
 #### 2. High Concurrency Test
+
 **File**: `scripts/load-tests/high-concurrency.js`
 
 Tests system with high concurrent users:
+
 - 1000 concurrent users for 10 minutes
 - Spike to 10000 concurrent users for 5 minutes
 
 **Workload**: Read-heavy (courses listing and details)
 
 **Thresholds**:
+
 - 95th percentile response time < 1000ms
 - 99th percentile response time < 2000ms
 - Error rate < 10%
 
 #### 3. Stress Test
+
 **File**: `scripts/load-tests/stress-test.js`
 
 Gradually increases load to find breaking points:
+
 - 100 → 200 → 500 → 1000 → 2000 → 5000 users
 - Each stage lasts 2 minutes
 
 **Workload**: Mix of read and write operations
 
 **Thresholds**:
+
 - 95th percentile response time < 2000ms
 - 99th percentile response time < 5000ms
 - Error rate < 20%
@@ -113,19 +123,19 @@ Gradually increases load to find breaking points:
 
 ### Key Metrics
 
-| Metric | Description | Target |
-|--------|-------------|--------|
-| `http_req_duration` | Request duration | p95 < 500ms |
-| `http_req_failed` | Failed requests | < 5% |
-| `http_reqs` | Total requests | - |
-| `http_req_blocked` | Time blocked | < 100ms |
-| `http_req_connecting` | Connection time | < 100ms |
-| `http_req_tls_handshaking` | TLS handshake | < 100ms |
-| `http_req_sending` | Request sending | < 100ms |
-| `http_req_waiting` | Server processing | < 300ms |
-| `http_req_receiving` | Response receiving | < 100ms |
-| `vus` | Virtual users | - |
-| `vus_max` | Max virtual users | - |
+| Metric                     | Description        | Target      |
+| -------------------------- | ------------------ | ----------- |
+| `http_req_duration`        | Request duration   | p95 < 500ms |
+| `http_req_failed`          | Failed requests    | < 5%        |
+| `http_reqs`                | Total requests     | -           |
+| `http_req_blocked`         | Time blocked       | < 100ms     |
+| `http_req_connecting`      | Connection time    | < 100ms     |
+| `http_req_tls_handshaking` | TLS handshake      | < 100ms     |
+| `http_req_sending`         | Request sending    | < 100ms     |
+| `http_req_waiting`         | Server processing  | < 300ms     |
+| `http_req_receiving`       | Response receiving | < 100ms     |
+| `vus`                      | Virtual users      | -           |
+| `vus_max`                  | Max virtual users  | -           |
 
 ### Interpreting Results
 
@@ -209,6 +219,7 @@ k6 run --cloud scripts/load-tests/user-journey.js
 ## Performance Optimization Tips
 
 ### 1. Database Optimization
+
 ```sql
 -- Add indexes for frequently queried columns
 CREATE INDEX idx_courses_status ON courses(status);
@@ -219,6 +230,7 @@ EXPLAIN ANALYZE SELECT * FROM courses WHERE status = 'published';
 ```
 
 ### 2. Caching Strategy
+
 ```typescript
 // Implement Redis caching
 const cachedCourses = await redis.get('courses:list');
@@ -229,6 +241,7 @@ if (!cachedCourses) {
 ```
 
 ### 3. Connection Pooling
+
 ```typescript
 // Configure connection pool
 const pool = new Pool({
@@ -239,6 +252,7 @@ const pool = new Pool({
 ```
 
 ### 4. Response Compression
+
 ```typescript
 // Enable gzip compression
 app.use(compression());
@@ -255,7 +269,7 @@ load-tests:
   name: Load Tests
   runs-on: ubuntu-latest
   if: github.ref == 'refs/heads/main'
-  
+
   steps:
     - uses: actions/checkout@v4
     - uses: grafana/setup-k6-action@v1
@@ -315,6 +329,7 @@ load-tests:
 ## Support
 
 For issues or questions:
+
 1. Check k6 documentation
 2. Review load test results
 3. Check backend logs

@@ -21,41 +21,41 @@ export enum OrgRole {
 @Index(['slug'], { unique: true })
 export class Organization {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column({ unique: true })
-  slug: string;
+  slug!: string;
 
   @Column()
-  name: string;
+  name!: string;
 
   @Column('text', { nullable: true })
-  description: string;
+  description!: string;
 
   @Column({ nullable: true })
-  logo: string;
+  logo!: string;
 
   @Column({ default: 0 })
-  seats: number; // Total number of member seats
+  seats!: number;
 
   @Column({ default: 0 })
-  usedSeats: number;
+  usedSeats!: number;
 
   @Column({ nullable: true })
-  domain: string;
+  domain!: string;
 
   @Column({ default: true })
-  active: boolean;
+  active!: boolean;
 
   @OneToMany(() => OrganizationMember, (m) => m.organization, { cascade: true })
-  members: OrganizationMember[];
+  members!: OrganizationMember[];
 
   @OneToMany(() => OrganizationBillingProfile, (b) => b.organization, { cascade: true })
-  billingProfiles: OrganizationBillingProfile[];
+  billingProfiles!: OrganizationBillingProfile[];
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt!: Date;
 }

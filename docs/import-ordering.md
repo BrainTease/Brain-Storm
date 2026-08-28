@@ -1,11 +1,13 @@
 # Import Ordering Rules
 
 ## Overview
+
 This document defines the import ordering rules for the monorepo.
 
 ## Ordering Rules
 
 ### 1. External Packages
+
 ```typescript
 // First: External packages
 import React from 'react';
@@ -59,3 +61,4 @@ npx eslint --fix . --ext .ts,.tsx
 
 # Run ESLint with import rules
 npx eslint . --ext .ts,.tsx --rule 'simple-import-sort/imports: error'
+```

@@ -11,11 +11,7 @@ export interface AccountBadgeProps {
   onClick?: () => void;
 }
 
-export function AccountBadge({
-  className = '',
-  showBalance = false,
-  onClick,
-}: AccountBadgeProps) {
+export function AccountBadge({ className = '', showBalance = false, onClick }: AccountBadgeProps) {
   const { isConnected, truncatedAddress, balance, networkMismatch } = useWallet();
   const [showMenu, setShowMenu] = useState(false);
 
@@ -51,9 +47,7 @@ export function AccountBadge({
         aria-label={`Connected account ${truncatedAddress}`}
       >
         <span
-          className={`w-2 h-2 rounded-full ${
-            networkMismatch ? 'bg-amber-400' : 'bg-green-500'
-          }`}
+          className={`w-2 h-2 rounded-full ${networkMismatch ? 'bg-amber-400' : 'bg-green-500'}`}
           aria-hidden="true"
         />
 

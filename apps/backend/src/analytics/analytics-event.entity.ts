@@ -3,23 +3,23 @@ import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, Index } from 
 @Entity('analytics_events')
 export class AnalyticsEvent {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  eventType: string;
+  eventType!: string;
 
   @Column('text')
-  payload: string; // JSON string
+  payload!: string;
 
   @CreateDateColumn()
-  timestamp: Date;
+  timestamp!: Date;
 
   // Optional indexes for querying
   @Index()
   @Column({ nullable: true })
-  userId: string;
+  userId!: string;
 
   @Index()
   @Column({ nullable: true })
-  courseId: string;
+  courseId!: string;
 }

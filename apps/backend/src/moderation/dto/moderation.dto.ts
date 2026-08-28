@@ -5,11 +5,11 @@ import { ContentType, ModerationStatus } from '../moderation.enums';
 export class FlagContentDto {
   @ApiProperty({ enum: ContentType })
   @IsEnum(ContentType)
-  contentType: ContentType;
+  contentType!: ContentType;
 
   @ApiProperty()
   @IsUUID()
-  contentId: string;
+  contentId!: string;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -20,7 +20,7 @@ export class FlagContentDto {
 export class ReviewItemDto {
   @ApiProperty({ enum: [ModerationStatus.APPROVED, ModerationStatus.REJECTED] })
   @IsEnum([ModerationStatus.APPROVED, ModerationStatus.REJECTED])
-  status: ModerationStatus.APPROVED | ModerationStatus.REJECTED;
+  status!: ModerationStatus.APPROVED | ModerationStatus.REJECTED;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -31,7 +31,7 @@ export class ReviewItemDto {
 export class AppealDto {
   @ApiProperty()
   @IsString()
-  reason: string;
+  reason!: string;
 }
 
 export class ModerationQueueQueryDto {

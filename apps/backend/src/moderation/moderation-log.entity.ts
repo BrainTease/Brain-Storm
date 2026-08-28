@@ -4,26 +4,26 @@ import { ContentType, ModerationAction } from './moderation.enums';
 @Entity('moderation_logs')
 export class ModerationLog {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  moderationItemId: string;
+  moderationItemId!: string;
 
   @Column({ type: 'enum', enum: ContentType })
-  contentType: ContentType;
+  contentType!: ContentType;
 
   @Column()
-  contentId: string;
+  contentId!: string;
 
   @Column({ type: 'enum', enum: ModerationAction })
-  action: ModerationAction;
+  action!: ModerationAction;
 
   @Column({ nullable: true })
-  performedByUserId: string | null;
+  performedByUserId!: string | null;
 
   @Column({ type: 'text', nullable: true })
-  note: string | null;
+  note!: string | null;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 }

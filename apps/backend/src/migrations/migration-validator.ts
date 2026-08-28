@@ -19,8 +19,8 @@ async function validateMigrations() {
   console.log(`Executed migrations:   ${executedMigrations.length}`);
 
   // Check for timestamp ordering issues
-  const timestamps = allMigrations.map((m) => {
-    const match = m.name.match(/(\d+)$/);
+  const timestamps = allMigrations.map((m: { name?: string }) => {
+    const match = m.name?.match(/(\d+)$/);
     return match ? parseInt(match[1], 10) : 0;
   });
 

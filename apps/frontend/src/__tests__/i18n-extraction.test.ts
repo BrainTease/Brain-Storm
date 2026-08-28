@@ -76,8 +76,7 @@ describe('i18n message catalog (en.json)', () => {
 
     it('has title key', () => expect(hasKey(catalog, ns, 'title')).toBe(true));
     it('has export key', () => expect(hasKey(catalog, ns, 'export')).toBe(true));
-    it('has metrics sub-object', () =>
-      expect(typeof catalog[ns]?.metrics).toBe('object'));
+    it('has metrics sub-object', () => expect(typeof catalog[ns]?.metrics).toBe('object'));
   });
 
   // ── nav namespace ──────────────────────────────────────────────────────────

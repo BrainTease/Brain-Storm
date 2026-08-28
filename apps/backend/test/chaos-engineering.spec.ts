@@ -195,9 +195,7 @@ describe('Chaos Engineering - Resilience Tests', () => {
       const promises = [];
 
       for (let i = 0; i < concurrentRequests; i++) {
-        promises.push(
-          client.get('/v1/courses', { timeout: 5000 }).catch((e) => e),
-        );
+        promises.push(client.get('/v1/courses', { timeout: 5000 }).catch((e) => e));
       }
 
       const results = await Promise.all(promises);

@@ -71,9 +71,7 @@ export function CredentialMetadataForm({
       {state.status === 'loading' && <LoadingState />}
       {state.status === 'empty' && <EmptyState />}
       {state.status === 'error' && <ErrorState message={state.message} onRetry={load} />}
-      {state.status === 'success' && (
-        <SuccessState data={state.data} onSubmit={onSubmit} />
-      )}
+      {state.status === 'success' && <SuccessState data={state.data} onSubmit={onSubmit} />}
     </div>
   );
 }
@@ -189,9 +187,7 @@ function SuccessState({ data, onSubmit }: SuccessStateProps) {
       </h2>
 
       <div className="space-y-1">
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          Name
-        </label>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Name</label>
         <p className="rounded-md border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100">
           {data.name}
         </p>

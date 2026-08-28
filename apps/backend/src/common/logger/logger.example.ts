@@ -22,8 +22,11 @@ export class ExampleService {
     try {
       // Simulate some operation
       throw new Error('Example error for demonstration');
-    } catch (error) {
-      this.logger.error('Error occurred in example method', error.stack);
+    } catch (error: unknown) {
+      this.logger.error(
+        'Error occurred in example method',
+        error instanceof Error ? error.stack : String(error)
+      );
     }
 
     // Using child logger for specific context

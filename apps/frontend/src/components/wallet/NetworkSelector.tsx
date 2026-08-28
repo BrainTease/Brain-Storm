@@ -37,16 +37,12 @@ export function NetworkSelector({
     >
       <span
         className={`w-2 h-2 rounded-full shrink-0 ${
-          isMismatch
-            ? 'bg-amber-500 animate-pulse'
-            : 'bg-green-500'
+          isMismatch ? 'bg-amber-500 animate-pulse' : 'bg-green-500'
         }`}
         aria-hidden="true"
       />
 
-      <span className="font-semibold uppercase tracking-wider">
-        {currentNetwork}
-      </span>
+      <span className="font-semibold uppercase tracking-wider">{currentNetwork}</span>
 
       {isMismatch && (
         <span

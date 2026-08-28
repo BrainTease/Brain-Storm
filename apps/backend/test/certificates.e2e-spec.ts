@@ -50,7 +50,7 @@ async function registerAndLogin(
   email: string,
   password: string,
   role: 'student' | 'admin' | 'instructor',
-  userRepo: Repository<User>,
+  userRepo: Repository<User>
 ): Promise<string> {
   await request(app.getHttpServer())
     .post('/v1/auth/register')
@@ -116,12 +116,28 @@ describe('Certificate Issuance & Verification (E2E)', () => {
     certRepo = moduleFixture.get<Repository<Certificate>>(getRepositoryToken(Certificate));
 
     // Seed an admin user and a student user
-    adminToken = await registerAndLogin(app, 'admin@cert-e2e.test', 'Admin1234!', 'admin', userRepo);
-    studentToken = await registerAndLogin(app, 'student@cert-e2e.test', 'Student1234!', 'student', userRepo);
+    adminToken = await registerAndLogin(
+      app,
+      'admin@cert-e2e.test',
+      'Admin1234!',
+      'admin',
+      userRepo
+    );
+    studentToken = await registerAndLogin(
+      app,
+      'student@cert-e2e.test',
+      'Student1234!',
+      'student',
+      userRepo
+    );
 
     // Seed a course
     testCourse = await courseRepo.save(
-      courseRepo.create({ title: 'Blockchain 101', description: 'Intro to blockchain', level: 'beginner' }),
+      courseRepo.create({
+        title: 'Blockchain 101',
+        description: 'Intro to blockchain',
+        level: 'beginner',
+      })
     );
 
     // Fetch the seeded student user
@@ -165,7 +181,7 @@ describe('Certificate Issuance & Verification (E2E)', () => {
 
     it('returns 400 when course is enrolled but not yet completed', async () => {
       await enrollmentRepo.save(
-        enrollmentRepo.create({ userId: testUser.id, courseId: testCourse.id, completedAt: null }),
+        enrollmentRepo.create({ userId: testUser.id, courseId: testCourse.id, completedAt: null })
       );
 
       await request(app.getHttpServer())
@@ -184,7 +200,7 @@ describe('Certificate Issuance & Verification (E2E)', () => {
           userId: testUser.id,
           courseId: testCourse.id,
           completedAt: new Date(),
-        }),
+        })
       );
 
       const resp = await request(app.getHttpServer())
@@ -225,7 +241,9 @@ describe('Certificate Issuance & Verification (E2E)', () => {
     let issuedHash: string;
 
     beforeAll(async () => {
-      const cert = await certRepo.findOne({ where: { userId: testUser.id, courseId: testCourse.id } });
+      const cert = await certRepo.findOne({
+        where: { userId: testUser.id, courseId: testCourse.id },
+      });
       issuedHash = cert!.certificateHash;
     });
 
@@ -264,7 +282,9 @@ describe('Certificate Issuance & Verification (E2E)', () => {
     let issuedHash: string;
 
     beforeAll(async () => {
-      const cert = await certRepo.findOne({ where: { userId: testUser.id, courseId: testCourse.id } });
+      const cert = await certRepo.findOne({
+        where: { userId: testUser.id, courseId: testCourse.id },
+      });
       issuedHash = cert!.certificateHash;
     });
 
@@ -293,7 +313,9 @@ describe('Certificate Issuance & Verification (E2E)', () => {
     let certId: string;
 
     beforeAll(async () => {
-      const cert = await certRepo.findOne({ where: { userId: testUser.id, courseId: testCourse.id } });
+      const cert = await certRepo.findOne({
+        where: { userId: testUser.id, courseId: testCourse.id },
+      });
       certId = cert!.id;
     });
 
@@ -316,9 +338,7 @@ describe('Certificate Issuance & Verification (E2E)', () => {
     });
 
     it('returns 401 when no JWT is provided', async () => {
-      await request(app.getHttpServer())
-        .get(`/v1/certificates/${certId}`)
-        .expect(401);
+      await request(app.getHttpServer()).get(`/v1/certificates/${certId}`).expect(401);
     });
   });
 
@@ -338,7 +358,7 @@ describe('Certificate Issuance & Verification (E2E)', () => {
 
     it('returns an empty array for a user with no certificates', async () => {
       const newUser = await userRepo.save(
-        userRepo.create({ email: 'no-certs@e2e.test', passwordHash: 'x', isVerified: true }),
+        userRepo.create({ email: 'no-certs@e2e.test', passwordHash: 'x', isVerified: true })
       );
 
       const resp = await request(app.getHttpServer())
@@ -362,11 +382,15 @@ describe('Certificate Issuance & Verification (E2E)', () => {
           isVerified: true,
           role: 'student',
           stellarPublicKey: 'GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF',
-        }),
+        })
       );
 
       const stellarCourse = await courseRepo.save(
-        courseRepo.create({ title: 'Stellar 101', description: 'Stellar blockchain', level: 'beginner' }),
+        courseRepo.create({
+          title: 'Stellar 101',
+          description: 'Stellar blockchain',
+          level: 'beginner',
+        })
       );
 
       await enrollmentRepo.save(
@@ -374,7 +398,7 @@ describe('Certificate Issuance & Verification (E2E)', () => {
           userId: stellarUser.id,
           courseId: stellarCourse.id,
           completedAt: new Date(),
-        }),
+        })
       );
 
       await request(app.getHttpServer())
@@ -385,7 +409,7 @@ describe('Certificate Issuance & Verification (E2E)', () => {
 
       expect(STELLAR_STUB.issueCredential).toHaveBeenCalledWith(
         'GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF',
-        stellarCourse.id,
+        stellarCourse.id
       );
     });
 
@@ -399,11 +423,15 @@ describe('Certificate Issuance & Verification (E2E)', () => {
           isVerified: true,
           role: 'student',
           stellarPublicKey: 'GBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB',
-        }),
+        })
       );
 
       const gracefulCourse = await courseRepo.save(
-        courseRepo.create({ title: 'Graceful Degradation', description: 'Fallback test', level: 'advanced' }),
+        courseRepo.create({
+          title: 'Graceful Degradation',
+          description: 'Fallback test',
+          level: 'advanced',
+        })
       );
 
       await enrollmentRepo.save(
@@ -411,7 +439,7 @@ describe('Certificate Issuance & Verification (E2E)', () => {
           userId: gracefulUser.id,
           courseId: gracefulCourse.id,
           completedAt: new Date(),
-        }),
+        })
       );
 
       const resp = await request(app.getHttpServer())

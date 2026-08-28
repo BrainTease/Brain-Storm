@@ -52,9 +52,7 @@ export const validationSchema = Joi.object({
   // ── Stellar ────────────────────────────────────────────────────────────────
   STELLAR_NETWORK: Joi.string().valid('testnet', 'mainnet').default('testnet'),
   STELLAR_SECRET_KEY: Joi.string().required(),
-  STELLAR_HORIZON_URL: Joi.string()
-    .uri()
-    .default('https://horizon-testnet.stellar.org'),
+  STELLAR_HORIZON_URL: Joi.string().uri().default('https://horizon-testnet.stellar.org'),
   SOROBAN_RPC_URL: Joi.string().uri().default('https://soroban-testnet.stellar.org'),
   SOROBAN_CONTRACT_ID: Joi.string().allow('').default(''),
   ANALYTICS_CONTRACT_ID: Joi.string().allow('').default(''),

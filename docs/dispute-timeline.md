@@ -32,11 +32,14 @@ A single config object maps each `DisputeState` to its display metadata, so
 adding a new state means adding one entry instead of a new switch branch:
 
 ```ts
-export const DISPUTE_STATE_CONFIG: Record<DisputeState, {
-  icon: IconComponent;
-  label: string;
-  description: string;
-}> = {
+export const DISPUTE_STATE_CONFIG: Record<
+  DisputeState,
+  {
+    icon: IconComponent;
+    label: string;
+    description: string;
+  }
+> = {
   filed: { icon: FileIcon, label: 'Filed', description: '...' },
   evidence: { icon: FolderIcon, label: 'Evidence Submitted', description: '...' },
   arbitration: { icon: GavelIcon, label: 'In Arbitration', description: '...' },

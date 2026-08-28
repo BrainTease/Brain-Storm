@@ -18,14 +18,14 @@ The version prefix is intentionally coarse-grained — it covers the entire API 
 
 A change is **breaking** if existing clients must update their code to keep working:
 
-| Breaking | Not breaking |
-|---|---|
-| Removing an endpoint | Adding a new endpoint |
-| Renaming / removing a required field | Adding an optional field |
-| Changing a field's type | Adding a new optional query param |
-| Changing HTTP method or status code | Expanding an enum with new values |
-| Changing auth requirements | Performance improvements |
-| Removing an enum value | Bug fixes that don't alter the contract |
+| Breaking                             | Not breaking                            |
+| ------------------------------------ | --------------------------------------- |
+| Removing an endpoint                 | Adding a new endpoint                   |
+| Renaming / removing a required field | Adding an optional field                |
+| Changing a field's type              | Adding a new optional query param       |
+| Changing HTTP method or status code  | Expanding an enum with new values       |
+| Changing auth requirements           | Performance improvements                |
+| Removing an enum value               | Bug fixes that don't alter the contract |
 
 ---
 
@@ -62,12 +62,12 @@ A change is **breaking** if existing clients must update their code to keep work
 
 ## Deprecation timeline
 
-| Phase | Duration | Action |
-|---|---|---|
-| Announcement | Day 0 | Issue opened, Swagger marked deprecated, `Deprecation` + `Sunset` headers added |
-| Parallel support | ≥ 90 days | Both versions fully supported |
-| Sunset | Day 90+ | v1 endpoints return `410 Gone` with a migration message |
-| Removal | Next major release | v1 code deleted |
+| Phase            | Duration           | Action                                                                          |
+| ---------------- | ------------------ | ------------------------------------------------------------------------------- |
+| Announcement     | Day 0              | Issue opened, Swagger marked deprecated, `Deprecation` + `Sunset` headers added |
+| Parallel support | ≥ 90 days          | Both versions fully supported                                                   |
+| Sunset           | Day 90+            | v1 endpoints return `410 Gone` with a migration message                         |
+| Removal          | Next major release | v1 code deleted                                                                 |
 
 The 90-day minimum may be extended for endpoints with high traffic or external integrations — maintainers decide case by case.
 
@@ -88,16 +88,19 @@ The 90-day minimum may be extended for endpoints with high traffic or external i
 ### Renamed field: `avatar` → `avatarUrl`
 
 **v1 response**
+
 ```json
 { "id": "abc", "email": "user@example.com", "avatar": "https://..." }
 ```
 
 **v2 response**
+
 ```json
 { "id": "abc", "email": "user@example.com", "avatarUrl": "https://..." }
 ```
 
 **Migration path for clients**
+
 ```diff
 - const avatar = user.avatar;
 + const avatar = user.avatarUrl;

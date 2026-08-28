@@ -116,12 +116,12 @@ export class StellarService {
       });
 
       return result.hash;
-    } catch (error) {
+    } catch (error: unknown) {
       await this.logTransaction({
         type: StellarTxType.MINT_CERTIFICATE,
         recipientPublicKey,
         status: StellarTxStatus.FAILED,
-        errorMessage: error.message,
+        errorMessage: error instanceof Error ? error.message : String(error),
         metadata: { certificateHash, courseTitle },
       });
       throw error;
@@ -133,10 +133,12 @@ export class StellarService {
       // Delegate Soroban progress-recording to the dedicated RPC service
       await this.sorobanRpc.recordProgress(recipientPublicKey, courseId, 100);
       this.logger.log(`Progress recorded on Soroban for ${courseId}`);
-    } catch (error) {
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : String(error);
+      const errStack = error instanceof Error ? error.stack : undefined;
       this.logger.error(
-        `Failed to record progress on Soroban: ${error.message}, falling back to Horizon`,
-        error.stack
+        `Failed to record progress on Soroban: ${errMsg}, falling back to Horizon`,
+        errStack
       );
       await this.issueCredentialFallback(recipientPublicKey, courseId);
     }
@@ -196,8 +198,10 @@ export class StellarService {
         createdAt: tx.created_at,
         operationCount: tx.operation_count,
       };
-    } catch (error) {
-      this.logger.warn(`Transaction verification failed for ${txHash}: ${error.message}`);
+    } catch (error: unknown) {
+      this.logger.warn(
+        `Transaction verification failed for ${txHash}: ${error instanceof Error ? error.message : String(error)}`
+      );
       return { verified: false, hash: txHash };
     }
   }
@@ -269,8 +273,10 @@ export class StellarService {
   private async logTransaction(data: Partial<StellarTransactionLog>): Promise<void> {
     try {
       await this.txLogRepo.save(this.txLogRepo.create(data));
-    } catch (err) {
-      this.logger.error(`Failed to log transaction: ${err.message}`, err.stack);
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      const errStack = err instanceof Error ? err.stack : undefined;
+      this.logger.error(`Failed to log transaction: ${errMsg}`, errStack);
     }
   }
 

@@ -80,9 +80,9 @@ export class PayoutsService {
       this.logger.log(
         `Payout processed for instructor ${payout.instructor.email}: $${payout.instructorShare}`
       );
-    } catch (error) {
+    } catch (error: unknown) {
       payout.status = 'failed';
-      this.logger.error(`Payout failed: ${error.message}`);
+      this.logger.error(`Payout failed: ${error instanceof Error ? error.message : String(error)}`);
     }
 
     return this.payoutsRepository.save(payout);

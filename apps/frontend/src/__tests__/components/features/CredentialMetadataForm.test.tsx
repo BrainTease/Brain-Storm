@@ -39,7 +39,9 @@ describe('CredentialMetadataForm — state transitions', () => {
     render(<CredentialMetadataForm fetchMetadata={fetchMetadata} />);
 
     expect(screen.getByTestId('credential-metadata-loading')).toBeInTheDocument();
-    expect(screen.getByRole('status', { name: /loading credential metadata/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('status', { name: /loading credential metadata/i })
+    ).toBeInTheDocument();
   });
 
   // ---------------------------------------------------------------------------
@@ -143,7 +145,7 @@ describe('CredentialMetadataForm — state transitions', () => {
     // loading
     const pendingFetch = vi.fn(() => new Promise<null>(() => {}));
     const { unmount: unmountLoading } = render(
-      <CredentialMetadataForm fetchMetadata={pendingFetch} />,
+      <CredentialMetadataForm fetchMetadata={pendingFetch} />
     );
     expect(screen.getByTestId('credential-metadata-loading')).toBeInTheDocument();
     expect(screen.queryByTestId('credential-metadata-empty')).not.toBeInTheDocument();
@@ -152,11 +154,9 @@ describe('CredentialMetadataForm — state transitions', () => {
 
     // empty
     const emptyFetch = vi.fn().mockResolvedValue(null);
-    const { unmount: unmountEmpty } = render(
-      <CredentialMetadataForm fetchMetadata={emptyFetch} />,
-    );
+    const { unmount: unmountEmpty } = render(<CredentialMetadataForm fetchMetadata={emptyFetch} />);
     await waitFor(() =>
-      expect(screen.getByTestId('credential-metadata-empty')).toBeInTheDocument(),
+      expect(screen.getByTestId('credential-metadata-empty')).toBeInTheDocument()
     );
     expect(screen.queryByTestId('credential-metadata-loading')).not.toBeInTheDocument();
     expect(screen.queryByTestId('credential-metadata-error')).not.toBeInTheDocument();
@@ -166,7 +166,7 @@ describe('CredentialMetadataForm — state transitions', () => {
     const errorFetch = vi.fn().mockRejectedValue(new Error('fail'));
     render(<CredentialMetadataForm fetchMetadata={errorFetch} />);
     await waitFor(() =>
-      expect(screen.getByTestId('credential-metadata-error')).toBeInTheDocument(),
+      expect(screen.getByTestId('credential-metadata-error')).toBeInTheDocument()
     );
     expect(screen.queryByTestId('credential-metadata-loading')).not.toBeInTheDocument();
     expect(screen.queryByTestId('credential-metadata-empty')).not.toBeInTheDocument();

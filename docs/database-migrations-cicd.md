@@ -9,18 +9,21 @@ The CI/CD pipeline automatically validates, tests, and reports on database migra
 ## Automated Checks
 
 ### 1. Migration Validation
+
 - **File Structure**: Ensures all migrations have `up()` and `down()` methods
 - **Naming Convention**: Validates timestamp-based naming (e.g., `1234567890123-Description.ts`)
 - **Ordering**: Checks that migrations are in chronological order
 - **Duplicates**: Detects duplicate timestamps
 
 ### 2. Dry-Run Testing
+
 - Runs migrations on a test PostgreSQL database
 - Verifies all migrations execute successfully
 - Tests rollback functionality
 - Ensures no data loss during migration
 
 ### 3. Migration Reports
+
 - Generates comprehensive migration reports
 - Lists all migration files with timestamps
 - Comments on PRs with migration status
@@ -29,6 +32,7 @@ The CI/CD pipeline automatically validates, tests, and reports on database migra
 ## Workflow Triggers
 
 The migration CI/CD pipeline runs automatically when:
+
 - Pull requests modify files in `apps/backend/src/migrations/`
 - Pull requests modify files in `apps/backend/src/entities/`
 - Code is pushed to `main` branch with migration changes
@@ -36,23 +40,27 @@ The migration CI/CD pipeline runs automatically when:
 ## Creating a New Migration
 
 ### Step 1: Generate Migration
+
 ```bash
 cd apps/backend
 npm run migration:generate -- src/migrations/AddNewFeature
 ```
 
 ### Step 2: Review Generated Migration
+
 ```bash
 cat src/migrations/1234567890123-AddNewFeature.ts
 ```
 
 ### Step 3: Test Locally
+
 ```bash
 npm run migration:run
 npm run migration:rollback
 ```
 
 ### Step 4: Commit and Push
+
 ```bash
 git add src/migrations/
 git commit -m "feat: add new feature migration"
@@ -64,18 +72,23 @@ The CI/CD pipeline will automatically validate and test your migration.
 ## Migration Best Practices
 
 ### 1. One Concern Per Migration
+
 Each migration should handle a single logical change:
+
 ```typescript
 // ✅ Good: Single concern
 export class AddUserEmailColumn1234567890123 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.addColumn('users', new TableColumn({
-      name: 'email',
-      type: 'varchar',
-      isUnique: true,
-    }));
+    await queryRunner.addColumn(
+      'users',
+      new TableColumn({
+        name: 'email',
+        type: 'varchar',
+        isUnique: true,
+      })
+    );
   }
-  
+
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.dropColumn('users', 'email');
   }
@@ -83,7 +96,9 @@ export class AddUserEmailColumn1234567890123 implements MigrationInterface {
 ```
 
 ### 2. Always Implement Down Method
+
 Ensure rollback capability:
+
 ```typescript
 // ✅ Good: Complete rollback
 public async down(queryRunner: QueryRunner): Promise<void> {
@@ -97,7 +112,9 @@ public async down(queryRunner: QueryRunner): Promise<void> {
 ```
 
 ### 3. Use Transactions
+
 Migrations automatically run in transactions for safety:
+
 ```typescript
 // ✅ Good: Transactional
 export class MyMigration1234567890123 implements MigrationInterface {
@@ -110,18 +127,20 @@ export class MyMigration1234567890123 implements MigrationInterface {
 ```
 
 ### 4. Handle Data Migrations Carefully
+
 For data migrations, include validation:
+
 ```typescript
 export class MigrateUserData1234567890123 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Validate data before migration
     const count = await queryRunner.query('SELECT COUNT(*) FROM users');
     console.log(`Migrating ${count[0].count} users...`);
-    
+
     // Perform migration
     await queryRunner.query('UPDATE users SET status = ? WHERE status IS NULL', ['active']);
   }
-  
+
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query('UPDATE users SET status = NULL WHERE status = ?', ['active']);
   }
@@ -133,12 +152,14 @@ export class MigrateUserData1234567890123 implements MigrationInterface {
 ### Migration Validation Fails
 
 **Issue**: "Invalid naming convention"
+
 ```
 ❌ Invalid naming convention: AddUserTable.ts
 Expected format: TIMESTAMP-Description.ts
 ```
 
 **Solution**: Rename file to include timestamp:
+
 ```bash
 mv src/migrations/AddUserTable.ts src/migrations/1234567890123-AddUserTable.ts
 ```
@@ -148,6 +169,7 @@ mv src/migrations/AddUserTable.ts src/migrations/1234567890123-AddUserTable.ts
 **Issue**: "Migration failed on test database"
 
 **Solution**:
+
 1. Check migration syntax for SQL errors
 2. Verify column/table names exist
 3. Test locally first:
@@ -161,6 +183,7 @@ mv src/migrations/AddUserTable.ts src/migrations/1234567890123-AddUserTable.ts
 **Issue**: "Rollback test failed"
 
 **Solution**: Ensure `down()` method properly reverses `up()`:
+
 ```typescript
 // ✅ Correct: Mirrors up() exactly
 public async down(queryRunner: QueryRunner): Promise<void> {
@@ -171,6 +194,7 @@ public async down(queryRunner: QueryRunner): Promise<void> {
 ## Production Deployment
 
 ### Pre-Deployment Checklist
+
 - [ ] All migrations pass CI/CD validation
 - [ ] Dry-run tests pass on test database
 - [ ] Rollback tested and verified
@@ -179,6 +203,7 @@ public async down(queryRunner: QueryRunner): Promise<void> {
 - [ ] Team notified
 
 ### Deployment Steps
+
 1. Deploy new code with migrations
 2. Run migrations on production:
    ```bash
@@ -189,7 +214,9 @@ public async down(queryRunner: QueryRunner): Promise<void> {
 5. Keep rollback plan ready
 
 ### Rollback Procedure
+
 If issues occur:
+
 ```bash
 npm run migration:rollback
 # Repeat as needed to revert multiple migrations
@@ -198,6 +225,7 @@ npm run migration:rollback
 ## Monitoring and Alerts
 
 The CI/CD pipeline provides:
+
 - ✅ Automatic validation on every PR
 - ✅ Test database dry-run verification
 - ✅ PR comments with migration status

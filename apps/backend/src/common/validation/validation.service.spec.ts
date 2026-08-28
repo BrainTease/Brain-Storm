@@ -15,11 +15,11 @@ import { ValidationService } from './validation.service';
 
 class UserDto {
   @IsEmail()
-  email: string;
+  email!: string;
 
   @IsString()
   @MinLength(3)
-  name: string;
+  name!: string;
 }
 
 class PartialUserDto {
@@ -36,12 +36,12 @@ class PartialUserDto {
 class PaginationDto {
   @IsInt()
   @Min(1)
-  page: number;
+  page!: number;
 
   @IsInt()
   @Min(1)
   @Max(100)
-  limit: number;
+  limit!: number;
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
@@ -72,13 +72,13 @@ describe('ValidationService (#806)', () => {
 
     it('throws BadRequestException for invalid email', async () => {
       await expect(
-        service.validateDto(UserDto, { email: 'not-an-email', name: 'Alice' }),
+        service.validateDto(UserDto, { email: 'not-an-email', name: 'Alice' })
       ).rejects.toThrow(BadRequestException);
     });
 
     it('throws BadRequestException when required field is missing', async () => {
       await expect(service.validateDto(UserDto, { email: 'alice@example.com' })).rejects.toThrow(
-        BadRequestException,
+        BadRequestException
       );
     });
 
@@ -132,7 +132,7 @@ describe('ValidationService (#806)', () => {
 
     it('throws when a provided field is invalid', async () => {
       await expect(
-        service.validatePartialDto(PartialUserDto, { email: 'not-an-email' }),
+        service.validatePartialDto(PartialUserDto, { email: 'not-an-email' })
       ).rejects.toThrow(BadRequestException);
     });
   });

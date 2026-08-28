@@ -71,10 +71,7 @@ export const forumApi = {
     return apiClient.post<Post>(`/courses/${courseId}/posts`, data);
   },
 
-  updatePost(
-    postId: string,
-    data: { title?: string; content?: string }
-  ): Promise<ApiResult<Post>> {
+  updatePost(postId: string, data: { title?: string; content?: string }): Promise<ApiResult<Post>> {
     return apiClient.patch<Post>(`/posts/${postId}`, data);
   },
 

@@ -52,39 +52,43 @@ brain-storm/
 ## Tech Stack
 
 ### Frontend (`apps/frontend`)
-| Technology | Purpose |
-|---|---|
+
+| Technology              | Purpose                      |
+| ----------------------- | ---------------------------- |
 | Next.js 14 (App Router) | React framework with SSR/SSG |
-| TypeScript | Type safety |
-| Tailwind CSS | Utility-first styling |
-| Zustand | Lightweight state management |
-| Axios | HTTP client |
-| @stellar/stellar-sdk | Stellar wallet integration |
+| TypeScript              | Type safety                  |
+| Tailwind CSS            | Utility-first styling        |
+| Zustand                 | Lightweight state management |
+| Axios                   | HTTP client                  |
+| @stellar/stellar-sdk    | Stellar wallet integration   |
 
 ### Backend (`apps/backend`)
-| Technology | Purpose |
-|---|---|
-| NestJS | Scalable Node.js framework |
-| TypeScript | Type safety |
-| PostgreSQL + TypeORM | Relational database & ORM |
-| JWT + Passport | Authentication & authorization |
-| Swagger/OpenAPI | Auto-generated API docs |
+
+| Technology           | Purpose                        |
+| -------------------- | ------------------------------ |
+| NestJS               | Scalable Node.js framework     |
+| TypeScript           | Type safety                    |
+| PostgreSQL + TypeORM | Relational database & ORM      |
+| JWT + Passport       | Authentication & authorization |
+| Swagger/OpenAPI      | Auto-generated API docs        |
 | @stellar/stellar-sdk | Blockchain credential issuance |
-| Redis | Caching & session management |
+| Redis                | Caching & session management   |
 
 ### Smart Contracts (`contracts/`)
-| Technology | Purpose |
-|---|---|
-| Rust | Contract language |
-| Soroban SDK | Stellar smart contract framework |
-| Stellar CLI | Deployment & interaction |
-| wasm32 target | WebAssembly compilation |
+
+| Technology    | Purpose                          |
+| ------------- | -------------------------------- |
+| Rust          | Contract language                |
+| Soroban SDK   | Stellar smart contract framework |
+| Stellar CLI   | Deployment & interaction         |
+| wasm32 target | WebAssembly compilation          |
 
 ---
 
 ## Features
 
 ### Platform
+
 - **Course Management** — Browse, enroll in, and complete structured blockchain courses
 - **On-Chain Credentials** — Certificates issued as Stellar transactions upon course completion
 - **Token Rewards** — Earn Brain-Storm tokens (BST) for completing modules and courses
@@ -92,11 +96,13 @@ brain-storm/
 - **Role-Based Access** — Admin, Instructor, and Student roles enforced on-chain via RBAC
 
 ### Smart Contracts
+
 - **Analytics Contract** — Records per-student, per-course progress percentages on-chain
 - **Token Contract** — Mints reward tokens to students upon verified course completion
 - **Shared Contract** — Provides RBAC, reentrancy guards, and common validation utilities
 
 ### API
+
 - RESTful endpoints for auth, courses, users, and Stellar interactions
 - Interactive Swagger docs at `/api/docs`
 - JWT-secured routes with role guards
@@ -105,14 +111,14 @@ brain-storm/
 
 ## Prerequisites
 
-| Tool | Version |
-|---|---|
-| Node.js | v18 or higher |
-| npm | v9 or higher |
-| PostgreSQL | v12 or higher |
-| Rust | v1.75 or higher |
-| Stellar CLI | v21.5.0 |
-| Docker | Optional (for local Stellar testnet) |
+| Tool        | Version                              |
+| ----------- | ------------------------------------ |
+| Node.js     | v18 or higher                        |
+| npm         | v9 or higher                         |
+| PostgreSQL  | v12 or higher                        |
+| Rust        | v1.75 or higher                      |
+| Stellar CLI | v21.5.0                              |
+| Docker      | Optional (for local Stellar testnet) |
 
 ---
 
@@ -193,6 +199,7 @@ docker compose down -v
 ```
 
 **Key Notes:**
+
 - **Default DB**: `brain-storm` db/user/pass (override in `.env`)
 - **Dev Mode**: Auto hot-reload via src/ mount + `nest start --watch`
 - **Persistence**: `postgres_data` / `redis_data` volumes
@@ -219,14 +226,14 @@ Requires `STELLAR_SECRET_KEY` set in your environment.
 
 See `.env.example` for the full list. Key variables:
 
-| Variable | Description |
-|---|---|
-| `DATABASE_HOST` | PostgreSQL host |
-| `DATABASE_NAME` | Database name (default: `brain-storm`) |
-| `JWT_SECRET` | Secret for signing JWT tokens |
-| `STELLAR_SECRET_KEY` | Stellar account secret for credential issuance |
-| `STELLAR_NETWORK` | `testnet` or `mainnet` |
-| `NEXT_PUBLIC_API_URL` | Backend API URL for the frontend |
+| Variable              | Description                                    |
+| --------------------- | ---------------------------------------------- |
+| `DATABASE_HOST`       | PostgreSQL host                                |
+| `DATABASE_NAME`       | Database name (default: `brain-storm`)         |
+| `JWT_SECRET`          | Secret for signing JWT tokens                  |
+| `STELLAR_SECRET_KEY`  | Stellar account secret for credential issuance |
+| `STELLAR_NETWORK`     | `testnet` or `mainnet`                         |
+| `NEXT_PUBLIC_API_URL` | Backend API URL for the frontend               |
 
 ---
 
@@ -234,14 +241,14 @@ See `.env.example` for the full list. Key variables:
 
 All API endpoints are prefixed with `/v1` for versioning.
 
-| Method | Path | Description |
-|---|---|---|
-| POST | `/v1/auth/register` | Register a new user |
-| POST | `/v1/auth/login` | Login and receive JWT |
-| GET | `/v1/courses` | List all published courses |
-| GET | `/v1/courses/:id` | Get a single course |
-| GET | `/v1/users/:id` | Get user profile |
-| GET | `/v1/stellar/balance/:publicKey` | Get Stellar account balances |
+| Method | Path                             | Description                  |
+| ------ | -------------------------------- | ---------------------------- |
+| POST   | `/v1/auth/register`              | Register a new user          |
+| POST   | `/v1/auth/login`                 | Login and receive JWT        |
+| GET    | `/v1/courses`                    | List all published courses   |
+| GET    | `/v1/courses/:id`                | Get a single course          |
+| GET    | `/v1/users/:id`                  | Get user profile             |
+| GET    | `/v1/stellar/balance/:publicKey` | Get Stellar account balances |
 
 ### Response Compression (#709)
 
@@ -250,11 +257,11 @@ Pass `Accept-Encoding: br, gzip` in the request header — the server negotiates
 
 Measured reduction on the `/v1/courses` list (20 items):
 
-| Encoding | Size |
-|---|---|
-| Uncompressed | ~38 KB |
-| gzip | ~7 KB (−82 %) |
-| brotli | ~5.5 KB (−86 %) |
+| Encoding     | Size            |
+| ------------ | --------------- |
+| Uncompressed | ~38 KB          |
+| gzip         | ~7 KB (−82 %)   |
+| brotli       | ~5.5 KB (−86 %) |
 
 ### Sparse Fieldsets (#709)
 
@@ -272,6 +279,7 @@ GET /v1/courses/abc123?fields=id,title,description
 ```
 
 **Interactive API Documentation:**
+
 - Local: `http://localhost:3000/api/docs`
 - Production: [https://nonso-eze.github.io/Brain-Storm/](https://nonso-eze.github.io/Brain-Storm/)
 
@@ -323,7 +331,7 @@ MIT — see [LICENSE](./LICENSE) for details.
 
 ---
 
-*Built with ❤️ on the Stellar network. Inspired by [StrellerMinds](https://github.com/StarkMindsHQ) by StarkMindsHQ.*
+_Built with ❤️ on the Stellar network. Inspired by [StrellerMinds](https://github.com/StarkMindsHQ) by StarkMindsHQ._
 
 ## CI Status
 
@@ -332,6 +340,7 @@ MIT — see [LICENSE](./LICENSE) for details.
 The CI workflow runs on every push and PR, ensuring code quality and functionality.
 
 ### Workflow Steps
+
 1. **Lint** - `cargo fmt` and `cargo clippy`
 2. **Test** - `cargo test` with coverage
 3. **Build** - WASM compilation

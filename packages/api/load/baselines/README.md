@@ -30,6 +30,7 @@ This directory contains performance baseline files for load tests. Baselines rep
 ## Updating Baselines
 
 Baselines should be updated when:
+
 1. Intentional performance improvements are made
 2. Infrastructure is upgraded
 3. Significant feature changes affect performance
@@ -66,6 +67,7 @@ Our CI system automatically compares test results against baselines:
 Track significant baseline updates here:
 
 ### 2026-06-29 - Initial Baselines
+
 - **Author**: Brain-Storm Performance Team
 - **Reason**: Initial baseline establishment
 - **Environment**: Staging
@@ -77,6 +79,7 @@ Track significant baseline updates here:
 
 ```markdown
 ### YYYY-MM-DD - [Update Description]
+
 - **Author**: [Name/Team]
 - **Reason**: [Why baseline was updated]
 - **Environment**: [staging/production]
@@ -98,6 +101,7 @@ Track significant baseline updates here:
 ## Monitoring Baselines
 
 Check baseline health regularly:
+
 - Are test results consistently meeting baselines?
 - Are baselines realistic for current infrastructure?
 - Do baselines align with SLOs?

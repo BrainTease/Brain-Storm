@@ -49,7 +49,9 @@ export default function NFTGalleryPage() {
     <main className="max-w-6xl mx-auto p-8">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">NFT Collectibles & Gallery</h1>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            NFT Collectibles & Gallery
+          </h1>
           <p className="text-gray-500 dark:text-gray-400 mt-1">
             Browse, collect, and trade verifiable educational NFTs and on-chain certificates.
           </p>

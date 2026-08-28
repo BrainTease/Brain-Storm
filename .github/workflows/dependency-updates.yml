@@ -71,15 +71,15 @@ jobs:
               frontend: ${{ job.status == 'success' }},
               contracts: ${{ job.status == 'success' }}
             };
-            
+
             const comment = `## 🔄 Dependency Update Test Results
-            
+
             - Backend Tests: ${testResults.backend ? '✅ Passed' : '⚠️ Check logs'}
             - Frontend Tests: ${testResults.frontend ? '✅ Passed' : '⚠️ Check logs'}
             - Contract Tests: ${testResults.contracts ? '✅ Passed' : '⚠️ Check logs'}
-            
+
             Security checks have been run. Please review the logs for any vulnerabilities.`;
-            
+
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
@@ -112,13 +112,13 @@ jobs:
         with:
           script: |
             const comment = `🔒 **Security Update Detected**
-            
+
             This PR contains security patches. Please prioritize review and merge.
-            
+
             - Review the changelog for breaking changes
             - Run the full test suite
             - Verify compatibility with existing code`;
-            
+
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,

@@ -11,10 +11,10 @@
 
 Brain-Storm serves two classes of cacheable content:
 
-| Class | Where | TTL strategy |
-|---|---|---|
-| Static assets (JS, CSS, fonts, images) | Next.js / CDN | 1 year, immutable |
-| Cacheable API reads | NestJS edge | Short TTL + stale-while-revalidate |
+| Class                                  | Where         | TTL strategy                       |
+| -------------------------------------- | ------------- | ---------------------------------- |
+| Static assets (JS, CSS, fonts, images) | Next.js / CDN | 1 year, immutable                  |
+| Cacheable API reads                    | NestJS edge   | Short TTL + stale-while-revalidate |
 
 ---
 
@@ -44,14 +44,14 @@ Next.js content-hashes every asset filename at build time, so `immutable` is saf
 
 ### Header matrix
 
-| Route | Auth header present? | Cache-Control |
-|---|---|---|
-| `GET /v1/courses` | No | `public, max-age=60, stale-while-revalidate=300` |
-| `GET /v1/courses/:id` | No | `public, max-age=120, stale-while-revalidate=600` |
-| `GET /v1/stellar/balance/:key` | No | `public, max-age=30, stale-while-revalidate=60` |
-| Any GET with `Authorization` | Yes | `private, max-age=30, stale-while-revalidate=60` |
-| Any other GET | — | `no-cache` |
-| POST / PATCH / PUT / DELETE | — | `no-store` |
+| Route                          | Auth header present? | Cache-Control                                     |
+| ------------------------------ | -------------------- | ------------------------------------------------- |
+| `GET /v1/courses`              | No                   | `public, max-age=60, stale-while-revalidate=300`  |
+| `GET /v1/courses/:id`          | No                   | `public, max-age=120, stale-while-revalidate=600` |
+| `GET /v1/stellar/balance/:key` | No                   | `public, max-age=30, stale-while-revalidate=60`   |
+| Any GET with `Authorization`   | Yes                  | `private, max-age=30, stale-while-revalidate=60`  |
+| Any other GET                  | —                    | `no-cache`                                        |
+| POST / PATCH / PUT / DELETE    | —                    | `no-store`                                        |
 
 ### ETag & conditional requests
 
@@ -102,19 +102,21 @@ For critical mutations (course publish, credential issue) add an explicit CDN pu
 
 ```ts
 // CloudFront
-await cloudfrontClient.send(new CreateInvalidationCommand({
-  DistributionId: process.env.CLOUDFRONT_DISTRIBUTION_ID,
-  InvalidationBatch: {
-    Paths: { Quantity: 1, Items: ['/v1/courses/*'] },
-    CallerReference: Date.now().toString(),
-  },
-}));
+await cloudfrontClient.send(
+  new CreateInvalidationCommand({
+    DistributionId: process.env.CLOUDFRONT_DISTRIBUTION_ID,
+    InvalidationBatch: {
+      Paths: { Quantity: 1, Items: ['/v1/courses/*'] },
+      CallerReference: Date.now().toString(),
+    },
+  })
+);
 ```
 
 ### On deploy (static assets)
 
 The CD pipeline should invalidate `/_next/static/*` after every deployment.  
-Since filenames are content-hashed, old filenames remain valid — only new filenames are served.  You only need to invalidate `/_next/static/*` as a safety measure.
+Since filenames are content-hashed, old filenames remain valid — only new filenames are served. You only need to invalidate `/_next/static/*` as a safety measure.
 
 ---
 

@@ -51,13 +51,13 @@ Key properties:
 
 ## Which Contracts Can Be Upgraded
 
-| Contract | Has `upgrade` fn | Upgrade path |
-|---|---|---|
-| `shared` | ✅ Yes | Call `SharedContract::upgrade` directly |
-| `analytics` | ❌ No | Redeploy and re-initialize; migrate data if needed |
-| `token` | ❌ No | Redeploy and re-initialize; migrate data if needed |
-| `governance` | ❌ No | Redeploy and re-initialize; migrate data if needed |
-| `certificate` | ❌ No | Redeploy and re-initialize; migrate data if needed |
+| Contract      | Has `upgrade` fn | Upgrade path                                       |
+| ------------- | ---------------- | -------------------------------------------------- |
+| `shared`      | ✅ Yes           | Call `SharedContract::upgrade` directly            |
+| `analytics`   | ❌ No            | Redeploy and re-initialize; migrate data if needed |
+| `token`       | ❌ No            | Redeploy and re-initialize; migrate data if needed |
+| `governance`  | ❌ No            | Redeploy and re-initialize; migrate data if needed |
+| `certificate` | ❌ No            | Redeploy and re-initialize; migrate data if needed |
 
 > **Note:** Only `SharedContract` supports in-place WASM upgrade. For the other contracts, an upgrade means deploying a new contract instance and updating all references (contract IDs in `.env`, `deployed-contracts.json`, and any cross-contract calls).
 
@@ -69,10 +69,10 @@ Key properties:
 
 Because `update_current_contract_wasm` only replaces the WASM, **all storage is preserved automatically**:
 
-| Storage type | Keys | Survives upgrade? |
-|---|---|---|
-| Instance | `Admin`, `Role(Address)` | ✅ Yes |
-| Persistent | — (SharedContract has none) | ✅ Yes |
+| Storage type | Keys                        | Survives upgrade? |
+| ------------ | --------------------------- | ----------------- |
+| Instance     | `Admin`, `Role(Address)`    | ✅ Yes            |
+| Persistent   | — (SharedContract has none) | ✅ Yes            |
 
 No data migration is needed for a SharedContract upgrade as long as the new WASM uses the same `DataKey` enum variants and value types.
 
@@ -199,6 +199,7 @@ VOTING_END=$((CURRENT_LEDGER + 120960))
 ```
 
 The proposal description should include:
+
 - What changed and why
 - The new WASM hash (so voters can verify the build)
 - Link to audit report or PR
@@ -411,7 +412,6 @@ If a redeployed contract (analytics, token, etc.) has issues:
 
 - **Monitor post-upgrade.** Watch the Horizon event stream for unexpected events after an upgrade. The `("shared", "upgraded")` event should be the only upgrade-related event. Set up alerts via the monitoring stack (`infra/monitoring/`) for anomalous contract activity.
 
-
 ---
 
 ## Automated Upgrade Test Harness (#665)
@@ -424,20 +424,20 @@ cargo test -p shared -- upgrade_tests
 
 ### What the harness covers
 
-| Test | Scenario |
-|---|---|
-| `test_schedule_upgrade_stores_pending` | Deploy v1, schedule upgrade, assert pending upgrade stored |
-| `test_non_admin_cannot_schedule_upgrade` | Unauthorised schedule rejected |
-| `test_cancel_upgrade_removes_pending` | Cancel clears the pending upgrade |
-| `test_non_admin_cannot_cancel_upgrade` | Unauthorised cancel rejected |
-| `test_execute_before_timelock_panics` | Timelock enforced — execute fails before delay |
-| `test_non_admin_cannot_execute_upgrade` | Unauthorised execute rejected |
-| `test_state_preserved_after_schedule` | Write state (roles) → schedule upgrade → state intact |
-| `test_state_preserved_after_cancel` | Write state → cancel upgrade → state intact |
-| `test_migration_pattern_reads_existing_data` | Simulates v1→v2 storage-layout compatibility check |
-| `test_upgrade_history_initially_empty` | Upgrade history count starts at 0 |
-| `test_no_pending_upgrade_initially` | No pending upgrade on fresh contract |
-| `test_direct_upgrade_non_admin_rejected` | Direct `upgrade()` by non-admin panics |
+| Test                                         | Scenario                                                   |
+| -------------------------------------------- | ---------------------------------------------------------- |
+| `test_schedule_upgrade_stores_pending`       | Deploy v1, schedule upgrade, assert pending upgrade stored |
+| `test_non_admin_cannot_schedule_upgrade`     | Unauthorised schedule rejected                             |
+| `test_cancel_upgrade_removes_pending`        | Cancel clears the pending upgrade                          |
+| `test_non_admin_cannot_cancel_upgrade`       | Unauthorised cancel rejected                               |
+| `test_execute_before_timelock_panics`        | Timelock enforced — execute fails before delay             |
+| `test_non_admin_cannot_execute_upgrade`      | Unauthorised execute rejected                              |
+| `test_state_preserved_after_schedule`        | Write state (roles) → schedule upgrade → state intact      |
+| `test_state_preserved_after_cancel`          | Write state → cancel upgrade → state intact                |
+| `test_migration_pattern_reads_existing_data` | Simulates v1→v2 storage-layout compatibility check         |
+| `test_upgrade_history_initially_empty`       | Upgrade history count starts at 0                          |
+| `test_no_pending_upgrade_initially`          | No pending upgrade on fresh contract                       |
+| `test_direct_upgrade_non_admin_rejected`     | Direct `upgrade()` by non-admin panics                     |
 
 ### Upgrade flow
 

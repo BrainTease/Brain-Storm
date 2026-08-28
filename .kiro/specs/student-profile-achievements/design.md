@@ -154,7 +154,7 @@ Finds the student's entry in the leaderboard array and displays their rank and b
 ```typescript
 interface AchievementInput {
   credentialCount: number;
-  bstBalance: number;       // parsed from string
+  bstBalance: number; // parsed from string
   progressRecords: ProgressRecord[];
 }
 
@@ -165,17 +165,17 @@ interface BadgeState {
   earned: boolean;
 }
 
-function computeAchievements(input: AchievementInput): BadgeState[]
+function computeAchievements(input: AchievementInput): BadgeState[];
 ```
 
 All badge logic lives here. The five badges are:
 
-| Badge ID | Name | Condition |
-|---|---|---|
-| `first-step` | First Step | `credentialCount >= 1` |
-| `course-collector` | Course Collector | `credentialCount >= 5` |
-| `token-earner` | Token Earner | `bstBalance > 0` |
-| `high-achiever` | High Achiever | `bstBalance >= 500` |
+| Badge ID            | Name              | Condition                                                       |
+| ------------------- | ----------------- | --------------------------------------------------------------- |
+| `first-step`        | First Step        | `credentialCount >= 1`                                          |
+| `course-collector`  | Course Collector  | `credentialCount >= 5`                                          |
+| `token-earner`      | Token Earner      | `bstBalance > 0`                                                |
+| `high-achiever`     | High Achiever     | `bstBalance >= 500`                                             |
 | `dedicated-learner` | Dedicated Learner | any `progressRecord` has `progressPct > 0 && progressPct < 100` |
 
 ---
@@ -214,7 +214,7 @@ Source: `GET /credentials/:userId`
 
 ```typescript
 interface StellarBalance {
-  asset_code?: string;   // undefined for native XLM
+  asset_code?: string; // undefined for native XLM
   asset_type: string;
   balance: string;
 }
@@ -253,13 +253,13 @@ Computed client-side by `computeAchievements`.
 
 ## Correctness Properties
 
-*A property is a characteristic or behavior that should hold true across all valid executions of a system — essentially, a formal statement about what the system should do. Properties serve as the bridge between human-readable specifications and machine-verifiable correctness guarantees.*
+_A property is a characteristic or behavior that should hold true across all valid executions of a system — essentially, a formal statement about what the system should do. Properties serve as the bridge between human-readable specifications and machine-verifiable correctness guarantees._
 
 ---
 
 **Property 1: Progress display correctness**
 
-*For any* list of progress records, each record with `progressPct === 100` must render a "Completed" indicator, and each record with `progressPct < 100` must render a progress bar whose width attribute equals `progressPct`.
+_For any_ list of progress records, each record with `progressPct === 100` must render a "Completed" indicator, and each record with `progressPct < 100` must render a progress bar whose width attribute equals `progressPct`.
 
 **Validates: Requirements 1.2, 1.3**
 
@@ -267,7 +267,7 @@ Computed client-side by `computeAchievements`.
 
 **Property 2: Credential card completeness**
 
-*For any* list of credentials, each rendered credential card must contain the course name (or fallback), the formatted issue date, and — when `txHash` is non-null — a link whose `href` contains the `txHash` value.
+_For any_ list of credentials, each rendered credential card must contain the course name (or fallback), the formatted issue date, and — when `txHash` is non-null — a link whose `href` contains the `txHash` value.
 
 **Validates: Requirements 2.2, 2.4**
 
@@ -275,7 +275,7 @@ Computed client-side by `computeAchievements`.
 
 **Property 3: Transaction display completeness**
 
-*For any* list of Stellar balance entries, each rendered row must display the asset code (or "XLM" for native) and the balance string.
+_For any_ list of Stellar balance entries, each rendered row must display the asset code (or "XLM" for native) and the balance string.
 
 **Validates: Requirements 3.4**
 
@@ -283,7 +283,7 @@ Computed client-side by `computeAchievements`.
 
 **Property 4: Credential-count badge correctness**
 
-*For any* `credentialCount` in `[0, ∞)`, `computeAchievements` must return `first-step.earned === (credentialCount >= 1)` and `course-collector.earned === (credentialCount >= 5)`.
+_For any_ `credentialCount` in `[0, ∞)`, `computeAchievements` must return `first-step.earned === (credentialCount >= 1)` and `course-collector.earned === (credentialCount >= 5)`.
 
 **Validates: Requirements 4.2, 4.3**
 
@@ -291,7 +291,7 @@ Computed client-side by `computeAchievements`.
 
 **Property 5: BST balance badge correctness**
 
-*For any* `bstBalance` in `[0, ∞)`, `computeAchievements` must return `token-earner.earned === (bstBalance > 0)` and `high-achiever.earned === (bstBalance >= 500)`.
+_For any_ `bstBalance` in `[0, ∞)`, `computeAchievements` must return `token-earner.earned === (bstBalance > 0)` and `high-achiever.earned === (bstBalance >= 500)`.
 
 **Validates: Requirements 4.4, 4.5**
 
@@ -299,7 +299,7 @@ Computed client-side by `computeAchievements`.
 
 **Property 6: In-progress badge correctness**
 
-*For any* list of progress records, `computeAchievements` must return `dedicated-learner.earned === true` if and only if at least one record has `progressPct > 0 && progressPct < 100`.
+_For any_ list of progress records, `computeAchievements` must return `dedicated-learner.earned === true` if and only if at least one record has `progressPct > 0 && progressPct < 100`.
 
 **Validates: Requirements 4.6**
 
@@ -307,7 +307,7 @@ Computed client-side by `computeAchievements`.
 
 **Property 7: Badge locked/unlocked rendering**
 
-*For any* list of `BadgeState` values, each badge where `earned === false` must render with a locked visual indicator, and each badge where `earned === true` must render with the badge name and description visible.
+_For any_ list of `BadgeState` values, each badge where `earned === false` must render with a locked visual indicator, and each badge where `earned === true` must render with the badge name and description visible.
 
 **Validates: Requirements 4.7, 4.8**
 
@@ -315,7 +315,7 @@ Computed client-side by `computeAchievements`.
 
 **Property 8: Leaderboard rank computation**
 
-*For any* leaderboard array and any `userId`, the displayed rank must equal `index + 1` where `index` is the position of the entry with matching `userId` in the array, or show "unranked" if no entry matches.
+_For any_ leaderboard array and any `userId`, the displayed rank must equal `index + 1` where `index` is the position of the entry with matching `userId` in the array, or show "unranked" if no entry matches.
 
 **Validates: Requirements 5.2, 5.3**
 
@@ -323,7 +323,7 @@ Computed client-side by `computeAchievements`.
 
 **Property 9: computeAchievements always returns all 5 badges**
 
-*For any* valid `AchievementInput`, `computeAchievements` must return an array of exactly 5 `BadgeState` objects with distinct `id` values.
+_For any_ valid `AchievementInput`, `computeAchievements` must return an array of exactly 5 `BadgeState` objects with distinct `id` values.
 
 **Validates: Requirements 4.1**
 
@@ -331,16 +331,16 @@ Computed client-side by `computeAchievements`.
 
 ## Error Handling
 
-| Scenario | Behaviour |
-|---|---|
-| `GET /users/:id/progress` fails | EnrolledCoursesSection shows error message + retry button; other sections unaffected |
-| `GET /credentials/:userId` fails | CredentialsSection shows error message + retry button; other sections unaffected |
-| `GET /users/:id/token-balance` fails | TokenSection shows "—" balance and error indicator |
-| `GET /stellar/balance/:publicKey` fails | TokenSection shows balance section without transaction list |
-| `GET /leaderboard` fails | LeaderboardSection shows error indicator; other sections unaffected |
-| `GET /credentials/:id/pdf` fails | Toast error message; download button re-enabled |
-| No Stellar wallet linked | TokenSection and LeaderboardSection show wallet-link prompts |
-| Course title not found for a progress record | Display fallback text `Course {courseId}` |
+| Scenario                                     | Behaviour                                                                            |
+| -------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `GET /users/:id/progress` fails              | EnrolledCoursesSection shows error message + retry button; other sections unaffected |
+| `GET /credentials/:userId` fails             | CredentialsSection shows error message + retry button; other sections unaffected     |
+| `GET /users/:id/token-balance` fails         | TokenSection shows "—" balance and error indicator                                   |
+| `GET /stellar/balance/:publicKey` fails      | TokenSection shows balance section without transaction list                          |
+| `GET /leaderboard` fails                     | LeaderboardSection shows error indicator; other sections unaffected                  |
+| `GET /credentials/:id/pdf` fails             | Toast error message; download button re-enabled                                      |
+| No Stellar wallet linked                     | TokenSection and LeaderboardSection show wallet-link prompts                         |
+| Course title not found for a progress record | Display fallback text `Course {courseId}`                                            |
 
 ---
 
@@ -368,14 +368,14 @@ Computed client-side by `computeAchievements`.
 
 Each property test is tagged: **Feature: student-profile-achievements, Property N: {property_text}**
 
-| Property | Generator | Assertion |
-|---|---|---|
-| Property 1 | `fc.array(fc.record({ progressPct: fc.integer({min:0, max:100}), ... }))` | completed indicator XOR progress bar per record |
-| Property 2 | `fc.array(fc.record({ txHash: fc.option(fc.hexaString()), ... }))` | required fields present; txHash link conditional |
-| Property 3 | `fc.array(fc.record({ asset_code: fc.option(fc.string()), balance: fc.string() }))` | asset label and balance present in each row |
-| Property 4 | `fc.nat()` for credentialCount | badge earned flags match threshold conditions |
-| Property 5 | `fc.nat()` for bstBalance | badge earned flags match threshold conditions |
-| Property 6 | `fc.array(fc.record({ progressPct: fc.integer({min:0, max:100}) }))` | dedicated-learner earned iff any in-progress record |
-| Property 7 | `fc.array(fc.record({ earned: fc.boolean(), ... }))` | locked/unlocked CSS class matches earned flag |
-| Property 8 | `fc.array(fc.record({ userId: fc.uuid(), ... }))` + `fc.uuid()` | rank = index+1 or unranked |
-| Property 9 | `fc.record({ credentialCount: fc.nat(), bstBalance: fc.nat(), progressRecords: fc.array(...) })` | always returns exactly 5 distinct badges |
+| Property   | Generator                                                                                        | Assertion                                           |
+| ---------- | ------------------------------------------------------------------------------------------------ | --------------------------------------------------- |
+| Property 1 | `fc.array(fc.record({ progressPct: fc.integer({min:0, max:100}), ... }))`                        | completed indicator XOR progress bar per record     |
+| Property 2 | `fc.array(fc.record({ txHash: fc.option(fc.hexaString()), ... }))`                               | required fields present; txHash link conditional    |
+| Property 3 | `fc.array(fc.record({ asset_code: fc.option(fc.string()), balance: fc.string() }))`              | asset label and balance present in each row         |
+| Property 4 | `fc.nat()` for credentialCount                                                                   | badge earned flags match threshold conditions       |
+| Property 5 | `fc.nat()` for bstBalance                                                                        | badge earned flags match threshold conditions       |
+| Property 6 | `fc.array(fc.record({ progressPct: fc.integer({min:0, max:100}) }))`                             | dedicated-learner earned iff any in-progress record |
+| Property 7 | `fc.array(fc.record({ earned: fc.boolean(), ... }))`                                             | locked/unlocked CSS class matches earned flag       |
+| Property 8 | `fc.array(fc.record({ userId: fc.uuid(), ... }))` + `fc.uuid()`                                  | rank = index+1 or unranked                          |
+| Property 9 | `fc.record({ credentialCount: fc.nat(), bstBalance: fc.nat(), progressRecords: fc.array(...) })` | always returns exactly 5 distinct badges            |

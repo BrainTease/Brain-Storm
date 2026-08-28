@@ -13,7 +13,7 @@ const KEYS = {
   SESSION_LOCKED: 'session_locked',
 } as const;
 
-export type SecureKey = typeof KEYS[keyof typeof KEYS];
+export type SecureKey = (typeof KEYS)[keyof typeof KEYS];
 
 /**
  * Store a value in secure storage
@@ -69,7 +69,10 @@ export async function storeTokens(accessToken: string, refreshToken: string): Pr
 /**
  * Get stored authentication tokens
  */
-export async function getTokens(): Promise<{ accessToken: string | null; refreshToken: string | null }> {
+export async function getTokens(): Promise<{
+  accessToken: string | null;
+  refreshToken: string | null;
+}> {
   const [accessToken, refreshToken] = await Promise.all([
     getSecureItem(KEYS.ACCESS_TOKEN),
     getSecureItem(KEYS.REFRESH_TOKEN),

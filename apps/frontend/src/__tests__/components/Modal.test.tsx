@@ -13,7 +13,7 @@ function setup(isOpen: boolean, onClose = vi.fn()) {
         <input data-testid="second-input" placeholder="Second" />
         <button data-testid="inner-btn">Inner Button</button>
       </Modal>
-    </div>,
+    </div>
   );
 }
 
@@ -63,7 +63,7 @@ describe('Modal accessibility', () => {
     render(
       <Modal isOpen onClose={onClose} title="Dialog">
         <p>Content</p>
-      </Modal>,
+      </Modal>
     );
     // The backdrop is the fixed div with aria-hidden immediately before the dialog
     const backdrop = document.querySelector('.fixed.inset-0.bg-black') as HTMLElement;
@@ -125,7 +125,7 @@ describe('Modal accessibility', () => {
         <Modal isOpen={false} onClose={onClose} title="Dialog">
           <button>Inner</button>
         </Modal>
-      </div>,
+      </div>
     );
 
     // Focus the trigger button before opening
@@ -140,7 +140,7 @@ describe('Modal accessibility', () => {
         <Modal isOpen onClose={onClose} title="Dialog">
           <button>Inner</button>
         </Modal>
-      </div>,
+      </div>
     );
 
     // Focus should move into the modal
@@ -155,7 +155,7 @@ describe('Modal accessibility', () => {
         <Modal isOpen={false} onClose={onClose} title="Dialog">
           <button>Inner</button>
         </Modal>
-      </div>,
+      </div>
     );
 
     // Focus should be restored to the trigger

@@ -42,10 +42,9 @@ function buildService() {
   const service = new CertificatesService(
     certRepo as any,
     enrollmentRepo as any,
-    stellarService as any
     stellarService as any,
     validationService,
-    mintingService,
+    mintingService
   );
   return { service, certRepo, enrollmentRepo, stellarService };
 }
@@ -139,7 +138,13 @@ describe('CertificatesService', () => {
       });
       certRepo.findOne.mockResolvedValue(null);
 
-      const savedCert = { id: 'cert-uuid', courseId: VALID_UUID_2, userId: VALID_UUID_1, status: 'pending', stellarTransactionId: undefined } as any;
+      const savedCert = {
+        id: 'cert-uuid',
+        courseId: VALID_UUID_2,
+        userId: VALID_UUID_1,
+        status: 'pending',
+        stellarTransactionId: undefined,
+      } as any;
       certRepo.create.mockReturnValue(savedCert);
       certRepo.save.mockResolvedValue(savedCert);
       stellarService.issueCredential.mockResolvedValue('TX_HASH_ABC');

@@ -44,18 +44,13 @@ export function TransactionSummary({
         onInvalid?.(result.errors);
       }
     } catch (e) {
-      setParseError(
-        e instanceof Error ? e.message : 'Failed to parse transaction'
-      );
+      setParseError(e instanceof Error ? e.message : 'Failed to parse transaction');
       setParsed(null);
       setValidation(null);
     }
   }, [xdr, expectedContractId, onValid, onInvalid]);
 
-  const summaryText = useMemo(
-    () => (parsed ? buildTransactionSummary(parsed) : ''),
-    [parsed]
-  );
+  const summaryText = useMemo(() => (parsed ? buildTransactionSummary(parsed) : ''), [parsed]);
 
   if (parseError) {
     return (
@@ -71,9 +66,7 @@ export function TransactionSummary({
             <h3 className="text-sm font-medium text-red-800 dark:text-red-200">
               Invalid Transaction
             </h3>
-            <p className="text-sm text-red-600 dark:text-red-300 mt-1">
-              {parseError}
-            </p>
+            <p className="text-sm text-red-600 dark:text-red-300 mt-1">{parseError}</p>
           </div>
         </div>
       </div>
@@ -87,15 +80,10 @@ export function TransactionSummary({
           className="rounded-lg border border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20 p-3"
           role="alert"
         >
-          <h3 className="text-sm font-medium text-red-800 dark:text-red-200">
-            Validation Errors
-          </h3>
+          <h3 className="text-sm font-medium text-red-800 dark:text-red-200">Validation Errors</h3>
           <ul className="mt-1 space-y-1">
             {validation.errors.map((err, i) => (
-              <li
-                key={i}
-                className="text-sm text-red-600 dark:text-red-300 flex items-start gap-2"
-              >
+              <li key={i} className="text-sm text-red-600 dark:text-red-300 flex items-start gap-2">
                 <span aria-hidden="true">•</span>
                 {err}
               </li>
@@ -106,9 +94,7 @@ export function TransactionSummary({
 
       {validation && validation.warnings.length > 0 && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20 p-3">
-          <h3 className="text-sm font-medium text-amber-800 dark:text-amber-200">
-            Warnings
-          </h3>
+          <h3 className="text-sm font-medium text-amber-800 dark:text-amber-200">Warnings</h3>
           <ul className="mt-1 space-y-1">
             {validation.warnings.map((warn, i) => (
               <li
@@ -138,10 +124,7 @@ export function TransactionSummary({
           </h3>
           <div className="rounded-lg border border-gray-200 dark:border-gray-700 divide-y divide-gray-200 dark:divide-gray-700">
             {parsed.operations.map((op, i) => (
-              <div
-                key={i}
-                className="p-3 flex items-start justify-between gap-2"
-              >
+              <div key={i} className="p-3 flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                     {getOperationTitle(op)}
@@ -152,9 +135,9 @@ export function TransactionSummary({
                 </div>
                 <div className="flex-shrink-0">
                   <span
-                    className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                      getOperationTypeColor(op.type)
-                    }`}
+                    className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getOperationTypeColor(
+                      op.type
+                    )}`}
                   >
                     {op.type}
                   </span>
@@ -170,18 +153,13 @@ export function TransactionSummary({
           <p>
             Network: <span className="font-mono">{parsed.network}</span>
           </p>
-          <p>
-            Fee: {parsed.fee} stroops
-          </p>
+          <p>Fee: {parsed.fee} stroops</p>
           {parsed.memo && (
             <p>
-              Memo ({parsed.memoType}):{' '}
-              <span className="font-mono">{parsed.memo}</span>
+              Memo ({parsed.memoType}): <span className="font-mono">{parsed.memo}</span>
             </p>
           )}
-          <p className="font-mono text-[10px] break-all">
-            Source: {parsed.source}
-          </p>
+          <p className="font-mono text-[10px] break-all">Source: {parsed.source}</p>
 
           <button
             onClick={() => setExpanded(!expanded)}

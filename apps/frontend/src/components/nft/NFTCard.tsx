@@ -46,9 +46,7 @@ export function NFTCard({
   className = '',
   compact = false,
 }: NFTCardProps) {
-  const truncatedOwner = nft.owner
-    ? `${nft.owner.slice(0, 6)}…${nft.owner.slice(-4)}`
-    : undefined;
+  const truncatedOwner = nft.owner ? `${nft.owner.slice(0, 6)}…${nft.owner.slice(-4)}` : undefined;
 
   const royaltyPercentage =
     nft.royaltyBasis !== undefined ? `${(nft.royaltyBasis / 100).toFixed(1)}%` : undefined;
@@ -179,11 +177,7 @@ export function NFTCard({
             </Button>
           )}
           {nft.isListed && onBuy && (
-            <Button
-              size="sm"
-              className="flex-1 text-xs"
-              onClick={() => onBuy(nft)}
-            >
+            <Button size="sm" className="flex-1 text-xs" onClick={() => onBuy(nft)}>
               Buy NFT
             </Button>
           )}

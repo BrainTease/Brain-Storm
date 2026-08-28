@@ -154,15 +154,12 @@ export const useAppStore = create<AppState>()(
       setWalletConnecting: (isConnecting) =>
         set((s) => ({ wallet: { ...s.wallet, isConnecting } })),
 
-      setWalletError: (walletError) =>
-        set((s) => ({ wallet: { ...s.wallet, walletError } })),
+      setWalletError: (walletError) => set((s) => ({ wallet: { ...s.wallet, walletError } })),
 
-      setBalanceError: (balanceError) =>
-        set((s) => ({ wallet: { ...s.wallet, balanceError } })),
+      setBalanceError: (balanceError) => set((s) => ({ wallet: { ...s.wallet, balanceError } })),
 
       // ── Network actions ──
-      setNetwork: (network) =>
-        set((s) => ({ network: { ...s.network, network } })),
+      setNetwork: (network) => set((s) => ({ network: { ...s.network, network } })),
 
       setNetworkMismatch: (networkMismatch) =>
         set((s) => ({ network: { ...s.network, networkMismatch } })),

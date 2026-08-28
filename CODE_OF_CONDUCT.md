@@ -10,19 +10,19 @@ We pledge to act and interact in ways that contribute to an open, welcoming, div
 
 Examples of behaviour that contributes to a positive environment:
 
-* Demonstrating empathy and kindness toward other people
-* Being respectful of differing opinions, viewpoints, and experiences
-* Giving and gracefully accepting constructive feedback
-* Accepting responsibility and apologising to those affected by our mistakes, and learning from the experience
-* Focusing on what is best not just for us as individuals, but for the overall community
+- Demonstrating empathy and kindness toward other people
+- Being respectful of differing opinions, viewpoints, and experiences
+- Giving and gracefully accepting constructive feedback
+- Accepting responsibility and apologising to those affected by our mistakes, and learning from the experience
+- Focusing on what is best not just for us as individuals, but for the overall community
 
 Examples of unacceptable behaviour:
 
-* The use of sexualised language or imagery, and sexual attention or advances of any kind
-* Trolling, insulting or derogatory comments, and personal or political attacks
-* Public or private harassment
-* Publishing others' private information, such as a physical or email address, without their explicit permission
-* Other conduct which could reasonably be considered inappropriate in a professional setting
+- The use of sexualised language or imagery, and sexual attention or advances of any kind
+- Trolling, insulting or derogatory comments, and personal or political attacks
+- Public or private harassment
+- Publishing others' private information, such as a physical or email address, without their explicit permission
+- Other conduct which could reasonably be considered inappropriate in a professional setting
 
 ## Enforcement Responsibilities
 
@@ -45,18 +45,22 @@ All community leaders are obligated to respect the privacy and security of the r
 Community leaders will follow these Community Impact Guidelines in determining the consequences for any action they deem in violation of this Code of Conduct:
 
 ### 1. Correction
+
 **Impact**: Use of inappropriate language or other behaviour deemed unprofessional.  
 **Consequence**: A private, written warning from community leaders, providing clarity around the nature of the violation and an explanation of why the behaviour was inappropriate.
 
 ### 2. Warning
+
 **Impact**: A violation through a single incident or series of actions.  
 **Consequence**: A warning with consequences for continued behaviour. No interaction with the people involved for a specified period of time.
 
 ### 3. Temporary Ban
+
 **Impact**: A serious violation of community standards, including sustained inappropriate behaviour.  
 **Consequence**: A temporary ban from any sort of interaction or public communication with the community for a specified period of time.
 
 ### 4. Permanent Ban
+
 **Impact**: Demonstrating a pattern of violation of community standards, including sustained inappropriate behaviour, harassment of an individual, or aggression toward or disparagement of classes of individuals.  
 **Consequence**: A permanent ban from any sort of public interaction within the community.
 

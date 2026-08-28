@@ -2,14 +2,14 @@ import { IsString, IsNumber, IsEnum, IsOptional, IsDateString, Min } from 'class
 
 export class CreateCouponDto {
   @IsString()
-  code: string;
+  code!: string;
 
   @IsEnum(['percentage', 'fixed'])
-  discountType: 'percentage' | 'fixed';
+  discountType!: 'percentage' | 'fixed';
 
   @IsNumber()
   @Min(0)
-  discountValue: number;
+  discountValue!: number;
 
   @IsOptional()
   @IsDateString()
@@ -23,23 +23,23 @@ export class CreateCouponDto {
 
 export class ValidateCouponDto {
   @IsString()
-  code: string;
+  code!: string;
 }
 
 export class BulkGenerateCouponDto {
   @IsString()
-  prefix: string;
+  prefix!: string;
 
   @IsNumber()
   @Min(1)
-  count: number;
+  count!: number;
 
   @IsEnum(['percentage', 'fixed'])
-  discountType: 'percentage' | 'fixed';
+  discountType!: 'percentage' | 'fixed';
 
   @IsNumber()
   @Min(0)
-  discountValue: number;
+  discountValue!: number;
 
   @IsOptional()
   @IsDateString()

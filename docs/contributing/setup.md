@@ -56,17 +56,17 @@ Brain-Storm/
 
 Ensure the following tools are installed with versions matching the project configurations:
 
-| Tool | Version Requirement | Config Source | Purpose |
-|---|---|---|---|
-| **Node.js** | `>= 18.0.0` (LTS 20.x recommended) | `package.json` engines | Backend, Frontend, SDK |
-| **npm** | `>= 9.0.0` | `package.json` | Workspace package management |
-| **Rust** | Stable (`>= 1.75.0`) | `rust-toolchain.toml` | Smart contract compilation |
-| **Rust Target** | `wasm32-unknown-unknown` | `rust-toolchain.toml` | WASM bytecode target |
-| **Soroban SDK** | `20.0.0` | `Cargo.toml` (`[workspace.dependencies]`) | Soroban smart contracts |
-| **Soroban / Stellar CLI** | `20.0.0` / `v21.5.0` | `Cargo.toml` | Contract compilation & deployment |
-| **PostgreSQL** | `>= 12.0` (15.x recommended) | `docker-compose.yml` | Backend relational database |
-| **Redis** | `>= 6.0` (7.x recommended) | `docker-compose.yml` | Session caching & rate limiting |
-| **Docker & Docker Compose** | Latest stable | `docker-compose.yml` | Local database & services |
+| Tool                        | Version Requirement                | Config Source                             | Purpose                           |
+| --------------------------- | ---------------------------------- | ----------------------------------------- | --------------------------------- |
+| **Node.js**                 | `>= 18.0.0` (LTS 20.x recommended) | `package.json` engines                    | Backend, Frontend, SDK            |
+| **npm**                     | `>= 9.0.0`                         | `package.json`                            | Workspace package management      |
+| **Rust**                    | Stable (`>= 1.75.0`)               | `rust-toolchain.toml`                     | Smart contract compilation        |
+| **Rust Target**             | `wasm32-unknown-unknown`           | `rust-toolchain.toml`                     | WASM bytecode target              |
+| **Soroban SDK**             | `20.0.0`                           | `Cargo.toml` (`[workspace.dependencies]`) | Soroban smart contracts           |
+| **Soroban / Stellar CLI**   | `20.0.0` / `v21.5.0`               | `Cargo.toml`                              | Contract compilation & deployment |
+| **PostgreSQL**              | `>= 12.0` (15.x recommended)       | `docker-compose.yml`                      | Backend relational database       |
+| **Redis**                   | `>= 6.0` (7.x recommended)         | `docker-compose.yml`                      | Session caching & rate limiting   |
+| **Docker & Docker Compose** | Latest stable                      | `docker-compose.yml`                      | Local database & services         |
 
 ---
 
@@ -122,6 +122,7 @@ docker compose up -d postgres redis
 ```
 
 Verify services are running:
+
 ```bash
 docker compose ps
 ```
@@ -174,6 +175,7 @@ npm run dev:frontend
 ```
 
 Open your browser:
+
 - **Web Application:** `http://localhost:3001`
 - **REST API Swagger Documentation:** `http://localhost:3000/api/docs`
 
@@ -185,69 +187,74 @@ Open your browser:
 
 These variables configure the NestJS server, database connections, auth, and Stellar RPC:
 
-| Variable | Default / Example Value | Description | Required |
-|---|---|---|:---:|
-| `PORT` | `3000` | HTTP port the NestJS server listens on | Yes |
-| `LOG_LEVEL` | `info` | Logging verbosity (`debug`, `info`, `warn`, `error`) | No |
-| `DATABASE_HOST` | `localhost` | PostgreSQL host (`postgres` when using Docker) | Yes |
-| `DATABASE_PORT` | `5432` | PostgreSQL port | Yes |
-| `DATABASE_USER` | `postgres` | Database username | Yes |
-| `DATABASE_PASSWORD` | `postgres` | Database password | Yes |
-| `DATABASE_NAME` | `brain-storm` | Database name | Yes |
-| `REDIS_URL` | `redis://localhost:6379` | Redis connection URL | Yes |
-| `JWT_SECRET` | `<32-char-random-secret>` | Secret key for signing and verifying JWT tokens | Yes |
-| `GOOGLE_CLIENT_ID` | `your_google_client_id` | Google OAuth client ID for social login | No |
-| `GOOGLE_CLIENT_SECRET` | `your_google_client_secret` | Google OAuth secret | No |
-| `GOOGLE_CALLBACK_URL` | `http://localhost:3000/auth/google/callback` | OAuth redirect callback | No |
-| `STELLAR_NETWORK` | `testnet` | Target network (`testnet` or `mainnet`) | Yes |
-| `STELLAR_SECRET_KEY` | `S...` | Admin Stellar account secret key for contract signing | Yes |
-| `STELLAR_HORIZON_URL` | `https://horizon-testnet.stellar.org` | Stellar Horizon REST endpoint | Yes |
-| `SOROBAN_RPC_URL` | `https://soroban-testnet.stellar.org` | Soroban JSON-RPC node URL | Yes |
-| `ANALYTICS_CONTRACT_ID` | `C...` | Deployed Analytics smart contract address | No |
-| `TOKEN_CONTRACT_ID` | `C...` | Deployed BST Token smart contract address | No |
-| `FRONTEND_URL` | `http://localhost:3001` | Origin URL for CORS and email redirect links | Yes |
-| `CORS_ORIGINS` | `http://localhost:3001,http://localhost:3000` | Allowed CORS origins | Yes |
-| `THROTTLE_TTL` | `60000` | Rate limiter window in milliseconds | No |
-| `THROTTLE_LIMIT` | `100` | Maximum requests permitted per window | No |
+| Variable                | Default / Example Value                       | Description                                           | Required |
+| ----------------------- | --------------------------------------------- | ----------------------------------------------------- | :------: |
+| `PORT`                  | `3000`                                        | HTTP port the NestJS server listens on                |   Yes    |
+| `LOG_LEVEL`             | `info`                                        | Logging verbosity (`debug`, `info`, `warn`, `error`)  |    No    |
+| `DATABASE_HOST`         | `localhost`                                   | PostgreSQL host (`postgres` when using Docker)        |   Yes    |
+| `DATABASE_PORT`         | `5432`                                        | PostgreSQL port                                       |   Yes    |
+| `DATABASE_USER`         | `postgres`                                    | Database username                                     |   Yes    |
+| `DATABASE_PASSWORD`     | `postgres`                                    | Database password                                     |   Yes    |
+| `DATABASE_NAME`         | `brain-storm`                                 | Database name                                         |   Yes    |
+| `REDIS_URL`             | `redis://localhost:6379`                      | Redis connection URL                                  |   Yes    |
+| `JWT_SECRET`            | `<32-char-random-secret>`                     | Secret key for signing and verifying JWT tokens       |   Yes    |
+| `GOOGLE_CLIENT_ID`      | `your_google_client_id`                       | Google OAuth client ID for social login               |    No    |
+| `GOOGLE_CLIENT_SECRET`  | `your_google_client_secret`                   | Google OAuth secret                                   |    No    |
+| `GOOGLE_CALLBACK_URL`   | `http://localhost:3000/auth/google/callback`  | OAuth redirect callback                               |    No    |
+| `STELLAR_NETWORK`       | `testnet`                                     | Target network (`testnet` or `mainnet`)               |   Yes    |
+| `STELLAR_SECRET_KEY`    | `S...`                                        | Admin Stellar account secret key for contract signing |   Yes    |
+| `STELLAR_HORIZON_URL`   | `https://horizon-testnet.stellar.org`         | Stellar Horizon REST endpoint                         |   Yes    |
+| `SOROBAN_RPC_URL`       | `https://soroban-testnet.stellar.org`         | Soroban JSON-RPC node URL                             |   Yes    |
+| `ANALYTICS_CONTRACT_ID` | `C...`                                        | Deployed Analytics smart contract address             |    No    |
+| `TOKEN_CONTRACT_ID`     | `C...`                                        | Deployed BST Token smart contract address             |    No    |
+| `FRONTEND_URL`          | `http://localhost:3001`                       | Origin URL for CORS and email redirect links          |   Yes    |
+| `CORS_ORIGINS`          | `http://localhost:3001,http://localhost:3000` | Allowed CORS origins                                  |   Yes    |
+| `THROTTLE_TTL`          | `60000`                                       | Rate limiter window in milliseconds                   |    No    |
+| `THROTTLE_LIMIT`        | `100`                                         | Maximum requests permitted per window                 |    No    |
 
 ### Frontend Variables (`apps/frontend`)
 
 These variables configure the Next.js client application (prefixed with `NEXT_PUBLIC_` for browser bundling):
 
-| Variable | Default / Example Value | Description | Required |
-|---|---|---|:---:|
-| `NEXT_PUBLIC_API_URL` | `http://localhost:3000` | Backend API URL reachable by the browser | Yes |
-| `NEXT_PUBLIC_STELLAR_NETWORK` | `testnet` | Stellar network ID (`testnet` or `mainnet`) | Yes |
-| `NEXT_PUBLIC_SENTRY_DSN` | `https://...` | Sentry DSN for frontend telemetry & error reporting | No |
-| `NEXT_PUBLIC_GIT_COMMIT_SHA` | `main` | Git commit identifier for release tracking | No |
+| Variable                      | Default / Example Value | Description                                         | Required |
+| ----------------------------- | ----------------------- | --------------------------------------------------- | :------: |
+| `NEXT_PUBLIC_API_URL`         | `http://localhost:3000` | Backend API URL reachable by the browser            |   Yes    |
+| `NEXT_PUBLIC_STELLAR_NETWORK` | `testnet`               | Stellar network ID (`testnet` or `mainnet`)         |   Yes    |
+| `NEXT_PUBLIC_SENTRY_DSN`      | `https://...`           | Sentry DSN for frontend telemetry & error reporting |    No    |
+| `NEXT_PUBLIC_GIT_COMMIT_SHA`  | `main`                  | Git commit identifier for release tracking          |    No    |
 
 ---
 
 ## Workspace Scripts Reference
 
 ### Root Commands (`package.json`)
+
 - `npm run dev:backend` — Starts NestJS backend in watch mode.
 - `npm run dev:frontend` — Starts Next.js frontend in development mode.
 - `npm run build` — Builds all npm workspaces.
 - `npm run test` — Runs tests across all workspaces.
 
 ### Smart Contracts (`Cargo.toml`)
+
 - `cargo build --workspace --target wasm32-unknown-unknown` — Compiles all 19 contract crates to WebAssembly.
 - `cargo fmt --all -- --check` — Checks Rust code formatting against `rustfmt.toml`.
 - `cargo clippy --workspace -- -D warnings` — Lints contracts for anti-patterns and performance issues.
 - `cargo test --workspace` — Executes contract unit tests and simulated Soroban runtime suites.
 
 ### Backend (`apps/backend`)
+
 - `npm run start:dev --workspace=apps/backend` — Starts backend in watch mode.
 - `npm run migration:run --workspace=apps/backend` — Applies pending TypeORM database migrations.
 - `npm run export:openapi --workspace=apps/backend` — Exports `openapi.json` specification.
 
 ### Frontend (`apps/frontend`)
+
 - `npm run dev --workspace=apps/frontend` — Launches Next.js dev server.
 - `npm run lint --workspace=apps/frontend` — Runs ESLint for Next.js and TypeScript.
 - `npm run storybook --workspace=apps/frontend` — Launches UI component Storybook on port `6006`.
 
 ### TypeScript SDK (`packages/sdk`)
+
 - `npm run build --workspace=packages/sdk` — Compiles TypeScript SDK to `dist/`.
 - `npm run docs --workspace=packages/sdk` — Generates public API documentation under `docs/api/sdk`.
 
@@ -256,16 +263,20 @@ These variables configure the Next.js client application (prefixed with `NEXT_PU
 ## Troubleshooting & Common Issues
 
 ### 1. Missing `wasm32-unknown-unknown` target
+
 **Error:** `error[E0463]: can't find crate for 'core'` or `target 'wasm32-unknown-unknown' not found`
 **Fix:** Run `rustup target add wasm32-unknown-unknown`.
 
 ### 2. Database Connection Refused
+
 **Error:** `ConnectionRefusedError: connect ECONNREFUSED 127.0.0.1:5432`
 **Fix:** Ensure PostgreSQL is running via `docker compose up -d postgres` and that `DATABASE_PORT=5432` is not blocked by another local database.
 
 ### 3. Packages Import Not Found in Backend/Frontend
+
 **Error:** `Cannot find module '@brain-storm/types'` or `@brain-storm/sdk`
 **Fix:** Build the package first: `npm run build --workspace=packages/types` and `npm run build --workspace=packages/sdk`.
 
 ### 4. Port Conflict on 3000 or 3001
+
 **Fix:** If port 3000 is occupied, set `PORT=3005` in `.env` for backend, and update `NEXT_PUBLIC_API_URL=http://localhost:3005`.

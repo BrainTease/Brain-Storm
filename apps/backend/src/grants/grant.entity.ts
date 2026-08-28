@@ -11,35 +11,35 @@ export type GrantStatus = 'open' | 'under_review' | 'approved' | 'rejected' | 'c
 @Entity('grants')
 export class Grant {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column({ length: 255 })
-  title: string;
+  title!: string;
 
   @Column({ type: 'text' })
-  description: string;
+  description!: string;
 
   @Column({ type: 'decimal', precision: 18, scale: 2 })
-  amount: number;
+  amount!: number;
 
   @Column({ length: 10, default: 'USD' })
-  currency: string;
+  currency!: string;
 
   @Column({ length: 36 })
-  applicantId: string;
+  applicantId!: string;
 
   @Column({ length: 50, default: 'open' })
-  status: GrantStatus;
+  status!: GrantStatus;
 
   @Column({ type: 'text', nullable: true })
-  reviewNotes: string | null;
+  reviewNotes!: string | null;
 
   @Column({ length: 36, nullable: true })
-  reviewerId: string | null;
+  reviewerId!: string | null;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt!: Date;
 }

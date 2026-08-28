@@ -3,32 +3,32 @@ import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from 'typeor
 @Entity('notification_preferences')
 export class NotificationPreference {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column({ unique: true })
-  userId: string;
+  userId!: string;
 
   @Column({ default: true })
-  inApp: boolean;
+  inApp!: boolean;
 
   @Column({ default: true })
-  email: boolean;
+  email!: boolean;
 
   @Column({ default: false })
-  push: boolean;
+  push!: boolean;
 
   @Column({ default: true })
-  enrollment: boolean;
+  enrollment!: boolean;
 
   @Column({ default: true })
-  completion: boolean;
+  completion!: boolean;
 
   @Column({ default: true })
-  credentialIssued: boolean;
+  credentialIssued!: boolean;
 
   @Column({ default: true })
-  coursePublished: boolean;
+  coursePublished!: boolean;
 
   @CreateDateColumn()
-  updatedAt: Date;
+  updatedAt!: Date;
 }

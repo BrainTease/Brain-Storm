@@ -67,7 +67,7 @@ describe('CertificateValidationService', () => {
 
     expect(result.enrollment).toEqual(enrollment);
     expect(mockEnrollmentsRepo.findOne).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { userId: USER_ID, courseId: COURSE_ID } }),
+      expect.objectContaining({ where: { userId: USER_ID, courseId: COURSE_ID } })
     );
   });
 
@@ -76,7 +76,7 @@ describe('CertificateValidationService', () => {
 
     await expect(service.validate(USER_ID, COURSE_ID)).rejects.toThrow(BadRequestException);
     await expect(service.validate(USER_ID, COURSE_ID)).rejects.toThrow(
-      'Enrollment not found for this user and course',
+      'Enrollment not found for this user and course'
     );
   });
 
@@ -86,7 +86,7 @@ describe('CertificateValidationService', () => {
 
     await expect(service.validate(USER_ID, COURSE_ID)).rejects.toThrow(BadRequestException);
     await expect(service.validate(USER_ID, COURSE_ID)).rejects.toThrow(
-      'Course has not been completed yet',
+      'Course has not been completed yet'
     );
   });
 
@@ -97,7 +97,7 @@ describe('CertificateValidationService', () => {
     await service.validate(USER_ID, COURSE_ID);
 
     expect(mockEnrollmentsRepo.findOne).toHaveBeenCalledWith(
-      expect.objectContaining({ relations: ['user', 'course'] }),
+      expect.objectContaining({ relations: ['user', 'course'] })
     );
   });
 });
@@ -111,10 +111,7 @@ describe('CertificateMintingService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    service = new CertificateMintingService(
-      mockCertRepo as any,
-      mockStellarService as any,
-    );
+    service = new CertificateMintingService(mockCertRepo as any, mockStellarService as any);
     jest.spyOn((service as any).logger, 'log').mockImplementation(() => undefined);
     jest.spyOn((service as any).logger, 'warn').mockImplementation(() => undefined);
     jest.spyOn((service as any).logger, 'error').mockImplementation(() => undefined);
@@ -169,7 +166,7 @@ describe('CertificatesService', () => {
       mockCertRepo as any,
       mockStellarService as any,
       mockValidationService as any,
-      mockMintingService as any,
+      mockMintingService as any
     );
   });
 
@@ -198,20 +195,20 @@ describe('CertificatesService', () => {
       mockCertRepo.findOne.mockResolvedValue(makeCertificate()); // duplicate
 
       await expect(
-        service.issueCertificate({ userId: USER_ID, courseId: COURSE_ID }),
+        service.issueCertificate({ userId: USER_ID, courseId: COURSE_ID })
       ).rejects.toThrow(BadRequestException);
       await expect(
-        service.issueCertificate({ userId: USER_ID, courseId: COURSE_ID }),
+        service.issueCertificate({ userId: USER_ID, courseId: COURSE_ID })
       ).rejects.toThrow('Certificate already issued for this course');
     });
 
     it('propagates BadRequestException from validation service', async () => {
       mockValidationService.validate.mockRejectedValue(
-        new BadRequestException('Course has not been completed yet'),
+        new BadRequestException('Course has not been completed yet')
       );
 
       await expect(
-        service.issueCertificate({ userId: USER_ID, courseId: COURSE_ID }),
+        service.issueCertificate({ userId: USER_ID, courseId: COURSE_ID })
       ).rejects.toThrow('Course has not been completed yet');
     });
   });

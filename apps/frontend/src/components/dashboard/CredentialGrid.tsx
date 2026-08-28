@@ -41,9 +41,7 @@ export function CredentialGrid({ credentials, isLoading = false }: CredentialGri
             <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
               {credential.course?.title ?? `Course ${credential.courseId}`}
             </p>
-            <p className="text-xs text-gray-400">
-              {formatDateShort(credential.issuedAt)}
-            </p>
+            <p className="text-xs text-gray-400">{formatDateShort(credential.issuedAt)}</p>
           </div>
         </li>
       ))}

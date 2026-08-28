@@ -17,8 +17,8 @@ test.describe('Homepage - Visual Regression', () => {
       fullPage: true,
       mask: [
         page.locator('[data-testid="timestamp"]'),
-        page.locator('[data-testid="dynamic-content"]')
-      ]
+        page.locator('[data-testid="dynamic-content"]'),
+      ],
     });
   });
 
@@ -28,13 +28,13 @@ test.describe('Homepage - Visual Regression', () => {
       await themeToggle.click();
       await page.waitForTimeout(500);
     }
-    
+
     await expect(page).toHaveScreenshot('homepage-dark-desktop.png', {
       fullPage: true,
       mask: [
         page.locator('[data-testid="timestamp"]'),
-        page.locator('[data-testid="dynamic-content"]')
-      ]
+        page.locator('[data-testid="dynamic-content"]'),
+      ],
     });
   });
 
@@ -42,10 +42,10 @@ test.describe('Homepage - Visual Regression', () => {
     await page.setViewportSize({ width: 768, height: 1024 });
     await page.reload();
     await page.waitForLoadState('networkidle');
-    
+
     await expect(page).toHaveScreenshot('homepage-light-tablet.png', {
       fullPage: true,
-      mask: [page.locator('[data-testid="timestamp"]')]
+      mask: [page.locator('[data-testid="timestamp"]')],
     });
   });
 
@@ -53,10 +53,10 @@ test.describe('Homepage - Visual Regression', () => {
     await page.setViewportSize({ width: 375, height: 667 });
     await page.reload();
     await page.waitForLoadState('networkidle');
-    
+
     await expect(page).toHaveScreenshot('homepage-light-mobile.png', {
       fullPage: true,
-      mask: [page.locator('[data-testid="timestamp"]')]
+      mask: [page.locator('[data-testid="timestamp"]')],
     });
   });
 
@@ -64,16 +64,16 @@ test.describe('Homepage - Visual Regression', () => {
     await page.setViewportSize({ width: 375, height: 667 });
     await page.reload();
     await page.waitForLoadState('networkidle');
-    
+
     const themeToggle = page.locator('[data-testid="theme-toggle"]');
     if (await themeToggle.isVisible()) {
       await themeToggle.click();
       await page.waitForTimeout(500);
     }
-    
+
     await expect(page).toHaveScreenshot('homepage-dark-mobile.png', {
       fullPage: true,
-      mask: [page.locator('[data-testid="timestamp"]')]
+      mask: [page.locator('[data-testid="timestamp"]')],
     });
   });
 

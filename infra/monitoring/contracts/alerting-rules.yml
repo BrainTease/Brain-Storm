@@ -11,7 +11,7 @@ groups:
           severity: warning
           team: contracts
         annotations:
-          summary: "No contract events received for {{ $labels.contract }}"
+          summary: 'No contract events received for {{ $labels.contract }}'
           description: >
             Contract {{ $labels.contract }} has not emitted any events for more
             than 10 minutes. This may indicate a monitoring connectivity issue
@@ -27,7 +27,7 @@ groups:
           severity: critical
           team: contracts
         annotations:
-          summary: "High error rate on {{ $labels.contract }}"
+          summary: 'High error rate on {{ $labels.contract }}'
           description: >
             Contract {{ $labels.contract }} is experiencing {{ $value | humanizePercentage }}
             transaction errors over the last 5 minutes.
@@ -43,7 +43,7 @@ groups:
           severity: warning
           team: contracts
         annotations:
-          summary: "High latency on {{ $labels.contract }}"
+          summary: 'High latency on {{ $labels.contract }}'
           description: >
             p95 transaction latency for {{ $labels.contract }} is
             {{ $value | humanizeDuration }}, exceeding the 5s threshold.
@@ -61,7 +61,7 @@ groups:
           severity: warning
           team: contracts
         annotations:
-          summary: "Unusual event spike on {{ $labels.contract }}"
+          summary: 'Unusual event spike on {{ $labels.contract }}'
           description: >
             Event rate for {{ $labels.contract }} is {{ $value }} events/s,
             which is more than 10x above the 1-hour baseline.
@@ -75,7 +75,7 @@ groups:
           severity: info
           team: contracts
         annotations:
-          summary: "No progress updates recorded in 30 minutes"
+          summary: 'No progress updates recorded in 30 minutes'
           description: >
             The analytics contract has not received any progress_update events
             in the past 30 minutes. Verify the backend is submitting transactions.

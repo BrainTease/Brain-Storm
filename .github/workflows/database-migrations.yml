@@ -271,7 +271,7 @@ jobs:
           echo "" >> migration-report.md
           echo "## Migration Files" >> migration-report.md
           echo "" >> migration-report.md
-          
+
           if [ -d "src/migrations" ]; then
             ls -1 src/migrations/*.ts | while read file; do
               filename=$(basename "$file")
@@ -280,7 +280,7 @@ jobs:
           else
             echo "No migrations found" >> migration-report.md
           fi
-          
+
           cat migration-report.md
 
       - name: Comment migration report on PR
@@ -290,7 +290,7 @@ jobs:
           script: |
             const fs = require('fs');
             const report = fs.readFileSync('apps/backend/migration-report.md', 'utf8');
-            
+
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
@@ -319,7 +319,7 @@ jobs:
         with:
           script: |
             const status = '${{ steps.status.outputs.status }}';
-            
+
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,

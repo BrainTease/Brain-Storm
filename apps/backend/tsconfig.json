@@ -10,13 +10,20 @@
     "sourceMap": true,
     "outDir": "./dist",
     "baseUrl": "./",
-    "ignoreDeprecations": "6.0",
     "incremental": true,
     "skipLibCheck": true,
-    "strictNullChecks": true,
-    "noImplicitAny": false,
-    "strictBindCallApply": false,
-    "forceConsistentCasingInFileNames": false,
-    "noFallthroughCasesInSwitch": false
-  }
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "noFallthroughCasesInSwitch": true,
+    "allowImportingTsExtensions": true,
+    "moduleResolution": "node",
+    "paths": {
+      "@brain-storm/types/*": ["../../packages/types/src/*"],
+      "@brain-storm/types": ["../../packages/types/src"],
+      "@brain-storm/sdk/*": ["../../packages/sdk/src/*"],
+      "@brain-storm/sdk": ["../../packages/sdk/src"]
+    }
+  },
+  "include": ["src/**/*", "types/**/*"],
+  "exclude": ["node_modules", "dist", "**/*.spec.ts"]
 }

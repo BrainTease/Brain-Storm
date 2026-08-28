@@ -2,12 +2,12 @@
 
 Dependency-free, fully-typed TypeScript client for the Brain-Storm REST API.
 
-| | |
-| --- | --- |
-| **Full API reference** | [`docs/api/sdk-reference.md`](../../docs/api/sdk-reference.md) |
-| **Versioning policy** | [`docs/api/sdk-versioning.md`](../../docs/api/sdk-versioning.md) |
-| **Changelog** | [`CHANGELOG.md`](./CHANGELOG.md) |
-| **Source** | [`src/index.ts`](./src/index.ts) — every export carries TSDoc |
+|                        |                                                                  |
+| ---------------------- | ---------------------------------------------------------------- |
+| **Full API reference** | [`docs/api/sdk-reference.md`](../../docs/api/sdk-reference.md)   |
+| **Versioning policy**  | [`docs/api/sdk-versioning.md`](../../docs/api/sdk-versioning.md) |
+| **Changelog**          | [`CHANGELOG.md`](./CHANGELOG.md)                                 |
+| **Source**             | [`src/index.ts`](./src/index.ts) — every export carries TSDoc    |
 
 ## Status
 
@@ -93,17 +93,17 @@ Everything exported from `src/index.ts`, and nothing else, is public API. Each e
 
 **Namespaces on the client**
 
-| Namespace | Methods |
-| --- | --- |
-| [`client.auth`](../../docs/api/sdk-reference.md#clientauth) | `register`, `login`, `logout` |
-| [`client.courses`](../../docs/api/sdk-reference.md#clientcourses) | `list`, `get`, `create`, `update`, `remove` |
-| [`client.progress`](../../docs/api/sdk-reference.md#clientprogress) | `record`, `getMyCourseProgress` |
-| [`client.users`](../../docs/api/sdk-reference.md#clientusers) | `getProfile`, `updateProfile` |
-| [`client.stellar`](../../docs/api/sdk-reference.md#clientstellar) | `getBalance` — read-only |
+| Namespace                                                           | Methods                                     |
+| ------------------------------------------------------------------- | ------------------------------------------- |
+| [`client.auth`](../../docs/api/sdk-reference.md#clientauth)         | `register`, `login`, `logout`               |
+| [`client.courses`](../../docs/api/sdk-reference.md#clientcourses)   | `list`, `get`, `create`, `update`, `remove` |
+| [`client.progress`](../../docs/api/sdk-reference.md#clientprogress) | `record`, `getMyCourseProgress`             |
+| [`client.users`](../../docs/api/sdk-reference.md#clientusers)       | `getProfile`, `updateProfile`               |
+| [`client.stellar`](../../docs/api/sdk-reference.md#clientstellar)   | `getBalance` — read-only                    |
 
 **Types** — [`LoginDto`](../../docs/api/sdk-reference.md#logindto), [`RegisterDto`](../../docs/api/sdk-reference.md#registerdto), [`AuthResponse`](../../docs/api/sdk-reference.md#authresponse), [`CourseDto`](../../docs/api/sdk-reference.md#coursedto), [`CreateCourseDto`](../../docs/api/sdk-reference.md#createcoursedto), [`UpdateCourseDto`](../../docs/api/sdk-reference.md#updatecoursedto), [`CourseListResponse`](../../docs/api/sdk-reference.md#courselistresponse), [`CourseQueryParams`](../../docs/api/sdk-reference.md#coursequeryparams), [`RecordProgressDto`](../../docs/api/sdk-reference.md#recordprogressdto), [`ProgressDto`](../../docs/api/sdk-reference.md#progressdto), [`UserDto`](../../docs/api/sdk-reference.md#userdto), [`UpdateUserDto`](../../docs/api/sdk-reference.md#updateuserdto), [`StellarBalanceResponse`](../../docs/api/sdk-reference.md#stellarbalanceresponse), [`ApiError`](../../docs/api/sdk-reference.md#apierror), [`HttpAdapter`](../../docs/api/sdk-reference.md#httpadapter).
 
-**Internal** — the per-resource classes (`AuthClient`, `CoursesClient`, `ProgressClient`, `UsersClient`, `StellarClient`) and `FetchHttpAdapter` are *not* exported. Their methods are public API; their names are not. Use `BrainStormClient['courses']` if you need the type.
+**Internal** — the per-resource classes (`AuthClient`, `CoursesClient`, `ProgressClient`, `UsersClient`, `StellarClient`) and `FetchHttpAdapter` are _not_ exported. Their methods are public API; their names are not. Use `BrainStormClient['courses']` if you need the type.
 
 ## Scope
 
@@ -113,16 +113,16 @@ This SDK wraps the **HTTP API**. It does **not** build, sign or submit Stellar o
 
 At `1.0.0`, with stability guarantees already in force. Summary:
 
-| Bump | Trigger |
-| --- | --- |
+| Bump      | Trigger                                                                                                                                                                    |
+| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **MAJOR** | Removing/renaming an export, new required input field, changed response field type, new member in a response **union**, changed error behaviour, `peerDependencies` change |
-| **MINOR** | New export, new method, new **optional** field, loosened input type, `@deprecated` marking |
-| **PATCH** | Bug fixes, docs, internal refactors |
+| **MINOR** | New export, new method, new **optional** field, loosened input type, `@deprecated` marking                                                                                 |
+| **PATCH** | Bug fixes, docs, internal refactors                                                                                                                                        |
 
 Two rules that catch people out:
 
 - **Adding a value to a response enum is breaking here**, though it is not for the HTTP API — a TypeScript union is checked at compile time, so exhaustive `switch` statements downstream stop compiling. The two policies govern different contracts and do not conflict.
-- **Never convert a decimal balance string to a number.** It is breaking *and* lossy.
+- **Never convert a decimal balance string to a number.** It is breaking _and_ lossy.
 
 Full rules, deprecation process, changelog format, and reserved rules for future transaction building: [`docs/api/sdk-versioning.md`](../../docs/api/sdk-versioning.md).
 

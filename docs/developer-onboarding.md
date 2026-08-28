@@ -20,17 +20,18 @@ Welcome to Brain-Storm! This comprehensive guide takes you from setup to your fi
 
 Ensure you have the following installed:
 
-| Tool | Version | Purpose |
-|------|---------|---------|
-| Node.js | v18+ | JavaScript runtime |
-| npm | v9+ | Package manager |
-| PostgreSQL | v12+ | Database |
-| Rust | v1.75+ | Smart contract language |
-| Stellar CLI | v21.5.0+ | Blockchain interaction |
-| Docker | Latest | Containerization (optional) |
-| Git | Latest | Version control |
+| Tool        | Version  | Purpose                     |
+| ----------- | -------- | --------------------------- |
+| Node.js     | v18+     | JavaScript runtime          |
+| npm         | v9+      | Package manager             |
+| PostgreSQL  | v12+     | Database                    |
+| Rust        | v1.75+   | Smart contract language     |
+| Stellar CLI | v21.5.0+ | Blockchain interaction      |
+| Docker      | Latest   | Containerization (optional) |
+| Git         | Latest   | Version control             |
 
 **Verify installations:**
+
 ```bash
 node --version
 npm --version
@@ -59,6 +60,7 @@ cp .env.example .env
 ```
 
 **Key variables for local development:**
+
 ```env
 DATABASE_HOST=localhost
 DATABASE_PORT=5432
@@ -124,11 +126,11 @@ npx ts-node src/database/seed.ts --count=25
 
 #### Seed Script Options
 
-| Option | Description | Default |
-|--------|-------------|---------|
-| `--with-reviews` | Include sample course reviews | Not included |
-| `--with-tips` | Include sample BST tip transactions | Not included |
-| `--count=N` | Number of courses/students to generate | 10 |
+| Option           | Description                            | Default      |
+| ---------------- | -------------------------------------- | ------------ |
+| `--with-reviews` | Include sample course reviews          | Not included |
+| `--with-tips`    | Include sample BST tip transactions    | Not included |
+| `--count=N`      | Number of courses/students to generate | 10           |
 
 #### Environment Safety
 
@@ -136,24 +138,25 @@ The seed script is **guarded against running in production** — it will exit im
 
 #### What Gets Seeded
 
-| Entity | Description |
-|--------|-------------|
-| Admin | 1 admin account (`admin@brainstorm.dev`) |
-| Instructors | Up to 5 instructor profiles with Stellar keys |
-| Curators | 3 content curator accounts |
-| Students | 20 student profiles (2x count) |
-| Courses | 10 courses with realistic titles/descriptions |
-| Modules | 3-6 modules per course |
-| Lessons | 2-4 lessons per module with markdown content |
-| Enrollments | Students enrolled in 1-4 courses each |
-| Progress | Random progress records for enrollments |
-| Notifications | Enrollment and tip notifications |
-| Reviews | (Optional) Student reviews with ratings |
-| Tips | (Optional) Sample BST tip transactions |
+| Entity        | Description                                   |
+| ------------- | --------------------------------------------- |
+| Admin         | 1 admin account (`admin@brainstorm.dev`)      |
+| Instructors   | Up to 5 instructor profiles with Stellar keys |
+| Curators      | 3 content curator accounts                    |
+| Students      | 20 student profiles (2x count)                |
+| Courses       | 10 courses with realistic titles/descriptions |
+| Modules       | 3-6 modules per course                        |
+| Lessons       | 2-4 lessons per module with markdown content  |
+| Enrollments   | Students enrolled in 1-4 courses each         |
+| Progress      | Random progress records for enrollments       |
+| Notifications | Enrollment and tip notifications              |
+| Reviews       | (Optional) Student reviews with ratings       |
+| Tips          | (Optional) Sample BST tip transactions        |
 
 ### 6. Start Development Servers
 
 **Terminal 1 - Backend:**
+
 ```bash
 npm run dev:backend
 # API available at http://localhost:3000
@@ -161,12 +164,14 @@ npm run dev:backend
 ```
 
 **Terminal 2 - Frontend:**
+
 ```bash
 npm run dev:frontend
 # App available at http://localhost:3001
 ```
 
 **Terminal 3 - Smart Contracts (optional):**
+
 ```bash
 cd contracts
 cargo build --target wasm32-unknown-unknown
@@ -217,18 +222,21 @@ brain-storm/
 ### Key Directories
 
 **Backend (`apps/backend/src/`):**
+
 - `auth/` — JWT, OAuth, Stellar authentication
 - `courses/` — Course CRUD, modules, lessons
 - `stellar/` — Soroban contract calls, Horizon API
 - `common/` — Guards, pipes, filters, logger
 
 **Frontend (`apps/frontend/src/`):**
+
 - `app/` — Next.js pages (App Router)
 - `components/ui/` — Reusable UI primitives
 - `store/` — Zustand stores for auth, courses, progress
 - `lib/` — API client, helpers
 
 **Contracts (`contracts/`):**
+
 - Each contract is a Rust crate with `src/lib.rs`
 - Tests in `#[cfg(test)]` modules
 - Built to `wasm32-unknown-unknown` target
@@ -248,12 +256,14 @@ Use conventional commit prefixes: `feature/`, `fix/`, `docs/`, `chore/`
 ### 2. Make Changes
 
 **Backend example:**
+
 ```bash
 cd apps/backend
 npm run dev  # Hot reload enabled
 ```
 
 **Frontend example:**
+
 ```bash
 cd apps/frontend
 npm run dev  # Hot reload enabled
@@ -312,21 +322,25 @@ Follow [Conventional Commits](./docs/contributing/COMMIT_CONVENTIONS.md).
 ### Backend Debugging
 
 **Enable debug logs:**
+
 ```env
 LOG_LEVEL=debug
 ```
 
 **Use NestJS CLI:**
+
 ```bash
 npm run dev:backend -- --debug
 ```
 
 **Inspect database:**
+
 ```bash
 psql -h localhost -U postgres -d brain_storm_dev
 ```
 
 **Common queries:**
+
 ```sql
 -- List all users
 SELECT id, email, role FROM users;
@@ -341,14 +355,17 @@ SELECT * FROM progress WHERE user_id = 'user-id';
 ### Frontend Debugging
 
 **React DevTools:**
+
 - Install [React DevTools](https://react-devtools-tutorial.vercel.app/) browser extension
 - Inspect component state in Zustand stores
 
 **Network inspection:**
+
 - Open DevTools → Network tab
 - Check API responses and request payloads
 
 **Console errors:**
+
 ```bash
 # Enable verbose logging
 NEXT_PUBLIC_DEBUG=true npm run dev:frontend
@@ -357,17 +374,20 @@ NEXT_PUBLIC_DEBUG=true npm run dev:frontend
 ### Smart Contract Debugging
 
 **Build with debug info:**
+
 ```bash
 cd contracts/analytics
 cargo build --target wasm32-unknown-unknown
 ```
 
 **Run tests with output:**
+
 ```bash
 cargo test -- --nocapture
 ```
 
 **Inspect contract state:**
+
 ```bash
 stellar contract invoke \
   --id <contract-id> \
@@ -384,6 +404,7 @@ stellar contract invoke \
 **Symptom:** `Error: connect ECONNREFUSED 127.0.0.1:5432`
 
 **Solution:**
+
 ```bash
 # Check PostgreSQL is running
 psql -h localhost -U postgres -c "SELECT 1"
@@ -398,6 +419,7 @@ sudo systemctl start postgresql  # Linux
 **Symptom:** `Error: listen EADDRINUSE :::3000`
 
 **Solution:**
+
 ```bash
 # Find process using port 3000
 lsof -i :3000
@@ -411,6 +433,7 @@ kill -9 <PID>
 **Symptom:** `Error: Network request failed`
 
 **Solution:**
+
 ```bash
 # Verify testnet is accessible
 curl https://horizon-testnet.stellar.org/
@@ -424,6 +447,7 @@ stellar keys list
 **Symptom:** `error: could not compile 'analytics'`
 
 **Solution:**
+
 ```bash
 # Update Rust
 rustup update
@@ -439,6 +463,7 @@ cargo build --target wasm32-unknown-unknown
 **Symptom:** Inconsistent test results
 
 **Solution:**
+
 ```bash
 # Clear cache
 npm run clean

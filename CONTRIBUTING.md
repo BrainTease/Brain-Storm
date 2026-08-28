@@ -16,14 +16,14 @@ All contributors are expected to follow our [Code of Conduct](CODE_OF_CONDUCT.md
 
 ## Branch Naming Conventions
 
-| Prefix | When to use |
-|--------|-------------|
-| `feat/` | New feature — e.g. `feat/api-key-rotation` |
-| `fix/` | Bug fix — e.g. `fix/xss-sanitization` |
-| `docs/` | Documentation only — e.g. `docs/contract-guide` |
-| `chore/` | Maintenance, tooling, deps — e.g. `chore/upgrade-nestjs` |
-| `refactor/` | Code restructure with no behaviour change |
-| `test/` | Adding or fixing tests |
+| Prefix      | When to use                                              |
+| ----------- | -------------------------------------------------------- |
+| `feat/`     | New feature — e.g. `feat/api-key-rotation`               |
+| `fix/`      | Bug fix — e.g. `fix/xss-sanitization`                    |
+| `docs/`     | Documentation only — e.g. `docs/contract-guide`          |
+| `chore/`    | Maintenance, tooling, deps — e.g. `chore/upgrade-nestjs` |
+| `refactor/` | Code restructure with no behaviour change                |
+| `test/`     | Adding or fixing tests                                   |
 
 Branch names must be lowercase and use hyphens, not underscores.
 
@@ -41,17 +41,17 @@ We enforce [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/
 
 ### Types
 
-| Type | Description |
-|------|-------------|
-| `feat` | A new feature |
-| `fix` | A bug fix |
-| `docs` | Documentation changes only |
-| `style` | Formatting, missing semicolons — no logic change |
-| `refactor` | Code change that is neither a fix nor a feature |
-| `test` | Adding or correcting tests |
-| `chore` | Build process, dependency updates, tooling |
-| `perf` | Performance improvement |
-| `ci` | CI/CD configuration changes |
+| Type       | Description                                      |
+| ---------- | ------------------------------------------------ |
+| `feat`     | A new feature                                    |
+| `fix`      | A bug fix                                        |
+| `docs`     | Documentation changes only                       |
+| `style`    | Formatting, missing semicolons — no logic change |
+| `refactor` | Code change that is neither a fix nor a feature  |
+| `test`     | Adding or correcting tests                       |
+| `chore`    | Build process, dependency updates, tooling       |
+| `perf`     | Performance improvement                          |
+| `ci`       | CI/CD configuration changes                      |
 
 ### Scope (optional but encouraged)
 
@@ -94,7 +94,7 @@ Before submitting your PR, verify:
 - [ ] Commits follow Conventional Commits format.
 - [ ] Documentation is updated if behaviour changes.
 - [ ] No secrets or PII are committed.
-- [ ] PR description clearly explains the *what* and *why*.
+- [ ] PR description clearly explains the _what_ and _why_.
 
 ## Development Workflow
 

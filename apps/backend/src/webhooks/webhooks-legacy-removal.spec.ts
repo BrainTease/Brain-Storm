@@ -30,7 +30,7 @@ const makeWebhook = (overrides: Partial<Webhook> = {}): Webhook =>
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides,
-  } as Webhook);
+  }) as Webhook;
 
 const makeDelivery = (overrides: Partial<WebhookDelivery> = {}): WebhookDelivery =>
   ({
@@ -43,7 +43,7 @@ const makeDelivery = (overrides: Partial<WebhookDelivery> = {}): WebhookDelivery
     nextRetryAt: null,
     deadLetteredAt: new Date(),
     ...overrides,
-  } as WebhookDelivery);
+  }) as WebhookDelivery;
 
 function buildService() {
   const mockWebhookRepo = {
@@ -128,10 +128,12 @@ describe('WebhooksService — core functionality unaffected by #819', () => {
       mockWebhookRepo.create.mockReturnValue(wh);
       mockWebhookRepo.save.mockResolvedValue(wh);
 
-      const result = await service.register('u1', 'https://example.com/hook', ['enrollment.created']);
+      const result = await service.register('u1', 'https://example.com/hook', [
+        'enrollment.created',
+      ]);
 
       expect(mockWebhookRepo.create).toHaveBeenCalledWith(
-        expect.objectContaining({ secret: expect.stringMatching(/^whs_/) }),
+        expect.objectContaining({ secret: expect.stringMatching(/^whs_/) })
       );
       expect(result).toEqual(wh);
     });
@@ -192,9 +194,9 @@ describe('WebhooksService — core functionality unaffected by #819', () => {
     it('returns false when timestamp is outside the 5-minute replay window', () => {
       const { service } = buildService();
       const staleTimestamp = String(Math.floor(Date.now() / 1000) - 600); // 10 min ago
-      expect(
-        service.verifySignature('secret', 'body', 'sha256=anysig', staleTimestamp),
-      ).toBe(false);
+      expect(service.verifySignature('secret', 'body', 'sha256=anysig', staleTimestamp)).toBe(
+        false
+      );
     });
   });
 

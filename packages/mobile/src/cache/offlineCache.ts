@@ -26,7 +26,11 @@ export interface QueuedAction {
 /**
  * Store data in local cache
  */
-export async function setCache<T>(key: string, data: T, maxAgeMs: number = 5 * 60 * 1000): Promise<void> {
+export async function setCache<T>(
+  key: string,
+  data: T,
+  maxAgeMs: number = 5 * 60 * 1000
+): Promise<void> {
   const item: CachedItem<T> = {
     data,
     timestamp: Date.now(),
@@ -41,7 +45,7 @@ export async function setCache<T>(key: string, data: T, maxAgeMs: number = 5 * 6
 export async function getCache<T>(key: string): Promise<CachedItem<T> | null> {
   const json = await AsyncStorage.getItem(CACHE_PREFIX + key);
   if (!json) return null;
-  
+
   try {
     const item = JSON.parse(json) as CachedItem<T>;
     return item;
@@ -53,23 +57,29 @@ export async function getCache<T>(key: string): Promise<CachedItem<T> | null> {
 /**
  * Check if cache is stale
  */
-export async function isCacheStale(key: string, maxAgeMs: number = 5 * 60 * 1000): Promise<boolean> {
+export async function isCacheStale(
+  key: string,
+  maxAgeMs: number = 5 * 60 * 1000
+): Promise<boolean> {
   const item = await getCache(key);
   if (!item) return true;
-  
+
   return Date.now() - item.timestamp > maxAgeMs;
 }
 
 /**
  * Get cached data if fresh, otherwise return null
  */
-export async function getCacheIfFresh<T>(key: string, maxAgeMs: number = 5 * 60 * 1000): Promise<T | null> {
+export async function getCacheIfFresh<T>(
+  key: string,
+  maxAgeMs: number = 5 * 60 * 1000
+): Promise<T | null> {
   const item = await getCache<T>(key);
   if (!item) return null;
-  
+
   const age = Date.now() - item.timestamp;
   if (age > maxAgeMs) return null;
-  
+
   return item.data;
 }
 
@@ -89,9 +99,9 @@ export async function fetchWithCache<T>(
   if (cached && !isStale) {
     // Refresh in background
     fetcher()
-      .then(fresh => setCache(key, fresh, maxAgeMs))
+      .then((fresh) => setCache(key, fresh, maxAgeMs))
       .catch(console.error);
-    
+
     return { data: cached.data, isStale: false };
   }
 
@@ -121,6 +131,6 @@ export async function clearCache(key: string): Promise<void> {
  */
 export async function clearAllCaches(): Promise<void> {
   const keys = await AsyncStorage.getAllKeys();
-  const cacheKeys = keys.filter(k => k.startsWith(CACHE_PREFIX));
+  const cacheKeys = keys.filter((k) => k.startsWith(CACHE_PREFIX));
   await AsyncStorage.multiRemove(cacheKeys);
 }

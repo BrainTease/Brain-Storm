@@ -33,9 +33,25 @@ function randomEmail(): string {
 
 function randomWords(n: number): string {
   const pool = [
-    'blockchain', 'stellar', 'smart', 'contract', 'token', 'ledger',
-    'credential', 'course', 'learning', 'web3', 'crypto', 'defi',
-    'soroban', 'wasm', 'node', 'module', 'lesson', 'quiz', 'reward',
+    'blockchain',
+    'stellar',
+    'smart',
+    'contract',
+    'token',
+    'ledger',
+    'credential',
+    'course',
+    'learning',
+    'web3',
+    'crypto',
+    'defi',
+    'soroban',
+    'wasm',
+    'node',
+    'module',
+    'lesson',
+    'quiz',
+    'reward',
   ];
   return Array.from({ length: n }, (_, i) => pool[(i + _counter) % pool.length]).join(' ');
 }
@@ -157,21 +173,21 @@ export interface TestQuiz {
 export class UserFactory {
   static create(overrides: Partial<TestUser> = {}): TestUser {
     const firstName = overrides.firstName ?? `First${nextId()}`;
-    const lastName  = overrides.lastName  ?? `Last${nextId()}`;
+    const lastName = overrides.lastName ?? `Last${nextId()}`;
     // Derive name once so the object literal only sets it in one place.
     // If the caller overrides firstName or lastName without providing an
     // explicit name, the derived value below will still be correct because
     // we use the already-resolved firstName/lastName values.
     const name = overrides.name ?? `${firstName} ${lastName}`;
     return {
-      id:        nextId(),
-      email:     randomEmail(),
+      id: nextId(),
+      email: randomEmail(),
       firstName,
       lastName,
       name,
-      username:  `user_${nextId()}`,
-      password:  `pwd_${nextId()}`,
-      role:      'student',
+      username: `user_${nextId()}`,
+      password: `pwd_${nextId()}`,
+      role: 'student',
       createdAt: randomPast(),
       updatedAt: randomRecent(),
       ...overrides,
@@ -192,19 +208,19 @@ export class UserFactory {
  */
 export class CourseFactory {
   static create(overrides: Partial<TestCourse> = {}): TestCourse {
-    const instructor   = overrides.instructor   ?? `Instructor ${nextId()}`;
+    const instructor = overrides.instructor ?? `Instructor ${nextId()}`;
     const instructorId = overrides.instructorId ?? nextId();
     return {
-      id:           nextId(),
-      title:        randomWords(3),
-      description:  randomParagraph(),
+      id: nextId(),
+      title: randomWords(3),
+      description: randomParagraph(),
       instructor,
       instructorId,
-      duration:     randomInt(1, 12),
-      published:    true,
-      status:       'published',
-      createdAt:    randomPast(),
-      updatedAt:    randomRecent(),
+      duration: randomInt(1, 12),
+      published: true,
+      status: 'published',
+      createdAt: randomPast(),
+      updatedAt: randomRecent(),
       ...overrides,
     };
   }
@@ -223,12 +239,12 @@ export class CourseFactory {
 export class EnrollmentFactory {
   static create(overrides: Partial<TestEnrollment> = {}): TestEnrollment {
     return {
-      id:          nextId(),
-      userId:      nextId(),
-      courseId:    nextId(),
-      progress:    randomInt(0, 100),
-      status:      'active',
-      enrolledAt:  randomPast(),
+      id: nextId(),
+      userId: nextId(),
+      courseId: nextId(),
+      progress: randomInt(0, 100),
+      status: 'active',
+      enrolledAt: randomPast(),
       completedAt: null,
       ...overrides,
     };
@@ -249,12 +265,12 @@ export class EnrollmentFactory {
 export class QuizFactory {
   static create(overrides: Partial<TestQuiz> = {}): TestQuiz {
     return {
-      id:           nextId(),
-      courseId:     nextId(),
-      title:        randomWords(2),
-      questions:    randomInt(5, 20),
+      id: nextId(),
+      courseId: nextId(),
+      title: randomWords(2),
+      questions: randomInt(5, 20),
       passingScore: 70,
-      createdAt:    randomPast(),
+      createdAt: randomPast(),
       ...overrides,
     };
   }

@@ -12,9 +12,10 @@ if (!currentFile || !fs.existsSync(currentFile)) {
 }
 
 const current = JSON.parse(fs.readFileSync(currentFile, 'utf8'));
-const baseline = baselineFile && fs.existsSync(baselineFile)
-  ? JSON.parse(fs.readFileSync(baselineFile, 'utf8'))
-  : null;
+const baseline =
+  baselineFile && fs.existsSync(baselineFile)
+    ? JSON.parse(fs.readFileSync(baselineFile, 'utf8'))
+    : null;
 
 const comparison = {
   timestamp: new Date().toISOString(),
@@ -23,10 +24,10 @@ const comparison = {
   metrics: {},
 };
 
-Object.keys(current.metrics).forEach(metric => {
+Object.keys(current.metrics).forEach((metric) => {
   const currentValue = current.metrics[metric];
   const baselineValue = baseline?.metrics?.[metric] || currentValue;
-  
+
   comparison.metrics[metric] = {
     baseline: baselineValue,
     current: currentValue,

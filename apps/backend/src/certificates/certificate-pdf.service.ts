@@ -18,7 +18,7 @@ export class CertificatePdfService {
     const courseTitle = (certificate.course as any)?.title || certificate.courseId;
     const issuedAt = certificate.issuedAt.toISOString().slice(0, 10);
 
-    return this.pdfBuilder.build([
+    const lines = [
       { size: 26, x: 140, y: 730, text: 'Certificate of Completion' },
       { size: 14, x: 72, y: 670, text: 'This certifies that' },
       { size: 22, x: 72, y: 635, text: recipient },
@@ -75,7 +75,5 @@ export class CertificatePdfService {
 
   private escape(text: string): string {
     return text.replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)');
-      { size: 10, x: 72, y: 415, text: `brain-storm://certificates/${certificate.id}/verify` },
-    ]);
   }
 }

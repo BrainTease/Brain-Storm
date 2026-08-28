@@ -1,16 +1,19 @@
 # Error Handling Standardization
 
 ## Overview
+
 Consistent error handling across the Brain-Storm backend using error hierarchy and factory pattern.
 
 ## Error Hierarchy
 
 ### AppError (Base)
+
 ```typescript
-new AppError(code, message, statusCode, details)
+new AppError(code, message, statusCode, details);
 ```
 
 ### Specific Errors
+
 - `ValidationError` (400) - Input validation failures
 - `AuthenticationError` (401) - Auth failures
 - `AuthorizationError` (403) - Permission denied
@@ -22,6 +25,7 @@ new AppError(code, message, statusCode, details)
 ## Usage
 
 ### Throwing Errors
+
 ```typescript
 import { ErrorFactory } from '@/common/errors/error.factory';
 
@@ -36,6 +40,7 @@ throw ErrorFactory.stellar('Transaction failed', { txHash: '...' });
 ```
 
 ### Global Exception Filter
+
 Automatically catches all errors and returns standardized JSON:
 
 ```json
@@ -49,6 +54,7 @@ Automatically catches all errors and returns standardized JSON:
 ```
 
 ## Best Practices
+
 - Always use ErrorFactory for consistency
 - Include relevant details for debugging
 - Log errors appropriately

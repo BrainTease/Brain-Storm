@@ -35,11 +35,17 @@ import {
 function generateMockQuizData(setData: (data: QuizScoreDataPoint[]) => void) {
   const data: QuizScoreDataPoint[] = [];
   const today = new Date();
-  const quizNames = ['Module 1 Quiz', 'Module 2 Quiz', 'Module 3 Quiz', 'Module 4 Quiz', 'Module 5 Quiz'];
+  const quizNames = [
+    'Module 1 Quiz',
+    'Module 2 Quiz',
+    'Module 3 Quiz',
+    'Module 4 Quiz',
+    'Module 5 Quiz',
+  ];
 
   for (let i = 0; i < quizNames.length; i++) {
     const date = new Date(today);
-    date.setDate(date.getDate() - (i * 5));
+    date.setDate(date.getDate() - i * 5);
     const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     const score = Math.floor(60 + Math.random() * 40);
 
@@ -149,7 +155,10 @@ export default function StudentDashboardPage() {
         </div>
 
         {error && (
-          <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700 dark:border-red-700 dark:bg-red-900/20">
+          <div
+            role="alert"
+            className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700 dark:border-red-700 dark:bg-red-900/20"
+          >
             {error}
           </div>
         )}
@@ -216,12 +225,17 @@ export default function StudentDashboardPage() {
 
           {isLoading ? (
             <div className="space-y-3">
-              {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-20" />)}
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} className="h-20" />
+              ))}
             </div>
           ) : filteredCourses.length === 0 ? (
             <div className="rounded-xl border border-dashed border-gray-300 dark:border-gray-600 p-8 text-center text-gray-500 dark:text-gray-400">
               <p>No courses found.</p>
-              <Link href="/courses" className="mt-2 inline-block text-blue-600 hover:underline text-sm">
+              <Link
+                href="/courses"
+                className="mt-2 inline-block text-blue-600 hover:underline text-sm"
+              >
                 Browse courses →
               </Link>
             </div>
@@ -241,15 +255,18 @@ export default function StudentDashboardPage() {
                         {course.title}
                       </Link>
                       {course.level && (
-                        <Badge className="capitalize text-xs shrink-0">
-                          {course.level}
-                        </Badge>
+                        <Badge className="capitalize text-xs shrink-0">{course.level}</Badge>
                       )}
                     </div>
-                    <ProgressBar value={course.progressPct} label={`${course.progressPct}% complete`} />
+                    <ProgressBar
+                      value={course.progressPct}
+                      label={`${course.progressPct}% complete`}
+                    />
                   </div>
                   {course.progressPct === 100 && (
-                    <span className="text-2xl shrink-0" aria-label="Completed" title="Completed">🏆</span>
+                    <span className="text-2xl shrink-0" aria-label="Completed" title="Completed">
+                      🏆
+                    </span>
                   )}
                 </li>
               ))}
@@ -264,7 +281,9 @@ export default function StudentDashboardPage() {
           </h2>
           {isLoading ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-16" />)}
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} className="h-16" />
+              ))}
             </div>
           ) : credentials.length === 0 ? (
             <p className="text-gray-500 dark:text-gray-400 text-sm">
@@ -277,7 +296,9 @@ export default function StudentDashboardPage() {
                   key={cred.id}
                   className="flex items-center gap-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-3"
                 >
-                  <span className="text-2xl" aria-hidden="true">🎓</span>
+                  <span className="text-2xl" aria-hidden="true">
+                    🎓
+                  </span>
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                       {cred.course?.title ?? `Course ${cred.courseId}`}

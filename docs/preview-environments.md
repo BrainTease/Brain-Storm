@@ -11,9 +11,9 @@ Every pull request targeting `main` or `develop` automatically gets an ephemeral
 
 The bot posts a comment like this on every PR:
 
-| Service | URL |
-|---|---|
-| Frontend | `http://PREVIEW_HOST:3200+PR_NUM` |
+| Service               | URL                                        |
+| --------------------- | ------------------------------------------ |
+| Frontend              | `http://PREVIEW_HOST:3200+PR_NUM`          |
 | Backend API / Swagger | `http://PREVIEW_HOST:3100+PR_NUM/api/docs` |
 
 Port assignment: `backend = 3100 + PR_NUM`, `frontend = 3200 + PR_NUM`.
@@ -26,11 +26,11 @@ Stellar interactions use `testnet`.
 
 ## Required Secrets
 
-| Secret | Description |
-|---|---|
-| `PREVIEW_HOST` | Hostname/IP of the preview server |
-| `PREVIEW_SSH_USER` | SSH username on the preview server |
-| `PREVIEW_SSH_KEY` | Private SSH key for the preview server |
+| Secret               | Description                                                |
+| -------------------- | ---------------------------------------------------------- |
+| `PREVIEW_HOST`       | Hostname/IP of the preview server                          |
+| `PREVIEW_SSH_USER`   | SSH username on the preview server                         |
+| `PREVIEW_SSH_KEY`    | Private SSH key for the preview server                     |
 | `PREVIEW_JWT_SECRET` | JWT signing secret for preview envs (non-production value) |
 
 ## Limitations

@@ -73,7 +73,7 @@ test('minimal moderate violations', async ({ page }) => {
 test('button should be accessible', async ({ page }) => {
   await page.goto('/');
   await injectAxe(page);
-  
+
   // Test specific element by selector
   await checkA11y(page, '[data-testid="submit-button"]', {
     detailedReport: true,
@@ -88,10 +88,10 @@ test('button should be accessible', async ({ page }) => {
 test('color contrast', async ({ page }) => {
   await page.goto('/');
   await injectAxe(page);
-  
+
   await checkA11y(page, null, {
     rules: {
-      'color-contrast': { enabled: true }
+      'color-contrast': { enabled: true },
     },
     includedImpacts: ['serious', 'critical'],
   });
@@ -100,11 +100,11 @@ test('color contrast', async ({ page }) => {
 test('form labels', async ({ page }) => {
   await page.goto('/form');
   await injectAxe(page);
-  
+
   await checkA11y(page, null, {
     rules: {
-      'label': { enabled: true },
-      'label-title-only': { enabled: true }
+      label: { enabled: true },
+      'label-title-only': { enabled: true },
     },
   });
 });
@@ -115,44 +115,44 @@ test('form labels', async ({ page }) => {
 ```typescript
 test('keyboard navigation', async ({ page }) => {
   await page.goto('/');
-  
+
   // Tab through interactive elements
   const elements = await page.locator('a, button, input').all();
-  
+
   for (let i = 0; i < Math.min(5, elements.length); i++) {
     await page.keyboard.press('Tab');
-    
+
     const focused = await page.evaluate(() => ({
       tag: document.activeElement?.tagName,
-      text: document.activeElement?.textContent?.trim()
+      text: document.activeElement?.textContent?.trim(),
     }));
-    
+
     expect(focused.tag).toBeTruthy();
   }
 });
 
 test('focus indicators visible', async ({ page }) => {
   await page.goto('/');
-  
+
   const button = page.locator('button').first();
   await button.focus();
-  
+
   const hasFocusIndicator = await button.evaluate((el) => {
     const style = window.getComputedStyle(el);
     return style.outlineWidth !== '0px' || style.boxShadow !== 'none';
   });
-  
+
   expect(hasFocusIndicator).toBe(true);
 });
 
 test('escape key closes modal', async ({ page }) => {
   await page.goto('/');
-  
+
   // Open modal
   await page.click('[data-testid="open-modal"]');
   const modal = page.locator('[role="dialog"]');
   await expect(modal).toBeVisible();
-  
+
   // Press Escape
   await page.keyboard.press('Escape');
   await expect(modal).not.toBeVisible();
@@ -164,39 +164,47 @@ test('escape key closes modal', async ({ page }) => {
 ```typescript
 test('proper ARIA usage', async ({ page }) => {
   await page.goto('/');
-  
+
   // Check for proper roles
   const invalidRoles = await page.evaluate(() => {
     const validRoles = [
-      'button', 'link', 'navigation', 'main', 'complementary',
-      'contentinfo', 'alert', 'dialog', 'tab', 'tabpanel'
+      'button',
+      'link',
+      'navigation',
+      'main',
+      'complementary',
+      'contentinfo',
+      'alert',
+      'dialog',
+      'tab',
+      'tabpanel',
     ];
-    
+
     const elements = document.querySelectorAll('[role]');
     const invalid = [];
-    
-    elements.forEach(el => {
+
+    elements.forEach((el) => {
       const role = el.getAttribute('role');
       if (role && !validRoles.includes(role)) {
         invalid.push(role);
       }
     });
-    
+
     return invalid;
   });
-  
+
   expect(invalidRoles.length).toBe(0);
 });
 
 test('ARIA labels present', async ({ page }) => {
   await page.goto('/');
-  
+
   const iconsButtons = await page.locator('button:has(svg)').all();
-  
+
   for (const button of iconsButtons) {
     const ariaLabel = await button.getAttribute('aria-label');
     const text = await button.textContent();
-    
+
     expect(ariaLabel || text?.trim()).toBeTruthy();
   }
 });
@@ -207,14 +215,14 @@ test('ARIA labels present', async ({ page }) => {
 ```typescript
 test('form inputs have labels', async ({ page }) => {
   await page.goto('/form');
-  
+
   const inputs = await page.locator('input, select, textarea').all();
-  
+
   for (const input of inputs) {
     const id = await input.getAttribute('id');
     const ariaLabel = await input.getAttribute('aria-label');
     const ariaLabelledBy = await input.getAttribute('aria-labelledby');
-    
+
     if (id) {
       const label = await page.locator(`label[for="${id}"]`).count();
       expect(label > 0 || ariaLabel || ariaLabelledBy).toBeTruthy();
@@ -226,11 +234,11 @@ test('form inputs have labels', async ({ page }) => {
 
 test('error messages accessible', async ({ page }) => {
   await page.goto('/form');
-  
+
   // Trigger validation
   await page.click('button[type="submit"]');
   await page.waitForTimeout(500);
-  
+
   // Check for accessible errors
   const errors = await page.locator('[role="alert"], [aria-invalid="true"]').count();
   expect(errors).toBeGreaterThan(0);
@@ -242,16 +250,16 @@ test('error messages accessible', async ({ page }) => {
 ```typescript
 test('images have alt text', async ({ page }) => {
   await page.goto('/');
-  
+
   const images = await page.locator('img').all();
-  
+
   for (const img of images) {
     const alt = await img.getAttribute('alt');
     const role = await img.getAttribute('role');
-    
+
     // Must have alt (can be empty for decorative)
     expect(alt !== null).toBe(true);
-    
+
     // If role="presentation", alt should be empty
     if (role === 'presentation') {
       expect(alt).toBe('');
@@ -266,13 +274,13 @@ test('images have alt text', async ({ page }) => {
 test('mobile touch targets', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 667 });
   await page.goto('/');
-  
+
   const buttons = await page.locator('button, a[href]').all();
-  
+
   for (const button of buttons.slice(0, 10)) {
     if (await button.isVisible()) {
       const box = await button.boundingBox();
-      
+
       if (box) {
         // Touch targets should be at least 44x44 pixels
         expect(box.width).toBeGreaterThanOrEqual(44);
@@ -285,7 +293,7 @@ test('mobile touch targets', async ({ page }) => {
 test('no horizontal scroll on mobile', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 667 });
   await page.goto('/');
-  
+
   const scrollWidth = await page.evaluate(() => document.body.scrollWidth);
   expect(scrollWidth).toBeLessThanOrEqual(375);
 });
@@ -316,6 +324,7 @@ npx playwright test --grep @a11y --update-snapshots
 ### CI/CD
 
 Tests run automatically on:
+
 - Every pull request
 - Commits to main branch
 - Manual workflow dispatch
@@ -344,6 +353,7 @@ npx playwright show-report
 ```
 
 The report shows:
+
 - Which tests failed
 - Specific violations found
 - Impact level (critical, serious, moderate, minor)
@@ -356,6 +366,7 @@ npx playwright test e2e/a11y/pages/homepage.a11y.spec.ts --debug
 ```
 
 This opens:
+
 - Playwright Inspector
 - Browser window
 - Step-by-step execution
@@ -372,10 +383,10 @@ npx playwright test e2e/a11y/pages/courses.a11y.spec.ts
 ```typescript
 test('debug element', async ({ page }) => {
   await page.goto('/');
-  
+
   // Pause to inspect in DevTools
   await page.pause();
-  
+
   // Or take screenshot
   await page.screenshot({ path: 'debug.png' });
 });
@@ -413,7 +424,7 @@ test.describe('Component Accessibility @a11y', () => {
   test('button accessible', async ({ page }) => {
     await page.goto('/components');
     await injectAxe(page);
-    
+
     await checkA11y(page, '[data-testid="my-button"]', {
       detailedReport: true,
     });
@@ -430,11 +441,11 @@ test.describe('User Flow Accessibility @a11y', () => {
     await page.goto('/courses');
     await injectAxe(page);
     await checkA11y(page);
-    
+
     // Step 2: Select course
     await page.click('[data-testid="course-card"]');
     await checkA11y(page);
-    
+
     // Step 3: Enroll
     await page.click('[data-testid="enroll-button"]');
     await checkA11y(page);
@@ -491,10 +502,10 @@ npx playwright test --grep @a11y --project=chromium
 
 ```typescript
 // ✅ Fast
-page.locator('[data-testid="button"]')
+page.locator('[data-testid="button"]');
 
 // ❌ Slow
-page.locator('div > div > button.primary')
+page.locator('div > div > button.primary');
 ```
 
 ## Troubleshooting
@@ -504,6 +515,7 @@ page.locator('div > div > button.primary')
 **Cause**: Timing or environment differences
 
 **Solution**:
+
 ```typescript
 // Add more wait time
 await page.waitForLoadState('networkidle');
@@ -518,6 +530,7 @@ await page.waitForSelector('[data-testid="content"]');
 **Cause**: Third-party content or dynamic elements
 
 **Solution**:
+
 ```typescript
 // Exclude specific elements
 await checkA11y(page, null, {
@@ -527,8 +540,8 @@ await checkA11y(page, null, {
 // Or disable specific rules
 await checkA11y(page, null, {
   rules: {
-    'color-contrast': { enabled: false }
-  }
+    'color-contrast': { enabled: false },
+  },
 });
 ```
 
@@ -537,10 +550,11 @@ await checkA11y(page, null, {
 **Cause**: Animations, async content, race conditions
 
 **Solution**:
+
 ```typescript
 // Disable animations
 await page.addStyleTag({
-  content: '* { animation: none !important; transition: none !important; }'
+  content: '* { animation: none !important; transition: none !important; }',
 });
 
 // Wait for specific state

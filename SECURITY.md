@@ -2,10 +2,10 @@
 
 ## Supported Versions
 
-| Version | Supported |
-|---------|-----------|
-| `main` (latest) | ✅ |
-| Older releases | ❌ — please upgrade |
+| Version         | Supported           |
+| --------------- | ------------------- |
+| `main` (latest) | ✅                  |
+| Older releases  | ❌ — please upgrade |
 
 ## Responsible Disclosure Policy
 

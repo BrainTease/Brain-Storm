@@ -11,7 +11,7 @@ import React from 'react';
  */
 function createDynamicComponent<P extends object>(
   importFunc: () => Promise<{ default: React.ComponentType<P> }>,
-  loadingComponent?: React.ComponentType,
+  loadingComponent?: React.ComponentType
 ) {
   return dynamic(importFunc, {
     loading: loadingComponent || (() => <div>Loading...</div>),
@@ -22,19 +22,19 @@ function createDynamicComponent<P extends object>(
 /**
  * Admin-heavy components with dynamic imports
  */
-export const AdminDashboard = dynamic(
-  () => import('@/components/Admin/Dashboard/AdminDashboard'),
-  {
-    ssr: false,
-    loading: () => <div>Loading admin dashboard...</div>,
-  }
-);
+export const AdminDashboard = dynamic(() => import('@/components/Admin/Dashboard/AdminDashboard'), {
+  ssr: false,
+  loading: () => <div>Loading admin dashboard...</div>,
+});
 
 /**
  * Instructor/course creation components
  */
 export const InstructorDashboard = dynamic(
-  () => import('@/components/instructor').then((mod) => mod.InstructorDashboard || { default: () => null }),
+  () =>
+    import('@/components/instructor').then(
+      (mod) => mod.InstructorDashboard || { default: () => null }
+    ),
   {
     ssr: false,
     loading: () => <div>Loading instructor dashboard...</div>,
@@ -45,7 +45,8 @@ export const InstructorDashboard = dynamic(
  * Analytics and governance components
  */
 export const GovernancePanel = dynamic(
-  () => import('@/components/governance').then((mod) => mod.GovernancePanel || { default: () => null }),
+  () =>
+    import('@/components/governance').then((mod) => mod.GovernancePanel || { default: () => null }),
   {
     ssr: true,
     loading: () => <div>Loading governance panel...</div>,
@@ -78,7 +79,10 @@ export const ForumPage = dynamic(
  * Notifications and messaging components
  */
 export const NotificationsPage = dynamic(
-  () => import('@/components/notifications').then((mod) => mod.NotificationsPage || { default: () => null }),
+  () =>
+    import('@/components/notifications').then(
+      (mod) => mod.NotificationsPage || { default: () => null }
+    ),
   {
     ssr: true,
     loading: () => <div>Loading notifications...</div>,
@@ -89,7 +93,8 @@ export const NotificationsPage = dynamic(
  * Dashboard and analytics components
  */
 export const DashboardPage = dynamic(
-  () => import('@/components/dashboard').then((mod) => mod.DashboardPage || { default: () => null }),
+  () =>
+    import('@/components/dashboard').then((mod) => mod.DashboardPage || { default: () => null }),
   {
     ssr: true,
     loading: () => <div>Loading dashboard...</div>,
@@ -100,7 +105,10 @@ export const DashboardPage = dynamic(
  * Leaderboard and stats components
  */
 export const LeaderboardPage = dynamic(
-  () => import('@/components/leaderboard').then((mod) => mod.LeaderboardPage || { default: () => null }),
+  () =>
+    import('@/components/leaderboard').then(
+      (mod) => mod.LeaderboardPage || { default: () => null }
+    ),
   {
     ssr: true,
     loading: () => <div>Loading leaderboard...</div>,

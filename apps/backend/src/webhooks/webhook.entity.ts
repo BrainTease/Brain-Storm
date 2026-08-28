@@ -10,37 +10,37 @@ import {
 @Entity('webhooks')
 export class Webhook {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Index()
   @Column()
-  userId: string;
+  userId!: string;
 
   @Column()
-  url: string;
+  url!: string;
 
   /** Comma-separated event types, e.g. "enrollment.created,enrollment.completed" */
   @Column('text')
-  events: string;
+  events!: string;
 
   /** Active HMAC signing secret */
   @Column()
-  secret: string;
+  secret!: string;
 
   /** Previous secret kept for a 24-h grace period during rotation */
   @Column({ nullable: true, type: 'varchar' })
-  previousSecret: string | null;
+  previousSecret!: string | null;
 
   /** When the previous secret expires (null = no rotation in progress) */
   @Column({ nullable: true, type: 'timestamp' })
-  secretRotatedAt: Date | null;
+  secretRotatedAt!: Date | null;
 
   @Column({ default: true })
-  isActive: boolean;
+  isActive!: boolean;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt!: Date;
 }

@@ -88,9 +88,7 @@ export function formatValue(value: unknown, valueType: RestrictionValueType): st
         ? `${Number(value).toLocaleString()} tokens`
         : String(value);
     case 'percentage':
-      return typeof value === 'number' || typeof value === 'string'
-        ? `${value}%`
-        : String(value);
+      return typeof value === 'number' || typeof value === 'string' ? `${value}%` : String(value);
     case 'duration':
       if (typeof value === 'number') {
         const days = Math.floor(value / 86400);

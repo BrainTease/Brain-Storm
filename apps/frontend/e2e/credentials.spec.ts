@@ -51,10 +51,15 @@ test.describe('Credential issuance journey', () => {
 
     for (let i = 0; i < count; i++) {
       // Re-query after each navigation to avoid stale handles
-      await page.getByRole('link', { name: /lesson/i }).nth(i).click();
+      await page
+        .getByRole('link', { name: /lesson/i })
+        .nth(i)
+        .click();
       await expect(page).toHaveURL(/lesson/);
 
-      const completeBtn = page.getByRole('button', { name: /mark (as )?complete|complete lesson/i });
+      const completeBtn = page.getByRole('button', {
+        name: /mark (as )?complete|complete lesson/i,
+      });
       await expect(completeBtn).toBeVisible();
       await completeBtn.click();
       await expect(page.getByText(/completed|progress saved/i)).toBeVisible({ timeout: 8_000 });
@@ -67,13 +72,11 @@ test.describe('Credential issuance journey', () => {
     await page.goto('/credentials');
 
     // The credential card should reference the completed course
-    await expect(
-      page.getByText(/intro to stellar|credential|certificate/i),
-    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText(/intro to stellar|credential|certificate/i)).toBeVisible({
+      timeout: 15_000,
+    });
 
     // Confirm it has a Stellar transaction ID or on-chain indicator
-    await expect(
-      page.getByText(/stellar|blockchain|on-chain|transaction/i),
-    ).toBeVisible();
+    await expect(page.getByText(/stellar|blockchain|on-chain|transaction/i)).toBeVisible();
   });
 });

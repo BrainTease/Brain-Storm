@@ -10,7 +10,9 @@ const sdkClient = new BrainStormClient({
 
 export interface ExtendedWalletValue extends WalletContextValue {
   /** SDK instance backed methods */
-  fetchSdkStellarBalance: (publicKey: string) => Promise<{ balances: Array<{ asset_type: string; balance: string; asset_code?: string }> }>;
+  fetchSdkStellarBalance: (
+    publicKey: string
+  ) => Promise<{ balances: Array<{ asset_type: string; balance: string; asset_code?: string }> }>;
 }
 
 /**

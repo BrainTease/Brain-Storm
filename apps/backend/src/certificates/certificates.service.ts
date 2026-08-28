@@ -9,11 +9,7 @@
  *
  * All other query/verify methods are unchanged.
  */
-import {
-  Injectable,
-  BadRequestException,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as crypto from 'crypto';
@@ -42,7 +38,7 @@ export class CertificatesService {
     private readonly repo: Repository<Certificate>,
     @InjectRepository(Enrollment)
     private readonly enrollmentsRepo: Repository<Enrollment>,
-    private readonly badgeAwardService: BadgeAwardService,
+    private readonly badgeAwardService: BadgeAwardService
   ) {}
 
   // ── Step-based issuance ────────────────────────────────────────────────────
@@ -73,7 +69,9 @@ export class CertificatesService {
         await this.repo.save(saved);
         this.logger.log(`Certificate minted for user=${userId} course=${courseId}`);
       } catch (error) {
-        this.logger.error(`Badge award failed for user=${userId} course=${courseId}: ${(error as Error).message}`);
+        this.logger.error(
+          `Badge award failed for user=${userId} course=${courseId}: ${(error as Error).message}`
+        );
       }
     }
 

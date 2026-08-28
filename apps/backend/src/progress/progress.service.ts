@@ -3,9 +3,7 @@ import { Progress } from './progress.entity';
 import { RecordProgressDto } from './dto/record-progress.dto';
 import { StellarService } from '../stellar/stellar.service';
 import { BadgeAwardService } from '../credentials/badge-award.service';
-import {
-  PROGRESS_REPOSITORY_TOKEN,
-} from '../repositories/repositories.module';
+import { PROGRESS_REPOSITORY_TOKEN } from '../repositories/repositories.module';
 import { ProgressRepository } from '../repositories/progress-repository.interface';
 
 /**
@@ -23,7 +21,7 @@ export class ProgressService {
     @Inject(PROGRESS_REPOSITORY_TOKEN)
     private readonly progressRepository: ProgressRepository,
     private readonly stellarService: StellarService,
-    private readonly badgeAwardService: BadgeAwardService,
+    private readonly badgeAwardService: BadgeAwardService
   ) {}
 
   async record(

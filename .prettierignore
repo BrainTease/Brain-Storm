@@ -9,3 +9,7 @@ build
 .env
 .env.local
 .env.*.local
+.github/workflows/performance-regression-testing.yml
+infra/helm/brain-storm/templates/
+packages/mobile/src/cache/actionQueue.ts
+packages/mobile/src/cache/useNetworkStatus.ts

@@ -35,7 +35,7 @@ export function TokenRestrictionsPanel({
   // Merge active restrictions with schema order so known rules always appear
   // at the top, unknown keys fall through at the bottom.
   const knownRows: Array<{ rule: RestrictionRule; value: unknown }> = RESTRICTION_RULES.filter(
-    (r) => Object.prototype.hasOwnProperty.call(restrictions, r.key),
+    (r) => Object.prototype.hasOwnProperty.call(restrictions, r.key)
   ).map((rule) => ({ rule, value: restrictions[rule.key] }));
 
   const unknownRows = Object.entries(restrictions)

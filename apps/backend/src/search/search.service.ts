@@ -402,7 +402,9 @@ export class SearchService implements OnModuleInit {
       const returnedIds = hits.slice(0, k).map((h) => h.id);
 
       const relevantSet = new Set(relevantIds);
-      const hits_at_k = returnedIds.filter((id): id is string => id !== undefined && relevantSet.has(id)).length;
+      const hits_at_k = returnedIds.filter(
+        (id): id is string => id !== undefined && relevantSet.has(id)
+      ).length;
       const precisionAtK = hits_at_k / k;
 
       // Discounted Cumulative Gain

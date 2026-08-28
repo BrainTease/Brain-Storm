@@ -144,7 +144,15 @@ describe('client.courses', () => {
 
   it('get(id) GETs /v1/courses/:id', async () => {
     const client = new BrainStormClient({ baseURL: BASE_URL });
-    const course = { id: 'course-1', title: 'Intro', description: 'd', level: 'beginner', isPublished: true, requiresKyc: false, createdAt: '2026-01-01T00:00:00.000Z' };
+    const course = {
+      id: 'course-1',
+      title: 'Intro',
+      description: 'd',
+      level: 'beginner',
+      isPublished: true,
+      requiresKyc: false,
+      createdAt: '2026-01-01T00:00:00.000Z',
+    };
     fetchMock.mockResolvedValueOnce(fakeOkResponse(course));
 
     const result = await client.courses.get('course-1');
@@ -158,7 +166,14 @@ describe('client.courses', () => {
   it('create(dto) POSTs to /v1/courses', async () => {
     const client = new BrainStormClient({ baseURL: BASE_URL });
     const dto = { title: 'New course', description: 'desc' };
-    const created = { id: 'course-2', ...dto, level: 'beginner', isPublished: false, requiresKyc: false, createdAt: '2026-01-01T00:00:00.000Z' };
+    const created = {
+      id: 'course-2',
+      ...dto,
+      level: 'beginner',
+      isPublished: false,
+      requiresKyc: false,
+      createdAt: '2026-01-01T00:00:00.000Z',
+    };
     fetchMock.mockResolvedValueOnce(fakeOkResponse(created));
 
     const result = await client.courses.create(dto);
@@ -173,7 +188,15 @@ describe('client.courses', () => {
   it('update(id, dto) PATCHes /v1/courses/:id', async () => {
     const client = new BrainStormClient({ baseURL: BASE_URL });
     const dto = { title: 'Updated title' };
-    const updated = { id: 'course-3', title: 'Updated title', description: 'd', level: 'beginner', isPublished: true, requiresKyc: false, createdAt: '2026-01-01T00:00:00.000Z' };
+    const updated = {
+      id: 'course-3',
+      title: 'Updated title',
+      description: 'd',
+      level: 'beginner',
+      isPublished: true,
+      requiresKyc: false,
+      createdAt: '2026-01-01T00:00:00.000Z',
+    };
     fetchMock.mockResolvedValueOnce(fakeOkResponse(updated));
 
     const result = await client.courses.update('course-3', dto);
@@ -201,7 +224,13 @@ describe('client.progress', () => {
   it('record(dto) POSTs to /v1/progress', async () => {
     const client = new BrainStormClient({ baseURL: BASE_URL });
     const dto = { courseId: 'course-1', progressPct: 75 };
-    const stored = { id: 'p-1', userId: 'u-1', courseId: 'course-1', progressPct: 75, updatedAt: '2026-01-01T00:00:00.000Z' };
+    const stored = {
+      id: 'p-1',
+      userId: 'u-1',
+      courseId: 'course-1',
+      progressPct: 75,
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    };
     fetchMock.mockResolvedValueOnce(fakeOkResponse(stored));
 
     const result = await client.progress.record(dto);
@@ -215,7 +244,13 @@ describe('client.progress', () => {
 
   it('getMyCourseProgress(id) GETs /v1/progress/my/:id', async () => {
     const client = new BrainStormClient({ baseURL: BASE_URL });
-    const progress = { id: 'p-2', userId: 'u-1', courseId: 'course-9', progressPct: 40, updatedAt: '2026-01-01T00:00:00.000Z' };
+    const progress = {
+      id: 'p-2',
+      userId: 'u-1',
+      courseId: 'course-9',
+      progressPct: 40,
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    };
     fetchMock.mockResolvedValueOnce(fakeOkResponse(progress));
 
     const result = await client.progress.getMyCourseProgress('course-9');
@@ -230,7 +265,13 @@ describe('client.progress', () => {
 describe('client.users', () => {
   it('getProfile(id) GETs /v1/users/:id', async () => {
     const client = new BrainStormClient({ baseURL: BASE_URL });
-    const user = { id: 'u-1', email: 'u@example.com', role: 'student', isVerified: true, createdAt: '2026-01-01T00:00:00.000Z' };
+    const user = {
+      id: 'u-1',
+      email: 'u@example.com',
+      role: 'student',
+      isVerified: true,
+      createdAt: '2026-01-01T00:00:00.000Z',
+    };
     fetchMock.mockResolvedValueOnce(fakeOkResponse(user));
 
     const result = await client.users.getProfile('u-1');
@@ -244,7 +285,14 @@ describe('client.users', () => {
   it('updateProfile(id, dto) PATCHes /v1/users/:id', async () => {
     const client = new BrainStormClient({ baseURL: BASE_URL });
     const dto = { username: 'newname', bio: 'hi' };
-    const updated = { id: 'u-1', email: 'u@example.com', role: 'student', isVerified: true, createdAt: '2026-01-01T00:00:00.000Z', ...dto };
+    const updated = {
+      id: 'u-1',
+      email: 'u@example.com',
+      role: 'student',
+      isVerified: true,
+      createdAt: '2026-01-01T00:00:00.000Z',
+      ...dto,
+    };
     fetchMock.mockResolvedValueOnce(fakeOkResponse(updated));
 
     const result = await client.users.updateProfile('u-1', dto);
@@ -339,7 +387,7 @@ describe('error handling', () => {
     const client = new BrainStormClient({ baseURL: BASE_URL });
     const apiError = { statusCode: 404, message: 'Course not found', error: 'Not Found' };
     fetchMock.mockResolvedValueOnce(
-      fakeErrorResponse(404, 'Not Found', jest.fn().mockResolvedValue(apiError)),
+      fakeErrorResponse(404, 'Not Found', jest.fn().mockResolvedValue(apiError))
     );
 
     expect.assertions(4);
@@ -357,7 +405,11 @@ describe('error handling', () => {
   it('falls back to {statusCode, message: statusText} when the error body is not valid JSON, and still throws', async () => {
     const client = new BrainStormClient({ baseURL: BASE_URL });
     fetchMock.mockResolvedValueOnce(
-      fakeErrorResponse(500, 'Internal Server Error', jest.fn().mockRejectedValue(new Error('unexpected token'))),
+      fakeErrorResponse(
+        500,
+        'Internal Server Error',
+        jest.fn().mockRejectedValue(new Error('unexpected token'))
+      )
     );
 
     expect.assertions(3);
@@ -373,7 +425,13 @@ describe('error handling', () => {
 
   it('resolves with the parsed JSON body, unmodified, on a successful response', async () => {
     const client = new BrainStormClient({ baseURL: BASE_URL });
-    const body = { id: 'u-1', email: 'u@example.com', role: 'student', isVerified: true, createdAt: '2026-01-01T00:00:00.000Z' };
+    const body = {
+      id: 'u-1',
+      email: 'u@example.com',
+      role: 'student',
+      isVerified: true,
+      createdAt: '2026-01-01T00:00:00.000Z',
+    };
     fetchMock.mockResolvedValueOnce(fakeOkResponse(body));
 
     const result = await client.users.getProfile('u-1');
