@@ -263,3 +263,149 @@ export class QuizFactory {
     return Array.from({ length: count }, () => this.create(overrides));
   }
 }
+
+// ── Credential Factory ────────────────────────────────────────────────────────
+
+export type CredentialStatus = 'pending' | 'issued' | 'revoked';
+
+/**
+ * Canonical test Credential shape.
+ *
+ * Covers the on-chain credential issued upon course completion, including
+ * the Stellar transaction hash that anchors the credential on-chain.
+ */
+export interface TestCredential {
+  id: string;
+  userId: string;
+  courseId: string;
+  courseName: string;
+  status: CredentialStatus;
+  issuedAt: Date | null;
+  txHash: string | null;
+  createdAt: Date;
+}
+
+/**
+ * Factory for creating test Credential objects.
+ *
+ * @example
+ * const credential  = CredentialFactory.create();
+ * const issued      = CredentialFactory.create({ status: 'issued', txHash: 'abc123' });
+ * const credentials = CredentialFactory.createMany(3, { status: 'pending' });
+ */
+export class CredentialFactory {
+  static create(overrides: Partial<TestCredential> = {}): TestCredential {
+    return {
+      id:         nextId(),
+      userId:     nextId(),
+      courseId:   nextId(),
+      courseName: randomWords(3),
+      status:     'issued',
+      issuedAt:   randomRecent(),
+      txHash:     `tx_${nextId()}`,
+      createdAt:  randomPast(),
+      ...overrides,
+    };
+  }
+
+  static createMany(count: number, overrides: Partial<TestCredential> = {}): TestCredential[] {
+    return Array.from({ length: count }, () => this.create(overrides));
+  }
+}
+
+// ── Progress Factory ──────────────────────────────────────────────────────────
+
+/**
+ * Canonical test Progress shape.
+ *
+ * Tracks a student's completion percentage for a specific course.
+ */
+export interface TestProgress {
+  id: string;
+  userId: string;
+  courseId: string;
+  progressPct: number;
+  completed: boolean;
+  txHash: string | null;
+  updatedAt: Date;
+}
+
+/**
+ * Factory for creating test Progress objects.
+ *
+ * @example
+ * const progress  = ProgressFactory.create({ progressPct: 75 });
+ * const completed = ProgressFactory.create({ progressPct: 100, completed: true });
+ * const progressList = ProgressFactory.createMany(5);
+ */
+export class ProgressFactory {
+  static create(overrides: Partial<TestProgress> = {}): TestProgress {
+    const progressPct = overrides.progressPct ?? randomInt(0, 100);
+    return {
+      id:          nextId(),
+      userId:      nextId(),
+      courseId:    nextId(),
+      progressPct,
+      completed:   progressPct === 100,
+      txHash:      progressPct > 0 ? `tx_${nextId()}` : null,
+      updatedAt:   randomRecent(),
+      ...overrides,
+    };
+  }
+
+  static createMany(count: number, overrides: Partial<TestProgress> = {}): TestProgress[] {
+    return Array.from({ length: count }, () => this.create(overrides));
+  }
+}
+
+// ── Payment Factory ───────────────────────────────────────────────────────────
+
+export type PaymentStatus = 'pending' | 'completed' | 'failed' | 'refunded';
+
+/**
+ * Canonical test Payment shape.
+ *
+ * Represents a payment record for course purchase (Stripe or Stellar).
+ */
+export interface TestPayment {
+  id: string;
+  userId: string;
+  courseId: string;
+  amount: number;
+  currency: string;
+  status: PaymentStatus;
+  provider: 'stripe' | 'stellar';
+  providerSessionId: string | null;
+  txHash: string | null;
+  createdAt: Date;
+}
+
+/**
+ * Factory for creating test Payment objects.
+ *
+ * @example
+ * const payment  = PaymentFactory.create({ amount: 4999, currency: 'usd' });
+ * const stellar  = PaymentFactory.create({ provider: 'stellar', txHash: 'abc123' });
+ * const payments = PaymentFactory.createMany(3, { status: 'completed' });
+ */
+export class PaymentFactory {
+  static create(overrides: Partial<TestPayment> = {}): TestPayment {
+    return {
+      id:                nextId(),
+      userId:            nextId(),
+      courseId:          nextId(),
+      amount:            randomInt(999, 9999),
+      currency:          'usd',
+      status:            'completed',
+      provider:          'stripe',
+      providerSessionId: `cs_${nextId()}`,
+      txHash:            null,
+      createdAt:         randomPast(),
+      ...overrides,
+    };
+  }
+
+  static createMany(count: number, overrides: Partial<TestPayment> = {}): TestPayment[] {
+    return Array.from({ length: count }, () => this.create(overrides));
+  }
+}
