@@ -8,6 +8,7 @@ import {
   Body,
   Request,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { NotificationsService } from './notifications.service';
 import { PushNotificationService } from './push-notification.service';
@@ -16,6 +17,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { NotificationType } from './notification.entity';
 import { IsEnum, IsString, IsDateString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { PaginationDto } from '../common/dto/pagination.dto';
 
 class ScheduleNotificationDto {
   @ApiProperty({ enum: NotificationType })
@@ -44,8 +46,8 @@ export class NotificationsController {
   @Get()
   @ApiOperation({ summary: 'Get all notifications for the current user' })
   @ApiResponse({ status: 200, description: 'Returns user notifications' })
-  findAll(@Request() req) {
-    return this.notificationsService.findByUser(req.user.id);
+  findAll(@Request() req, @Query() query: PaginationDto) {
+    return this.notificationsService.findByUser(req.user.id, query);
   }
 
   @Patch(':id/read')

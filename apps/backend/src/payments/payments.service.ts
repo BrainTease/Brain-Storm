@@ -15,6 +15,8 @@ import { Subscription, SubscriptionStatus, SubscriptionPlan } from './subscripti
 import { Invoice, InvoiceStatus } from './invoice.entity';
 import { Enrollment } from '../enrollments/enrollment.entity';
 import { StellarService } from '../stellar/stellar.service';
+import { PaginationDto } from '../common/dto/pagination.dto';
+import { PaginatedResponseDto } from '../common/dto/api-response.dto';
 
 @Injectable()
 export class PaymentsService {
@@ -240,20 +242,33 @@ export class PaymentsService {
     return this.subscriptionRepo.save(sub);
   }
 
-  async getUserInvoices(userId: string): Promise<Invoice[]> {
-    return this.invoiceRepo.find({
+  async getUserInvoices(
+    userId: string,
+    query: PaginationDto
+  ): Promise<PaginatedResponseDto<Invoice>> {
+    const { page = 1, limit = 20 } = query;
+    const [invoices, total] = await this.invoiceRepo.findAndCount({
       where: { userId },
       order: { createdAt: 'DESC' },
-      take: 50,
+      skip: (page - 1) * limit,
+      take: limit,
     });
+    return new PaginatedResponseDto(invoices, 200, page, limit, total);
   }
 
-  async getUserPayments(userId: string): Promise<Payment[]> {
-    return this.paymentRepo.find({
+  async getUserPayments(
+    userId: string,
+    query: PaginationDto
+  ): Promise<PaginatedResponseDto<Payment>> {
+    const { page = 1, limit = 20 } = query;
+    const [payments, total] = await this.paymentRepo.findAndCount({
       where: { userId },
       relations: ['course'],
       order: { createdAt: 'DESC' },
+      skip: (page - 1) * limit,
+      take: limit,
     });
+    return new PaginatedResponseDto(payments, 200, page, limit, total);
   }
 
   // ─── Private helpers ─────────────────────────────────────────────────────────

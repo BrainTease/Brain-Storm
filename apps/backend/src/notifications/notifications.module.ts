@@ -11,6 +11,9 @@ import { NotificationsController } from './notifications.controller';
 import { NotificationsEvents } from './notifications.events';
 import { NotificationsGateway } from './notifications.gateway';
 import { PushNotificationService } from './push-notification.service';
+import { EmailNotifierService } from './email-notifier.service';
+import { PushNotifierService } from './push-notifier.service';
+import { InAppNotifierService } from './inapp-notifier.service';
 import { MailModule } from '../mail/mail.module';
 
 @Module({
@@ -36,6 +39,9 @@ import { MailModule } from '../mail/mail.module';
     NotificationsEvents,
     NotificationsGateway,
     PushNotificationService,
+    EmailNotifierService,
+    PushNotifierService,
+    InAppNotifierService,
   ],
   exports: [NotificationsService, PushNotificationService],
 })

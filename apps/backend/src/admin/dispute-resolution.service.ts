@@ -21,7 +21,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Dispute, DisputeStatus } from './dispute.entity';
 import { AuditService } from '../audit/audit.service';
-import { CreateDisputeDto, ResolveDisputeDto } from './admin.dto';
+import { CreateDisputeDto, ResolveDisputeDto, DisputeQueryDto } from './admin.dto';
+import { PaginatedResponseDto } from '../common/dto/api-response.dto';
 
 /** Terminal statuses — a dispute in these states cannot be resolved again. */
 const TERMINAL_STATUSES: DisputeStatus[] = [DisputeStatus.RESOLVED, DisputeStatus.CLOSED];
@@ -54,11 +55,18 @@ export class DisputeResolutionService {
   }
 
   /**
-   * Return all disputes, optionally filtered by status.
+   * Return paginated disputes, optionally filtered by status.
    */
-  async listDisputes(status?: DisputeStatus): Promise<Dispute[]> {
+  async listDisputes(query: DisputeQueryDto): Promise<PaginatedResponseDto<Dispute>> {
+    const { page = 1, limit = 20, status } = query;
     const where = status ? { status } : {};
-    return this.disputeRepo.find({ where, order: { createdAt: 'DESC' } });
+    const [disputes, total] = await this.disputeRepo.findAndCount({
+      where,
+      order: { createdAt: 'DESC' },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+    return new PaginatedResponseDto(disputes, 200, page, limit, total);
   }
 
   /**
