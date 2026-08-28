@@ -251,6 +251,9 @@ impl BadgesContract {
 mod tests_ext;
 
 #[cfg(test)]
+mod cross_contract_tests;
+
+#[cfg(test)]
 mod tests {
     use super::*;
     use soroban_sdk::testutils::Address as _;
