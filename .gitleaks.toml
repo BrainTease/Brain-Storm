@@ -1,0 +1,21 @@
+[allowlist]
+  description = "Global gitleaks allowlist"
+  paths = [
+    '''\.github/workflows/.*''',
+    '''docs/.*''',
+    '''packages/mobile/src/__mocks__/.*''',
+    '''packages/mobile/src/__tests__/.*''',
+    '''apps/frontend/src/__tests__/.*''',
+    '''contracts/.*/tests/.*''',
+  ]
+
+[[rules]]
+  id = "test-secret-placeholder"
+  description = "Allow test/placeholder secrets in test files"
+  regex = '''(?i)(test|mock|fake|placeholder|dummy)(secret|key|token|password)'''
+  paths = [
+    '''\.test\..*''',
+    '''\.spec\..*''',
+    '''__tests__/.*''',
+    '''\.github/workflows/.*''',
+  ]
