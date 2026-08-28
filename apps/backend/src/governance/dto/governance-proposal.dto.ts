@@ -8,9 +8,11 @@ import {
   MaxLength,
   IsObject,
 } from 'class-validator';
+import { Sanitize, Trim } from 'class-sanitizer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ProposalType } from './governance-proposal.entity';
 import { PaginationDto } from '../common/dto/pagination.dto';
+import { StripHtmlSanitizer } from '../../common/sanitizers/strip-html.sanitizer';
 
 export class CreateProposalDto {
   @ApiProperty({ description: 'Proposal title', maxLength: 200 })
@@ -58,11 +60,15 @@ export class UpdateProposalDto {
   @IsOptional()
   @IsString()
   @MaxLength(200)
+  @Trim()
+  @Sanitize(StripHtmlSanitizer)
   title?: string;
 
   @ApiPropertyOptional({ description: 'Detailed description of the proposal' })
   @IsOptional()
   @IsString()
+  @Trim()
+  @Sanitize(StripHtmlSanitizer)
   description?: string;
 
   @ApiPropertyOptional({ description: 'Arbitrary metadata (JSON)' })

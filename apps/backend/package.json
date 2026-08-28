@@ -13,6 +13,7 @@
     "format": "prettier --write .",
     "test": "jest",
     "test:integration": "jest --config jest-integration.config.js --runInBand",
+    "test:contract-integration": "jest --config jest-contract-integration.config.js --runInBand",
     "test:e2e": "jest --config jest-e2e.config.js --runInBand",
     "test:pact": "jest --testPathPattern=pact",
     "test:unit": "jest --config jest-test.config.js --runInBand",
@@ -31,6 +32,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-comprehend": "^3.758.0",
+    "@aws-sdk/s3-request-presigner": "^3.758.0",
     "@brain-storm/types": "*",
     "@elastic/elasticsearch": "^8.17.0",
     "@nest-lab/throttler-storage-redis": "^1.2.0",

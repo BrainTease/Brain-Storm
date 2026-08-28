@@ -26,6 +26,32 @@ jobs:
   validate-openapi:
     name: Validate OpenAPI Specification
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: brainstorm
+          POSTGRES_USER: brainstorm
+          POSTGRES_PASSWORD: brainstorm
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
     steps:
       - uses: actions/checkout@v4
 
@@ -43,6 +69,16 @@ jobs:
       - name: Export OpenAPI spec
         working-directory: apps/backend
         run: EXPORT_OPENAPI=true node dist/main --export-openapi
+        env:
+          NODE_ENV: test
+          DATABASE_HOST: localhost
+          DATABASE_PORT: '5432'
+          DATABASE_NAME: brainstorm
+          DATABASE_USER: brainstorm
+          DATABASE_PASSWORD: brainstorm
+          JWT_SECRET: ci-secret
+          REDIS_URL: redis://localhost:6379
+          STELLAR_NETWORK: testnet
 
       - name: Validate OpenAPI spec
         run: |

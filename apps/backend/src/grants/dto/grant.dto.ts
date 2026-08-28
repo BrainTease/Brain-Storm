@@ -8,9 +8,11 @@ import {
   MaxLength,
   Min,
 } from 'class-validator';
+import { Sanitize, Trim } from 'class-sanitizer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { PaginationDto } from '../../common/dto/pagination.dto';
+import { StripHtmlSanitizer } from '../../common/sanitizers/strip-html.sanitizer';
 import type { GrantStatus } from '../grant.entity';
 
 export class CreateGrantDto {
@@ -50,11 +52,15 @@ export class UpdateGrantDto {
   @IsString()
   @IsNotEmpty()
   @MaxLength(255)
+  @Trim()
+  @Sanitize(StripHtmlSanitizer)
   title?: string;
 
   @ApiPropertyOptional({ example: 'Updated description text.' })
   @IsOptional()
   @IsString()
+  @Trim()
+  @Sanitize(StripHtmlSanitizer)
   description?: string;
 
   @ApiPropertyOptional({ example: 7500 })
@@ -72,6 +78,8 @@ export class UpdateGrantDto {
   @ApiPropertyOptional({ example: 'Application looks promising.' })
   @IsOptional()
   @IsString()
+  @Trim()
+  @Sanitize(StripHtmlSanitizer)
   reviewNotes?: string;
 
   @ApiPropertyOptional({ example: 'reviewer-uuid-here' })

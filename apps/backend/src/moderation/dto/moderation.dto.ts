@@ -1,6 +1,8 @@
 import { IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
+import { Sanitize, Trim } from 'class-sanitizer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ContentType, ModerationStatus } from '../moderation.enums';
+import { StripHtmlSanitizer } from '../../common/sanitizers/strip-html.sanitizer';
 
 export class FlagContentDto {
   @ApiProperty({ enum: ContentType })
@@ -14,6 +16,8 @@ export class FlagContentDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
+  @Trim()
+  @Sanitize(StripHtmlSanitizer)
   reason?: string;
 }
 
@@ -25,6 +29,8 @@ export class ReviewItemDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
+  @Trim()
+  @Sanitize(StripHtmlSanitizer)
   note?: string;
 }
 

@@ -18,7 +18,6 @@ jobs:
       - name: Get PR size
         id: size
         run: |
-          # Get the base and head commits
           BASE_COMMIT=${{ github.event.pull_request.base.sha }}
           HEAD_COMMIT=${{ github.event.pull_request.head.sha }}
 
@@ -29,7 +28,7 @@ jobs:
           echo "PR changed $CHANGED_LINES lines"
 
       - name: Comment on PR if large
-        if: steps.size.outputs.changed_lines > 500
+        if: steps.size.outputs.changed_lines > 500 && github.event.pull_request.head.repo.full_name == github.repository
         uses: actions/github-script@v7
         with:
           script: |

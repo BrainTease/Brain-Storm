@@ -379,6 +379,11 @@ jobs:
       - name: cargo clippy
         run: cargo clippy -- -D warnings
 
+      - name: Install cargo-audit and cargo-deny
+        run: |
+          cargo install cargo-audit
+          cargo install cargo-deny
+
       - name: cargo audit
         run: cargo audit --deny warnings
 

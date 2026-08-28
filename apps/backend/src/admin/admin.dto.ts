@@ -1,6 +1,7 @@
 import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { DisputeStatus, DisputeType } from './dispute.entity';
+import { PaginationDto } from '../common/dto/pagination.dto';
 
 export class CreateDisputeDto {
   @ApiProperty({ enum: DisputeType })
@@ -41,4 +42,11 @@ export class SuspendUserDto {
   @IsOptional()
   @IsString()
   until?: string;
+}
+
+export class DisputeQueryDto extends PaginationDto {
+  @ApiPropertyOptional({ enum: DisputeStatus, description: 'Filter by status' })
+  @IsOptional()
+  @IsEnum(DisputeStatus)
+  status?: DisputeStatus;
 }

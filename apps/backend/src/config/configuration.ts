@@ -138,4 +138,33 @@ export default () => ({
     dsn: process.env.SENTRY_DSN || '',
     release: process.env.GIT_COMMIT_SHA || 'unknown',
   },
+
+  // ── OpenTelemetry ──────────────────────────────────────────────────────────
+  otel: {
+    serviceName: process.env.OTEL_SERVICE_NAME || 'brain-storm-api',
+    exporterOtlpEndpoint: process.env.OTEL_EXPORTER_OTLP_ENDPOINT || 'http://localhost:4318',
+    tracesSamplerArg: process.env.OTEL_TRACES_SAMPLER_ARG || '0.1',
+  },
+
+  // ── Rate Limiting ──────────────────────────────────────────────────────────
+  rateLimit: {
+    admin: Number(process.env.RATE_LIMIT_ADMIN || '10000'),
+    instructor: Number(process.env.RATE_LIMIT_INSTRUCTOR || '5000'),
+    student: Number(process.env.RATE_LIMIT_STUDENT || '1000'),
+    guest: Number(process.env.RATE_LIMIT_GUEST || '100'),
+    allowlist: (process.env.RATE_LIMIT_ALLOWLIST || '').split(',').filter(Boolean),
+  },
+
+  // ── Audit ──────────────────────────────────────────────────────────────────
+  audit: {
+    retentionDays: parseInt(process.env.AUDIT_RETENTION_DAYS ?? '365', 10),
+  },
+
+  // ── Graceful Shutdown ──────────────────────────────────────────────────────
+  shutdown: {
+    drainTimeoutMs: parseInt(process.env.SHUTDOWN_DRAIN_TIMEOUT_MS ?? '10000', 10),
+  },
+
+  // ── Export OpenAPI ────────────────────────────────────────────────────────
+  exportOpenapi: process.env.EXPORT_OPENAPI === 'true',
 });

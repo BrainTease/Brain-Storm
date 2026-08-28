@@ -18,6 +18,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { NotificationType } from './notification.entity';
 import { IsEnum, IsString, IsDateString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { PaginationDto } from '../common/dto/pagination.dto';
 
 class ScheduleNotificationDto {
   @ApiProperty({ enum: NotificationType })

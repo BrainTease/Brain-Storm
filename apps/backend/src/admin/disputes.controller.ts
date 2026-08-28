@@ -14,7 +14,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { AdminService } from './admin.service';
-import { CreateDisputeDto, ResolveDisputeDto } from './admin.dto';
+import { CreateDisputeDto, ResolveDisputeDto, DisputeQueryDto } from './admin.dto';
 import { DisputeStatus } from './dispute.entity';
 
 /**
@@ -39,8 +39,8 @@ export class DisputesController {
   @Get()
   @Roles('admin')
   @ApiOperation({ summary: 'List all disputes (admin)' })
-  listDisputes(@Query('status') status?: DisputeStatus) {
-    return this.adminService.listDisputes(status);
+  listDisputes(@Query() query: DisputeQueryDto) {
+    return this.adminService.listDisputes(query);
   }
 
   @Get(':id')
