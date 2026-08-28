@@ -113,4 +113,25 @@ export const validationSchema = Joi.object({
   SENTRY_DSN: Joi.string().uri().allow('').optional(),
   // GIT_COMMIT_SHA is injected by CI/CD pipelines; falls back to 'unknown'.
   GIT_COMMIT_SHA: Joi.string().allow('').optional(),
+
+  // ── OpenTelemetry ──────────────────────────────────────────────────────────
+  OTEL_SERVICE_NAME: Joi.string().default('brain-storm-api'),
+  OTEL_EXPORTER_OTLP_ENDPOINT: Joi.string().uri().default('http://localhost:4318'),
+  OTEL_TRACES_SAMPLER_ARG: Joi.string().default('0.1'),
+
+  // ── Rate Limiting ──────────────────────────────────────────────────────────
+  RATE_LIMIT_ADMIN: Joi.number().default(10000),
+  RATE_LIMIT_INSTRUCTOR: Joi.number().default(5000),
+  RATE_LIMIT_STUDENT: Joi.number().default(1000),
+  RATE_LIMIT_GUEST: Joi.number().default(100),
+  RATE_LIMIT_ALLOWLIST: Joi.string().allow('').default(''),
+
+  // ── Audit ──────────────────────────────────────────────────────────────────
+  AUDIT_RETENTION_DAYS: Joi.number().integer().min(1).default(365),
+
+  // ── Graceful Shutdown ──────────────────────────────────────────────────────
+  SHUTDOWN_DRAIN_TIMEOUT_MS: Joi.number().integer().min(1000).default(10000),
+
+  // ── Export OpenAPI ────────────────────────────────────────────────────────
+  EXPORT_OPENAPI: Joi.boolean().default(false),
 });
