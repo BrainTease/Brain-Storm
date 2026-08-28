@@ -1,6 +1,8 @@
 import { User } from '../users/user.entity';
 import { BaseRepository } from './base-repository.interface';
 
+export const USERS_REPOSITORY_TOKEN = 'USERS_REPOSITORY';
+
 export interface UsersRepository extends BaseRepository<User> {
   findByEmail(email: string): Promise<User | null>;
   findByVerificationToken(hash: string): Promise<User | null>;
