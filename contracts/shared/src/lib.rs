@@ -10,6 +10,7 @@ pub mod admin;
 
 pub mod errors;
 pub mod math;
+pub mod pagination;
 pub mod pausable;
 pub mod reentrancy;
 pub mod validation;
