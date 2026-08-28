@@ -110,9 +110,7 @@ export class InstructorAnalyticsService {
     }
   }
 
-  private async getPayoutInfo(instructorId: string, courseId: string, month: string) {
-    // TODO: Integrate with payouts module
-    // For now, return placeholder
+  private async getPayoutInfo(_instructorId: string, _courseId: string, _month: string) {
     return { revenue: 0, payout: 0 };
   }
 

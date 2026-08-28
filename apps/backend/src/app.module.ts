@@ -15,7 +15,6 @@ import { StellarModule } from './stellar/stellar.module';
 import { ProgressModule } from './progress/progress.module';
 import { CredentialsModule } from './credentials/credentials.module';
 import { NotificationsModule } from './notifications/notifications.module';
-import { LoggerModule } from './common/logger'; // eslint-disable-line @typescript-eslint/no-unused-vars
 import { HealthModule } from './health/health.module';
 import { MetricsModule } from './metrics/metrics.module';
 import { KycModule } from './kyc/kyc.module';

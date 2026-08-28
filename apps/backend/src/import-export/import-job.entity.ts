@@ -42,8 +42,7 @@ export class ImportJob {
   error: string | null;
 
   @Column({ type: 'jsonb', nullable: true })
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  result: any;
+  result: Record<string, unknown> | null;
 
   @CreateDateColumn()
   createdAt: Date;

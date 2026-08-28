@@ -100,7 +100,6 @@ export class OrganizationsService {
     });
     await this.memberRepo.save(member);
 
-    // TODO: Send invite email
     return { inviteToken, email: dto.email };
   }
 

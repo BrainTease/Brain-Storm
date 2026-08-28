@@ -32,8 +32,7 @@ export default () => ({
     name: process.env.DATABASE_NAME!,
   },
 
-  // Database connection-pool settings — previously read via raw process.env in
-  // app.module.ts and db-pool.config.ts (issue #805).
+  // Database connection-pool settings
   dbPool: {
     max: parseInt(process.env.DB_POOL_MAX || '20', 10),
     min: parseInt(process.env.DB_POOL_MIN || '5', 10),
