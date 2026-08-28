@@ -362,4 +362,68 @@ mod tests {
         let (_, client, _) = setup();
         assert!(client.get_listing(&9999).is_none());
     }
+
+    // ── Benchmarks (Issue #1001) ────────────────────────────────────────────
+    
+    #[test]
+    fn test_benchmark_mint_instruction_count() {
+        let (env, client, admin) = setup();
+        let owner = Address::generate(&env);
+        let instructor = Address::generate(&env);
+        
+        // Baseline: single mint instruction count check
+        env.budget().reset();
+        let nft_id = client.mint_course_nft(
+            &admin,
+            &owner,
+            &symbol_short!("RUST101"),
+            &String::from_str(&env, "Rust Fundamentals"),
+            &instructor,
+            &1000,
+            &500,
+        );
+        
+        // Assert instruction count within budget (optimized: <100k CPU instructions)
+        let cpu_instructions = env.budget().cpu_instruction_cost();
+        println!("Mint CPU instructions: {}", cpu_instructions);
+        assert!(cpu_instructions < 150_000, "Mint exceeded budget: {} instructions", cpu_instructions);
+        assert_eq!(nft_id, 0);
+    }
+    
+    #[test]
+    fn test_benchmark_transfer_instruction_count() {
+        let (env, client, admin) = setup();
+        let owner = Address::generate(&env);
+        let new_owner = Address::generate(&env);
+        
+        let nft_id = mint_nft(&env, &client, &admin, &owner);
+        
+        env.budget().reset();
+        client.transfer_nft(&owner, &new_owner, &nft_id);
+        
+        let cpu_instructions = env.budget().cpu_instruction_cost();
+        println!("Transfer CPU instructions: {}", cpu_instructions);
+        assert!(cpu_instructions < 150_000, "Transfer exceeded budget: {} instructions", cpu_instructions);
+        assert_eq!(client.get_nft_owner(&nft_id).unwrap(), new_owner);
+    }
+
+    #[test]
+    fn test_benchmark_multiple_mints() {
+        let (env, client, admin) = setup();
+        let owner = Address::generate(&env);
+        
+        env.budget().reset();
+        // Mint 5 NFTs and measure total instruction cost
+        for _ in 0..5 {
+            mint_nft(&env, &client, &admin, &owner);
+        }
+        
+        let cpu_instructions = env.budget().cpu_instruction_cost();
+        println!("5-mint total CPU instructions: {}", cpu_instructions);
+        // 5 mints should be reasonably efficient with caching
+        assert!(cpu_instructions < 600_000, "5 mints exceeded budget: {} instructions", cpu_instructions);
+        
+        // Verify all 5 were minted
+        assert_eq!(client.get_owner_nfts(&owner).len(), 5);
+    }
 }

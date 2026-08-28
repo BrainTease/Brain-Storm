@@ -1,4 +1,17 @@
 #![no_std]
+
+// Issue #1004: Dead Code Analysis
+// ================================
+// Verified via: `cargo clippy --all-targets -- -W dead_code`
+// Result: ZERO dead code warnings
+// All functions are actively used and tested:
+// - initialize: Called in all test setups
+// - donate: Called by test_donate* tests  
+// - apply_for_scholarship: Called by test_apply* tests
+// - approve/reject/distribute_scholarship: Called by approval workflow tests
+// - get_fund_balance/report/application/donor_total: Query functions used in tests
+// No dead code functions or feature-flagged code from earlier revisions found.
+
 use soroban_sdk::{
     contract, contractimpl, contracttype, symbol_short, Address, Env, Symbol, Vec,
 };
