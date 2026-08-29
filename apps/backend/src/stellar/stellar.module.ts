@@ -6,6 +6,7 @@ import { NetworkMonitorService } from './network-monitor.service';
 import { StellarIndexerService } from './stellar-indexer.service';
 import { StellarTransactionLog } from './stellar-transaction-log.entity';
 import { SorobanRpcClientService } from './soroban-rpc-client.service';
+import { StellarClientFactory } from './stellar-client.factory';
 import { ContractEventDispatcher } from './event-handlers/contract-event.dispatcher';
 import { AnalyticsEventHandler } from './event-handlers/analytics-event.handler';
 import { TokenEventHandler } from './event-handlers/token-event.handler';
@@ -21,6 +22,7 @@ import { UsersModule } from '../users/users.module';
     forwardRef(() => UsersModule),
   ],
   providers: [
+    StellarClientFactory,
     SorobanRpcClientService,
     StellarService,
     NetworkMonitorService,
@@ -44,6 +46,6 @@ import { UsersModule } from '../users/users.module';
     },
   ],
   controllers: [StellarController, CredentialsController],
-  exports: [StellarService, SorobanRpcClientService, NetworkMonitorService],
+  exports: [StellarClientFactory, StellarService, SorobanRpcClientService, NetworkMonitorService],
 })
 export class StellarModule {}
