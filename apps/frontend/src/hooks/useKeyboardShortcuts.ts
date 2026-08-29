@@ -19,7 +19,7 @@ export function useKeyboardShortcuts(shortcuts: Shortcut[]) {
     const handler = (e: KeyboardEvent) => {
       for (const s of shortcuts) {
         const keyMatch = e.key === s.key;
-        const ctrlMatch = s.ctrl ? (e.ctrlKey || e.metaKey) : (!e.ctrlKey && !e.metaKey);
+        const ctrlMatch = s.ctrl ? e.ctrlKey || e.metaKey : !e.ctrlKey && !e.metaKey;
         const shiftMatch = s.shift ? e.shiftKey : !e.shiftKey;
 
         if (!keyMatch || !ctrlMatch || !shiftMatch) continue;
@@ -31,7 +31,8 @@ export function useKeyboardShortcuts(shortcuts: Shortcut[]) {
             target.tagName === 'TEXTAREA' ||
             target.tagName === 'SELECT' ||
             target.isContentEditable
-          ) continue;
+          )
+            continue;
         }
 
         s.handler(e);

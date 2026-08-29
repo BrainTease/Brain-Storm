@@ -13,69 +13,69 @@ import {
 @Index(['createdAt'])
 export class User {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column({ unique: true })
-  email: string;
+  email!: string;
 
   @Column({ unique: true, nullable: true })
-  username: string;
+  username!: string;
 
   @Column()
-  passwordHash: string;
+  passwordHash!: string;
 
   @Column({ nullable: true })
-  avatar: string;
+  avatar!: string;
 
   @Column({ nullable: true, type: 'text' })
-  bio: string;
+  bio!: string;
 
   @Column({ nullable: true })
-  stellarPublicKey: string;
+  stellarPublicKey!: string;
 
   @Column({ default: 'student' })
-  role: string;
+  role!: string;
 
   @Column({ default: false })
-  isBanned: boolean;
+  isBanned!: boolean;
 
   @Column({ default: false })
-  isVerified: boolean;
+  isVerified!: boolean;
 
   @Column({ nullable: true, type: 'timestamptz' })
-  deletedAt: Date | null;
+  deletedAt!: Date | null;
 
   @Column({ nullable: true, type: 'varchar' })
-  verificationToken: string | null;
+  verificationToken!: string | null;
 
   @Column({ nullable: true, type: 'timestamptz' })
-  verificationTokenExpiresAt: Date | null;
+  verificationTokenExpiresAt!: Date | null;
 
   @Column({ default: false })
-  mfaEnabled: boolean;
+  mfaEnabled!: boolean;
 
   @Column({ nullable: true })
-  mfaSecret: string | null;
+  mfaSecret!: string | null;
 
   @Column({ type: 'simple-array', nullable: true, default: null })
-  mfaBackupCodes: string[] | null;
+  mfaBackupCodes!: string[] | null;
 
   @Column({ unique: true, nullable: true })
-  referralCode: string;
+  referralCode!: string;
 
   @Column({ nullable: true, type: 'varchar' })
-  referredBy: string | null;
+  referredBy!: string | null;
 
   // Audit columns
   @Column({ nullable: true })
-  createdBy: string | null;
+  createdBy!: string | null;
 
   @Column({ nullable: true })
-  updatedBy: string | null;
+  updatedBy!: string | null;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt!: Date;
 }

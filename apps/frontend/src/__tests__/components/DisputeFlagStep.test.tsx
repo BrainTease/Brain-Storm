@@ -25,12 +25,7 @@ describe('DisputeFlagStep', () => {
 
   it('should call onReasonChange when a reason is selected', () => {
     const handleReasonChange = vi.fn();
-    render(
-      <DisputeFlagStep
-        {...defaultProps}
-        onReasonChange={handleReasonChange}
-      />
-    );
+    render(<DisputeFlagStep {...defaultProps} onReasonChange={handleReasonChange} />);
 
     const spamRadio = screen.getAllByRole('radio')[1];
     fireEvent.click(spamRadio);
@@ -43,12 +38,7 @@ describe('DisputeFlagStep', () => {
 
     expect(screen.queryByPlaceholderText('Please describe your reason…')).not.toBeInTheDocument();
 
-    rerender(
-      <DisputeFlagStep
-        {...defaultProps}
-        reason="Other"
-      />
-    );
+    rerender(<DisputeFlagStep {...defaultProps} reason="Other" />);
 
     expect(screen.getByPlaceholderText('Please describe your reason…')).toBeInTheDocument();
   });
@@ -70,26 +60,14 @@ describe('DisputeFlagStep', () => {
   });
 
   it('should disable submit button when "Other" is selected without custom reason', () => {
-    render(
-      <DisputeFlagStep
-        {...defaultProps}
-        reason="Other"
-        customReason=""
-      />
-    );
+    render(<DisputeFlagStep {...defaultProps} reason="Other" customReason="" />);
 
     const submitButton = screen.getByRole('button', { name: /submit flag/i });
     expect(submitButton).toBeDisabled();
   });
 
   it('should enable submit button when "Other" has custom reason', () => {
-    render(
-      <DisputeFlagStep
-        {...defaultProps}
-        reason="Other"
-        customReason="Custom reason"
-      />
-    );
+    render(<DisputeFlagStep {...defaultProps} reason="Other" customReason="Custom reason" />);
 
     const submitButton = screen.getByRole('button', { name: /submit flag/i });
     expect(submitButton).not.toBeDisabled();
@@ -97,12 +75,7 @@ describe('DisputeFlagStep', () => {
 
   it('should call onSubmit when form is submitted with valid reason', () => {
     const handleSubmit = vi.fn();
-    render(
-      <DisputeFlagStep
-        {...defaultProps}
-        onSubmit={handleSubmit}
-      />
-    );
+    render(<DisputeFlagStep {...defaultProps} onSubmit={handleSubmit} />);
 
     const submitButton = screen.getByRole('button', { name: /submit flag/i });
     fireEvent.click(submitButton);
@@ -112,12 +85,7 @@ describe('DisputeFlagStep', () => {
 
   it('should call onCancel when cancel button is clicked', () => {
     const handleCancel = vi.fn();
-    render(
-      <DisputeFlagStep
-        {...defaultProps}
-        onCancel={handleCancel}
-      />
-    );
+    render(<DisputeFlagStep {...defaultProps} onCancel={handleCancel} />);
 
     const cancelButton = screen.getByRole('button', { name: /cancel/i });
     fireEvent.click(cancelButton);
@@ -127,16 +95,11 @@ describe('DisputeFlagStep', () => {
 
   it('should disable all inputs when loading', () => {
     render(
-      <DisputeFlagStep
-        {...defaultProps}
-        reason="Other"
-        customReason="reason"
-        loading={true}
-      />
+      <DisputeFlagStep {...defaultProps} reason="Other" customReason="reason" loading={true} />
     );
 
     const textareas = screen.getAllByRole('textbox');
-    textareas.forEach(input => {
+    textareas.forEach((input) => {
       expect(input).toBeDisabled();
     });
 

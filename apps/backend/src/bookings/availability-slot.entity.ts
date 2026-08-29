@@ -12,28 +12,28 @@ import {
 @Index(['workerId'])
 export class AvailabilitySlot {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  workerId: string;
+  workerId!: string;
 
   /** ISO 8601 datetime (stored in UTC) */
   @Column({ type: 'timestamptz' })
-  startTime: Date;
+  startTime!: Date;
 
   @Column({ type: 'timestamptz' })
-  endTime: Date;
+  endTime!: Date;
 
   /** IANA timezone string, e.g. "America/New_York" */
   @Column({ default: 'UTC' })
-  timezone: string;
+  timezone!: string;
 
   @Column({ default: true })
-  isAvailable: boolean;
+  isAvailable!: boolean;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt!: Date;
 }

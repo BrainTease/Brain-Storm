@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import api from '@/lib/api';
+import { formatDateShort } from '@/lib/date-utils';
 
 interface EarningsData {
   totalRevenue: number;
@@ -26,7 +27,8 @@ export function EarningsPayouts() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get('/instructor/earnings')
+    api
+      .get('/instructor/earnings')
       .then((r) => setData(r.data))
       .catch(() => setData(MOCK))
       .finally(() => setLoading(false));
@@ -40,11 +42,26 @@ export function EarningsPayouts() {
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[
-          { label: 'Total Revenue', value: loading ? '…' : `$${d.totalRevenue.toLocaleString()}`, color: 'text-green-600 dark:text-green-400' },
-          { label: 'BST Earned', value: loading ? '…' : `${d.totalTokens.toLocaleString()} BST`, color: 'text-blue-600 dark:text-blue-400' },
-          { label: 'Pending Payout', value: loading ? '…' : `$${d.pendingPayout.toLocaleString()}`, color: 'text-yellow-600 dark:text-yellow-400' },
+          {
+            label: 'Total Revenue',
+            value: loading ? '…' : `$${d.totalRevenue.toLocaleString()}`,
+            color: 'text-green-600 dark:text-green-400',
+          },
+          {
+            label: 'BST Earned',
+            value: loading ? '…' : `${d.totalTokens.toLocaleString()} BST`,
+            color: 'text-blue-600 dark:text-blue-400',
+          },
+          {
+            label: 'Pending Payout',
+            value: loading ? '…' : `$${d.pendingPayout.toLocaleString()}`,
+            color: 'text-yellow-600 dark:text-yellow-400',
+          },
         ].map(({ label, value, color }) => (
-          <div key={label} className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4">
+          <div
+            key={label}
+            className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4"
+          >
             <p className="text-sm text-gray-500 dark:text-gray-400">{label}</p>
             <p className={`text-2xl font-bold mt-1 ${color}`}>{value}</p>
           </div>
@@ -52,7 +69,9 @@ export function EarningsPayouts() {
       </div>
 
       <div>
-        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Payout History</h3>
+        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+          Payout History
+        </h3>
         {loading ? (
           <div className="space-y-2">
             {Array.from({ length: 3 }).map((_, i) => (
@@ -65,7 +84,9 @@ export function EarningsPayouts() {
               <thead className="bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
                 <tr>
                   {['Date', 'Amount', 'Status'].map((h) => (
-                    <th key={h} className="px-4 py-2 text-left font-medium">{h}</th>
+                    <th key={h} className="px-4 py-2 text-left font-medium">
+                      {h}
+                    </th>
                   ))}
                 </tr>
               </thead>
@@ -73,17 +94,19 @@ export function EarningsPayouts() {
                 {d.payouts.map((p) => (
                   <tr key={p.id}>
                     <td className="px-4 py-2 text-gray-600 dark:text-gray-300">
-                      {new Date(p.date).toLocaleDateString()}
+                      {formatDateShort(p.date)}
                     </td>
                     <td className="px-4 py-2 font-medium text-gray-900 dark:text-gray-100">
                       ${p.amount.toLocaleString()}
                     </td>
                     <td className="px-4 py-2">
-                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                        p.status === 'paid'
-                          ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                          : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-                      }`}>
+                      <span
+                        className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                          p.status === 'paid'
+                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                            : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                        }`}
+                      >
                         {p.status}
                       </span>
                     </td>

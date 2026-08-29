@@ -15,25 +15,18 @@ export class AccessControlController {
       data.userId,
       data.role as AccessRole,
       data.subscriptionExpiryDate,
-      data.allowedIpAddresses,
+      data.allowedIpAddresses
     );
   }
 
   @Post('check')
   async checkAccess(@Body() data: any, @Req() req: any) {
     const ipAddress = req.ip || req.connection.remoteAddress;
-    return this.accessControlService.checkAccess(
-      data.courseId,
-      data.userId,
-      ipAddress,
-    );
+    return this.accessControlService.checkAccess(data.courseId, data.userId, ipAddress);
   }
 
   @Delete(':courseId/users/:userId')
-  async revokeAccess(
-    @Param('courseId') courseId: string,
-    @Param('userId') userId: string,
-  ) {
+  async revokeAccess(@Param('courseId') courseId: string, @Param('userId') userId: string) {
     return this.accessControlService.revokeAccess(courseId, userId);
   }
 
@@ -41,32 +34,18 @@ export class AccessControlController {
   async updateSubscription(
     @Param('courseId') courseId: string,
     @Param('userId') userId: string,
-    @Body() data: any,
+    @Body() data: any
   ) {
-    return this.accessControlService.updateSubscription(
-      courseId,
-      userId,
-      data.expiryDate,
-    );
+    return this.accessControlService.updateSubscription(courseId, userId, data.expiryDate);
   }
 
   @Get(':courseId/logs')
-  async getAccessLogs(
-    @Param('courseId') courseId: string,
-    @Body() data?: any,
-  ) {
-    return this.accessControlService.getAccessLogs(
-      courseId,
-      data?.userId,
-      data?.days || 30,
-    );
+  async getAccessLogs(@Param('courseId') courseId: string, @Body() data?: any) {
+    return this.accessControlService.getAccessLogs(courseId, data?.userId, data?.days || 30);
   }
 
   @Get(':courseId/users/:userId')
-  async getAccessControl(
-    @Param('courseId') courseId: string,
-    @Param('userId') userId: string,
-  ) {
+  async getAccessControl(@Param('courseId') courseId: string, @Param('userId') userId: string) {
     return this.accessControlService.getAccessControl(courseId, userId);
   }
 

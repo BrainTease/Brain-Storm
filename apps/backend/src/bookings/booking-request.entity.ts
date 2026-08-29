@@ -19,32 +19,32 @@ export enum BookingStatus {
 @Index(['requesterId'])
 export class BookingRequest {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  workerId: string;
+  workerId!: string;
 
   @Column()
-  requesterId: string;
+  requesterId!: string;
 
   @Column({ type: 'timestamptz' })
-  startTime: Date;
+  startTime!: Date;
 
   @Column({ type: 'timestamptz' })
-  endTime: Date;
+  endTime!: Date;
 
   @Column({ default: 'UTC' })
-  timezone: string;
+  timezone!: string;
 
   @Column({ nullable: true, type: 'text' })
-  message: string;
+  message!: string;
 
   @Column({ type: 'enum', enum: BookingStatus, default: BookingStatus.PENDING })
-  status: BookingStatus;
+  status!: BookingStatus;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt!: Date;
 }

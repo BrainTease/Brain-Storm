@@ -11,10 +11,7 @@ export class PayoutsController {
   @Post('calculate')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
-  async calculatePayouts(
-    @Query('startDate') startDate: string,
-    @Query('endDate') endDate: string,
-  ) {
+  async calculatePayouts(@Query('startDate') startDate: string, @Query('endDate') endDate: string) {
     return this.payoutsService.calculatePayouts(new Date(startDate), new Date(endDate));
   }
 
@@ -39,10 +36,7 @@ export class PayoutsController {
 
   @Get('instructor/:instructorId/history')
   @UseGuards(JwtAuthGuard)
-  async getPayoutHistory(
-    @Param('instructorId') instructorId: string,
-    @Query('limit') limit = 10,
-  ) {
+  async getPayoutHistory(@Param('instructorId') instructorId: string, @Query('limit') limit = 10) {
     return this.payoutsService.getPayoutHistory(instructorId, limit);
   }
 }

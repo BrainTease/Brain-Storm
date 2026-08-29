@@ -32,11 +32,7 @@ export function Navigation() {
   return (
     <NavigationContainer>
       <Stack.Navigator>
-        <Stack.Screen
-          name="Main"
-          component={MainTabs}
-          options={{ headerShown: false }}
-        />
+        <Stack.Screen name="Main" component={MainTabs} options={{ headerShown: false }} />
         <Stack.Screen name="CourseDetail" component={CourseDetailScreen} />
       </Stack.Navigator>
     </NavigationContainer>

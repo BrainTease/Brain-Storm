@@ -9,10 +9,7 @@ import { Enrollment } from '../enrollments/enrollment.entity';
 import { StellarModule } from '../stellar/stellar.module';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([Payment, Subscription, Invoice, Enrollment]),
-    StellarModule,
-  ],
+  imports: [TypeOrmModule.forFeature([Payment, Subscription, Invoice, Enrollment]), StellarModule],
   providers: [PaymentsService],
   controllers: [PaymentsController],
   exports: [PaymentsService],

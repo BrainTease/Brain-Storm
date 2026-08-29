@@ -21,14 +21,14 @@ export class BookingService {
     private slotRepo: Repository<AvailabilitySlot>,
     @InjectRepository(BookingRequest)
     private bookingRepo: Repository<BookingRequest>,
-    private notificationsService: NotificationsService,
+    private notificationsService: NotificationsService
   ) {}
 
   // ── Availability ──────────────────────────────────────────────────────────
 
   async setAvailability(
     workerId: string,
-    slots: Array<{ startTime: string; endTime: string; timezone?: string }>,
+    slots: Array<{ startTime: string; endTime: string; timezone?: string }>
   ): Promise<AvailabilitySlot[]> {
     // Replace all existing slots for this worker
     await this.slotRepo.delete({ workerId });
@@ -38,7 +38,7 @@ export class BookingService {
         startTime: new Date(s.startTime),
         endTime: new Date(s.endTime),
         timezone: s.timezone ?? 'UTC',
-      }),
+      })
     );
     return this.slotRepo.save(entities);
   }
@@ -58,7 +58,7 @@ export class BookingService {
     startTime: string,
     endTime: string,
     timezone: string = 'UTC',
-    message?: string,
+    message?: string
   ): Promise<BookingRequest> {
     const start = new Date(startTime);
     const end = new Date(endTime);
@@ -84,21 +84,21 @@ export class BookingService {
         endTime: end,
         timezone,
         message,
-      }),
+      })
     );
 
     // Notify worker
     await this.notificationsService.create(
       workerId,
       NotificationType.ENROLLMENT, // closest generic type; extend enum for booking if desired
-      `New booking request from user ${requesterId} for ${start.toISOString()}`,
+      `New booking request from user ${requesterId} for ${start.toISOString()}`
     );
 
     // Notify requester
     await this.notificationsService.create(
       requesterId,
       NotificationType.ENROLLMENT,
-      `Your booking request to worker ${workerId} is pending confirmation`,
+      `Your booking request to worker ${workerId} is pending confirmation`
     );
 
     this.logger.log(`Booking ${booking.id} created (requester=${requesterId}, worker=${workerId})`);
@@ -108,7 +108,7 @@ export class BookingService {
   async respondToBooking(
     workerId: string,
     bookingId: string,
-    accept: boolean,
+    accept: boolean
   ): Promise<BookingRequest> {
     const booking = await this.bookingRepo.findOne({ where: { id: bookingId } });
     if (!booking) throw new NotFoundException('Booking not found');
@@ -126,7 +126,7 @@ export class BookingService {
     await this.notificationsService.create(
       booking.requesterId,
       NotificationType.COMPLETION,
-      `Your booking request for ${booking.startTime.toISOString()} has been ${statusLabel}`,
+      `Your booking request for ${booking.startTime.toISOString()} has been ${statusLabel}`
     );
 
     return updated;
@@ -150,7 +150,7 @@ export class BookingService {
     await this.notificationsService.create(
       otherParty,
       NotificationType.COMPLETION,
-      `Booking ${bookingId} has been cancelled`,
+      `Booking ${bookingId} has been cancelled`
     );
 
     return updated;

@@ -6,6 +6,7 @@ import { Roles } from '../auth/roles.decorator';
 import {
   UserRateLimitService,
   ROLE_RATE_LIMITS,
+  PLAN_RATE_LIMITS,
   ENDPOINT_RATE_LIMITS,
 } from './user-rate-limit.service';
 
@@ -19,7 +20,12 @@ export class RateLimitController {
   @Get('status')
   @ApiOperation({ summary: 'Get current rate limit status for the authenticated user' })
   getMyStatus(@Request() req) {
-    return this.rateLimitService.getRateLimitStatus(req.user.id, req.user.role || 'guest');
+    return this.rateLimitService.getRateLimitStatus(
+      req.user.id,
+      req.user.role ?? 'guest',
+      undefined,
+      req.user.plan
+    );
   }
 
   @Get('config')
@@ -27,7 +33,11 @@ export class RateLimitController {
   @Roles('admin')
   @ApiOperation({ summary: 'Get rate limit configuration (admin)' })
   getConfig() {
-    return { roleLimits: ROLE_RATE_LIMITS, planLimits: PLAN_RATE_LIMITS, endpointLimits: ENDPOINT_RATE_LIMITS };
+    return {
+      roleLimits: ROLE_RATE_LIMITS,
+      planLimits: PLAN_RATE_LIMITS,
+      endpointLimits: ENDPOINT_RATE_LIMITS,
+    };
   }
 
   @Delete('users/:userId/reset')

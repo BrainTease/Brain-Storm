@@ -11,7 +11,7 @@ export class DataLoaderProvider {
   constructor(
     @InjectRepository(User) private usersRepo: Repository<User>,
     @InjectRepository(Progress) private progressRepo: Repository<Progress>,
-    @InjectRepository(Course) private coursesRepo: Repository<Course>,
+    @InjectRepository(Course) private coursesRepo: Repository<Course>
   ) {}
 
   public readonly userLoader = new DataLoader<string, User | null>(async (ids) => {

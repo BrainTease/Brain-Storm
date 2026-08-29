@@ -110,6 +110,7 @@ test('homepage should have no accessibility violations', async ({ page }) => {
 ```
 
 **Checks**:
+
 - Page title
 - Language attribute
 - Semantic structure
@@ -127,6 +128,7 @@ test('navigation should be keyboard accessible', async ({ page }) => {
 ```
 
 **Checks**:
+
 - Keyboard navigation
 - Skip links
 - Navigation landmarks
@@ -143,6 +145,7 @@ test('should have proper heading hierarchy', async ({ page }) => {
 ```
 
 **Checks**:
+
 - H1 presence
 - Heading hierarchy
 - No skipped levels
@@ -162,6 +165,7 @@ test('all images should have alt text', async ({ page }) => {
 ```
 
 **Checks**:
+
 - Alt text presence
 - Decorative image handling
 - Meaningful descriptions
@@ -184,6 +188,7 @@ test('form inputs should have associated labels', async ({ page }) => {
 ```
 
 **Checks**:
+
 - Label associations
 - Required field marking
 - Error messages
@@ -203,6 +208,7 @@ test('text should have sufficient color contrast', async ({ page }) => {
 ```
 
 **Standards**:
+
 - Normal text: 4.5:1 ratio
 - Large text: 3:1 ratio
 
@@ -223,6 +229,7 @@ test('focus should be visible', async ({ page }) => {
 ```
 
 **Checks**:
+
 - Focus visibility
 - Focus order
 - Focus trapping
@@ -235,12 +242,13 @@ Tests proper ARIA usage:
 test('should use proper ARIA roles', async ({ page }) => {
   const ariaRoles = await page.evaluate(() => {
     const elements = document.querySelectorAll('[role]');
-    return Array.from(elements).map(el => el.getAttribute('role'));
+    return Array.from(elements).map((el) => el.getAttribute('role'));
   });
 });
 ```
 
 **Checks**:
+
 - Valid ARIA roles
 - ARIA labels
 - ARIA descriptions
@@ -252,7 +260,9 @@ Tests semantic HTML usage:
 ```typescript
 test('should use semantic HTML elements', async ({ page }) => {
   const semanticElements = await page.evaluate(() => {
-    const elements = document.querySelectorAll('header, nav, main, article, section, aside, footer');
+    const elements = document.querySelectorAll(
+      'header, nav, main, article, section, aside, footer'
+    );
     return elements.length;
   });
   expect(semanticElements).toBeGreaterThan(0);
@@ -260,6 +270,7 @@ test('should use semantic HTML elements', async ({ page }) => {
 ```
 
 **Checks**:
+
 - Semantic elements
 - Proper structure
 - Landmark regions
@@ -283,6 +294,7 @@ test('should be mobile accessible', async ({ page }) => {
 ```
 
 **Checks**:
+
 - Touch target size (44x44px minimum)
 - Responsive design
 - Mobile navigation
@@ -302,6 +314,7 @@ test('videos should have captions', async ({ page }) => {
 ```
 
 **Checks**:
+
 - Caption presence
 - Transcript availability
 - Audio descriptions
@@ -322,6 +335,7 @@ test('links should have descriptive text', async ({ page }) => {
 ```
 
 **Checks**:
+
 - Descriptive link text
 - No "click here" links
 - ARIA labels
@@ -397,7 +411,7 @@ on:
     branches: [main, develop]
   pull_request:
   schedule:
-    - cron: '0 4 * * *'  # Daily at 4 AM UTC
+    - cron: '0 4 * * *' # Daily at 4 AM UTC
 
 jobs:
   accessibility:

@@ -1,46 +1,52 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 
 @Entity('platform_analytics')
 export class PlatformAnalytics {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column()
-  totalUsers: number;
+  totalUsers!: number;
 
   @Column()
-  totalCourses: number;
+  totalCourses!: number;
 
   @Column()
-  totalEnrollments: number;
+  totalEnrollments!: number;
 
   @Column()
-  totalCompletions: number;
+  totalCompletions!: number;
 
   @Column({ type: 'float', default: 0 })
-  completionRate: number;
+  completionRate!: number;
 
   @Column({ type: 'float', default: 0 })
-  averageRating: number;
+  averageRating!: number;
 
   @Column()
-  totalReviews: number;
+  totalReviews!: number;
 
   @Column({ type: 'float', default: 0 })
-  averageProgressPct: number;
+  averageProgressPct!: number;
 
   @Column()
-  activeLearnersLast30Days: number;
+  activeLearnersLast30Days!: number;
 
   @Column()
-  newUsersLast30Days: number;
+  newUsersLast30Days!: number;
 
   @Column()
-  newEnrollmentsLast30Days: number;
+  newEnrollmentsLast30Days!: number;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt!: Date;
 }

@@ -43,7 +43,9 @@ describe('GdprRetentionService', () => {
   it('soft-deletes a user by setting deletedAt', async () => {
     repo.findOne.mockResolvedValue(mockUser());
     await service.softDeleteUser('u1');
-    expect(repo.save).toHaveBeenCalledWith(expect.objectContaining({ deletedAt: expect.any(Date) }));
+    expect(repo.save).toHaveBeenCalledWith(
+      expect.objectContaining({ deletedAt: expect.any(Date) })
+    );
   });
 
   it('throws when soft-deleting non-existent user', async () => {

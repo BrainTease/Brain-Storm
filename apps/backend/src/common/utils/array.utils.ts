@@ -34,7 +34,10 @@ export class ArrayUtils {
    * Flatten deeply nested array
    */
   static flattenDeep<T>(arr: any[]): T[] {
-    return arr.reduce((acc, val) => acc.concat(Array.isArray(val) ? this.flattenDeep(val) : val), [] as T[]);
+    return arr.reduce(
+      (acc, val) => acc.concat(Array.isArray(val) ? this.flattenDeep(val) : val),
+      [] as T[]
+    );
   }
 
   /**
@@ -59,7 +62,7 @@ export class ArrayUtils {
         acc[groupKey].push(item);
         return acc;
       },
-      {} as Record<string, T[]>,
+      {} as Record<string, T[]>
     );
   }
 

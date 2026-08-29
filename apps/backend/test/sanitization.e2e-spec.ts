@@ -33,7 +33,7 @@ describe('Input Sanitization (E2E)', () => {
     app = moduleFixture.createNestApplication();
     app.useGlobalPipes(
       new ValidationPipe({ whitelist: true, transform: true }),
-      new SanitizationPipe(),
+      new SanitizationPipe()
     );
     await app.init();
 
@@ -64,7 +64,8 @@ describe('Input Sanitization (E2E)', () => {
     const token = loginResp.body.access_token;
 
     // 3. Update profile with malicious input
-    const maliciousBio = '  Check this <script>alert("xss")</script> out! <b>Bold</b> and <i>Italic</i>.  ';
+    const maliciousBio =
+      '  Check this <script>alert("xss")</script> out! <b>Bold</b> and <i>Italic</i>.  ';
     const expectedBio = 'Check this  out! Bold and Italic.';
 
     const updateResp = await request(app.getHttpServer())

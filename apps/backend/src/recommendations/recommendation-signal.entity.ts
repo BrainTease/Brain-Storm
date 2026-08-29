@@ -36,26 +36,26 @@ export enum SignalType {
 @Index(['userId', 'createdAt'])
 export class RecommendationSignal {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
   @Index()
-  userId: string;
+  userId!: string;
 
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
-  user: User;
+  user!: User;
 
   @Column()
   @Index()
-  courseId: string;
+  courseId!: string;
 
   @ManyToOne(() => Course, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'courseId' })
-  course: Course;
+  course!: Course;
 
   @Column({ type: 'varchar' })
-  signalType: SignalType;
+  signalType!: SignalType;
 
   /**
    * Signal value:
@@ -64,12 +64,12 @@ export class RecommendationSignal {
    *  - RATING: 1-5 star value
    */
   @Column({ type: 'float', default: 1 })
-  value: number;
+  value!: number;
 
   /** Respect user privacy — false = signal must not be used for recommendations */
   @Column({ default: true })
-  consentGranted: boolean;
+  consentGranted!: boolean;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 }

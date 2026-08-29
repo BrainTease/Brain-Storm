@@ -32,12 +32,12 @@ groups:
         labels:
           severity: critical
           team: backend
-          oncall: "true"
+          oncall: 'true'
           env: staging
         annotations:
-          summary: "🧪 Simulated incident test — verify PagerDuty routing"
+          summary: '🧪 Simulated incident test — verify PagerDuty routing'
           description: >
             This is a synthetic alert used to verify that on-call routing and
             PagerDuty escalation are working correctly. If you received this page
             outside of a planned test, investigate immediately.
-          runbook_url: "https://github.com/BrainTease/Brain-Storm/blob/main/docs/incident-runbook.md"
+          runbook_url: 'https://github.com/BrainTease/Brain-Storm/blob/main/docs/incident-runbook.md'

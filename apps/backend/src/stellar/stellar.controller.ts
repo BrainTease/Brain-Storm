@@ -6,6 +6,15 @@ import { NetworkMonitorService } from './network-monitor.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+import { ValidateRequest } from '../common/decorators/validate-request.decorator';
+import { RateLimit } from '../common/decorators/rate-limit.decorator';
+import { Idempotent } from '../common/decorators/idempotent.decorator';
+import { RateLimitPresets } from '../middleware/rate-limit.middleware';
+import {
+  fundTestnetSchema,
+  mintCredentialSchema,
+  issueCredentialSchema,
+} from '../common/validation/schemas';
 
 @ApiTags('stellar')
 @Controller('stellar')
@@ -30,7 +39,15 @@ export class StellarController {
   }
 
   @Post('fund-testnet')
-  @ApiOperation({ summary: 'Fund a testnet account via Friendbot (testnet only)' })
+  @ValidateRequest({ body: fundTestnetSchema })
+  @RateLimit(RateLimitPresets.testnetFunding)
+  @Idempotent()
+  @ApiOperation({
+    summary: 'Fund a testnet account via Friendbot (testnet only)',
+    description:
+      'Support Idempotency-Key header for retry safety. ' +
+      'Same key within 24 hours returns cached result.',
+  })
   @ApiResponse({ status: 201, description: 'Account funded successfully' })
   @ApiResponse({ status: 400, description: 'Not available on mainnet or Friendbot error' })
   async fundTestnet(@Body() body: { publicKey: string }) {
@@ -38,11 +55,19 @@ export class StellarController {
   }
 
   @Post('mint')
+  @ValidateRequest({ body: mintCredentialSchema })
+  @RateLimit({ ...RateLimitPresets.transaction, useAccountId: true })
+  @Idempotent()
   @Throttle({ default: { limit: 3, ttl: 60000 } })
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Mint a credential NFT' })
+  @ApiOperation({
+    summary: 'Mint a credential NFT',
+    description:
+      'Support Idempotency-Key header to prevent duplicate NFT minting. ' +
+      'Retries with same key within 24 hours return cached result.',
+  })
   @ApiBody({ schema: { example: { recipientPublicKey: 'GABC...', courseId: 'uuid' } } })
   @ApiResponse({ status: 201, description: 'Credential minted successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -69,12 +94,16 @@ export class StellarController {
   getTransactionLogs(
     @Query('publicKey') publicKey?: string,
     @Query('type') type?: string,
-    @Query('status') status?: string,
+    @Query('status') status?: string
   ) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const typeAny: any = type;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const statusAny: any = status;
     return this.stellarService.getTransactionLogs({
       recipientPublicKey: publicKey,
-      type: type as any,
-      status: status as any,
+      type: typeAny,
+      status: statusAny,
     });
   }
 }
@@ -87,9 +116,17 @@ export class CredentialsController {
   constructor(private stellarService: StellarService) {}
 
   @Post('issue')
+  @ValidateRequest({ body: issueCredentialSchema })
+  @RateLimit({ ...RateLimitPresets.transaction, useAccountId: true })
+  @Idempotent()
   @Throttle({ default: { limit: 3, ttl: 60000 } })
   @Roles('admin')
-  @ApiOperation({ summary: 'Issue a credential for course completion' })
+  @ApiOperation({
+    summary: 'Issue a credential for course completion',
+    description:
+      'Support Idempotency-Key header to prevent duplicate credential issuance. ' +
+      'Retries with same key within 24 hours return cached result.',
+  })
   @ApiBody({ schema: { example: { recipientPublicKey: 'GABC...', courseId: 'uuid' } } })
   @ApiResponse({
     status: 201,

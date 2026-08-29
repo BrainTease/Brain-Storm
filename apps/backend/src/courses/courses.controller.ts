@@ -67,7 +67,7 @@ export class CoursesController {
       query.search,
       query.level,
       query.page,
-      query.limit,
+      query.limit
     );
   }
 
@@ -149,7 +149,7 @@ export class CoursesController {
       id,
       req.user.id,
       req.user.role,
-      scheduledAt,
+      scheduledAt
     );
   }
 
@@ -198,7 +198,7 @@ function resolveScheduledAt(isoString: string, timezone?: string): Date {
   const parts = formatter.formatToParts(naive);
   const get = (type: string) => Number(parts.find((p) => p.type === type)?.value ?? 0);
   const localDate = new Date(
-    Date.UTC(get('year'), get('month') - 1, get('day'), get('hour'), get('minute'), get('second')),
+    Date.UTC(get('year'), get('month') - 1, get('day'), get('hour'), get('minute'), get('second'))
   );
   const offsetMs = localDate.getTime() - naive.getTime();
   return new Date(naive.getTime() - offsetMs);

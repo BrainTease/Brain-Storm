@@ -9,28 +9,28 @@ export enum FlagType {
 @Entity('feature_flags')
 export class FeatureFlag {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column({ unique: true })
-  key: string;
+  key!: string;
 
   @Column({ type: 'enum', enum: FlagType, default: FlagType.BOOLEAN })
-  type: FlagType;
+  type!: FlagType;
 
   @Column({ default: false })
-  enabled: boolean;
+  enabled!: boolean;
 
   /** For percentage rollouts: 0-100 */
   @Column({ type: 'float', default: 0 })
-  percentage: number;
+  percentage!: number;
 
   /** For user-targeted flags: array of user IDs */
   @Column({ type: 'simple-array', nullable: true })
-  targetedUserIds: string[];
+  targetedUserIds!: string[];
 
   @Column({ nullable: true })
-  description: string;
+  description!: string;
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt!: Date;
 }

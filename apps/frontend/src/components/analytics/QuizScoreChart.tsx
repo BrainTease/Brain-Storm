@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { memo, useMemo } from 'react';
 import {
   BarChart,
   Bar,
@@ -51,7 +51,7 @@ function getScoreColor(score: number): string {
   return CHART_COLORS.poor; // Purple - needs improvement
 }
 
-export function QuizScoreChart({
+function QuizScoreChartBase({
   data,
   isLoading = false,
   error = null,
@@ -62,7 +62,7 @@ export function QuizScoreChart({
     if (!data || data.length === 0) return [];
 
     // Ensure scores are normalized to 0-100 range
-    return data.map(item => ({
+    return data.map((item) => ({
       ...item,
       score: item.maxScore ? (item.score / item.maxScore) * 100 : item.score,
       displayScore: item.maxScore ? item.score : item.score,
@@ -73,7 +73,9 @@ export function QuizScoreChart({
   const gridColor = isDarkMode ? '#374151' : '#E5E7EB';
 
   const avgScore =
-    chartData.length > 0 ? Math.round(chartData.reduce((sum, d) => sum + d.score, 0) / chartData.length) : 0;
+    chartData.length > 0
+      ? Math.round(chartData.reduce((sum, d) => sum + d.score, 0) / chartData.length)
+      : 0;
 
   if (isLoading) return <ChartSkeleton />;
 
@@ -110,16 +112,9 @@ export function QuizScoreChart({
       </div>
 
       <ResponsiveContainer width="100%" height={300}>
-        <BarChart
-          data={chartData}
-          margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-        >
+        <BarChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
-          <XAxis
-            dataKey="date"
-            stroke={textColor}
-            style={{ fontSize: '12px' }}
-          />
+          <XAxis dataKey="date" stroke={textColor} style={{ fontSize: '12px' }} />
           <YAxis
             stroke={textColor}
             domain={[0, 100]}
@@ -155,19 +150,19 @@ export function QuizScoreChart({
         <div className="rounded-lg border border-gray-200 bg-blue-50 p-3 dark:border-gray-700 dark:bg-gray-800">
           <p className="text-xs text-gray-600 dark:text-gray-400">Excellent (85-100%)</p>
           <p className="text-lg font-semibold text-gray-900 dark:text-white">
-            {chartData.filter(d => d.score >= 85).length}
+            {chartData.filter((d) => d.score >= 85).length}
           </p>
         </div>
         <div className="rounded-lg border border-gray-200 bg-orange-50 p-3 dark:border-gray-700 dark:bg-gray-800">
           <p className="text-xs text-gray-600 dark:text-gray-400">Good (70-84%)</p>
           <p className="text-lg font-semibold text-gray-900 dark:text-white">
-            {chartData.filter(d => d.score >= 70 && d.score < 85).length}
+            {chartData.filter((d) => d.score >= 70 && d.score < 85).length}
           </p>
         </div>
         <div className="rounded-lg border border-gray-200 bg-purple-50 p-3 dark:border-gray-700 dark:bg-gray-800">
           <p className="text-xs text-gray-600 dark:text-gray-400">Needs Work (&lt;70%)</p>
           <p className="text-lg font-semibold text-gray-900 dark:text-white">
-            {chartData.filter(d => d.score < 70).length}
+            {chartData.filter((d) => d.score < 70).length}
           </p>
         </div>
       </div>
@@ -186,7 +181,7 @@ export function QuizScoreChart({
               <th className="border border-gray-200 px-3 py-2 text-right dark:border-gray-700">
                 Score (%)
               </th>
-              {chartData.some(d => d.attempts) && (
+              {chartData.some((d) => d.attempts) && (
                 <th className="border border-gray-200 px-3 py-2 text-right dark:border-gray-700">
                   Attempts
                 </th>
@@ -202,7 +197,7 @@ export function QuizScoreChart({
                 <td className="border border-gray-200 px-3 py-2 text-right dark:border-gray-700">
                   {Math.round(item.score)}%
                 </td>
-                {chartData.some(d => d.attempts) && (
+                {chartData.some((d) => d.attempts) && (
                   <td className="border border-gray-200 px-3 py-2 text-right dark:border-gray-700">
                     {item.attempts ?? '-'}
                   </td>
@@ -215,3 +210,6 @@ export function QuizScoreChart({
     </Card>
   );
 }
+
+export const QuizScoreChart = memo(QuizScoreChartBase);
+QuizScoreChart.displayName = 'QuizScoreChart';

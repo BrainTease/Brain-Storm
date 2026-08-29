@@ -35,13 +35,15 @@ class MockJwtAuthGuard implements CanActivate {
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-function makeGrantPayload(overrides: Partial<{
-  title: string;
-  description: string;
-  amount: number;
-  currency: string;
-  applicantId: string;
-}> = {}) {
+function makeGrantPayload(
+  overrides: Partial<{
+    title: string;
+    description: string;
+    amount: number;
+    currency: string;
+    applicantId: string;
+  }> = {}
+) {
   return {
     title: 'Stellar Education Initiative',
     description: 'A grant to fund blockchain education in underserved communities.',
@@ -86,7 +88,7 @@ describe('Grants API Integration Tests', () => {
         forbidNonWhitelisted: false,
         transform: true,
         transformOptions: { enableImplicitConversion: true },
-      }),
+      })
     );
 
     await app.init();
@@ -109,10 +111,7 @@ describe('Grants API Integration Tests', () => {
     it('creates a grant with a valid payload and returns 201', async () => {
       const payload = makeGrantPayload();
 
-      const res = await request(app.getHttpServer())
-        .post('/v1/grants')
-        .send(payload)
-        .expect(201);
+      const res = await request(app.getHttpServer()).post('/v1/grants').send(payload).expect(201);
 
       expect(res.body.id).toBeDefined();
       expect(res.body.title).toBe(payload.title);
@@ -127,10 +126,7 @@ describe('Grants API Integration Tests', () => {
     it('defaults currency to USD when not provided', async () => {
       const { currency: _omitted, ...payload } = makeGrantPayload();
 
-      const res = await request(app.getHttpServer())
-        .post('/v1/grants')
-        .send(payload)
-        .expect(201);
+      const res = await request(app.getHttpServer()).post('/v1/grants').send(payload).expect(201);
 
       expect(res.body.currency).toBe('USD');
     });
@@ -138,10 +134,7 @@ describe('Grants API Integration Tests', () => {
     it('returns 400 when title is missing', async () => {
       const { title: _omitted, ...payload } = makeGrantPayload();
 
-      const res = await request(app.getHttpServer())
-        .post('/v1/grants')
-        .send(payload)
-        .expect(400);
+      const res = await request(app.getHttpServer()).post('/v1/grants').send(payload).expect(400);
 
       expect(res.body.message).toBeDefined();
     });
@@ -149,19 +142,13 @@ describe('Grants API Integration Tests', () => {
     it('returns 400 when description is missing', async () => {
       const { description: _omitted, ...payload } = makeGrantPayload();
 
-      await request(app.getHttpServer())
-        .post('/v1/grants')
-        .send(payload)
-        .expect(400);
+      await request(app.getHttpServer()).post('/v1/grants').send(payload).expect(400);
     });
 
     it('returns 400 when amount is missing', async () => {
       const { amount: _omitted, ...payload } = makeGrantPayload();
 
-      await request(app.getHttpServer())
-        .post('/v1/grants')
-        .send(payload)
-        .expect(400);
+      await request(app.getHttpServer()).post('/v1/grants').send(payload).expect(400);
     });
 
     it('returns 400 when amount is zero or negative', async () => {
@@ -179,10 +166,7 @@ describe('Grants API Integration Tests', () => {
     it('returns 400 when applicantId is missing', async () => {
       const { applicantId: _omitted, ...payload } = makeGrantPayload();
 
-      await request(app.getHttpServer())
-        .post('/v1/grants')
-        .send(payload)
-        .expect(400);
+      await request(app.getHttpServer()).post('/v1/grants').send(payload).expect(400);
     });
   });
 
@@ -199,9 +183,7 @@ describe('Grants API Integration Tests', () => {
     });
 
     it('returns 200 with a paginated list of all grants', async () => {
-      const res = await request(app.getHttpServer())
-        .get('/v1/grants')
-        .expect(200);
+      const res = await request(app.getHttpServer()).get('/v1/grants').expect(200);
 
       expect(res.body.data).toBeInstanceOf(Array);
       expect(res.body.data.length).toBe(3);
@@ -211,9 +193,7 @@ describe('Grants API Integration Tests', () => {
     });
 
     it('paginates results correctly with page and limit params', async () => {
-      const res = await request(app.getHttpServer())
-        .get('/v1/grants?page=1&limit=2')
-        .expect(200);
+      const res = await request(app.getHttpServer()).get('/v1/grants?page=1&limit=2').expect(200);
 
       expect(res.body.data.length).toBe(2);
       expect(res.body.total).toBe(3);
@@ -222,36 +202,28 @@ describe('Grants API Integration Tests', () => {
     });
 
     it('returns an empty second page when all items fit on page one', async () => {
-      const res = await request(app.getHttpServer())
-        .get('/v1/grants?page=2&limit=10')
-        .expect(200);
+      const res = await request(app.getHttpServer()).get('/v1/grants?page=2&limit=10').expect(200);
 
       expect(res.body.data.length).toBe(0);
       expect(res.body.total).toBe(3);
     });
 
     it('filters grants by status', async () => {
-      const res = await request(app.getHttpServer())
-        .get('/v1/grants?status=approved')
-        .expect(200);
+      const res = await request(app.getHttpServer()).get('/v1/grants?status=approved').expect(200);
 
       expect(res.body.data.length).toBe(1);
       expect(res.body.data[0].status).toBe('approved');
     });
 
     it('returns an empty data array when no grants match the status filter', async () => {
-      const res = await request(app.getHttpServer())
-        .get('/v1/grants?status=closed')
-        .expect(200);
+      const res = await request(app.getHttpServer()).get('/v1/grants?status=closed').expect(200);
 
       expect(res.body.data.length).toBe(0);
       expect(res.body.total).toBe(0);
     });
 
     it('returns grants in descending createdAt order', async () => {
-      const res = await request(app.getHttpServer())
-        .get('/v1/grants')
-        .expect(200);
+      const res = await request(app.getHttpServer()).get('/v1/grants').expect(200);
 
       const dates = res.body.data.map((g: Grant) => new Date(g.createdAt).getTime());
       for (let i = 1; i < dates.length; i++) {
@@ -266,9 +238,7 @@ describe('Grants API Integration Tests', () => {
     it('returns 200 with the grant when the ID exists', async () => {
       const saved = await grantsRepo.save(grantsRepo.create(makeGrantPayload()));
 
-      const res = await request(app.getHttpServer())
-        .get(`/v1/grants/${saved.id}`)
-        .expect(200);
+      const res = await request(app.getHttpServer()).get(`/v1/grants/${saved.id}`).expect(200);
 
       expect(res.body.id).toBe(saved.id);
       expect(res.body.title).toBe(saved.title);
@@ -277,17 +247,13 @@ describe('Grants API Integration Tests', () => {
     it('returns 404 when the grant ID does not exist', async () => {
       const nonExistentId = '00000000-0000-0000-0000-000000000000';
 
-      const res = await request(app.getHttpServer())
-        .get(`/v1/grants/${nonExistentId}`)
-        .expect(404);
+      const res = await request(app.getHttpServer()).get(`/v1/grants/${nonExistentId}`).expect(404);
 
       expect(res.body.message).toMatch(/not found/i);
     });
 
     it('returns 400 when the ID is not a valid UUID', async () => {
-      await request(app.getHttpServer())
-        .get('/v1/grants/not-a-uuid')
-        .expect(400);
+      await request(app.getHttpServer()).get('/v1/grants/not-a-uuid').expect(400);
     });
   });
 
@@ -370,17 +336,13 @@ describe('Grants API Integration Tests', () => {
     it('deletes an existing grant and returns 204', async () => {
       const saved = await grantsRepo.save(grantsRepo.create(makeGrantPayload()));
 
-      await request(app.getHttpServer())
-        .delete(`/v1/grants/${saved.id}`)
-        .expect(204);
+      await request(app.getHttpServer()).delete(`/v1/grants/${saved.id}`).expect(204);
     });
 
     it('removes the grant from the database after deletion', async () => {
       const saved = await grantsRepo.save(grantsRepo.create(makeGrantPayload()));
 
-      await request(app.getHttpServer())
-        .delete(`/v1/grants/${saved.id}`)
-        .expect(204);
+      await request(app.getHttpServer()).delete(`/v1/grants/${saved.id}`).expect(204);
 
       const fromDb = await grantsRepo.findOne({ where: { id: saved.id } });
       expect(fromDb).toBeNull();
@@ -393,18 +355,18 @@ describe('Grants API Integration Tests', () => {
     });
 
     it('returns 400 when the ID is not a valid UUID', async () => {
-      await request(app.getHttpServer())
-        .delete('/v1/grants/not-a-uuid')
-        .expect(400);
+      await request(app.getHttpServer()).delete('/v1/grants/not-a-uuid').expect(400);
     });
 
     it('cascades correctly — deleting a grant does not affect other grants', async () => {
-      const grantA = await grantsRepo.save(grantsRepo.create(makeGrantPayload({ title: 'Keep Me' })));
-      const grantB = await grantsRepo.save(grantsRepo.create(makeGrantPayload({ title: 'Delete Me' })));
+      const grantA = await grantsRepo.save(
+        grantsRepo.create(makeGrantPayload({ title: 'Keep Me' }))
+      );
+      const grantB = await grantsRepo.save(
+        grantsRepo.create(makeGrantPayload({ title: 'Delete Me' }))
+      );
 
-      await request(app.getHttpServer())
-        .delete(`/v1/grants/${grantB.id}`)
-        .expect(204);
+      await request(app.getHttpServer()).delete(`/v1/grants/${grantB.id}`).expect(204);
 
       const remaining = await grantsRepo.find();
       expect(remaining.length).toBe(1);
@@ -418,7 +380,7 @@ describe('Grants API Integration Tests', () => {
     it('allows the grant applicant to update their own grant', async () => {
       // The mock JWT guard sets user.id = 'test-user-id' which matches applicantId
       const saved = await grantsRepo.save(
-        grantsRepo.create(makeGrantPayload({ applicantId: 'test-user-id' })),
+        grantsRepo.create(makeGrantPayload({ applicantId: 'test-user-id' }))
       );
 
       const res = await request(app.getHttpServer())

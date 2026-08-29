@@ -15,6 +15,8 @@ import { Subscription, SubscriptionStatus, SubscriptionPlan } from './subscripti
 import { Invoice, InvoiceStatus } from './invoice.entity';
 import { Enrollment } from '../enrollments/enrollment.entity';
 import { StellarService } from '../stellar/stellar.service';
+import { PaginationDto } from '../common/dto/pagination.dto';
+import { PaginatedResponseDto } from '../common/dto/api-response.dto';
 
 @Injectable()
 export class PaymentsService {
@@ -29,7 +31,7 @@ export class PaymentsService {
     private readonly configService: ConfigService,
     private readonly eventEmitter: EventEmitter2,
     private readonly stellarService: StellarService,
-    private readonly dataSource: DataSource,
+    private readonly dataSource: DataSource
   ) {
     this.stripe = new Stripe(this.configService.get<string>('stripe.secretKey') ?? '', {
       apiVersion: '2024-04-10',
@@ -47,7 +49,7 @@ export class PaymentsService {
     courseId: string,
     priceId: string,
     successUrl: string,
-    cancelUrl: string,
+    cancelUrl: string
   ): Promise<{ url: string; sessionId: string }> {
     // Idempotency: prevent duplicate pending payments
     const existing = await this.paymentRepo.findOne({
@@ -77,7 +79,7 @@ export class PaymentsService {
         idempotencyKey: session.id,
         currency: session.currency ?? 'usd',
         amountCents: session.amount_total ?? 0,
-      }),
+      })
     );
 
     return { url: session.url!, sessionId: session.id };
@@ -90,7 +92,7 @@ export class PaymentsService {
     userId: string,
     plan: SubscriptionPlan,
     priceId: string,
-    paymentMethodId: string,
+    paymentMethodId: string
   ): Promise<Subscription> {
     // Get or create a Stripe customer
     let stripeCustomerId = await this.getStripeCustomerId(userId);
@@ -183,7 +185,7 @@ export class PaymentsService {
   async verifyAndRecordStellarPayment(
     userId: string,
     courseId: string,
-    txHash: string,
+    txHash: string
   ): Promise<Payment> {
     // Idempotency: prevent duplicate stellar payment recording
     const existing = await this.paymentRepo.findOne({
@@ -208,7 +210,7 @@ export class PaymentsService {
         status: PaymentStatus.COMPLETED,
         stellarTxHash: txHash,
         idempotencyKey: `stellar:${txHash}`,
-      }),
+      })
     );
 
     await this.grantEnrollment(userId, courseId);
@@ -240,20 +242,33 @@ export class PaymentsService {
     return this.subscriptionRepo.save(sub);
   }
 
-  async getUserInvoices(userId: string): Promise<Invoice[]> {
-    return this.invoiceRepo.find({
+  async getUserInvoices(
+    userId: string,
+    query: PaginationDto
+  ): Promise<PaginatedResponseDto<Invoice>> {
+    const { page = 1, limit = 20 } = query;
+    const [invoices, total] = await this.invoiceRepo.findAndCount({
       where: { userId },
       order: { createdAt: 'DESC' },
-      take: 50,
+      skip: (page - 1) * limit,
+      take: limit,
     });
+    return new PaginatedResponseDto(invoices, 200, page, limit, total);
   }
 
-  async getUserPayments(userId: string): Promise<Payment[]> {
-    return this.paymentRepo.find({
+  async getUserPayments(
+    userId: string,
+    query: PaginationDto
+  ): Promise<PaginatedResponseDto<Payment>> {
+    const { page = 1, limit = 20 } = query;
+    const [payments, total] = await this.paymentRepo.findAndCount({
       where: { userId },
       relations: ['course'],
       order: { createdAt: 'DESC' },
+      skip: (page - 1) * limit,
+      take: limit,
     });
+    return new PaginatedResponseDto(payments, 200, page, limit, total);
   }
 
   // ─── Private helpers ─────────────────────────────────────────────────────────
@@ -270,7 +285,7 @@ export class PaymentsService {
         status: PaymentStatus.COMPLETED,
         amountCents: session.amount_total ?? 0,
         idempotencyKey: event.id,
-      },
+      }
     );
 
     await this.grantEnrollment(userId, courseId);
@@ -316,7 +331,7 @@ export class PaymentsService {
         {
           status: SubscriptionStatus.ACTIVE,
           currentPeriodEnd: new Date((stripeInvoice as any).period_end * 1000),
-        },
+        }
       );
     }
 
@@ -329,7 +344,7 @@ export class PaymentsService {
         amountCents: stripeInvoice.amount_paid,
         currency: stripeInvoice.currency,
         idempotencyKey: event.id,
-      }),
+      })
     );
   }
 
@@ -340,7 +355,7 @@ export class PaymentsService {
 
     await this.subscriptionRepo.update(
       { stripeSubscriptionId: stripeSubId },
-      { status: SubscriptionStatus.PAST_DUE },
+      { status: SubscriptionStatus.PAST_DUE }
     );
     this.logger.warn(`Subscription ${stripeSubId} moved to past_due after payment failure`);
   }
@@ -349,7 +364,7 @@ export class PaymentsService {
     const stripeSub = event.data.object as Stripe.Subscription;
     await this.subscriptionRepo.update(
       { stripeSubscriptionId: stripeSub.id },
-      { status: SubscriptionStatus.CANCELLED, cancelledAt: new Date() },
+      { status: SubscriptionStatus.CANCELLED, cancelledAt: new Date() }
     );
     this.logger.log(`Subscription ${stripeSub.id} cancelled`);
   }

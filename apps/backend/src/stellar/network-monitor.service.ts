@@ -35,13 +35,13 @@ export class NetworkMonitorService implements OnModuleInit {
         latencyMs: latency,
         lastChecked: new Date().toISOString(),
       };
-    } catch (error) {
+    } catch (error: unknown) {
       return {
         status: 'down',
         url,
         latencyMs: Date.now() - start,
         lastChecked: new Date().toISOString(),
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
       };
     }
   }

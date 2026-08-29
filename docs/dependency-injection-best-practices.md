@@ -14,7 +14,7 @@ export class CourseService {
   constructor(
     private readonly courseRepository: CourseRepository,
     private readonly validationService: ValidationService,
-    private readonly logger: Logger,
+    private readonly logger: Logger
   ) {}
 }
 ```
@@ -186,7 +186,7 @@ export class UserModule {}
 export class CourseService {
   constructor(
     private readonly repository: CourseRepository,
-    @Optional() private readonly cacheService?: CacheService,
+    @Optional() private readonly cacheService?: CacheService
   ) {}
 
   async findOne(id: string) {
@@ -423,7 +423,7 @@ export class CourseService {
 export class CourseService {
   constructor(
     private readonly repository: CourseRepository,
-    private readonly logger: Logger,
+    private readonly logger: Logger
   ) {}
 
   async create(dto: CreateCourseDto) {
@@ -489,18 +489,18 @@ export class CourseService {
 
 ## Summary
 
-| Practice | Benefit |
-|----------|---------|
+| Practice              | Benefit                         |
+| --------------------- | ------------------------------- |
 | Constructor Injection | Explicit dependencies, testable |
-| Interface-Based | Flexible, mockable |
-| Proper Exports | Reusable across modules |
-| Avoid Service Locator | Clear dependencies, testable |
-| Handle Circular Deps | Prevents runtime errors |
-| Optional Dependencies | Graceful degradation |
-| Lazy Loading | Dynamic configuration |
-| Scope Management | Memory efficiency |
-| Good Testing | Reliable code |
-| Documentation | Maintainability |
+| Interface-Based       | Flexible, mockable              |
+| Proper Exports        | Reusable across modules         |
+| Avoid Service Locator | Clear dependencies, testable    |
+| Handle Circular Deps  | Prevents runtime errors         |
+| Optional Dependencies | Graceful degradation            |
+| Lazy Loading          | Dynamic configuration           |
+| Scope Management      | Memory efficiency               |
+| Good Testing          | Reliable code                   |
+| Documentation         | Maintainability                 |
 
 ## References
 

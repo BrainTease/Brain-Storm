@@ -33,13 +33,13 @@ const BASE_URL = process.env.API_URL ?? 'http://localhost:3000/v1';
 
 export async function apiFetch<T>(
   path: string,
-  options: RequestInit & { token?: string; apiKey?: string } = {},
+  options: RequestInit & { token?: string; apiKey?: string } = {}
 ): Promise<T> {
   const { token, apiKey, ...init } = options;
 
   const headers = new Headers(init.headers);
   headers.set('Content-Type', 'application/json');
-  if (token)  headers.set('Authorization', `Bearer ${token}`);
+  if (token) headers.set('Authorization', `Bearer ${token}`);
   if (apiKey) headers.set('X-API-KEY', apiKey);
 
   const res = await fetch(`${BASE_URL}${path}`, { ...init, headers });
@@ -56,7 +56,7 @@ export class ApiError extends Error {
   constructor(
     public readonly status: number,
     message: string,
-    public readonly path?: string,
+    public readonly path?: string
   ) {
     super(message);
     this.name = 'ApiError';
@@ -72,7 +72,7 @@ Every successful response is wrapped by the global transform interceptor:
 
 ```json
 {
-  "data": { },
+  "data": {},
   "statusCode": 200,
   "timestamp": "2024-01-01T00:00:00.000Z"
 }
@@ -165,14 +165,11 @@ const courses = await apiFetch('/courses', {
 To generate an API key (admin only):
 
 ```typescript
-const { data } = await apiFetch<{ data: { key: string; id: string } }>(
-  '/auth/admin/api-keys',
-  {
-    method: 'POST',
-    token: adminAccessToken,
-    body: JSON.stringify({ userId: 'user-uuid', name: 'my-integration' }),
-  },
-);
+const { data } = await apiFetch<{ data: { key: string; id: string } }>('/auth/admin/api-keys', {
+  method: 'POST',
+  token: adminAccessToken,
+  body: JSON.stringify({ userId: 'user-uuid', name: 'my-integration' }),
+});
 
 // Save data.key immediately — it cannot be retrieved again
 console.log('API key:', data.key);
@@ -212,13 +209,10 @@ async function stellarLogin(secretKey: string): Promise<string> {
   const signedXdr = tx.toEnvelope().toXDR('base64');
 
   // 3. Submit signed transaction to receive JWT
-  const { data: auth } = await apiFetch<{ data: { access_token: string } }>(
-    '/auth/stellar',
-    {
-      method: 'POST',
-      body: JSON.stringify({ transaction: signedXdr }),
-    },
-  );
+  const { data: auth } = await apiFetch<{ data: { access_token: string } }>('/auth/stellar', {
+    method: 'POST',
+    body: JSON.stringify({ transaction: signedXdr }),
+  });
 
   return auth.access_token;
 }
@@ -253,7 +247,7 @@ export async function getCourses(params?: {
   const qs = new URLSearchParams(
     Object.entries(params ?? {})
       .filter(([, v]) => v !== undefined)
-      .map(([k, v]) => [k, String(v)]),
+      .map(([k, v]) => [k, String(v)])
   ).toString();
 
   return apiFetch<PaginatedCourses>(`/courses${qs ? `?${qs}` : ''}`);
@@ -267,7 +261,7 @@ export async function getCourse(id: string) {
 // Create a course (admin / instructor only)
 export async function createCourse(
   token: string,
-  payload: { title: string; description: string; level: string },
+  payload: { title: string; description: string; level: string }
 ) {
   return apiFetch<{ data: Course }>('/courses', {
     method: 'POST',
@@ -320,7 +314,7 @@ export async function getEnrollments(token: string, userId: string) {
 // Record lesson progress (also updates on-chain via Soroban)
 export async function recordProgress(
   token: string,
-  payload: { courseId: string; lessonId?: string; progressPct: number },
+  payload: { courseId: string; lessonId?: string; progressPct: number }
 ) {
   return apiFetch('/progress', {
     method: 'POST',
@@ -372,7 +366,7 @@ export async function getBalance(publicKey: string) {
 export async function mintCredential(
   adminToken: string,
   recipientPublicKey: string,
-  courseId: string,
+  courseId: string
 ) {
   return apiFetch('/stellar/mint', {
     method: 'POST',
@@ -399,8 +393,8 @@ const { data: balances } = await getBalance('GABC...XYZ');
 // After a learner completes a course, mint their on-chain credential
 const { data: txHash } = await mintCredential(
   adminToken,
-  'GABC...XYZ',   // learner's Stellar public key
-  'course-uuid',
+  'GABC...XYZ', // learner's Stellar public key
+  'course-uuid'
 );
 console.log('Credential minted, tx:', txHash);
 ```
@@ -421,7 +415,7 @@ const RETRYABLE_STATUSES = new Set([429, 502, 503, 504]);
  */
 export async function withRetry<T>(
   fn: () => Promise<T>,
-  { maxAttempts = 3, baseDelayMs = 500 }: { maxAttempts?: number; baseDelayMs?: number } = {},
+  { maxAttempts = 3, baseDelayMs = 500 }: { maxAttempts?: number; baseDelayMs?: number } = {}
 ): Promise<T> {
   let lastError: unknown;
 
@@ -432,8 +426,8 @@ export async function withRetry<T>(
       lastError = err;
 
       const isRetryable =
-        !(err instanceof ApiError) ||          // network / parse error
-        RETRYABLE_STATUSES.has(err.status);    // rate-limited or server error
+        !(err instanceof ApiError) || // network / parse error
+        RETRYABLE_STATUSES.has(err.status); // rate-limited or server error
 
       if (!isRetryable || attempt === maxAttempts) throw err;
 
@@ -492,10 +486,7 @@ try {
 let accessToken = '';
 let refreshTokenValue = '';
 
-export async function authedFetch<T>(
-  path: string,
-  options: RequestInit = {},
-): Promise<T> {
+export async function authedFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
   try {
     return await apiFetch<T>(path, { ...options, token: accessToken });
   } catch (err) {
@@ -516,14 +507,14 @@ export async function authedFetch<T>(
 
 The API enforces per-IP rate limits. Exceeding them returns `429 Too Many Requests`.
 
-| Endpoint group | Limit |
-|---|---|
-| `POST /auth/register` | 5 requests / min |
-| `POST /auth/login` | 5 requests / min |
-| `POST /auth/forgot-password` | 3 requests / hour |
-| `GET/POST /auth/stellar` | 10 requests / min |
-| `POST /stellar/mint` | 3 requests / min |
-| All other endpoints | 100 requests / min (default) |
+| Endpoint group               | Limit                        |
+| ---------------------------- | ---------------------------- |
+| `POST /auth/register`        | 5 requests / min             |
+| `POST /auth/login`           | 5 requests / min             |
+| `POST /auth/forgot-password` | 3 requests / hour            |
+| `GET/POST /auth/stellar`     | 10 requests / min            |
+| `POST /stellar/mint`         | 3 requests / min             |
+| All other endpoints          | 100 requests / min (default) |
 
 **Recommendations:**
 

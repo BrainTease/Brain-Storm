@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { AuditService } from './audit.service';
 
@@ -11,8 +12,11 @@ export class AuditRetentionService {
   private readonly logger = new Logger(AuditRetentionService.name);
   private readonly retentionDays: number;
 
-  constructor(private readonly auditService: AuditService) {
-    this.retentionDays = parseInt(process.env.AUDIT_RETENTION_DAYS ?? '365', 10);
+  constructor(
+    private readonly auditService: AuditService,
+    private readonly configService: ConfigService
+  ) {
+    this.retentionDays = this.configService.get<number>('audit.retentionDays') ?? 365;
   }
 
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)

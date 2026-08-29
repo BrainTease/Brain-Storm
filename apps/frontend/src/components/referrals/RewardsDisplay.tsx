@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import useSWR from 'swr';
+import { formatDateShort } from '@/lib/date-utils';
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -119,9 +120,7 @@ export function RewardsDisplay() {
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-      <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
-        Your Rewards
-      </h2>
+      <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">Your Rewards</h2>
 
       {/* Summary */}
       <div className="grid grid-cols-2 gap-4 mb-6">
@@ -129,17 +128,13 @@ export function RewardsDisplay() {
           <div className="text-2xl font-bold text-green-600 dark:text-green-400">
             ${isLoading ? '...' : rewards.totalEarned}
           </div>
-          <div className="text-sm text-green-800 dark:text-green-200">
-            Total Earned
-          </div>
+          <div className="text-sm text-green-800 dark:text-green-200">Total Earned</div>
         </div>
         <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 text-center">
           <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
             ${isLoading ? '...' : rewards.totalPaid}
           </div>
-          <div className="text-sm text-blue-800 dark:text-blue-200">
-            Total Paid
-          </div>
+          <div className="text-sm text-blue-800 dark:text-blue-200">Total Paid</div>
         </div>
       </div>
 
@@ -171,7 +166,10 @@ export function RewardsDisplay() {
       <div className="space-y-3 max-h-80 overflow-y-auto">
         {isLoading ? (
           Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg animate-pulse">
+            <div
+              key={i}
+              className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg animate-pulse"
+            >
               <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-full" />
               <div className="flex-1">
                 <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2" />
@@ -202,14 +200,12 @@ export function RewardsDisplay() {
                   </div>
                 )}
                 <div className="text-xs text-gray-500 dark:text-gray-500">
-                  {new Date(reward.date).toLocaleDateString()}
+                  {formatDateShort(reward.date)}
                 </div>
               </div>
 
               <div className="text-right">
-                <div className="font-semibold text-gray-900 dark:text-white">
-                  +${reward.amount}
-                </div>
+                <div className="font-semibold text-gray-900 dark:text-white">+${reward.amount}</div>
                 <span
                   className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(
                     reward.status

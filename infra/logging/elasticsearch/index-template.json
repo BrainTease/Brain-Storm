@@ -26,22 +26,22 @@
         }
       ],
       "properties": {
-        "@timestamp":       { "type": "date" },
-        "app_timestamp":    { "type": "date" },
-        "log_level":        { "type": "keyword" },
-        "message":          { "type": "text" },
-        "context":          { "type": "keyword" },
-        "trace_id":         { "type": "keyword" },
-        "service_name":     { "type": "keyword" },
-        "environment":      { "type": "keyword" },
-        "client_ip":        { "type": "ip", "ignore_malformed": true },
-        "method":           { "type": "keyword" },
-        "request_path":     { "type": "keyword" },
-        "status_code":      { "type": "integer" },
-        "response_bytes":   { "type": "long" },
+        "@timestamp": { "type": "date" },
+        "app_timestamp": { "type": "date" },
+        "log_level": { "type": "keyword" },
+        "message": { "type": "text" },
+        "context": { "type": "keyword" },
+        "trace_id": { "type": "keyword" },
+        "service_name": { "type": "keyword" },
+        "environment": { "type": "keyword" },
+        "client_ip": { "type": "ip", "ignore_malformed": true },
+        "method": { "type": "keyword" },
+        "request_path": { "type": "keyword" },
+        "status_code": { "type": "integer" },
+        "response_bytes": { "type": "long" },
         "response_time_ms": { "type": "float" },
-        "user_agent":       { "type": "text" },
-        "tags":             { "type": "keyword" }
+        "user_agent": { "type": "text" },
+        "tags": { "type": "keyword" }
       }
     }
   }

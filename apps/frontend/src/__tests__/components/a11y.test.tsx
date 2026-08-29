@@ -22,9 +22,7 @@ describe('Component accessibility (axe)', () => {
   });
 
   it('Input has no a11y violations with error state', async () => {
-    const { container } = render(
-      <Input label="Email" type="email" error="Invalid email" />,
-    );
+    const { container } = render(<Input label="Email" type="email" error="Invalid email" />);
     const results = await axe(container);
     expect(results).toHaveNoViolations();
   });

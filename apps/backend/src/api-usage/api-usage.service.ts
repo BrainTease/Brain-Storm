@@ -5,9 +5,7 @@ import { ApiUsageLog } from './api-usage-log.entity';
 
 @Injectable()
 export class ApiUsageService {
-  constructor(
-    @InjectRepository(ApiUsageLog) private logRepo: Repository<ApiUsageLog>,
-  ) {}
+  constructor(@InjectRepository(ApiUsageLog) private logRepo: Repository<ApiUsageLog>) {}
 
   async log(data: Partial<ApiUsageLog>): Promise<void> {
     await this.logRepo.save(this.logRepo.create(data));

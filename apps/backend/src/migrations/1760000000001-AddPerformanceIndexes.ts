@@ -1,62 +1,72 @@
 import { MigrationInterface, QueryRunner, TableIndex } from 'typeorm';
 
+/**
+ * AddPerformanceIndexes — #810 cleanup
+ *
+ * Removed indexes that are now declared as @Index() decorators on the entity
+ * classes (User, Course) and therefore managed automatically by TypeORM
+ * (synchronize:true in dev; generated migrations in prod).
+ *
+ * REMOVED (redundant — covered by @Index on entity):
+ *   IDX_USERS_ACTIVE_ROLE           — superseded by @Index(['role','deletedAt']) on User
+ *   IDX_USERS_VERIFIED              — superseded by @Index(['isVerified','deletedAt']),
+ *                                     but isVerified is not yet on the entity @Index;
+ *                                     left as a partial-index candidate below (#810-note-1)
+ *   IDX_COURSES_PUBLISHED_LEVEL     — superseded by @Index(['isPublished','isDeleted','level'])
+ *   IDX_COURSES_INSTRUCTOR          — superseded by @Index(['instructorId','isDeleted'])
+ *
+ * KEPT (not covered by entity decorators):
+ *   IDX_ENROLLMENTS_USER_PROGRESS   — not on Enrollment entity
+ *   IDX_REVIEWS_COURSE_RATING       — not on Review entity
+ *   IDX_NOTIFICATIONS_UNREAD        — not on Notification entity
+ *   IDX_PROGRESS_COURSE_COMPLETION  — not on Progress entity
+ *
+ * CHECK CONSTRAINTS kept — they express business rules not expressible via decorators.
+ */
 export class AddPerformanceIndexes1760000000001 implements MigrationInterface {
   name = 'AddPerformanceIndexes1760000000001';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
-    // Users table - composite index for active user lookups
-    await queryRunner.createIndex('users', new TableIndex({
-      name: 'IDX_USERS_ACTIVE_ROLE',
-      columnNames: ['deletedAt', 'role', 'createdAt'],
-      where: '"deletedAt" IS NULL',
-    }));
+    // Enrollments table — composite index for student progress lookups.
+    // Not covered by an @Index decorator on Enrollment entity.
+    await queryRunner.createIndex(
+      'enrollments',
+      new TableIndex({
+        name: 'IDX_ENROLLMENTS_USER_PROGRESS',
+        columnNames: ['userId', 'completedAt'],
+      })
+    );
 
-    // Users table - index for verified users
-    await queryRunner.createIndex('users', new TableIndex({
-      name: 'IDX_USERS_VERIFIED',
-      columnNames: ['isVerified', 'deletedAt'],
-    }));
+    // Reviews table — composite index for course rating aggregation.
+    await queryRunner.createIndex(
+      'reviews',
+      new TableIndex({
+        name: 'IDX_REVIEWS_COURSE_RATING',
+        columnNames: ['courseId', 'rating', 'createdAt'],
+      })
+    );
 
-    // Courses table - composite index for published courses
-    await queryRunner.createIndex('courses', new TableIndex({
-      name: 'IDX_COURSES_PUBLISHED_LEVEL',
-      columnNames: ['isPublished', 'level', 'createdAt'],
-      where: '"isDeleted" = false AND "isPublished" = true',
-    }));
+    // Notifications table — composite index for unread notification queries.
+    await queryRunner.createIndex(
+      'notifications',
+      new TableIndex({
+        name: 'IDX_NOTIFICATIONS_UNREAD',
+        columnNames: ['userId', 'isRead', 'createdAt'],
+        where: '"isRead" = false',
+      })
+    );
 
-    // Courses table - index for instructor's courses
-    await queryRunner.createIndex('courses', new TableIndex({
-      name: 'IDX_COURSES_INSTRUCTOR',
-      columnNames: ['instructorId', 'createdAt'],
-      where: '"isDeleted" = false',
-    }));
+    // Progress table — composite index for completion-progress tracking.
+    await queryRunner.createIndex(
+      'progress',
+      new TableIndex({
+        name: 'IDX_PROGRESS_COURSE_COMPLETION',
+        columnNames: ['courseId', 'progressPct', 'updatedAt'],
+      })
+    );
 
-    // Enrollments table - composite index for student progress lookups
-    await queryRunner.createIndex('enrollments', new TableIndex({
-      name: 'IDX_ENROLLMENTS_USER_PROGRESS',
-      columnNames: ['userId', 'completedAt'],
-    }));
+    // --- Check constraints (not expressible as entity decorators) -----------
 
-    // Reviews table - composite index for course rating aggregation
-    await queryRunner.createIndex('reviews', new TableIndex({
-      name: 'IDX_REVIEWS_COURSE_RATING',
-      columnNames: ['courseId', 'rating', 'createdAt'],
-    }));
-
-    // Notifications table - composite index for unread notifications
-    await queryRunner.createIndex('notifications', new TableIndex({
-      name: 'IDX_NOTIFICATIONS_UNREAD',
-      columnNames: ['userId', 'isRead', 'createdAt'],
-      where: '"isRead" = false',
-    }));
-
-    // Progress table - composite index for course completion tracking
-    await queryRunner.createIndex('progress', new TableIndex({
-      name: 'IDX_PROGRESS_COURSE_COMPLETION',
-      columnNames: ['courseId', 'progressPct', 'updatedAt'],
-    }));
-
-    // Add check constraints for data integrity
     await queryRunner.query(`
       ALTER TABLE progress
       ADD CONSTRAINT check_progress_pct
@@ -77,19 +87,13 @@ export class AddPerformanceIndexes1760000000001 implements MigrationInterface {
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    // Drop check constraints
     await queryRunner.query('ALTER TABLE courses DROP CONSTRAINT IF EXISTS check_duration_hours');
     await queryRunner.query('ALTER TABLE reviews DROP CONSTRAINT IF EXISTS check_rating');
     await queryRunner.query('ALTER TABLE progress DROP CONSTRAINT IF EXISTS check_progress_pct');
 
-    // Drop indexes
     await queryRunner.dropIndex('progress', 'IDX_PROGRESS_COURSE_COMPLETION');
     await queryRunner.dropIndex('notifications', 'IDX_NOTIFICATIONS_UNREAD');
     await queryRunner.dropIndex('reviews', 'IDX_REVIEWS_COURSE_RATING');
     await queryRunner.dropIndex('enrollments', 'IDX_ENROLLMENTS_USER_PROGRESS');
-    await queryRunner.dropIndex('courses', 'IDX_COURSES_INSTRUCTOR');
-    await queryRunner.dropIndex('courses', 'IDX_COURSES_PUBLISHED_LEVEL');
-    await queryRunner.dropIndex('users', 'IDX_USERS_VERIFIED');
-    await queryRunner.dropIndex('users', 'IDX_USERS_ACTIVE_ROLE');
   }
 }

@@ -4,10 +4,8 @@ import { useRef } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
-import {
-  useCertificateActions,
-  type Certificate,
-} from '@/hooks/useCertificateActions';
+import { useCertificateActions, type Certificate } from '@/hooks/useCertificateActions';
+import { formatDateShort, formatDateLong } from '@/lib/date-utils';
 
 export type { Certificate };
 
@@ -41,21 +39,35 @@ export function CertificateViewer({ certificate, isOpen, onClose }: CertificateV
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Certificate of Completion">
       <div className="space-y-6 max-h-[80vh] overflow-y-auto">
-
         {/* ── Certificate Template ── */}
         <div
           ref={certRef}
           className="print:shadow-none relative overflow-hidden rounded-xl border-4 border-blue-600 dark:border-blue-500 bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-indigo-950 p-8 text-center"
         >
           {/* Decorative corner accents */}
-          <div className="absolute top-2 left-2 w-8 h-8 border-t-4 border-l-4 border-blue-400 rounded-tl-md" aria-hidden="true" />
-          <div className="absolute top-2 right-2 w-8 h-8 border-t-4 border-r-4 border-blue-400 rounded-tr-md" aria-hidden="true" />
-          <div className="absolute bottom-2 left-2 w-8 h-8 border-b-4 border-l-4 border-blue-400 rounded-bl-md" aria-hidden="true" />
-          <div className="absolute bottom-2 right-2 w-8 h-8 border-b-4 border-r-4 border-blue-400 rounded-br-md" aria-hidden="true" />
+          <div
+            className="absolute top-2 left-2 w-8 h-8 border-t-4 border-l-4 border-blue-400 rounded-tl-md"
+            aria-hidden="true"
+          />
+          <div
+            className="absolute top-2 right-2 w-8 h-8 border-t-4 border-r-4 border-blue-400 rounded-tr-md"
+            aria-hidden="true"
+          />
+          <div
+            className="absolute bottom-2 left-2 w-8 h-8 border-b-4 border-l-4 border-blue-400 rounded-bl-md"
+            aria-hidden="true"
+          />
+          <div
+            className="absolute bottom-2 right-2 w-8 h-8 border-b-4 border-r-4 border-blue-400 rounded-br-md"
+            aria-hidden="true"
+          />
 
           {/* Logo / seal */}
           <div className="flex justify-center mb-4">
-            <div className="w-16 h-16 rounded-full bg-blue-600 flex items-center justify-center shadow-lg" aria-hidden="true">
+            <div
+              className="w-16 h-16 rounded-full bg-blue-600 flex items-center justify-center shadow-lg"
+              aria-hidden="true"
+            >
               <span className="text-white text-2xl font-bold">BS</span>
             </div>
           </div>
@@ -88,22 +100,13 @@ export function CertificateViewer({ certificate, isOpen, onClose }: CertificateV
           {/* Metadata row */}
           <div className="flex flex-wrap justify-center gap-4 text-sm text-gray-600 dark:text-gray-300 mt-4 mb-4">
             <span>
-              <span className="font-medium">Issued:</span>{' '}
-              {new Date(certificate.issuedAt).toLocaleDateString(undefined, {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-              })}
+              <span className="font-medium">Issued:</span> {formatDateLong(certificate.issuedAt)}
             </span>
             {certificate.expiresAt && (
               <span>
                 <span className="font-medium">Expires:</span>{' '}
                 <span className={isExpired ? 'text-red-500' : ''}>
-                  {new Date(certificate.expiresAt).toLocaleDateString(undefined, {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                  })}
+                  {formatDateLong(certificate.expiresAt)}
                 </span>
               </span>
             )}
@@ -135,12 +138,12 @@ export function CertificateViewer({ certificate, isOpen, onClose }: CertificateV
           </h3>
           <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-gray-600 dark:text-gray-300">
             <span className="text-gray-400 dark:text-gray-500">Issue Date</span>
-            <span>{new Date(certificate.issuedAt).toLocaleDateString()}</span>
+            <span>{formatDateShort(certificate.issuedAt)}</span>
             {certificate.expiresAt && (
               <>
                 <span className="text-gray-400 dark:text-gray-500">Expiry Date</span>
                 <span className={isExpired ? 'text-red-500 font-medium' : ''}>
-                  {new Date(certificate.expiresAt).toLocaleDateString()}
+                  {formatDateShort(certificate.expiresAt)}
                   {isExpired && ' (Expired)'}
                 </span>
               </>

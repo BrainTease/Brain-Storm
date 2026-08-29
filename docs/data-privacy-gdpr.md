@@ -18,43 +18,43 @@ This document describes how Brain-Storm collects, stores, processes, and deletes
 
 ### Legal Basis for Processing
 
-| Purpose | Legal basis (GDPR Art. 6) |
-|---|---|
-| Account creation and authentication | Contract performance (Art. 6(1)(b)) |
-| Course progress and credential issuance | Contract performance (Art. 6(1)(b)) |
-| KYC identity verification | Legal obligation (Art. 6(1)(c)) |
-| Email notifications | Legitimate interest / consent (Art. 6(1)(a/f)) |
-| Analytics and platform improvement | Legitimate interest (Art. 6(1)(f)) |
+| Purpose                                 | Legal basis (GDPR Art. 6)                      |
+| --------------------------------------- | ---------------------------------------------- |
+| Account creation and authentication     | Contract performance (Art. 6(1)(b))            |
+| Course progress and credential issuance | Contract performance (Art. 6(1)(b))            |
+| KYC identity verification               | Legal obligation (Art. 6(1)(c))                |
+| Email notifications                     | Legitimate interest / consent (Art. 6(1)(a/f)) |
+| Analytics and platform improvement      | Legitimate interest (Art. 6(1)(f))             |
 
 ### Personal Data Collected
 
 #### `users` table (PostgreSQL)
 
-| Field | Description | Personal data |
-|---|---|---|
-| `id` | UUID primary key | No |
-| `email` | Login identifier and contact address | **Yes** |
-| `username` | Display name (optional) | **Yes** |
-| `passwordHash` | bcrypt hash — plaintext never stored | No |
-| `avatar` | Profile image URL | **Yes** |
-| `bio` | Free-text self-description | **Yes** |
-| `stellarPublicKey` | Stellar wallet address | **Yes** (pseudonymous) |
-| `role` | `student` / `instructor` / `admin` | No |
-| `isBanned` | Account status flag | No |
-| `isVerified` | Email verification status | No |
-| `deletedAt` | Soft-delete timestamp | No |
-| `verificationToken` | One-time email verification hash | No |
-| `mfaEnabled` | MFA status flag | No |
-| `mfaSecret` | TOTP secret (encrypted at rest) | **Yes** |
-| `createdAt` | Account creation timestamp | No |
+| Field               | Description                          | Personal data          |
+| ------------------- | ------------------------------------ | ---------------------- |
+| `id`                | UUID primary key                     | No                     |
+| `email`             | Login identifier and contact address | **Yes**                |
+| `username`          | Display name (optional)              | **Yes**                |
+| `passwordHash`      | bcrypt hash — plaintext never stored | No                     |
+| `avatar`            | Profile image URL                    | **Yes**                |
+| `bio`               | Free-text self-description           | **Yes**                |
+| `stellarPublicKey`  | Stellar wallet address               | **Yes** (pseudonymous) |
+| `role`              | `student` / `instructor` / `admin`   | No                     |
+| `isBanned`          | Account status flag                  | No                     |
+| `isVerified`        | Email verification status            | No                     |
+| `deletedAt`         | Soft-delete timestamp                | No                     |
+| `verificationToken` | One-time email verification hash     | No                     |
+| `mfaEnabled`        | MFA status flag                      | No                     |
+| `mfaSecret`         | TOTP secret (encrypted at rest)      | **Yes**                |
+| `createdAt`         | Account creation timestamp           | No                     |
 
 #### `kyc_customers` table (PostgreSQL)
 
-| Field | Description | Personal data |
-|---|---|---|
-| `stellarPublicKey` | Links KYC record to user | **Yes** (pseudonymous) |
-| `status` | `none` / `pending` / `approved` / `rejected` | No |
-| `providerId` | Session ID from Synaps.io KYC provider | **Yes** |
+| Field              | Description                                  | Personal data          |
+| ------------------ | -------------------------------------------- | ---------------------- |
+| `stellarPublicKey` | Links KYC record to user                     | **Yes** (pseudonymous) |
+| `status`           | `none` / `pending` / `approved` / `rejected` | No                     |
+| `providerId`       | Session ID from Synaps.io KYC provider       | **Yes**                |
 
 KYC identity documents (passport, ID card, selfie) are processed and stored exclusively by the third-party provider **Synaps.io**. Brain-Storm does not receive or store raw identity documents.
 
@@ -73,6 +73,7 @@ Hashed API keys linked to `userId`. The plaintext key is shown once at creation 
 #### Redis (in-memory)
 
 Used for:
+
 - Rate-limit counters (keyed by IP or user ID — no personal data stored)
 - Short-lived cache entries (e.g. leaderboard, token balances — keyed by Stellar public key)
 - Session data (if applicable)
@@ -92,12 +93,12 @@ Course completion credentials are recorded on the Stellar ledger as `ManageData`
 
 ### Third-Party Processors
 
-| Processor | Purpose | Data shared |
-|---|---|---|
-| Synaps.io | KYC identity verification | Stellar public key, identity documents |
-| Google OAuth | Social login | Email, name (from Google profile) |
-| Sentry | Error monitoring | Stack traces, request metadata (no PII by default) |
-| AWS (ECS, RDS, ElastiCache) | Infrastructure hosting | All data at rest |
+| Processor                   | Purpose                   | Data shared                                        |
+| --------------------------- | ------------------------- | -------------------------------------------------- |
+| Synaps.io                   | KYC identity verification | Stellar public key, identity documents             |
+| Google OAuth                | Social login              | Email, name (from Google profile)                  |
+| Sentry                      | Error monitoring          | Stack traces, request metadata (no PII by default) |
+| AWS (ECS, RDS, ElastiCache) | Infrastructure hosting    | All data at rest                                   |
 
 Ensure Data Processing Agreements (DPAs) are in place with each processor before going to production.
 
@@ -152,14 +153,14 @@ The response must be JSON (or optionally CSV) and must cover all tables that ref
 
 A complete export must include:
 
-| Data category | Source |
-|---|---|
-| Profile (email, username, avatar, bio, stellarPublicKey, role, createdAt) | `users` table |
-| KYC status and provider reference | `kyc_customers` table |
-| Course enrollments | `enrollments` table |
-| Course progress | `progress` table |
-| Notifications | `notifications` table |
-| Credentials issued | Stellar ledger (transaction hashes) |
+| Data category                                                             | Source                              |
+| ------------------------------------------------------------------------- | ----------------------------------- |
+| Profile (email, username, avatar, bio, stellarPublicKey, role, createdAt) | `users` table                       |
+| KYC status and provider reference                                         | `kyc_customers` table               |
+| Course enrollments                                                        | `enrollments` table                 |
+| Course progress                                                           | `progress` table                    |
+| Notifications                                                             | `notifications` table               |
+| Credentials issued                                                        | Stellar ledger (transaction hashes) |
 
 ---
 
@@ -180,6 +181,7 @@ async softDelete(id: string) {
 ```
 
 Soft-deleted users:
+
 - Are excluded from all `findAll` queries (`WHERE deletedAt IS NULL`)
 - Cannot log in (authentication checks `deletedAt`)
 - Retain their row for referential integrity with enrollments, credentials, and notifications
@@ -238,11 +240,11 @@ await this.cacheManager.del('leaderboard:top50');
 
 Brain-Storm does not set first-party cookies for tracking or advertising. The following technical cookies may be set:
 
-| Cookie | Purpose | Type | Duration |
-|---|---|---|---|
-| `access_token` (if stored in cookie) | JWT authentication | Strictly necessary | Session / JWT expiry |
-| `next-intl` locale preference | Language selection | Functional | 1 year |
-| `theme` | Dark/light mode preference | Functional | 1 year |
+| Cookie                               | Purpose                    | Type               | Duration             |
+| ------------------------------------ | -------------------------- | ------------------ | -------------------- |
+| `access_token` (if stored in cookie) | JWT authentication         | Strictly necessary | Session / JWT expiry |
+| `next-intl` locale preference        | Language selection         | Functional         | 1 year               |
+| `theme`                              | Dark/light mode preference | Functional         | 1 year               |
 
 > If JWTs are stored in `localStorage` rather than `HttpOnly` cookies, no authentication cookie is set. Confirm the storage mechanism before publishing the cookie policy.
 
@@ -287,20 +289,20 @@ if (hasConsent()) {
 
 ### Recommended Retention Periods
 
-| Data category | Retention period | Basis |
-|---|---|---|
-| Active user accounts | Duration of account + 30 days after deletion request | Contract |
-| Soft-deleted user records | 30 days, then hard delete / anonymise | GDPR Art. 5(1)(e) |
-| Password reset tokens | 1 hour (enforced at application level) | Minimisation |
-| Email verification tokens | 24 hours (enforced at application level) | Minimisation |
-| Refresh tokens | 7 days (or until revoked) | Security |
-| API keys | Until revoked by user | Contract |
-| Notifications | 90 days | Legitimate interest |
-| KYC records (Brain-Storm) | Duration of account + 5 years | Legal obligation (AML) |
-| KYC documents (Synaps.io) | Per Synaps.io DPA | Legal obligation |
-| Application logs | 30 days | Legitimate interest |
-| Redis cache entries | Per TTL (30 s – 5 min) | Technical necessity |
-| On-chain Stellar records | Permanent (immutable) | Blockchain limitation |
+| Data category             | Retention period                                     | Basis                  |
+| ------------------------- | ---------------------------------------------------- | ---------------------- |
+| Active user accounts      | Duration of account + 30 days after deletion request | Contract               |
+| Soft-deleted user records | 30 days, then hard delete / anonymise                | GDPR Art. 5(1)(e)      |
+| Password reset tokens     | 1 hour (enforced at application level)               | Minimisation           |
+| Email verification tokens | 24 hours (enforced at application level)             | Minimisation           |
+| Refresh tokens            | 7 days (or until revoked)                            | Security               |
+| API keys                  | Until revoked by user                                | Contract               |
+| Notifications             | 90 days                                              | Legitimate interest    |
+| KYC records (Brain-Storm) | Duration of account + 5 years                        | Legal obligation (AML) |
+| KYC documents (Synaps.io) | Per Synaps.io DPA                                    | Legal obligation       |
+| Application logs          | 30 days                                              | Legitimate interest    |
+| Redis cache entries       | Per TTL (30 s – 5 min)                               | Technical necessity    |
+| On-chain Stellar records  | Permanent (immutable)                                | Blockchain limitation  |
 
 ### Automated Retention Enforcement
 
@@ -322,14 +324,14 @@ async purgeDeletedUsers() {
 
 ### Data Subject Rights Summary
 
-| Right | GDPR Article | Current support | Action required |
-|---|---|---|---|
-| Right of access | Art. 15 | Partial (profile via `GET /users/:id`) | Full export endpoint |
-| Right to rectification | Art. 16 | ✅ `PATCH /users/:id` | — |
-| Right to erasure | Art. 17 | Partial (soft delete only) | Hard delete / anonymisation |
-| Right to data portability | Art. 20 | ❌ Not implemented | Export endpoint |
-| Right to restrict processing | Art. 18 | Partial (ban flag) | Formal restriction mechanism |
-| Right to object | Art. 21 | ❌ Not implemented | Opt-out mechanism |
+| Right                        | GDPR Article | Current support                        | Action required              |
+| ---------------------------- | ------------ | -------------------------------------- | ---------------------------- |
+| Right of access              | Art. 15      | Partial (profile via `GET /users/:id`) | Full export endpoint         |
+| Right to rectification       | Art. 16      | ✅ `PATCH /users/:id`                  | —                            |
+| Right to erasure             | Art. 17      | Partial (soft delete only)             | Hard delete / anonymisation  |
+| Right to data portability    | Art. 20      | ❌ Not implemented                     | Export endpoint              |
+| Right to restrict processing | Art. 18      | Partial (ban flag)                     | Formal restriction mechanism |
+| Right to object              | Art. 21      | ❌ Not implemented                     | Opt-out mechanism            |
 
 ---
 

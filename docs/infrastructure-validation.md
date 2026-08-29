@@ -5,6 +5,7 @@ This document describes the automated infrastructure validation system for Brain
 ## Overview
 
 The automated infrastructure validation system provides:
+
 - **Terraform Validation**: Syntax and configuration validation
 - **Security Policy Checking**: OPA-based policy enforcement
 - **Infrastructure Testing**: Health checks and functionality tests
@@ -57,11 +58,13 @@ The automated infrastructure validation system provides:
 **Purpose**: Ensures consistent code formatting
 
 **Command**:
+
 ```bash
 terraform fmt -check -recursive
 ```
 
 **What it checks**:
+
 - Consistent indentation (2 spaces)
 - Proper bracket alignment
 - Consistent naming conventions
@@ -73,11 +76,13 @@ terraform fmt -check -recursive
 **Purpose**: Validates Terraform configuration syntax and structure
 
 **Command**:
+
 ```bash
 terraform validate
 ```
 
 **What it checks**:
+
 - Valid HCL syntax
 - Required provider configuration
 - Variable and output definitions
@@ -92,6 +97,7 @@ terraform validate
 **Configuration**: `scripts/.tflint.hcl`
 
 **What it checks**:
+
 - Naming conventions
 - Deprecated syntax
 - Module pinning
@@ -106,6 +112,7 @@ terraform validate
 **Purpose**: Security and compliance scanning
 
 **What it checks**:
+
 - Encryption at rest and in transit
 - Public access restrictions
 - Backup and recovery settings
@@ -122,6 +129,7 @@ terraform validate
 **File**: `infra/terraform/policies/terraform.rego`
 
 **Policies**:
+
 - Deny unrestricted security group access
 - Require RDS encryption
 - Require S3 versioning
@@ -136,6 +144,7 @@ terraform validate
 **Purpose**: Analyzes infrastructure changes
 
 **What it checks**:
+
 - Resource creation/modification/deletion
 - Cost estimation
 - Dependency analysis
@@ -165,6 +174,7 @@ Validation runs automatically via GitHub Actions:
 **Trigger**: Push to `main` or PR with changes to `infra/terraform/`
 
 **Steps**:
+
 1. Terraform format check
 2. Terraform validation
 3. TFLint analysis
@@ -179,51 +189,61 @@ Validation runs automatically via GitHub Actions:
 ### Test Categories
 
 #### 1. API Health Checks
+
 - Health endpoint (`/health`)
 - Readiness probe (`/ready`)
 - Liveness probe (`/live`)
 
 #### 2. Database Connectivity
+
 - PostgreSQL connection
 - Migration status
 - Query performance
 
 #### 3. Cache Connectivity
+
 - Redis connection
 - Memory usage
 - Key operations
 
 #### 4. API Endpoints
+
 - Course listing
 - Health status
 - Documentation
 
 #### 5. Security Headers
+
 - X-Content-Type-Options
 - X-Frame-Options
 - Content-Security-Policy
 
 #### 6. Performance Checks
+
 - API response time
 - Database query performance
 - Throughput metrics
 
 #### 7. Infrastructure Resources
+
 - RDS instance status
 - ElastiCache status
 - ECS services running
 
 #### 8. Backup Verification
+
 - Automated backups enabled
 - Recent backup existence
 - Backup retention policy
 
 #### 9. Logging and Monitoring
+
 - CloudWatch logs enabled
 - CloudWatch alarms configured
 - Log retention settings
 
 #### 10. SSL/TLS Configuration
+
 - Certificate validity
 - TLS version
 - Cipher strength
@@ -273,6 +293,7 @@ Success Rate: 100%
 ### Purpose
 
 Tracks infrastructure versions and changes over time for:
+
 - Audit trail
 - Rollback capability
 - Change tracking
@@ -281,6 +302,7 @@ Tracks infrastructure versions and changes over time for:
 ### Version Tracking
 
 **Tracked Components**:
+
 - Terraform version
 - AWS provider version
 - Module versions
@@ -322,10 +344,12 @@ cat infra/terraform/.versions/versions-20260601-103000.json | jq '.'
 **File**: `.github/workflows/terraform.yml`
 
 **Triggers**:
+
 - Push to `main` with Terraform changes
 - Pull request with Terraform changes
 
 **Steps**:
+
 1. Checkout code
 2. Configure AWS credentials
 3. Setup Terraform
@@ -412,6 +436,7 @@ deny[msg] {
 **Problem**: Format check fails
 
 **Solution**:
+
 ```bash
 # Auto-fix formatting
 terraform fmt -recursive infra/terraform
@@ -422,6 +447,7 @@ terraform fmt -recursive infra/terraform
 **Problem**: TFLint reports issues
 
 **Solution**:
+
 ```bash
 # View detailed TFLint output
 tflint -f json infra/terraform | jq '.'
@@ -438,6 +464,7 @@ tflint -f json infra/terraform | jq '.'
 **Problem**: OPA policies block deployment
 
 **Solution**:
+
 1. Review policy violation message
 2. Fix infrastructure code
 3. Re-run validation
@@ -448,6 +475,7 @@ tflint -f json infra/terraform | jq '.'
 **Problem**: Checkov reports security issues
 
 **Solution**:
+
 ```bash
 # View detailed Checkov output
 checkov -d infra/terraform --framework terraform --output cli

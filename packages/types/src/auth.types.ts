@@ -1,16 +1,4 @@
-export interface LoginDto {
-  email: string;
-  password: string;
-  rememberMe?: boolean;
-}
-
-export interface RegisterDto {
-  email: string;
-  password: string;
-  firstName: string;
-  lastName: string;
-  stellarPublicKey?: string;
-}
+import { UserProfile } from './user.types';
 
 export interface AuthResponse {
   accessToken: string;

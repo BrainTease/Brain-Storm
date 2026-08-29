@@ -24,7 +24,7 @@ test.describe('Buttons - Visual Regression', () => {
       await themeToggle.click();
       await page.waitForTimeout(500);
     }
-    
+
     const primaryButton = page.locator('button.btn-primary, button[variant="primary"]').first();
     if (await primaryButton.isVisible()) {
       await expect(primaryButton).toHaveScreenshot('button-primary-dark.png');
@@ -50,7 +50,9 @@ test.describe('Buttons - Visual Regression', () => {
   });
 
   test('secondary button variants', async ({ page }) => {
-    const secondaryButton = page.locator('button.btn-secondary, button[variant="secondary"]').first();
+    const secondaryButton = page
+      .locator('button.btn-secondary, button[variant="secondary"]')
+      .first();
     if (await secondaryButton.isVisible()) {
       await expect(secondaryButton).toHaveScreenshot('button-secondary.png');
     }
@@ -67,7 +69,7 @@ test.describe('Buttons - Visual Regression', () => {
     const loadingButton = page.locator('button[data-loading="true"], button .spinner').first();
     if (await loadingButton.isVisible()) {
       await expect(loadingButton).toHaveScreenshot('button-loading.png', {
-        animations: 'disabled' // Disable spinner animation for consistent snapshots
+        animations: 'disabled', // Disable spinner animation for consistent snapshots
       });
     }
   });

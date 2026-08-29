@@ -8,7 +8,7 @@ import { AccessLog } from './access-log.entity';
 export class AccessControlService {
   constructor(
     @InjectRepository(CourseAccessControl) private accessRepo: Repository<CourseAccessControl>,
-    @InjectRepository(AccessLog) private logRepo: Repository<AccessLog>,
+    @InjectRepository(AccessLog) private logRepo: Repository<AccessLog>
   ) {}
 
   async grantAccess(
@@ -16,7 +16,7 @@ export class AccessControlService {
     userId: string,
     role: AccessRole,
     subscriptionExpiryDate?: Date,
-    allowedIpAddresses?: string[],
+    allowedIpAddresses?: string[]
   ) {
     const access = this.accessRepo.create({
       courseId,
@@ -31,19 +31,33 @@ export class AccessControlService {
   async checkAccess(
     courseId: string,
     userId: string,
-    ipAddress?: string,
+    ipAddress?: string
   ): Promise<{ allowed: boolean; reason?: string }> {
     const access = await this.accessRepo.findOne({
       where: { courseId, userId, isActive: true },
     });
 
     if (!access) {
-      await this.logAccess(courseId, userId, 'access_denied', ipAddress, false, 'No access granted');
+      await this.logAccess(
+        courseId,
+        userId,
+        'access_denied',
+        ipAddress,
+        false,
+        'No access granted'
+      );
       return { allowed: false, reason: 'No access granted' };
     }
 
     if (access.subscriptionExpiryDate && new Date() > access.subscriptionExpiryDate) {
-      await this.logAccess(courseId, userId, 'access_denied', ipAddress, false, 'Subscription expired');
+      await this.logAccess(
+        courseId,
+        userId,
+        'access_denied',
+        ipAddress,
+        false,
+        'Subscription expired'
+      );
       return { allowed: false, reason: 'Subscription expired' };
     }
 
@@ -59,17 +73,11 @@ export class AccessControlService {
   }
 
   async revokeAccess(courseId: string, userId: string) {
-    return this.accessRepo.update(
-      { courseId, userId },
-      { isActive: false },
-    );
+    return this.accessRepo.update({ courseId, userId }, { isActive: false });
   }
 
   async updateSubscription(courseId: string, userId: string, expiryDate: Date) {
-    return this.accessRepo.update(
-      { courseId, userId },
-      { subscriptionExpiryDate: expiryDate },
-    );
+    return this.accessRepo.update({ courseId, userId }, { subscriptionExpiryDate: expiryDate });
   }
 
   async logAccess(
@@ -78,7 +86,7 @@ export class AccessControlService {
     action: string,
     ipAddress?: string,
     isAllowed: boolean = true,
-    denialReason?: string,
+    denialReason?: string
   ) {
     const log = this.logRepo.create({
       courseId,
@@ -92,7 +100,9 @@ export class AccessControlService {
   }
 
   async getAccessLogs(courseId: string, userId?: string, days: number = 30) {
-    const query = this.logRepo.createQueryBuilder('log').where('log.courseId = :courseId', { courseId });
+    const query = this.logRepo
+      .createQueryBuilder('log')
+      .where('log.courseId = :courseId', { courseId });
 
     if (userId) {
       query.andWhere('log.userId = :userId', { userId });

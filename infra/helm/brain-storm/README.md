@@ -51,20 +51,20 @@ helm uninstall brain-storm --namespace brain-storm
 
 ## Key Values
 
-| Key | Default | Description |
-|-----|---------|-------------|
-| `backend.image.tag` | `latest` | Backend image tag |
-| `frontend.image.tag` | `latest` | Frontend image tag |
-| `backend.autoscaling.enabled` | `true` | Enable backend HPA |
-| `backend.existingSecret` | `brain-storm-backend-secret` | K8s secret with DB/JWT/Stellar keys |
-| `postgresql.enabled` | `true` | Deploy bundled PostgreSQL (disable for managed DB) |
-| `redis.enabled` | `true` | Deploy bundled Redis (disable for managed Redis) |
-| `ingress.enabled` | `true` | Enable ingress |
-| `ingress.className` | `nginx` | Ingress class |
+| Key                           | Default                      | Description                                        |
+| ----------------------------- | ---------------------------- | -------------------------------------------------- |
+| `backend.image.tag`           | `latest`                     | Backend image tag                                  |
+| `frontend.image.tag`          | `latest`                     | Frontend image tag                                 |
+| `backend.autoscaling.enabled` | `true`                       | Enable backend HPA                                 |
+| `backend.existingSecret`      | `brain-storm-backend-secret` | K8s secret with DB/JWT/Stellar keys                |
+| `postgresql.enabled`          | `true`                       | Deploy bundled PostgreSQL (disable for managed DB) |
+| `redis.enabled`               | `true`                       | Deploy bundled Redis (disable for managed Redis)   |
+| `ingress.enabled`             | `true`                       | Enable ingress                                     |
+| `ingress.className`           | `nginx`                      | Ingress class                                      |
 
 ## Health Probes
 
-| Service | Liveness | Readiness |
-|---------|----------|-----------|
-| Backend | `GET /v1/health/liveness` | `GET /v1/health/readiness` |
-| Frontend | `GET /api/health` | `GET /api/health` |
+| Service  | Liveness                  | Readiness                  |
+| -------- | ------------------------- | -------------------------- |
+| Backend  | `GET /v1/health/liveness` | `GET /v1/health/readiness` |
+| Frontend | `GET /api/health`         | `GET /api/health`          |

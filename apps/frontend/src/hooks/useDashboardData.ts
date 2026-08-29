@@ -118,10 +118,10 @@ export function useDashboardData(): DashboardData {
 
   const enrolledCourses = useMemo(() => joinCourses(progress, courses), [progress, courses]);
 
-  const stats = useMemo(() => computeStats(enrolledCourses, credentials), [
-    enrolledCourses,
-    credentials,
-  ]);
+  const stats = useMemo(
+    () => computeStats(enrolledCourses, credentials),
+    [enrolledCourses, credentials]
+  );
 
   const patchProgress = useCallback(
     (updater: (records: ProgressRecord[]) => ProgressRecord[]) => setProgress(updater),

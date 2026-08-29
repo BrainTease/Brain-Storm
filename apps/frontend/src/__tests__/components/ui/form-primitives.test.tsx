@@ -138,7 +138,12 @@ describe('SegmentedControl', () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
     render(
-      <SegmentedControl ariaLabel="Filter courses" options={options} value="a" onChange={onChange} />
+      <SegmentedControl
+        ariaLabel="Filter courses"
+        options={options}
+        value="a"
+        onChange={onChange}
+      />
     );
     await user.click(screen.getByRole('button', { name: 'Option B' }));
     expect(onChange).toHaveBeenCalledWith('b');

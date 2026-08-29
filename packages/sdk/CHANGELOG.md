@@ -19,6 +19,11 @@ Every breaking entry must state the **migration**, not only the change.
 
 ### Added
 
+- Unit test infrastructure (`jest.config.js`, `tsconfig.jest.json`, `jest`/`ts-jest`
+  devDependencies) and a full test suite (`src/index.test.ts`) covering
+  `BrainStormClient`'s HTTP adapter behaviour and all five resource clients
+  (`auth`, `courses`, `progress`, `users`, `stellar`) against a mocked global
+  `fetch`. Run with `npm test` / `npm run test:coverage` from `packages/sdk`.
 - Full TSDoc on every public export in `src/index.ts`, covering intended usage,
   optional-field semantics, thrown errors, and the precision constraint on
   Stellar balance strings.
@@ -29,6 +34,17 @@ Every breaking entry must state the **migration**, not only the change.
   policy, deprecation process, changelog location and format, and reserved rules
   should the SDK ever gain Stellar/Soroban transaction building.
 - This changelog.
+
+### Fixed
+
+- `CoursesClient.list` (`client.courses.list`) now actually drops `undefined`
+  fields when building the query string, matching its own doc comment.
+  Previously `new URLSearchParams(params)` stringified an `undefined` value
+  literally (e.g. `limit: undefined` produced `?limit=undefined` in the
+  request URL) instead of omitting the field. Found while writing unit tests
+  for this PR; fixed by filtering `undefined` entries out of `params` before
+  constructing `URLSearchParams`. Non-breaking (brings behaviour in line with
+  the documented contract).
 
 ### Changed
 

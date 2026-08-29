@@ -14,14 +14,14 @@ describe('useNotifications', () => {
 
   it('should initialize with empty notifications', () => {
     const { result } = renderHook(() => useNotifications());
-    
+
     expect(result.current.notifications).toEqual([]);
     expect(result.current.unreadCount).toBe(0);
   });
 
   it('should add a notification', () => {
     const { result } = renderHook(() => useNotifications());
-    
+
     act(() => {
       result.current.addNotification({
         id: '1',
@@ -30,7 +30,7 @@ describe('useNotifications', () => {
         timestamp: new Date(),
       });
     });
-    
+
     expect(result.current.notifications).toHaveLength(1);
     expect(result.current.notifications[0]).toMatchObject({
       id: '1',
@@ -41,7 +41,7 @@ describe('useNotifications', () => {
 
   it('should mark notification as read', () => {
     const { result } = renderHook(() => useNotifications());
-    
+
     act(() => {
       result.current.addNotification({
         id: '1',
@@ -51,20 +51,20 @@ describe('useNotifications', () => {
         read: false,
       });
     });
-    
+
     expect(result.current.unreadCount).toBe(1);
-    
+
     act(() => {
       result.current.markAsRead('1');
     });
-    
+
     expect(result.current.unreadCount).toBe(0);
     expect(result.current.notifications[0].read).toBe(true);
   });
 
   it('should remove a notification', () => {
     const { result } = renderHook(() => useNotifications());
-    
+
     act(() => {
       result.current.addNotification({
         id: '1',
@@ -73,19 +73,19 @@ describe('useNotifications', () => {
         timestamp: new Date(),
       });
     });
-    
+
     expect(result.current.notifications).toHaveLength(1);
-    
+
     act(() => {
       result.current.removeNotification('1');
     });
-    
+
     expect(result.current.notifications).toHaveLength(0);
   });
 
   it('should clear all notifications', () => {
     const { result } = renderHook(() => useNotifications());
-    
+
     act(() => {
       result.current.addNotification({
         id: '1',
@@ -100,21 +100,21 @@ describe('useNotifications', () => {
         timestamp: new Date(),
       });
     });
-    
+
     expect(result.current.notifications).toHaveLength(2);
-    
+
     act(() => {
       result.current.clearAll();
     });
-    
+
     expect(result.current.notifications).toHaveLength(0);
   });
 
   it('should handle multiple notification types', () => {
     const { result } = renderHook(() => useNotifications());
-    
+
     const types = ['success', 'error', 'warning', 'info'] as const;
-    
+
     act(() => {
       types.forEach((type, index) => {
         result.current.addNotification({
@@ -125,7 +125,7 @@ describe('useNotifications', () => {
         });
       });
     });
-    
+
     expect(result.current.notifications).toHaveLength(4);
     types.forEach((type, index) => {
       expect(result.current.notifications[index].type).toBe(type);
@@ -134,7 +134,7 @@ describe('useNotifications', () => {
 
   it('should count unread notifications correctly', () => {
     const { result } = renderHook(() => useNotifications());
-    
+
     act(() => {
       result.current.addNotification({
         id: '1',
@@ -158,13 +158,13 @@ describe('useNotifications', () => {
         read: true,
       });
     });
-    
+
     expect(result.current.unreadCount).toBe(2);
   });
 
   it('should mark all as read', () => {
     const { result } = renderHook(() => useNotifications());
-    
+
     act(() => {
       result.current.addNotification({
         id: '1',
@@ -181,15 +181,15 @@ describe('useNotifications', () => {
         read: false,
       });
     });
-    
+
     expect(result.current.unreadCount).toBe(2);
-    
+
     act(() => {
       result.current.markAllAsRead();
     });
-    
+
     expect(result.current.unreadCount).toBe(0);
-    result.current.notifications.forEach(notification => {
+    result.current.notifications.forEach((notification) => {
       expect(notification.read).toBe(true);
     });
   });
@@ -197,7 +197,7 @@ describe('useNotifications', () => {
   it('should handle notification with action', () => {
     const { result } = renderHook(() => useNotifications());
     const mockAction = vi.fn();
-    
+
     act(() => {
       result.current.addNotification({
         id: '1',
@@ -210,22 +210,22 @@ describe('useNotifications', () => {
         },
       });
     });
-    
+
     const notification = result.current.notifications[0];
     expect(notification.action).toBeDefined();
     expect(notification.action?.label).toBe('Click me');
-    
+
     act(() => {
       notification.action?.onClick();
     });
-    
+
     expect(mockAction).toHaveBeenCalledOnce();
   });
 
   it('should auto-dismiss notification after timeout', async () => {
     vi.useFakeTimers();
     const { result } = renderHook(() => useNotifications());
-    
+
     act(() => {
       result.current.addNotification({
         id: '1',
@@ -236,23 +236,23 @@ describe('useNotifications', () => {
         duration: 3000,
       });
     });
-    
+
     expect(result.current.notifications).toHaveLength(1);
-    
+
     act(() => {
       vi.advanceTimersByTime(3000);
     });
-    
+
     await waitFor(() => {
       expect(result.current.notifications).toHaveLength(0);
     });
-    
+
     vi.useRealTimers();
   });
 
   it('should handle notification priority ordering', () => {
     const { result } = renderHook(() => useNotifications());
-    
+
     act(() => {
       result.current.addNotification({
         id: '1',
@@ -276,7 +276,7 @@ describe('useNotifications', () => {
         priority: 'medium',
       });
     });
-    
+
     // Notifications should be ordered by priority (high, medium, low)
     expect(result.current.notifications[0].priority).toBe('high');
     expect(result.current.notifications[1].priority).toBe('medium');

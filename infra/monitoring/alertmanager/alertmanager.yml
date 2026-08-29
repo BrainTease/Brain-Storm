@@ -1,17 +1,17 @@
 global:
   resolve_timeout: 5m
-  slack_api_url: "${SLACK_WEBHOOK_URL}"
-  smtp_smarthost: "${SMTP_HOST:localhost:587}"
-  smtp_from: "alerts@brain-storm.example.com"
-  smtp_auth_username: "${SMTP_USERNAME}"
-  smtp_auth_password: "${SMTP_PASSWORD}"
-  pagerduty_url: "https://events.pagerduty.com/v2/enqueue"
+  slack_api_url: '${SLACK_WEBHOOK_URL}'
+  smtp_smarthost: '${SMTP_HOST:localhost:587}'
+  smtp_from: 'alerts@brain-storm.example.com'
+  smtp_auth_username: '${SMTP_USERNAME}'
+  smtp_auth_password: '${SMTP_PASSWORD}'
+  pagerduty_url: 'https://events.pagerduty.com/v2/enqueue'
 
 templates:
   - /etc/alertmanager/templates/*.tmpl
 
 route:
-  group_by: ["alertname", "severity", "team"]
+  group_by: ['alertname', 'severity', 'team']
   group_wait: 30s
   group_interval: 5m
   repeat_interval: 4h
@@ -66,7 +66,7 @@ route:
 receivers:
   - name: pagerduty-oncall
     pagerduty_configs:
-      - routing_key: "${PAGERDUTY_INTEGRATION_KEY}"
+      - routing_key: '${PAGERDUTY_INTEGRATION_KEY}'
         severity: '{{ .CommonLabels.severity }}'
         description: '{{ .CommonAnnotations.summary }}'
         details:
@@ -76,10 +76,10 @@ receivers:
 
   - name: slack-platform-oncall
     slack_configs:
-      - channel: "#platform-oncall"
+      - channel: '#platform-oncall'
         send_resolved: true
         color: '{{ if eq .Status "firing" }}{{ if eq .CommonLabels.severity "critical" }}danger{{ else }}warning{{ end }}{{ else }}good{{ end }}'
-        title: "{{ if eq .Status \"firing\" }}🚨{{ else }}✅{{ end }} {{ .GroupLabels.alertname }}"
+        title: '{{ if eq .Status "firing" }}🚨{{ else }}✅{{ end }} {{ .GroupLabels.alertname }}'
         text: |
           {{ range .Alerts }}
           *Summary:* {{ .Annotations.summary }}
@@ -89,9 +89,9 @@ receivers:
 
   - name: slack-default
     slack_configs:
-      - channel: "#alerts"
+      - channel: '#alerts'
         send_resolved: true
-        title: "[{{ .Status | toUpper }}] {{ .GroupLabels.alertname }}"
+        title: '[{{ .Status | toUpper }}] {{ .GroupLabels.alertname }}'
         text: |
           {{ range .Alerts }}
           *Summary:* {{ .Annotations.summary }}
@@ -101,10 +101,10 @@ receivers:
 
   - name: slack-critical
     slack_configs:
-      - channel: "#alerts-critical"
+      - channel: '#alerts-critical'
         send_resolved: true
         color: '{{ if eq .Status "firing" }}danger{{ else }}good{{ end }}'
-        title: "🔴 CRITICAL: {{ .GroupLabels.alertname }}"
+        title: '🔴 CRITICAL: {{ .GroupLabels.alertname }}'
         text: |
           {{ range .Alerts }}
           *Summary:* {{ .Annotations.summary }}
@@ -114,9 +114,9 @@ receivers:
 
   - name: slack-contracts-critical
     slack_configs:
-      - channel: "#contracts-alerts"
+      - channel: '#contracts-alerts'
         send_resolved: true
-        title: "🔴 Contract Alert: {{ .GroupLabels.alertname }}"
+        title: '🔴 Contract Alert: {{ .GroupLabels.alertname }}'
         text: |
           {{ range .Alerts }}
           *Contract:* {{ .Labels.contract }}
@@ -125,9 +125,9 @@ receivers:
 
   - name: slack-contracts-warning
     slack_configs:
-      - channel: "#contracts-alerts"
+      - channel: '#contracts-alerts'
         send_resolved: true
-        title: "⚠️ Contract Warning: {{ .GroupLabels.alertname }}"
+        title: '⚠️ Contract Warning: {{ .GroupLabels.alertname }}'
         text: |
           {{ range .Alerts }}
           *Contract:* {{ .Labels.contract }}
@@ -136,9 +136,9 @@ receivers:
 
   - name: slack-deployments
     slack_configs:
-      - channel: "#deployments"
+      - channel: '#deployments'
         send_resolved: true
-        title: "🚀 Deployment Alert: {{ .GroupLabels.alertname }}"
+        title: '🚀 Deployment Alert: {{ .GroupLabels.alertname }}'
         text: |
           {{ range .Alerts }}
           *Summary:* {{ .Annotations.summary }}
@@ -146,9 +146,9 @@ receivers:
 
   - name: slack-uptime
     slack_configs:
-      - channel: "#uptime"
+      - channel: '#uptime'
         send_resolved: true
-        title: "{{ if eq .Status \"firing\" }}🔴{{ else }}✅{{ end }} Uptime: {{ .GroupLabels.alertname }}"
+        title: '{{ if eq .Status "firing" }}🔴{{ else }}✅{{ end }} Uptime: {{ .GroupLabels.alertname }}'
         text: |
           {{ range .Alerts }}
           *Summary:* {{ .Annotations.summary }}
@@ -159,4 +159,4 @@ inhibit_rules:
       - severity="critical"
     target_matchers:
       - severity="warning"
-    equal: ["alertname", "team"]
+    equal: ['alertname', 'team']

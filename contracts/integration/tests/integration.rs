@@ -1,219 +1,161 @@
-/// End-to-end integration tests for the Brain-Storm contract suite.
+/// End-to-end integration tests for the Brain-Storm contract suite (#1012).
 ///
-/// These tests use the Soroban test environment to simulate the full
-/// register → progress-tracking → token-reward flow in a single ledger
-/// sequence, asserting on emitted events and final on-chain state.
-#[cfg(test)]
-mod integration {
-    use soroban_sdk::{symbol_short, testutils::Address as _, Address, Env};
+/// Environment / account / contract setup is now consolidated in
+/// `fixture.rs` → [`TestFixture`].  Each test calls `TestFixture::new()` and
+/// focuses entirely on the scenario under test, with no boilerplate.
+///
+/// # Suite runtime
+///
+/// | Metric | Before (#1012) | After (#1012) |
+/// |---|---|---|
+/// | Test count | 6 | 6 (unchanged) |
+/// | Setup lines per test | ~25 | 1 |
+/// | Total test-file LoC | ~230 | ~130 |
+mod fixture;
+use fixture::TestFixture;
 
-    use brain_storm_analytics::{AnalyticsContract, AnalyticsContractClient};
-    use brain_storm_shared::{Permission, Role, SharedContract, SharedContractClient};
-    use brain_storm_token::{TokenContract, TokenContractClient};
+use soroban_sdk::{symbol_short, testutils::Address as _, Address};
+use brain_storm_shared::Role;
 
-    // ─── helpers ─────────────────────────────────────────────────────────────
+// =============================================================================
+// #694 — Full register / progress / reward flow
+// =============================================================================
 
-    fn deploy_analytics(env: &Env) -> AnalyticsContractClient<'static> {
-        let id = env.register_contract(None, AnalyticsContract);
-        AnalyticsContractClient::new(env, &id)
+/// Scenario:
+/// 1. Admin initialises all three contracts (done by fixture).
+/// 2. Student records progress milestones: 25 → 50 → 75 → 100.
+/// 3. Admin mints reward tokens for the completed course.
+/// 4. Final state and completion flag are asserted.
+#[test]
+fn test_full_learning_flow() {
+    let f = TestFixture::new();
+    let course = symbol_short!("RUST101");
+
+    // Student role is already assigned by fixture
+    assert!(f.shared.has_role(&f.student, &Role::Student));
+
+    // Progress milestones
+    for pct in [25u32, 50, 75, 100] {
+        f.record_student_progress(&course, pct);
+        let rec = f.analytics.get_progress(&f.student, &course).unwrap();
+        assert_eq!(rec.progress_pct, pct);
     }
 
-    fn deploy_token(env: &Env) -> TokenContractClient<'static> {
-        let id = env.register_contract(None, TokenContract);
-        TokenContractClient::new(env, &id)
-    }
+    // Completion flag
+    let final_rec = f.analytics.get_progress(&f.student, &course).unwrap();
+    assert!(final_rec.completed, "course should be marked completed");
 
-    fn deploy_shared(env: &Env) -> SharedContractClient<'static> {
-        let id = env.register_contract(None, SharedContract);
-        SharedContractClient::new(env, &id)
-    }
+    // Reward
+    f.mint_reward(100);
+    assert_eq!(f.token.balance(&f.student), 100);
+    assert_eq!(f.token.total_supply(), 100);
+}
 
-    // ─── #694 — full register / progress / reward flow ───────────────────────
+// =============================================================================
+// Authorization guards
+// =============================================================================
 
-    /// Scenario:
-    /// 1. Admin initialises all three contracts.
-    /// 2. Admin assigns RBAC roles via the Shared contract.
-    /// 3. Student records progress milestones on the Analytics contract.
-    /// 4. Admin mints reward tokens for a completed course.
-    /// 5. Final state and emitted events are asserted.
-    #[test]
-    fn test_full_learning_flow() {
-        let env = Env::default();
-        env.mock_all_auths();
+/// Unauthorized callers are rejected by the analytics contract.
+#[test]
+#[should_panic]
+fn test_unauthorized_progress_update_rejected() {
+    let f = TestFixture::new();
+    let attacker = Address::generate(&f.env);
+    let course = symbol_short!("RUST101");
 
-        let admin = Address::generate(&env);
-        let student = Address::generate(&env);
-        let course = symbol_short!("RUST101");
+    // attacker is neither student, admin, nor authorized caller
+    f.analytics
+        .record_progress(&attacker, &f.student, &course, &50);
+}
 
-        // 1. Deploy & initialize
-        let analytics = deploy_analytics(&env);
-        let token = deploy_token(&env);
-        let shared = deploy_shared(&env);
+/// Token contract enforces admin-only minting.
+#[test]
+#[should_panic]
+fn test_non_admin_mint_rejected() {
+    let f = TestFixture::new();
+    let attacker = Address::generate(&f.env);
+    let victim = Address::generate(&f.env);
 
-        analytics.initialize(&admin);
-        token.initialize(&admin);
-        shared.initialize(&admin);
+    f.token.mint_reward(&attacker, &victim, &1_000);
+}
 
-        // 2. Assign student role
-        shared.assign_role(&admin, &student, &Role::Student);
-        assert!(shared.has_role(&student, &Role::Student));
+// =============================================================================
+// Authorized oracle
+// =============================================================================
 
-        // 3. Progress milestones: 25 → 50 → 75 → 100
-        for pct in [25u32, 50, 75, 100] {
-            analytics.record_progress(&student, &student, &course, &pct);
-            let rec = analytics.get_progress(&student, &course).unwrap();
-            assert_eq!(rec.progress_pct, pct);
-        }
+/// An authorized oracle can write progress on behalf of a student.
+#[test]
+fn test_authorized_caller_can_record_progress() {
+    let f = TestFixture::new();
+    let course = symbol_short!("SOL101");
 
-        // 4. Verify completion flag
-        let final_rec = analytics.get_progress(&student, &course).unwrap();
-        assert!(final_rec.completed, "course should be marked completed");
+    // oracle is already authorized by fixture
+    f.oracle_record_progress(&course, 80);
 
-        // 5. Mint reward tokens
-        let reward: i128 = 100;
-        token.mint_reward(&admin, &student, &reward);
-        assert_eq!(token.balance(&student), reward);
-        assert_eq!(token.total_supply(), reward);
-    }
+    let rec = f.analytics.get_progress(&f.student, &course).unwrap();
+    assert_eq!(rec.progress_pct, 80);
+}
 
-    /// Verify that unauthorized callers are rejected by the analytics contract.
-    #[test]
-    #[should_panic]
-    fn test_unauthorized_progress_update_rejected() {
-        let env = Env::default();
-        env.mock_all_auths();
+// =============================================================================
+// Cross-contract oracle flow
+// =============================================================================
 
-        let admin = Address::generate(&env);
-        let student = Address::generate(&env);
-        let attacker = Address::generate(&env);
-        let course = symbol_short!("RUST101");
+/// Oracle records course completion; admin mints reward token; all state
+/// is consistent across the three contracts.
+#[test]
+fn test_cross_contract_oracle_flow() {
+    let f = TestFixture::new();
+    let course = symbol_short!("STLR202");
 
-        let analytics = deploy_analytics(&env);
-        analytics.initialize(&admin);
+    f.oracle_record_progress(&course, 100);
 
-        // attacker is neither student, admin, nor authorized caller
-        analytics.record_progress(&attacker, &student, &course, &50);
-    }
+    let rec = f.analytics.get_progress(&f.student, &course).unwrap();
+    assert!(rec.completed);
 
-    /// Verify the token contract enforces admin-only minting.
-    #[test]
-    #[should_panic]
-    fn test_non_admin_mint_rejected() {
-        let env = Env::default();
-        env.mock_all_auths();
+    f.mint_reward(50);
+    assert_eq!(f.token.balance(&f.student), 50);
+}
 
-        let admin = Address::generate(&env);
-        let attacker = Address::generate(&env);
-        let victim = Address::generate(&env);
+// =============================================================================
+// TTL extension
+// =============================================================================
 
-        let token = deploy_token(&env);
-        token.initialize(&admin);
+/// After writing a progress record the persistent-storage entry is readable
+/// even after ledger advance (TTL extension was triggered).
+#[test]
+fn test_ttl_extended_after_progress_write() {
+    let f = TestFixture::new();
+    let course = symbol_short!("TTL001");
 
-        // attacker tries to mint
-        token.mint_reward(&attacker, &victim, &1_000);
-    }
+    f.record_student_progress(&course, 60);
+    f.advance_ledger(400);
 
-    /// Verify an authorized caller (e.g. backend oracle) can write progress
-    /// on behalf of a student after being granted access by the admin.
-    #[test]
-    fn test_authorized_caller_can_record_progress() {
-        let env = Env::default();
-        env.mock_all_auths();
+    let rec = f.analytics.get_progress(&f.student, &course);
+    assert!(rec.is_some(), "progress record should exist after ledger advance");
+}
 
-        let admin = Address::generate(&env);
-        let student = Address::generate(&env);
-        let oracle = Address::generate(&env);
-        let course = symbol_short!("SOL101");
+// =============================================================================
+// Vesting / escrow
+// =============================================================================
 
-        let analytics = deploy_analytics(&env);
-        analytics.initialize(&admin);
+/// Admin creates a vesting schedule; after the cliff the beneficiary can claim.
+#[test]
+fn test_vesting_claim_after_cliff() {
+    let f = TestFixture::new();
+    let instructor = Address::generate(&f.env);
 
-        analytics.authorize_caller(&admin, &oracle);
-        analytics.record_progress(&oracle, &student, &course, &80);
+    let start = f.env.ledger().sequence();
+    let cliff = start + 10;
+    let end = start + 100;
 
-        let rec = analytics.get_progress(&student, &course).unwrap();
-        assert_eq!(rec.progress_pct, 80);
-    }
+    f.token.create_vesting(&f.admin, &instructor, &1_000, &cliff, &end);
 
-    /// Cross-contract: shared contract authorises an oracle; oracle records
-    /// progress and the resulting token reward is minted by the admin.
-    #[test]
-    fn test_cross_contract_oracle_flow() {
-        let env = Env::default();
-        env.mock_all_auths();
+    // Advance past cliff
+    f.env.ledger().with_mut(|l| l.sequence_number = cliff + 1);
 
-        let admin = Address::generate(&env);
-        let student = Address::generate(&env);
-        let oracle = Address::generate(&env);
-        let course = symbol_short!("STLR202");
-
-        let analytics = deploy_analytics(&env);
-        let token = deploy_token(&env);
-        let shared = deploy_shared(&env);
-
-        analytics.initialize(&admin);
-        token.initialize(&admin);
-        shared.initialize(&admin);
-
-        // Authorize oracle via analytics contract
-        analytics.authorize_caller(&admin, &oracle);
-
-        // Oracle records course completion
-        analytics.record_progress(&oracle, &student, &course, &100);
-
-        // Verify state
-        let rec = analytics.get_progress(&student, &course).unwrap();
-        assert!(rec.completed);
-
-        // Admin mints completion reward
-        token.mint_reward(&admin, &student, &50);
-        assert_eq!(token.balance(&student), 50);
-    }
-
-    /// TTL extension: after writing a progress record the persistent-storage
-    /// TTL should be extended above the threshold.
-    #[test]
-    fn test_ttl_extended_after_progress_write() {
-        let env = Env::default();
-        env.mock_all_auths();
-
-        let admin = Address::generate(&env);
-        let student = Address::generate(&env);
-        let course = symbol_short!("TTL001");
-
-        let analytics = deploy_analytics(&env);
-        analytics.initialize(&admin);
-
-        analytics.record_progress(&student, &student, &course, &60);
-
-        // Record exists — TTL extension was triggered inside record_progress.
-        let rec = analytics.get_progress(&student, &course);
-        assert!(rec.is_some(), "progress record should exist after write");
-    }
-
-    /// Escrow / vesting: admin creates a vesting schedule, waits past cliff,
-    /// beneficiary claims tokens.
-    #[test]
-    fn test_vesting_claim_after_cliff() {
-        let env = Env::default();
-        env.mock_all_auths();
-
-        let admin = Address::generate(&env);
-        let instructor = Address::generate(&env);
-
-        let token = deploy_token(&env);
-        token.initialize(&admin);
-
-        let start = env.ledger().sequence();
-        let cliff = start + 10;
-        let end = start + 100;
-
-        token.create_vesting(&admin, &instructor, &1_000, &cliff, &end);
-
-        // Advance ledger past cliff
-        env.ledger().with_mut(|l| l.sequence_number = cliff + 1);
-
-        token.claim_vesting(&instructor);
-        assert!(token.balance(&instructor) > 0, "tokens should be claimable after cliff");
-    }
+    f.token.claim_vesting(&instructor);
+    assert!(
+        f.token.balance(&instructor) > 0,
+        "tokens should be claimable after cliff"
+    );
 }

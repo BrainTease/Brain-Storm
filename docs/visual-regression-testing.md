@@ -16,18 +16,21 @@ Visual regression testing automatically detects unintended UI changes by compari
 Chromatic integrates with Storybook to test individual components in isolation.
 
 **Features:**
+
 - Component snapshot testing
 - Automatic baseline creation
 - Visual diff review in PRs
 - Accessibility checks
 
 **Setup:**
+
 ```bash
 # Already configured in .github/workflows/ci.yml
 # Requires CHROMATIC_PROJECT_TOKEN secret
 ```
 
 **Running Locally:**
+
 ```bash
 npm run build-storybook --workspace=apps/frontend
 npx chromatic --project-token=<YOUR_TOKEN>
@@ -38,6 +41,7 @@ npx chromatic --project-token=<YOUR_TOKEN>
 Percy captures full-page screenshots of the running application for comprehensive visual testing.
 
 **Features:**
+
 - Full-page visual regression detection
 - Responsive design testing (mobile, tablet, desktop)
 - Dark mode testing
@@ -45,6 +49,7 @@ Percy captures full-page screenshots of the running application for comprehensiv
 - Visual diff review in PRs
 
 **Setup:**
+
 ```bash
 # Install Percy CLI
 npm install -g @percy/cli
@@ -58,6 +63,7 @@ export PERCY_TOKEN=<YOUR_TOKEN>
 ### Locally
 
 #### Chromatic (Component Testing)
+
 ```bash
 # Build Storybook
 npm run build-storybook --workspace=apps/frontend
@@ -67,6 +73,7 @@ npx chromatic --project-token=<YOUR_TOKEN>
 ```
 
 #### Percy (Full Application Testing)
+
 ```bash
 # Start backend
 npm run dev:backend
@@ -79,15 +86,18 @@ npx playwright test --config=playwright-visual.config.ts
 ### In CI/CD
 
 Visual tests run automatically on:
+
 - Pull requests
 - Pushes to main branch
 
 **Chromatic:**
+
 - Runs on every PR and main push
 - Creates visual diffs for review
 - Blocks merge if critical changes detected
 
 **Percy:**
+
 - Runs on every PR and main push
 - Captures full-page screenshots
 - Compares against baseline
@@ -130,6 +140,7 @@ Visual tests run automatically on:
 ### Responsive Breakpoints
 
 Tests cover three viewport sizes:
+
 - **Mobile**: 375x667 (iPhone SE)
 - **Tablet**: 768x1024 (iPad)
 - **Desktop**: 1920x1080 (Full HD)
@@ -137,6 +148,7 @@ Tests cover three viewport sizes:
 ### Color Schemes
 
 Tests include:
+
 - Light mode (default)
 - Dark mode (emulated)
 
@@ -171,6 +183,7 @@ Baselines are automatically updated when you accept changes in the Chromatic UI.
 Baselines are automatically updated on main branch after approval.
 
 To manually update:
+
 ```bash
 # Run tests and approve changes
 npx playwright test --config=playwright-visual.config.ts --update-snapshots
@@ -193,6 +206,7 @@ await expect(page).toHaveScreenshot('page.png', {
 **Cause**: Different fonts, rendering engines, or OS differences
 
 **Solution**:
+
 - Use Docker for consistent environment
 - Run in CI environment
 - Check browser versions
@@ -202,6 +216,7 @@ await expect(page).toHaveScreenshot('page.png', {
 **Cause**: Dynamic content, animations, or timing issues
 
 **Solution**:
+
 - Add masks for dynamic elements
 - Wait for animations to complete
 - Use `waitForLoadState('networkidle')`
@@ -211,6 +226,7 @@ await expect(page).toHaveScreenshot('page.png', {
 **Cause**: Intentional design changes not approved
 
 **Solution**:
+
 - Review and approve changes in Percy/Chromatic
 - Update baselines after approval
 - Document design changes in PR

@@ -15,34 +15,34 @@ import { User } from '../users/user.entity';
 @Index(['organizationId', 'role'])
 export class OrganizationMember {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  organizationId: string;
+  organizationId!: string;
 
   @ManyToOne(() => Organization, (o) => o.members, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'organizationId' })
-  organization: Organization;
+  organization!: Organization;
 
   @Column()
-  userId: string;
+  userId!: string;
 
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
-  user: User;
+  user!: User;
 
   @Column({ enum: OrgRole, default: OrgRole.MEMBER })
-  role: OrgRole;
+  role!: OrgRole;
 
   @Column({ default: null, nullable: true })
-  invitedEmail: string;
+  invitedEmail!: string;
 
   @Column({ default: false })
-  invitePending: boolean;
+  invitePending!: boolean;
 
   @Column({ default: null, nullable: true })
-  inviteToken: string;
+  inviteToken!: string;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 }

@@ -5,4 +5,6 @@ export interface CredentialsRepository extends BaseRepository<Credential> {
   findByUser(userId: string): Promise<Credential[]>;
   findByUserAndCourse(userId: string, courseId: string): Promise<Credential | null>;
   findByTxHash(txHash: string): Promise<Credential | null>;
+  findByIdWithRelations(id: string): Promise<Credential | null>;
+  findByTxHashWithRelations(txHash: string): Promise<Credential | null>;
 }

@@ -15,12 +15,12 @@ export class PushNotificationService {
 
   constructor(
     @InjectRepository(MobileDevice)
-    private deviceRepo: Repository<MobileDevice>,
+    private deviceRepo: Repository<MobileDevice>
   ) {}
 
   async registerDevice(userId: string, token: string, platform: string) {
     const existing = await this.deviceRepo.findOne({ where: { userId, pushToken: token } });
-    
+
     if (existing) {
       existing.lastUsed = new Date();
       return this.deviceRepo.save(existing);
@@ -31,10 +31,8 @@ export class PushNotificationService {
 
   async sendPushToUser(userId: string, message: PushMessage) {
     const devices = await this.deviceRepo.find({ where: { userId } });
-    
-    await Promise.all(
-      devices.map((device) => this.sendPushToDevice(device.pushToken, message))
-    );
+
+    await Promise.all(devices.map((device) => this.sendPushToDevice(device.pushToken, message)));
   }
 
   private async sendPushToDevice(token: string, message: PushMessage) {

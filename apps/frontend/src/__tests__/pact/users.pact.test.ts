@@ -99,7 +99,7 @@ describe('Users API Contract Tests', () => {
               headers: {
                 Authorization: 'Bearer valid-token',
               },
-            },
+            }
           );
           expect(response.status).toBe(200);
           expect(response.data.username).toBe('newusername');

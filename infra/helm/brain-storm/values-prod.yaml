@@ -1,7 +1,7 @@
 # Production overrides — apply with: helm upgrade --install brain-storm . -f values-prod.yaml
 backend:
   image:
-    tag: "1.0.0"
+    tag: '1.0.0'
   replicaCount: 2
   autoscaling:
     minReplicas: 2
@@ -12,7 +12,7 @@ backend:
 
 frontend:
   image:
-    tag: "1.0.0"
+    tag: '1.0.0'
   replicaCount: 2
   autoscaling:
     minReplicas: 2

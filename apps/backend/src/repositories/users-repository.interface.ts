@@ -4,6 +4,9 @@ import { BaseRepository } from './base-repository.interface';
 export interface UsersRepository extends BaseRepository<User> {
   findByEmail(email: string): Promise<User | null>;
   findByVerificationToken(hash: string): Promise<User | null>;
+  findByStellarPublicKey(stellarPublicKey: string): Promise<User | null>;
+  findByReferralCode(code: string): Promise<User | null>;
+  countReferredBy(userId: string): Promise<number>;
   findAll(options: {
     page?: number;
     limit?: number;

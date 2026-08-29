@@ -85,11 +85,7 @@ describe('CertificatesService', () => {
     enrollRepo = makeMockRepo<Enrollment>();
     stellarService = { issueCredential: jest.fn() };
 
-    service = new CertificatesService(
-      certRepo as any,
-      enrollRepo as any,
-      stellarService as any,
-    );
+    service = new CertificatesService(certRepo as any, enrollRepo as any, stellarService as any);
   });
 
   afterEach(() => {
@@ -102,14 +98,17 @@ describe('CertificatesService', () => {
     it('issues a certificate successfully when all preconditions are met', async () => {
       const enrollment = buildEnrollment();
       const pendingCert = buildCertificate();
-      const mintedCert = buildCertificate({ status: 'minted', stellarTransactionId: 'tx-stellar-123' });
+      const mintedCert = buildCertificate({
+        status: 'minted',
+        stellarTransactionId: 'tx-stellar-123',
+      });
 
       enrollRepo.findOne.mockResolvedValue(enrollment);
       certRepo.findOne.mockResolvedValue(null); // no duplicate
       certRepo.create.mockReturnValue(pendingCert);
       certRepo.save
-        .mockResolvedValueOnce(pendingCert)   // first save → pending
-        .mockResolvedValueOnce(mintedCert);   // second save → minted
+        .mockResolvedValueOnce(pendingCert) // first save → pending
+        .mockResolvedValueOnce(mintedCert); // second save → minted
       stellarService.issueCredential.mockResolvedValue('tx-stellar-123');
 
       const result = await service.issueCertificate({ userId: USER_ID, courseId: COURSE_ID });
@@ -121,7 +120,7 @@ describe('CertificatesService', () => {
         relations: ['user', 'course'],
       });
       expect(certRepo.create).toHaveBeenCalledWith(
-        expect.objectContaining({ userId: USER_ID, courseId: COURSE_ID, status: 'pending' }),
+        expect.objectContaining({ userId: USER_ID, courseId: COURSE_ID, status: 'pending' })
       );
     });
 
@@ -169,7 +168,7 @@ describe('CertificatesService', () => {
       enrollRepo.findOne.mockResolvedValue(null);
 
       await expect(
-        service.issueCertificate({ userId: USER_ID, courseId: COURSE_ID }),
+        service.issueCertificate({ userId: USER_ID, courseId: COURSE_ID })
       ).rejects.toThrow(new BadRequestException('Enrollment not found for this user and course'));
     });
 
@@ -178,7 +177,7 @@ describe('CertificatesService', () => {
       enrollRepo.findOne.mockResolvedValue(incompleteEnrollment);
 
       await expect(
-        service.issueCertificate({ userId: USER_ID, courseId: COURSE_ID }),
+        service.issueCertificate({ userId: USER_ID, courseId: COURSE_ID })
       ).rejects.toThrow(new BadRequestException('Course has not been completed yet'));
     });
 
@@ -190,7 +189,7 @@ describe('CertificatesService', () => {
       certRepo.findOne.mockResolvedValue(existingCert); // duplicate
 
       await expect(
-        service.issueCertificate({ userId: USER_ID, courseId: COURSE_ID }),
+        service.issueCertificate({ userId: USER_ID, courseId: COURSE_ID })
       ).rejects.toThrow(new BadRequestException('Certificate already issued for this course'));
     });
 
@@ -247,7 +246,7 @@ describe('CertificatesService', () => {
       certRepo.findOne.mockResolvedValue(null);
 
       await expect(service.getCertificate('nonexistent-id')).rejects.toThrow(
-        new NotFoundException('Certificate not found'),
+        new NotFoundException('Certificate not found')
       );
     });
   });

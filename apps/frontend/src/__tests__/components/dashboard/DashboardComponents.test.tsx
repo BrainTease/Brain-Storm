@@ -30,7 +30,12 @@ const courses: EnrolledCourse[] = [
 ];
 
 const credentials = [
-  { id: 'cr-1', courseId: 'c-1', issuedAt: '2026-02-01T00:00:00Z', course: { id: 'c-1', title: 'Stellar Basics' } },
+  {
+    id: 'cr-1',
+    courseId: 'c-1',
+    issuedAt: '2026-02-01T00:00:00Z',
+    course: { id: 'c-1', title: 'Stellar Basics' },
+  },
   { id: 'cr-2', courseId: 'c-9', issuedAt: '2026-01-01T00:00:00Z' },
 ];
 
@@ -223,7 +228,11 @@ describe('DashboardSection', () => {
 
   it('prefers an explicit aria label and renders actions', () => {
     render(
-      <DashboardSection title="My Courses" ariaLabel="Enrolled courses" actions={<button>Sort</button>}>
+      <DashboardSection
+        title="My Courses"
+        ariaLabel="Enrolled courses"
+        actions={<button>Sort</button>}
+      >
         <p>body</p>
       </DashboardSection>
     );

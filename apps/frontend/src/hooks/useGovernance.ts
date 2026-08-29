@@ -34,16 +34,14 @@ export function useGovernance() {
   const loadProposals = async (status?: string) => {
     setLoading(true);
     setError(null);
-    try {
-      const data = await fetchProposals(status);
-      setProposals(data);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to load proposals';
-      setError(message);
-      toast.error(message);
-    } finally {
-      setLoading(false);
+    const result = await fetchProposals(status);
+    if (!result.ok) {
+      setError(result.error.message);
+      toast.error(result.error.message);
+    } else {
+      setProposals(result.data);
     }
+    setLoading(false);
   };
 
   /**
@@ -52,58 +50,50 @@ export function useGovernance() {
   const loadProposal = async (proposalId: string) => {
     setLoading(true);
     setError(null);
-    try {
-      const data = await fetchProposal(proposalId);
-      setSelectedProposal(data);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to load proposal';
-      setError(message);
-      toast.error(message);
-    } finally {
-      setLoading(false);
+    const result = await fetchProposal(proposalId);
+    if (!result.ok) {
+      setError(result.error.message);
+      toast.error(result.error.message);
+    } else {
+      setSelectedProposal(result.data);
     }
+    setLoading(false);
   };
 
   /**
    * Load voting power for wallet
    */
   const loadVotingPower = async (walletAddress: string) => {
-    try {
-      const power = await fetchVotingPower(walletAddress);
-      setUserVotingPower(power);
-      return power;
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to load voting power';
-      toast.error(message);
+    const result = await fetchVotingPower(walletAddress);
+    if (!result.ok) {
+      toast.error(result.error.message);
       setUserVotingPower(0);
       return 0;
     }
+    setUserVotingPower(result.data);
+    return result.data;
   };
 
   /**
    * Load user's previous votes
    */
   const loadUserVotes = async (walletAddress: string) => {
-    try {
-      const votes = await fetchUserVotes(walletAddress);
-      votes.forEach((vote) => {
-        recordVote(vote.proposalId, vote.support);
-      });
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to load voting history';
-      toast.error(message);
+    const result = await fetchUserVotes(walletAddress);
+    if (!result.ok) {
+      toast.error(result.error.message);
+      return;
     }
+    result.data.forEach((vote) => {
+      recordVote(vote.proposalId, vote.support);
+    });
   };
 
   /**
    * Check if user has voted on a specific proposal
    */
   const checkHasVoted = async (proposalId: string, walletAddress: string): Promise<boolean> => {
-    try {
-      return await hasVoted(proposalId, walletAddress);
-    } catch {
-      return false;
-    }
+    const result = await hasVoted(proposalId, walletAddress);
+    return result.ok ? result.data : false;
   };
 
   /**
@@ -115,20 +105,16 @@ export function useGovernance() {
     support: boolean,
     signedTransaction: string
   ) => {
-    try {
-      setLoading(true);
-      await submitVote(proposalId, walletAddress, support, signedTransaction);
-      recordVote(proposalId, support);
-
-      toast.success(support ? 'Vote cast in favor!' : 'Vote cast against!');
-      return true;
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to submit vote';
-      toast.error(message);
+    setLoading(true);
+    const result = await submitVote(proposalId, walletAddress, support, signedTransaction);
+    setLoading(false);
+    if (!result.ok) {
+      toast.error(result.error.message);
       return false;
-    } finally {
-      setLoading(false);
     }
+    recordVote(proposalId, support);
+    toast.success(support ? 'Vote cast in favor!' : 'Vote cast against!');
+    return true;
   };
 
   /**

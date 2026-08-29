@@ -12,15 +12,15 @@ const activeUsers = new Gauge('active_users');
 
 export const options = {
   stages: [
-    { duration: '30s', target: 10 },   // Ramp up to 10 users
-    { duration: '1m', target: 50 },    // Ramp up to 50 users
-    { duration: '2m', target: 50 },    // Stay at 50 users
-    { duration: '30s', target: 0 },    // Ramp down
+    { duration: '30s', target: 10 }, // Ramp up to 10 users
+    { duration: '1m', target: 50 }, // Ramp up to 50 users
+    { duration: '2m', target: 50 }, // Stay at 50 users
+    { duration: '30s', target: 0 }, // Ramp down
   ],
   thresholds: {
-    'http_req_duration': ['p(95)<500', 'p(99)<1000'],
-    'http_req_failed': ['rate<0.01'],
-    'errors': ['rate<0.01'],
+    http_req_duration: ['p(95)<500', 'p(99)<1000'],
+    http_req_failed: ['rate<0.01'],
+    errors: ['rate<0.01'],
   },
 };
 

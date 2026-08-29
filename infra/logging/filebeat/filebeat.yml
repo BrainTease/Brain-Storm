@@ -4,12 +4,12 @@ filebeat.inputs:
       - /var/lib/docker/containers/*/*.log
     processors:
       - add_docker_metadata:
-          host: "unix:///var/run/docker.sock"
+          host: 'unix:///var/run/docker.sock'
       - decode_json_fields:
-          fields: ["message"]
+          fields: ['message']
           process_array: false
           max_depth: 2
-          target: ""
+          target: ''
           overwrite_keys: true
           add_error_key: true
 
@@ -38,12 +38,12 @@ processors:
         project: brain-storm
 
 output.logstash:
-  hosts: ["logstash:5044"]
+  hosts: ['logstash:5044']
   loadbalance: true
   ssl.enabled: false
 
 setup.kibana:
-  host: "${KIBANA_HOST:http://kibana:5601}"
+  host: '${KIBANA_HOST:http://kibana:5601}'
 
 logging.level: info
 logging.to_files: true

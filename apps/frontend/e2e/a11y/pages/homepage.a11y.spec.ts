@@ -33,7 +33,7 @@ test.describe('Homepage Accessibility @a11y', () => {
     const violations = await getViolations(page, null, {
       includedImpacts: ['moderate'],
     });
-    
+
     // Allow up to 5 moderate violations (adjust as needed)
     expect(violations.length).toBeLessThanOrEqual(5);
   });
@@ -55,7 +55,7 @@ test.describe('Homepage Accessibility @a11y', () => {
 
   test('should have accessible hero section', async ({ page }) => {
     const hero = page.locator('[data-testid="hero-section"], section').first();
-    
+
     if (await hero.isVisible()) {
       await checkA11y(page, '[data-testid="hero-section"], section', {
         detailedReport: true,
@@ -65,8 +65,10 @@ test.describe('Homepage Accessibility @a11y', () => {
   });
 
   test('should have accessible CTA buttons', async ({ page }) => {
-    const ctaButtons = await page.locator('button[data-testid*="cta"], a[data-testid*="cta"]').all();
-    
+    const ctaButtons = await page
+      .locator('button[data-testid*="cta"], a[data-testid*="cta"]')
+      .all();
+
     for (const button of ctaButtons) {
       // Each CTA should have text or aria-label
       const text = await button.textContent();
@@ -81,7 +83,7 @@ test.describe('Homepage Accessibility @a11y', () => {
 
   test('should have accessible features section', async ({ page }) => {
     const features = page.locator('[data-testid="features-section"]').first();
-    
+
     if (await features.isVisible()) {
       await features.scrollIntoViewIfNeeded();
       await checkA11y(page, '[data-testid="features-section"]', {
@@ -93,14 +95,14 @@ test.describe('Homepage Accessibility @a11y', () => {
 
   test('all images should have alt text', async ({ page }) => {
     const images = await page.locator('img').all();
-    
+
     for (const img of images) {
       const alt = await img.getAttribute('alt');
       const role = await img.getAttribute('role');
-      
+
       // Image should have alt text (empty for decorative)
       expect(alt !== null).toBe(true);
-      
+
       // If decorative, should have empty alt or role="presentation"
       if (role === 'presentation' || alt === '') {
         // Decorative image - this is fine
@@ -113,21 +115,21 @@ test.describe('Homepage Accessibility @a11y', () => {
 
   test('should be keyboard navigable', async ({ page }) => {
     // Get all interactive elements
-    const interactiveElements = await page.locator(
-      'a, button, input, select, textarea, [tabindex="0"]'
-    ).all();
+    const interactiveElements = await page
+      .locator('a, button, input, select, textarea, [tabindex="0"]')
+      .all();
 
     expect(interactiveElements.length).toBeGreaterThan(0);
 
     // Tab through first few elements
     for (let i = 0; i < Math.min(5, interactiveElements.length); i++) {
       await page.keyboard.press('Tab');
-      
+
       const focused = await page.evaluate(() => {
         const el = document.activeElement;
         return {
           tag: el?.tagName,
-          hasOutline: window.getComputedStyle(el as HTMLElement).outline !== 'none'
+          hasOutline: window.getComputedStyle(el as HTMLElement).outline !== 'none',
         };
       });
 
@@ -137,24 +139,23 @@ test.describe('Homepage Accessibility @a11y', () => {
 
   test('should have visible focus indicators', async ({ page }) => {
     const firstButton = page.locator('button, a[href]').first();
-    
+
     if (await firstButton.isVisible()) {
       await firstButton.focus();
-      
+
       const focusStyle = await firstButton.evaluate((el) => {
         const style = window.getComputedStyle(el);
         return {
           outline: style.outline,
           outlineWidth: style.outlineWidth,
-          boxShadow: style.boxShadow
+          boxShadow: style.boxShadow,
         };
       });
 
       // Should have some focus indicator
-      const hasFocusIndicator = 
-        focusStyle.outlineWidth !== '0px' ||
-        focusStyle.boxShadow !== 'none';
-      
+      const hasFocusIndicator =
+        focusStyle.outlineWidth !== '0px' || focusStyle.boxShadow !== 'none';
+
       expect(hasFocusIndicator).toBe(true);
     }
   });
@@ -163,7 +164,7 @@ test.describe('Homepage Accessibility @a11y', () => {
     await checkA11y(page, null, {
       detailedReport: true,
       rules: {
-        'color-contrast': { enabled: true }
+        'color-contrast': { enabled: true },
       },
       includedImpacts: ['serious', 'critical'],
     });

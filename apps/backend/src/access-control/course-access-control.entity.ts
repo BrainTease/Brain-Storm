@@ -18,34 +18,34 @@ export enum AccessRole {
 @Entity('course_access_controls')
 export class CourseAccessControl {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  courseId: string;
+  courseId!: string;
 
   @ManyToOne(() => Course, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'courseId' })
-  course: Course;
+  course!: Course;
 
   @Column()
-  userId: string;
+  userId!: string;
 
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
-  user: User;
+  user!: User;
 
   @Column({ type: 'enum', enum: AccessRole })
-  role: AccessRole;
+  role!: AccessRole;
 
   @Column({ nullable: true })
-  subscriptionExpiryDate: Date;
+  subscriptionExpiryDate!: Date;
 
   @Column('simple-array', { nullable: true })
-  allowedIpAddresses: string[];
+  allowedIpAddresses!: string[];
 
   @Column({ default: true })
-  isActive: boolean;
+  isActive!: boolean;
 
   @CreateDateColumn()
-  grantedAt: Date;
+  grantedAt!: Date;
 }

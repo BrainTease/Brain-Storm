@@ -26,68 +26,68 @@ export enum CourseStatus {
 @Index(['level', 'isPublished', 'isDeleted'])
 export class Course {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  title: string;
+  title!: string;
 
   @Column('text')
-  description: string;
+  description!: string;
 
   @Column({ default: 'beginner' })
-  level: string;
+  level!: string;
 
   @Column({ default: 0 })
-  durationHours: number;
+  durationHours!: number;
 
   @Column({ type: 'enum', enum: CourseStatus, default: CourseStatus.DRAFT })
-  status: CourseStatus;
+  status!: CourseStatus;
 
   /** @deprecated use status instead */
   @Column({ default: false })
-  isPublished: boolean;
+  isPublished!: boolean;
 
   @Column({ default: false })
-  isDeleted: boolean;
+  isDeleted!: boolean;
 
   @Column({ default: false })
-  requiresKyc: boolean;
+  requiresKyc!: boolean;
 
   @Column({ nullable: true })
-  instructorId: string;
+  instructorId!: string;
 
   @Column({ nullable: true, type: 'timestamptz' })
-  scheduledAt: Date | null;
+  scheduledAt!: Date | null;
 
   @Column({ nullable: true, type: 'timestamptz' })
-  publishedAt: Date | null;
+  publishedAt!: Date | null;
 
   // Soft-delete timestamp
   @Column({ nullable: true, type: 'timestamptz' })
-  deletedAt: Date | null;
+  deletedAt!: Date | null;
 
   // Audit columns
   @Column({ nullable: true })
-  createdBy: string | null;
+  createdBy!: string | null;
 
   @Column({ nullable: true })
-  updatedBy: string | null;
+  updatedBy!: string | null;
 
   @ManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'instructorId' })
-  instructor: User;
+  instructor!: User;
 
   @OneToMany(() => CourseModule, (m) => m.course)
-  modules: CourseModule[];
+  modules!: CourseModule[];
 
   @OneToMany(() => Review, (review) => review.course)
-  reviews: Review[];
+  reviews!: Review[];
 
   averageRating?: number | null;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt!: Date;
 }

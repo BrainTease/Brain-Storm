@@ -3,7 +3,11 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { fuzzySearch } from '@/lib/fuzzy-search';
-import { createNavigationCommands, createActionCommands, Command } from '@/lib/command-palette-items';
+import {
+  createNavigationCommands,
+  createActionCommands,
+  Command,
+} from '@/lib/command-palette-items';
 
 interface CommandPaletteProps {
   isOpen: boolean;
@@ -27,11 +31,13 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
   const filteredCommands = useMemo(() => {
     if (!query.trim()) {
       // Show recent items (navigation + actions) when empty
-      return allCommands.filter(cmd => cmd.category === 'navigation' || cmd.category === 'actions').slice(0, 10);
+      return allCommands
+        .filter((cmd) => cmd.category === 'navigation' || cmd.category === 'actions')
+        .slice(0, 10);
     }
-    
+
     return fuzzySearch(
-      allCommands.map(cmd => ({
+      allCommands.map((cmd) => ({
         id: cmd.id,
         title: cmd.title,
         description: cmd.description,
@@ -39,7 +45,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
         ...cmd,
       })),
       query,
-      10,
+      10
     );
   }, [query, allCommands]);
 
@@ -53,16 +59,18 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
 
   useEffect(() => {
     if (!isOpen) return;
-    
+
     const handler = (e: KeyboardEvent) => {
       switch (e.key) {
         case 'ArrowDown':
           e.preventDefault();
-          setSelectedIndex(prev => (prev + 1) % filteredCommands.length);
+          setSelectedIndex((prev) => (prev + 1) % filteredCommands.length);
           break;
         case 'ArrowUp':
           e.preventDefault();
-          setSelectedIndex(prev => (prev - 1 + filteredCommands.length) % filteredCommands.length);
+          setSelectedIndex(
+            (prev) => (prev - 1 + filteredCommands.length) % filteredCommands.length
+          );
           break;
         case 'Enter':
           e.preventDefault();
@@ -95,7 +103,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
       onClose();
       setQuery('');
     },
-    [onClose],
+    [onClose]
   );
 
   if (!isOpen) return null;
@@ -106,17 +114,14 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
       role="presentation"
       onClick={onClose}
     >
-      <div
-        className="absolute inset-0 bg-black/50"
-        aria-hidden="true"
-      />
-      
+      <div className="absolute inset-0 bg-black/50" aria-hidden="true" />
+
       <div
         className="relative w-full max-w-md bg-white dark:bg-gray-900 rounded-xl shadow-2xl overflow-hidden"
         role="dialog"
         aria-modal="true"
         aria-label="Command palette"
-        onClick={e => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Search input */}
         <div className="border-b border-gray-200 dark:border-gray-700 p-3">
@@ -124,7 +129,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
             ref={inputRef}
             type="text"
             value={query}
-            onChange={e => {
+            onChange={(e) => {
               setQuery(e.target.value);
               setSelectedIndex(0);
             }}
@@ -139,12 +144,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
 
         {/* Results list */}
         {filteredCommands.length > 0 ? (
-          <ul
-            ref={listRef}
-            id="command-list"
-            className="max-h-64 overflow-y-auto"
-            role="listbox"
-          >
+          <ul ref={listRef} id="command-list" className="max-h-64 overflow-y-auto" role="listbox">
             {filteredCommands.map((command, index) => (
               <li
                 key={command.id}
@@ -185,8 +185,14 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
 
         {/* Footer with help text */}
         <div className="border-t border-gray-200 dark:border-gray-700 px-3 py-2 bg-gray-50 dark:bg-gray-800 text-xs text-gray-500 dark:text-gray-400 flex justify-between">
-          <span>Press <kbd className="px-1 py-0.5 bg-gray-200 dark:bg-gray-700 rounded">↑</kbd> <kbd className="px-1 py-0.5 bg-gray-200 dark:bg-gray-700 rounded">↓</kbd> to navigate</span>
-          <span>Press <kbd className="px-1 py-0.5 bg-gray-200 dark:bg-gray-700 rounded">esc</kbd> to close</span>
+          <span>
+            Press <kbd className="px-1 py-0.5 bg-gray-200 dark:bg-gray-700 rounded">↑</kbd>{' '}
+            <kbd className="px-1 py-0.5 bg-gray-200 dark:bg-gray-700 rounded">↓</kbd> to navigate
+          </span>
+          <span>
+            Press <kbd className="px-1 py-0.5 bg-gray-200 dark:bg-gray-700 rounded">esc</kbd> to
+            close
+          </span>
         </div>
       </div>
     </div>

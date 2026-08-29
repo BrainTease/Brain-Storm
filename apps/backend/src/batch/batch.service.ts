@@ -9,13 +9,13 @@ import { BatchJob, BatchJobType } from './batch-job.entity';
 export class BatchService {
   constructor(
     @InjectRepository(BatchJob) private readonly jobRepo: Repository<BatchJob>,
-    @InjectQueue('batch') private readonly batchQueue: Queue,
+    @InjectQueue('batch') private readonly batchQueue: Queue
   ) {}
 
   private async createBatchJob(
     type: BatchJobType,
     payload: Record<string, any>[],
-    createdById: string,
+    createdById: string
   ): Promise<BatchJob> {
     const job = this.jobRepo.create({
       type,
@@ -31,7 +31,7 @@ export class BatchService {
     await this.batchQueue.add(
       type,
       { jobId: savedJob.id, payload, totalItems: payload.length },
-      { jobId: savedJob.id },
+      { jobId: savedJob.id }
     );
 
     return savedJob;
@@ -45,7 +45,10 @@ export class BatchService {
     return this.createBatchJob('courses', payload, createdById);
   }
 
-  async createCertificateBatch(payload: Record<string, any>[], createdById: string): Promise<BatchJob> {
+  async createCertificateBatch(
+    payload: Record<string, any>[],
+    createdById: string
+  ): Promise<BatchJob> {
     return this.createBatchJob('certificates', payload, createdById);
   }
 

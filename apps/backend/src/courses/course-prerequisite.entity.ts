@@ -13,22 +13,22 @@ import { Course } from './course.entity';
 @Unique(['courseId', 'prerequisiteId'])
 export class CoursePrerequisite {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  courseId: string;
+  courseId!: string;
 
   @ManyToOne(() => Course, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'courseId' })
-  course: Course;
+  course!: Course;
 
   @Column()
-  prerequisiteId: string;
+  prerequisiteId!: string;
 
   @ManyToOne(() => Course, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'prerequisiteId' })
-  prerequisite: Course;
+  prerequisite!: Course;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 }

@@ -22,7 +22,9 @@ export default function ThreadPage({ params }: ThreadPageProps) {
     ]).then(([t, r]) => {
       setThread(t);
       // Sort replies chronologically
-      setReplies(r.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()));
+      setReplies(
+        r.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+      );
       setLoading(false);
     });
   }, [courseId, threadId]);

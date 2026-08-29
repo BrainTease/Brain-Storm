@@ -21,7 +21,7 @@ They move independently. The SDK can ship a major (renaming a method) without an
 
 **Explicitly out of scope:**
 
-- Anything not exported from `src/index.ts` — including the resource classes `AuthClient`, `CoursesClient`, `ProgressClient`, `UsersClient`, `StellarClient` and `FetchHttpAdapter`. Their *methods*, reachable via `client.auth`, `client.courses` and so on, **are** in scope. The class names are not.
+- Anything not exported from `src/index.ts` — including the resource classes `AuthClient`, `CoursesClient`, `ProgressClient`, `UsersClient`, `StellarClient` and `FetchHttpAdapter`. Their _methods_, reachable via `client.auth`, `client.courses` and so on, **are** in scope. The class names are not.
 - The `dist/` build layout, `openapi.json`, and the contents of this repo's `scripts/`.
 - Anything reached by deep import (`@brain-storm/sdk/dist/...`). Only the package root is public.
 
@@ -33,22 +33,22 @@ They move independently. The SDK can ship a major (renaming a method) without an
 
 Ship a major when existing consumer code must change to keep compiling or working.
 
-| Category | Examples |
-| --- | --- |
-| **Removals & renames** | Removing or renaming any export; removing a method from a namespace; renaming a namespace (`client.courses` → `client.catalogue`). |
-| **Required inputs** | Adding a required field to a `*Dto`; making an existing optional field required; adding a required constructor option. |
-| **Narrowing inputs** | Tightening an accepted type (`string` → a string union); narrowing a numeric range the server now rejects. |
-| **Widening outputs** | Adding a member to a response **union** (`level: 'beginner' \| … \| 'expert'`) — exhaustive `switch` statements downstream stop compiling. |
-| **Narrowing outputs** | Making a required response field optional; changing a field's type (`string` → `number`, including "just" `createdAt` to `Date`). |
-| **Error behaviour** | Changing what is thrown, or the shape assigned onto the thrown `Error`; converting a throw into a returned error value. |
-| **Auth semantics** | Making a previously-anonymous method require a token; changing `setToken`'s effect. |
-| **Peer dependencies** | Adding, removing or narrowing a `peerDependencies` range — including removing the currently-unused `axios` peer. |
-| **Runtime floor** | Raising the minimum Node version or requiring a newly-global API. |
-| **Endpoint remapping** | Repointing a method at a different HTTP endpoint with different semantics. |
+| Category               | Examples                                                                                                                                   |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Removals & renames** | Removing or renaming any export; removing a method from a namespace; renaming a namespace (`client.courses` → `client.catalogue`).         |
+| **Required inputs**    | Adding a required field to a `*Dto`; making an existing optional field required; adding a required constructor option.                     |
+| **Narrowing inputs**   | Tightening an accepted type (`string` → a string union); narrowing a numeric range the server now rejects.                                 |
+| **Widening outputs**   | Adding a member to a response **union** (`level: 'beginner' \| … \| 'expert'`) — exhaustive `switch` statements downstream stop compiling. |
+| **Narrowing outputs**  | Making a required response field optional; changing a field's type (`string` → `number`, including "just" `createdAt` to `Date`).          |
+| **Error behaviour**    | Changing what is thrown, or the shape assigned onto the thrown `Error`; converting a throw into a returned error value.                    |
+| **Auth semantics**     | Making a previously-anonymous method require a token; changing `setToken`'s effect.                                                        |
+| **Peer dependencies**  | Adding, removing or narrowing a `peerDependencies` range — including removing the currently-unused `axios` peer.                           |
+| **Runtime floor**      | Raising the minimum Node version or requiring a newly-global API.                                                                          |
+| **Endpoint remapping** | Repointing a method at a different HTTP endpoint with different semantics.                                                                 |
 
 Two cases deserve emphasis because they read as harmless:
 
-- **Expanding a response enum is breaking here.** [`api-versioning.md`](../api-versioning.md) lists "expanding an enum with new values" as non-breaking for the *HTTP* contract, and that is correct — a JSON consumer tolerates an unknown string. But a TypeScript union is checked at compile time, so adding `'expert'` to `CourseDto['level']` breaks every exhaustive `switch` downstream. **The two documents do not contradict each other; they govern different contracts.** To add a tier without a major, widen the field to `string` first (itself a major), or model it as `'beginner' | 'intermediate' | 'advanced' | (string & {})` from the outset. This is why [`UserDto.role`](./sdk-reference.md#userdto) is deliberately a plain `string`.
+- **Expanding a response enum is breaking here.** [`api-versioning.md`](../api-versioning.md) lists "expanding an enum with new values" as non-breaking for the _HTTP_ contract, and that is correct — a JSON consumer tolerates an unknown string. But a TypeScript union is checked at compile time, so adding `'expert'` to `CourseDto['level']` breaks every exhaustive `switch` downstream. **The two documents do not contradict each other; they govern different contracts.** To add a tier without a major, widen the field to `string` first (itself a major), or model it as `'beginner' | 'intermediate' | 'advanced' | (string & {})` from the outset. This is why [`UserDto.role`](./sdk-reference.md#userdto) is deliberately a plain `string`.
 - **Changing a decimal string to a number is breaking and lossy.** `StellarBalanceResponse.balances[].balance` is a string to preserve Stellar's 7-digit precision. Never "fix" it to `number`.
 
 ### MINOR — additive
@@ -103,17 +103,20 @@ This mirrors the HTTP API's [deprecation timeline](../api-versioning.md#deprecat
 
 ### ⚠ BREAKING CHANGES
 
-* **courses:** `list()` now returns `CourseListResponse` rather than `CourseDto[]`.
+- **courses:** `list()` now returns `CourseListResponse` rather than `CourseDto[]`.
   Migrate by reading `.data`: `(await client.courses.list()).data`
 
 ### Added
-* **stellar:** `getAccount()` for full account details ([#123](…))
+
+- **stellar:** `getAccount()` for full account details ([#123](…))
 
 ### Deprecated
-* **courses:** `getAll()` — use `list()`. Removed in 3.0.0.
+
+- **courses:** `getAll()` — use `list()`. Removed in 3.0.0.
 
 ### Fixed
-* `setToken()` no longer drops custom headers passed via `options` ([#456](…))
+
+- `setToken()` no longer drops custom headers passed via `options` ([#456](…))
 ```
 
 Every breaking entry **must** state the migration, not just the change. A reader upgrading should never need to open the diff.
@@ -122,12 +125,12 @@ Every breaking entry **must** state the migration, not just the change. A reader
 
 The repo enforces [Conventional Commits](https://www.conventionalcommits.org/) via commitlint (`.commitlintrc`). Scope SDK commits with `sdk`:
 
-| Commit | Bump |
-| --- | --- |
-| `fix(sdk): …` | PATCH |
-| `feat(sdk): …` | MINOR |
-| `feat(sdk)!: …` or a `BREAKING CHANGE:` footer | MAJOR |
-| `docs(sdk): …`, `refactor(sdk): …`, `chore(sdk): …` | none |
+| Commit                                              | Bump  |
+| --------------------------------------------------- | ----- |
+| `fix(sdk): …`                                       | PATCH |
+| `feat(sdk): …`                                      | MINOR |
+| `feat(sdk)!: …` or a `BREAKING CHANGE:` footer      | MAJOR |
+| `docs(sdk): …`, `refactor(sdk): …`, `chore(sdk): …` | none  |
 
 ### Automation status
 

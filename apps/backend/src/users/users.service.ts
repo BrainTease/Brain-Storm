@@ -1,43 +1,46 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User } from './user.entity';
 import { ImportJob, ImportJobStatus, ImportJobType } from '../import-export/import-job.entity';
+import { UserQueryDto } from './dto/user-query.dto';
+import { PaginatedResponseDto } from '../common/dto/api-response.dto';
+import { USERS_REPOSITORY_TOKEN, UsersRepository } from '../repositories';
 
 @Injectable()
 export class UsersService {
   private readonly logger = new Logger(UsersService.name);
 
   constructor(
-    @InjectRepository(User) private repo: Repository<User>,
-    @InjectRepository(ImportJob) private importJobRepo: Repository<ImportJob>,
+    @Inject(USERS_REPOSITORY_TOKEN) private readonly usersRepository: UsersRepository,
+    @InjectRepository(ImportJob) private importJobRepo: Repository<ImportJob>
   ) {}
 
   findByEmail(email: string) {
-    return this.repo.findOne({ where: { email } });
+    return this.usersRepository.findByEmail(email);
   }
 
   findByVerificationToken(hash: string) {
-    return this.repo.findOne({ where: { verificationToken: hash } });
+    return this.usersRepository.findByVerificationToken(hash);
   }
 
   findById(id: string) {
-    return this.repo.findOne({ where: { id } });
+    return this.usersRepository.findById(id);
   }
 
   findByStellarPublicKey(stellarPublicKey: string) {
-    return this.repo.findOne({ where: { stellarPublicKey } });
+    return this.usersRepository.findByStellarPublicKey(stellarPublicKey);
   }
 
   create(data: Partial<User>) {
-    return this.repo.save(this.repo.create(data));
+    return this.usersRepository.save(data);
   }
 
   async update(id: string, data: Partial<User>) {
     const user = await this.findById(id);
     if (!user) throw new NotFoundException('User not found');
-    return this.repo.save({ ...user, ...data });
+    return this.usersRepository.save({ ...user, ...data });
   }
 
   canUpdateUser(currentUserId: string, targetUserId: string, currentUserRole?: string): boolean {
@@ -47,83 +50,47 @@ export class UsersService {
   async uploadAvatar(userId: string, file: Express.Multer.File) {
     const user = await this.findById(userId);
     if (!user) throw new NotFoundException('User not found');
-    
+
     // In production, upload to S3/CDN and return URL
     // For now, return a placeholder
     const avatarUrl = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
-    
-    await this.repo.save({ ...user, avatar: avatarUrl });
+
+    await this.usersRepository.save({ ...user, avatar: avatarUrl });
     return { avatarUrl };
   }
 
-  async findAll(
-    options: {
-      page?: number;
-      limit?: number;
-      role?: string;
-      isVerified?: boolean;
-      search?: string;
-    } = {}
-  ) {
-    const { page = 1, limit = 10, role, isVerified, search } = options;
+  async findAll(options: UserQueryDto = {}): Promise<PaginatedResponseDto<User>> {
+    const { page = 1, limit = 20, role, isVerified, search } = options;
 
-    const query = this.repo.createQueryBuilder('user');
+    const result = await this.usersRepository.findAll({ page, limit, role, isVerified, search });
 
-    if (role) {
-      query.andWhere('user.role = :role', { role });
-    }
-
-    if (isVerified !== undefined) {
-      query.andWhere('user.isVerified = :isVerified', { isVerified });
-    }
-
-    if (search) {
-      query.andWhere('user.email ILIKE :search', { search: `%${search}%` });
-    }
-
-    query.andWhere('user.deletedAt IS NULL');
-
-    const [users, total] = await query
-      .skip((page - 1) * limit)
-      .take(limit)
-      .orderBy('user.createdAt', 'DESC')
-      .getManyAndCount();
-
-    return {
-      data: users,
-      meta: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
-      },
-    };
+    return new PaginatedResponseDto(result.data, 200, page, limit, result.meta.total);
   }
 
   async banUser(id: string, isBanned: boolean) {
     const user = await this.findById(id);
     if (!user) throw new NotFoundException('User not found');
-    return this.repo.save({ ...user, isBanned });
+    return this.usersRepository.save({ ...user, isBanned });
   }
 
   async changeRole(id: string, role: string) {
     const user = await this.findById(id);
     if (!user) throw new NotFoundException('User not found');
-    return this.repo.save({ ...user, role });
+    return this.usersRepository.save({ ...user, role });
   }
 
   async softDelete(id: string) {
     const user = await this.findById(id);
     if (!user) throw new NotFoundException('User not found');
-    return this.repo.save({ ...user, deletedAt: new Date() });
+    return this.usersRepository.save({ ...user, deletedAt: new Date() });
   }
 
   findByReferralCode(code: string) {
-    return this.repo.findOne({ where: { referralCode: code } });
+    return this.usersRepository.findByReferralCode(code);
   }
 
   async getReferralStats(userId: string) {
-    const count = await this.repo.count({ where: { referredBy: userId } });
+    const count = await this.usersRepository.countReferredBy(userId);
     return { referralCount: count, earnedBst: count * 50 };
   }
 
@@ -145,7 +112,7 @@ export class UsersService {
         total: rows.length,
         processed: 0,
         result: {},
-      }),
+      })
     );
 
     this.processUserImportJob(job.id, rows).catch((err) => {
@@ -209,7 +176,7 @@ export class UsersService {
     }
 
     const passwordHash = await bcrypt.hash(Math.random().toString(36).slice(2), 10);
-    const user = this.repo.create({
+    await this.usersRepository.save({
       email,
       username: row.username?.trim() || undefined,
       role: row.role?.trim() || 'student',
@@ -217,7 +184,5 @@ export class UsersService {
       referralCode: row.referralCode?.trim() || undefined,
       passwordHash,
     });
-
-    await this.repo.save(user);
   }
 }

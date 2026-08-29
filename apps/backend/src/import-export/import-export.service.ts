@@ -1,9 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  Logger,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as AdmZip from 'adm-zip';
@@ -89,21 +84,20 @@ export class ImportExportService {
         lesson.title,
         String(lesson.durationMinutes),
         lesson.videoUrl ?? '',
-      ]),
+      ])
     );
 
-    const escapeValue = (value: string) =>
-      `"${String(value).replace(/"/g, '""')}"`;
+    const escapeValue = (value: string) => `"${String(value).replace(/"/g, '""')}"`;
 
-    return [headers.map(escapeValue).join(','), ...rows.map((row) => row.map(escapeValue).join(','))].join('\n');
+    return [
+      headers.map(escapeValue).join(','),
+      ...rows.map((row) => row.map(escapeValue).join(',')),
+    ].join('\n');
   }
 
   // ─── JSON Import ───────────────────────────────────────────────────────────
 
-  async importJson(
-    buffer: Buffer,
-    instructorId: string
-  ): Promise<{ courseId: string }> {
+  async importJson(buffer: Buffer, instructorId: string): Promise<{ courseId: string }> {
     let payload: CourseJsonExport;
     try {
       payload = JSON.parse(buffer.toString('utf-8'));
@@ -117,10 +111,7 @@ export class ImportExportService {
 
   // ─── SCORM Import ──────────────────────────────────────────────────────────
 
-  async importScorm(
-    buffer: Buffer,
-    instructorId: string
-  ): Promise<{ courseId: string }> {
+  async importScorm(buffer: Buffer, instructorId: string): Promise<{ courseId: string }> {
     let zip: AdmZip;
     try {
       zip = new AdmZip(buffer);
@@ -247,14 +238,18 @@ export class ImportExportService {
   private validateJsonPayload(payload: unknown): asserts payload is CourseJsonExport {
     const p = payload as CourseJsonExport;
     if (!p?.course?.title) throw new BadRequestException('Missing required field: course.title');
-    if (!p.course.description) throw new BadRequestException('Missing required field: course.description');
-    if (!Array.isArray(p.course.modules)) throw new BadRequestException('course.modules must be an array');
+    if (!p.course.description)
+      throw new BadRequestException('Missing required field: course.description');
+    if (!Array.isArray(p.course.modules))
+      throw new BadRequestException('course.modules must be an array');
     for (const mod of p.course.modules) {
       if (!mod.title) throw new BadRequestException('Each module must have a title');
-      if (!Array.isArray(mod.lessons)) throw new BadRequestException('Each module must have a lessons array');
+      if (!Array.isArray(mod.lessons))
+        throw new BadRequestException('Each module must have a lessons array');
       for (const lesson of mod.lessons) {
         if (!lesson.title) throw new BadRequestException('Each lesson must have a title');
-        if (lesson.content === undefined) throw new BadRequestException('Each lesson must have content');
+        if (lesson.content === undefined)
+          throw new BadRequestException('Each lesson must have content');
       }
     }
   }
@@ -272,15 +267,15 @@ export class ImportExportService {
       'Imported SCORM Course';
 
     const orgList = organizations?.['organization'];
-    const org = Array.isArray(orgList) ? orgList[0] : orgList ?? {};
+    const org = Array.isArray(orgList) ? orgList[0] : (orgList ?? {});
     const orgTitle = (org as Record<string, unknown>)?.['title'] as string | undefined;
 
     const items = (org as Record<string, unknown>)?.['item'];
     const itemList: Record<string, unknown>[] = Array.isArray(items)
       ? items
       : items
-      ? [items as Record<string, unknown>]
-      : [];
+        ? [items as Record<string, unknown>]
+        : [];
 
     const resourceMap = this.buildResourceMap(resources, zip);
 
@@ -290,8 +285,8 @@ export class ImportExportService {
       const subList: Record<string, unknown>[] = Array.isArray(subItems)
         ? subItems
         : subItems
-        ? [subItems as Record<string, unknown>]
-        : [];
+          ? [subItems as Record<string, unknown>]
+          : [];
 
       const lessons = subList.length
         ? subList.map((sub, li) => ({
@@ -303,7 +298,8 @@ export class ImportExportService {
         : [
             {
               title: itemTitle,
-              content: resourceMap[(item['$'] as Record<string, string>)?.identifierref ?? ''] ?? '',
+              content:
+                resourceMap[(item['$'] as Record<string, string>)?.identifierref ?? ''] ?? '',
               order: 0,
               durationMinutes: 0,
             },
@@ -326,7 +322,9 @@ export class ImportExportService {
     };
   }
 
-  private extractScormTitle(organizations: Record<string, unknown> | undefined): string | undefined {
+  private extractScormTitle(
+    organizations: Record<string, unknown> | undefined
+  ): string | undefined {
     const org = organizations?.['organization'];
     const first = Array.isArray(org) ? org[0] : org;
     return (first as Record<string, unknown>)?.['title'] as string | undefined;
@@ -342,8 +340,8 @@ export class ImportExportService {
     const list: Record<string, unknown>[] = Array.isArray(resList)
       ? resList
       : resList
-      ? [resList as Record<string, unknown>]
-      : [];
+        ? [resList as Record<string, unknown>]
+        : [];
 
     for (const res of list) {
       const attrs = res['$'] as Record<string, string> | undefined;

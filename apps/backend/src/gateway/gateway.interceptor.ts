@@ -1,10 +1,4 @@
-import {
-  Injectable,
-  NestInterceptor,
-  ExecutionContext,
-  CallHandler,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, NestInterceptor, ExecutionContext, CallHandler, Logger } from '@nestjs/common';
 import { Observable, tap, catchError, throwError } from 'rxjs';
 
 @Injectable()
@@ -41,7 +35,7 @@ export class GatewayLoggingInterceptor implements NestInterceptor {
           error: err.message,
         });
         return throwError(() => err);
-      }),
+      })
     );
   }
 }

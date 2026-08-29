@@ -5,6 +5,7 @@ This guide explains the common utility functions available in Brain-Storm backen
 ## Overview
 
 The utility module provides reusable functions for:
+
 - String manipulation
 - Array operations
 - Date handling
@@ -60,7 +61,10 @@ ArrayUtils.unique([1, 2, 2, 3]); // [1, 2, 3]
 ArrayUtils.uniqueBy(users, 'email');
 
 // Flatten array
-ArrayUtils.flatten([[1, 2], [3, 4]]); // [1, 2, 3, 4]
+ArrayUtils.flatten([
+  [1, 2],
+  [3, 4],
+]); // [1, 2, 3, 4]
 
 // Chunk array
 ArrayUtils.chunk([1, 2, 3, 4, 5], 2); // [[1, 2], [3, 4], [5]]
@@ -251,7 +255,7 @@ export class CourseService {
   async getCourses(query: string) {
     // Normalize search query
     const slug = StringUtils.toSlug(query);
-    
+
     // Get courses and sort
     const courses = await this.repository.find();
     return ArrayUtils.sortBy(courses, 'createdAt', 'desc');
@@ -260,9 +264,9 @@ export class CourseService {
   async getUpcomingCourses() {
     const courses = await this.repository.find();
     const now = new Date();
-    
+
     // Filter courses starting in next 7 days
-    return courses.filter(course => {
+    return courses.filter((course) => {
       const daysUntilStart = DateUtils.diffInDays(now, course.startDate);
       return daysUntilStart > 0 && daysUntilStart <= 7;
     });
@@ -280,7 +284,7 @@ export class AnalyticsController {
   @Get('summary')
   async getSummary() {
     const data = await this.analyticsService.getData();
-    
+
     // Format numbers for response
     return ObjectUtils.mapValues(data, (value) => {
       if (typeof value === 'number') {

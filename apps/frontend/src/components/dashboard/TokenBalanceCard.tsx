@@ -1,4 +1,5 @@
 import { SkeletonBlock } from './SkeletonBlock';
+import { TokenBalance } from '@/components/ui/TokenBalance';
 
 interface TokenBalanceCardProps {
   balance: number | null;
@@ -15,7 +16,7 @@ export function TokenBalanceCard({ balance, isLoading = false }: TokenBalanceCar
           <SkeletonBlock className="h-7 w-32" />
         ) : (
           <p className="text-3xl font-bold text-green-600 dark:text-green-400">
-            {balance ?? 0} BST
+            <TokenBalance balance={balance ?? 0} symbol="BST" fallback="0" />
           </p>
         )}
       </div>

@@ -13,6 +13,7 @@ cache_type:resource_type:resource_id[:sub_resource]
 ```
 
 Examples:
+
 - `course:detail:uuid` - Single course details
 - `course:list:page:0` - Course listing page
 - `progress:user-uuid:course-uuid` - User progress per course
@@ -20,31 +21,34 @@ Examples:
 
 ## Cache Strategies
 
-| Resource | TTL | Strategy |
-|----------|-----|----------|
-| Course Details | 1 hour | Long-lived, invalidated on update |
-| Course List | 30 minutes | Medium TTL for browsing |
-| Enrollment Status | 15 minutes | Dynamic content with moderate TTL |
-| User Progress | 10 minutes | Frequently changing, shorter TTL |
-| Cohort Members | 5 minutes | Real-time sensitive |
-| Leaderboard | 30 minutes | Aggregated, moderate staleness acceptable |
-| Instructor Analytics | 1 hour | Heavy computation, long TTL |
+| Resource             | TTL        | Strategy                                  |
+| -------------------- | ---------- | ----------------------------------------- |
+| Course Details       | 1 hour     | Long-lived, invalidated on update         |
+| Course List          | 30 minutes | Medium TTL for browsing                   |
+| Enrollment Status    | 15 minutes | Dynamic content with moderate TTL         |
+| User Progress        | 10 minutes | Frequently changing, shorter TTL          |
+| Cohort Members       | 5 minutes  | Real-time sensitive                       |
+| Leaderboard          | 30 minutes | Aggregated, moderate staleness acceptable |
+| Instructor Analytics | 1 hour     | Heavy computation, long TTL               |
 
 ## Cache Invalidation Events
 
 Cache is invalidated on the following events:
 
 ### Course Updates
+
 - `course.created` → Invalidate course list
 - `course.updated` → Invalidate course detail + list
 - `course.deleted` → Invalidate course detail + list
 
 ### Enrollment Changes
+
 - `enrollment.created` → Invalidate user progress + course list
 - `enrollment.updated` → Invalidate enrollment status + analytics
 - `enrollment.completed` → Invalidate user progress + leaderboard + analytics
 
 ### Progress Tracking
+
 - `progress.recorded` → Invalidate user progress + leaderboard
 - `progress.updated` → Invalidate cohort members cache
 

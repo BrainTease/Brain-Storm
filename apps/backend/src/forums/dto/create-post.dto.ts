@@ -8,13 +8,13 @@ export class CreatePostDto {
   @IsString()
   @Trim()
   @Sanitize(StripHtmlSanitizer)
-  title: string;
+  title!: string;
 
   @ApiProperty({ description: 'Forum post content' })
   @IsString()
   @Trim()
   @Sanitize(StripHtmlSanitizer)
-  content: string;
+  content!: string;
 
   @ApiPropertyOptional({ description: 'Pin the post (instructors/admins only)', default: false })
   @IsOptional()

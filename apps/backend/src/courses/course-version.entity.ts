@@ -12,34 +12,34 @@ import { User } from '../users/user.entity';
 @Entity('course_versions')
 export class CourseVersion {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  courseId: string;
+  courseId!: string;
 
   @ManyToOne(() => Course, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'courseId' })
-  course: Course;
+  course!: Course;
 
   @Column()
-  versionTag: string; // e.g. "v1.0", "v2.0"
+  versionTag!: string;
 
   @Column({ default: 1 })
-  versionNumber: number;
+  versionNumber!: number;
 
   @Column('jsonb')
-  snapshot: Record<string, any>; // full course + modules + lessons snapshot
+  snapshot!: Record<string, any>;
 
   @Column({ nullable: true, type: 'text' })
-  changeNote: string;
+  changeNote!: string;
 
   @Column({ nullable: true })
-  createdById: string;
+  createdById!: string;
 
   @ManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'createdById' })
-  createdBy: User;
+  createdBy!: User;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 }

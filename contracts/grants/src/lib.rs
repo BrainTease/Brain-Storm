@@ -326,7 +326,7 @@ impl GrantsContract {
 
         let report = ReportRecord {
             grant_id,
-            report_idx: reports.len() as u32,
+            report_idx: reports.len(),
             content,
             submitted_at: env.ledger().timestamp(),
         };
@@ -339,7 +339,7 @@ impl GrantsContract {
 
         env.events().publish(
             (symbol_short!("grants"), symbol_short!("report")),
-            (grant_id, reports.len() as u32),
+            (grant_id, reports.len()),
         );
     }
 
@@ -399,6 +399,9 @@ impl GrantsContract {
 // =============================================================================
 // Tests
 // =============================================================================
+
+#[cfg(test)]
+mod tests_ext;
 
 #[cfg(test)]
 mod tests {

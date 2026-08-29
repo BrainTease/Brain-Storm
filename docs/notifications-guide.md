@@ -10,21 +10,21 @@ Notifications are stored in the `notifications` PostgreSQL table and pushed to c
 
 ### Types
 
-| Type | Value | Trigger |
-|------|-------|---------|
-| Enrollment | `enrollment` | A user is enrolled in a course (`enrollment.created` event) |
-| Completion | `completion` | A user completes a course (`progress.completed` event) |
+| Type              | Value               | Trigger                                                      |
+| ----------------- | ------------------- | ------------------------------------------------------------ |
+| Enrollment        | `enrollment`        | A user is enrolled in a course (`enrollment.created` event)  |
+| Completion        | `completion`        | A user completes a course (`progress.completed` event)       |
 | Credential Issued | `credential_issued` | An on-chain credential is issued (`credential.issued` event) |
 
 ### Entity Schema
 
 ```typescript
 {
-  id: string;          // UUID primary key
-  userId: string;      // recipient user ID
+  id: string; // UUID primary key
+  userId: string; // recipient user ID
   type: NotificationType;
-  message: string;     // human-readable description
-  isRead: boolean;     // default false
+  message: string; // human-readable description
+  isRead: boolean; // default false
   createdAt: Date;
 }
 ```
@@ -33,17 +33,17 @@ Notifications are stored in the `notifications` PostgreSQL table and pushed to c
 
 The `NotificationsEvents` service listens to NestJS `EventEmitter` events and creates notifications automatically:
 
-| Event | Handler | Message template |
-|-------|---------|-----------------|
-| `enrollment.created` | `handleEnrollmentCreated` | `"You have been enrolled in {courseName}"` |
-| `credential.issued` | `handleCredentialIssued` | `"Your credential for {courseName} has been issued!"` |
-| `progress.completed` | `handleProgressCompleted` | `"Congratulations! You have completed {courseName}"` |
+| Event                | Handler                   | Message template                                      |
+| -------------------- | ------------------------- | ----------------------------------------------------- |
+| `enrollment.created` | `handleEnrollmentCreated` | `"You have been enrolled in {courseName}"`            |
+| `credential.issued`  | `handleCredentialIssued`  | `"Your credential for {courseName} has been issued!"` |
+| `progress.completed` | `handleProgressCompleted` | `"Congratulations! You have completed {courseName}"`  |
 
 To trigger a notification from another service, emit the corresponding event:
 
 ```typescript
 this.eventEmitter.emit('enrollment.created', { userId, courseName });
-this.eventEmitter.emit('credential.issued',  { userId, courseName });
+this.eventEmitter.emit('credential.issued', { userId, courseName });
 this.eventEmitter.emit('progress.completed', { userId, courseName });
 ```
 
@@ -102,6 +102,7 @@ GET /v1/notifications
 Returns all notifications for the authenticated user, ordered by unread first, then newest first.
 
 **Response (200):**
+
 ```json
 [
   {
@@ -130,6 +131,7 @@ PATCH /v1/notifications/read-all
 ```
 
 **Response (200):**
+
 ```json
 { "success": true }
 ```
@@ -142,13 +144,13 @@ Email delivery is handled by `MailService` (`apps/backend/src/mail/mail.service.
 
 ### Configuration
 
-| Variable | Description |
-|----------|-------------|
+| Variable    | Description                          |
+| ----------- | ------------------------------------ |
 | `MAIL_HOST` | SMTP host (e.g. `smtp.sendgrid.net`) |
-| `MAIL_PORT` | SMTP port (e.g. `587`) |
-| `MAIL_USER` | SMTP username |
-| `MAIL_PASS` | SMTP password / API key |
-| `MAIL_FROM` | Sender address |
+| `MAIL_PORT` | SMTP port (e.g. `587`)               |
+| `MAIL_USER` | SMTP username                        |
+| `MAIL_PASS` | SMTP password / API key              |
+| `MAIL_FROM` | Sender address                       |
 
 ### Adding a new email template
 
@@ -175,6 +177,7 @@ User-level notification preferences are not yet persisted as a dedicated entity.
 2. Check the preference in each `NotificationsEvents` handler before calling `NotificationsService.create()`.
 
 Example preference shape:
+
 ```json
 {
   "enrollment": true,
@@ -188,11 +191,11 @@ Example preference shape:
 
 ## Delivery Guarantees
 
-| Channel | Guarantee |
-|---------|-----------|
-| Database (PostgreSQL) | Durable — notifications are persisted before the WebSocket emit. If the emit fails, the notification is still retrievable via `GET /v1/notifications`. |
-| WebSocket | At-most-once — if the client is offline at the time of emit, the event is not queued. The client should fetch missed notifications via the REST API on reconnect. |
-| Email | Depends on SMTP provider reliability. No retry logic is built in; add a queue (e.g., Bull) for production resilience. |
+| Channel               | Guarantee                                                                                                                                                         |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Database (PostgreSQL) | Durable — notifications are persisted before the WebSocket emit. If the emit fails, the notification is still retrievable via `GET /v1/notifications`.            |
+| WebSocket             | At-most-once — if the client is offline at the time of emit, the event is not queued. The client should fetch missed notifications via the REST API on reconnect. |
+| Email                 | Depends on SMTP provider reliability. No retry logic is built in; add a queue (e.g., Bull) for production resilience.                                             |
 
 ### Handling missed WebSocket events
 

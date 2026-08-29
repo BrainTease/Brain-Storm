@@ -36,13 +36,9 @@ function compareMetrics(current, baseline) {
     timestamp: new Date().toISOString(),
   };
 
-  const criticalMetrics = [
-    'http_req_duration',
-    'http_req_failed',
-    'http_reqs',
-  ];
+  const criticalMetrics = ['http_req_duration', 'http_req_failed', 'http_reqs'];
 
-  criticalMetrics.forEach(metric => {
+  criticalMetrics.forEach((metric) => {
     if (!current[metric] || !baseline[metric]) return;
 
     const currentVal = current[metric].p95 || current[metric].avg;
@@ -87,7 +83,7 @@ function generateReport(results) {
 
   if (results.regressions.length > 0) {
     report += '🚨 REGRESSIONS DETECTED:\n';
-    results.regressions.forEach(r => {
+    results.regressions.forEach((r) => {
       report += `  • ${r.metric}: ${r.change_percent}% (${r.baseline} → ${r.current}) [${r.severity}]\n`;
     });
     report += '\n';
@@ -95,7 +91,7 @@ function generateReport(results) {
 
   if (results.warnings.length > 0) {
     report += '⚠️  WARNINGS:\n';
-    results.warnings.forEach(w => {
+    results.warnings.forEach((w) => {
       report += `  • ${w.metric}: ${w.change_percent}% (${w.baseline} → ${w.current})\n`;
     });
     report += '\n';
@@ -103,7 +99,7 @@ function generateReport(results) {
 
   if (results.improvements.length > 0) {
     report += '✅ IMPROVEMENTS:\n';
-    results.improvements.forEach(i => {
+    results.improvements.forEach((i) => {
       report += `  • ${i.metric}: ${i.change_percent}% (${i.baseline} → ${i.current})\n`;
     });
     report += '\n';
@@ -118,7 +114,8 @@ function generateReport(results) {
 
 function main() {
   const resultsDir = process.env.RESULTS_DIR || './load-test-results';
-  const baselinesFile = process.env.BASELINES_FILE || './scripts/load-tests/baselines/performance-baselines.json';
+  const baselinesFile =
+    process.env.BASELINES_FILE || './scripts/load-tests/baselines/performance-baselines.json';
 
   if (!fs.existsSync(baselinesFile)) {
     console.error(`❌ Baselines file not found: ${baselinesFile}`);
@@ -126,7 +123,7 @@ function main() {
   }
 
   const baselines = JSON.parse(fs.readFileSync(baselinesFile, 'utf8'));
-  const testFiles = fs.readdirSync(resultsDir).filter(f => f.endsWith('.json'));
+  const testFiles = fs.readdirSync(resultsDir).filter((f) => f.endsWith('.json'));
 
   let hasRegressions = false;
   let allResults = {
@@ -134,7 +131,7 @@ function main() {
     tests: [],
   };
 
-  testFiles.forEach(file => {
+  testFiles.forEach((file) => {
     const filePath = path.join(resultsDir, file);
     const testName = file.replace('.json', '');
 

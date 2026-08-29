@@ -10,38 +10,38 @@ export enum DeliveryStatus {
 @Entity('webhook_deliveries')
 export class WebhookDelivery {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Index()
   @Column()
-  webhookId: string;
+  webhookId!: string;
 
   @Column()
-  event: string;
+  event!: string;
 
   @Column('text')
-  payload: string;
+  payload!: string;
 
   @Index()
   @Column({ type: 'varchar', default: DeliveryStatus.PENDING })
-  status: DeliveryStatus;
+  status!: DeliveryStatus;
 
   @Column({ nullable: true })
-  responseStatus: number;
+  responseStatus!: number;
 
   @Column({ nullable: true, type: 'text' })
-  responseBody: string;
+  responseBody!: string;
 
   @Column({ default: 0 })
-  attempts: number;
+  attempts!: number;
 
   @Column({ nullable: true, type: 'timestamp' })
-  nextRetryAt: Date;
+  nextRetryAt!: Date | null;
 
   /** Set when this delivery moves to the dead-letter queue */
   @Column({ nullable: true, type: 'timestamp' })
-  deadLetteredAt: Date | null;
+  deadLetteredAt!: Date | null;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 }

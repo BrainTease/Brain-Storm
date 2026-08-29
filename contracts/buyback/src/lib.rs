@@ -106,8 +106,8 @@ impl BuybackContract {
         let config = BuybackConfig {
             enabled: false,
             price_threshold: 1000,
-            max_buyback_amount: 100_000_0000000,
-            min_reserve_balance: 1_000_0000000,
+            max_buyback_amount: 100_000_000_000_000,
+            min_reserve_balance: 10_000_000_000,
             buyback_interval: 1000,
             dex_pool_id,
         };
@@ -224,7 +224,7 @@ impl BuybackContract {
             env,
             max_buyback_xlm,
             bst_price,
-            symbol_short!("price_thresh"),
+            symbol_short!("price_thr"),
         );
     }
 
@@ -380,15 +380,6 @@ impl BuybackContract {
         (xlm_amount.checked_mul(1_000_000).unwrap_or(xlm_amount)) / bst_price
     }
 
-    /// Calculates the XLM cost for a given BST amount at the given price.
-    /// Formula: (bst_amount * bst_price) / 1_000_000
-    fn calculate_xlm_from_bst(bst_amount: i128, bst_price: i128) -> i128 {
-        if bst_price == 0 {
-            return 0;
-        }
-        (bst_amount.checked_mul(bst_price).unwrap_or(bst_amount)) / 1_000_000
-    }
-
     fn get_bst_price(env: &Env) -> i128 {
         // Calls oracle contract; returns mock price for now
         let _oracle_contract: Address = env
@@ -464,3 +455,6 @@ impl BuybackContract {
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod invariant_tests;

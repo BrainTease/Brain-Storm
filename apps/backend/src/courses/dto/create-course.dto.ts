@@ -9,7 +9,7 @@ export class CreateCourseDto {
   @MinLength(3)
   @Trim()
   @Sanitize(StripHtmlSanitizer)
-  title: string;
+  title!: string;
 
   @ApiProperty({
     example: 'Learn the fundamentals of the Stellar network, wallets, and smart contracts.',
@@ -19,7 +19,7 @@ export class CreateCourseDto {
   @MinLength(10)
   @Trim()
   @Sanitize(StripHtmlSanitizer)
-  description: string;
+  description!: string;
 
   @ApiPropertyOptional({
     enum: ['beginner', 'intermediate', 'advanced'],
@@ -32,8 +32,13 @@ export class CreateCourseDto {
   level?: string;
 
   @ApiPropertyOptional({ example: 8, description: 'Estimated duration in hours' })
-  @IsOptional() @IsInt() @Min(0) durationHours?: number;
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  durationHours?: number;
 
   @ApiPropertyOptional({ example: false, description: 'Whether KYC is required to enroll' })
-  @IsOptional() @IsBoolean() requiresKyc?: boolean;
+  @IsOptional()
+  @IsBoolean()
+  requiresKyc?: boolean;
 }

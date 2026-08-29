@@ -7,6 +7,9 @@ edition = "2021"
 soroban-sdk = { version = "21.5.0", features = ["testutils"] }
 brain-storm-shared = { path = "../shared", default-features = false }
 
+[dev-dependencies]
+scholarship_fund = { path = "../scholarship_fund" }
+
 [lib]
 crate-type = ["cdylib", "rlib"]
 

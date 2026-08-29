@@ -62,7 +62,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ isAuthenticated, onLogout 
 
   const onTouchEnd = () => {
     if (!touchStart || !touchEnd) return;
-    
+
     const distance = touchStart - touchEnd;
     const isLeftSwipe = distance > minSwipeDistance;
     const isRightSwipe = distance < -minSwipeDistance;
@@ -117,9 +117,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ isAuthenticated, onLogout 
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b dark:border-gray-800">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Menu
-          </h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Menu</h2>
           <button
             onClick={() => setIsOpen(false)}
             className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
@@ -131,7 +129,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ isAuthenticated, onLogout 
 
         {/* Navigation Items */}
         <div className="flex flex-col p-4 space-y-2 overflow-y-auto h-[calc(100%-80px)]">
-          {navItems.map(item => {
+          {navItems.map((item) => {
             const isActive = pathname === item.href;
             return (
               <Link
@@ -154,7 +152,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ isAuthenticated, onLogout 
           {isAuthenticated && (
             <>
               <div className="my-4 border-t dark:border-gray-800" />
-              
+
               {/* Logout Button */}
               <button
                 onClick={() => {
@@ -218,7 +216,7 @@ export const BottomMobileNav: React.FC<BottomMobileNavProps> = ({ onSwipeLeft, o
       onTouchEnd={handleTouchEnd}
     >
       <div className="flex items-center justify-around">
-        {navItems.map(item => {
+        {navItems.map((item) => {
           const isActive = pathname === item.href;
           return (
             <Link
@@ -226,9 +224,7 @@ export const BottomMobileNav: React.FC<BottomMobileNavProps> = ({ onSwipeLeft, o
               href={item.href}
               onClick={triggerHaptic}
               className={`flex flex-col items-center justify-center py-2 px-3 min-w-[60px] transition-colors ${
-                isActive
-                  ? 'text-blue-600 dark:text-blue-400'
-                  : 'text-gray-600 dark:text-gray-400'
+                isActive ? 'text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400'
               }`}
               aria-current={isActive ? 'page' : undefined}
             >

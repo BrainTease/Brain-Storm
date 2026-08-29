@@ -7,10 +7,7 @@ import { BookingsController } from './bookings.controller';
 import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([AvailabilitySlot, BookingRequest]),
-    NotificationsModule,
-  ],
+  imports: [TypeOrmModule.forFeature([AvailabilitySlot, BookingRequest]), NotificationsModule],
   providers: [BookingService],
   controllers: [BookingsController],
   exports: [BookingService],

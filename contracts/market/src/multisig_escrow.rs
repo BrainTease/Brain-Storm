@@ -3,7 +3,7 @@
 use soroban_sdk::{contracttype, symbol_short, Address, Env, Symbol, Vec};
 
 #[contracttype]
-#[derive(Clone, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum MsEscrowStatus {
     Pending,   // collecting approvals
     Released,  // threshold met, funds released
@@ -47,7 +47,7 @@ pub fn create_ms_escrow(
     payer.require_auth();
     assert!(amount > 0, "Amount must be positive");
     assert!(!signers.is_empty(), "Need at least one signer");
-    assert!(threshold > 0 && threshold <= signers.len() as u32, "Invalid threshold");
+    assert!(threshold > 0 && threshold <= signers.len(), "Invalid threshold");
 
     let id: u64 = env
         .storage()
@@ -99,7 +99,7 @@ pub fn approve_ms_escrow(env: &Env, escrow_id: u64, signer: Address) {
 
     escrow.approvals.push_back(signer.clone());
 
-    if escrow.approvals.len() as u32 >= escrow.threshold {
+    if escrow.approvals.len() >= escrow.threshold {
         escrow.status = MsEscrowStatus::Released;
         env.events()
             .publish((EVT_MS_RELEASE,), (escrow_id, escrow.payee.clone(), escrow.amount));

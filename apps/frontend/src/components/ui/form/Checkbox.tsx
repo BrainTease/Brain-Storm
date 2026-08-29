@@ -3,8 +3,7 @@ import { FieldFeedback, useFieldA11y, type FieldMeta } from './Field';
 import { CHECKBOX_CLASS, LABEL_CLASS } from './fieldStyles';
 
 export interface CheckboxProps
-  extends FieldMeta,
-    Omit<React.InputHTMLAttributes<HTMLInputElement>, 'aria-invalid' | 'type'> {
+  extends FieldMeta, Omit<React.InputHTMLAttributes<HTMLInputElement>, 'aria-invalid' | 'type'> {
   /**
    * Renders label and box on a single justified row inside a bordered card —
    * the toggle-list layout used by the settings screens.
@@ -23,7 +22,13 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(functi
   const { fieldId, a11yProps } = useFieldA11y({ id, label, error, helperText });
 
   const control = (
-    <input {...a11yProps} ref={ref} type="checkbox" className={`${CHECKBOX_CLASS} ${className}`} {...rest} />
+    <input
+      {...a11yProps}
+      ref={ref}
+      type="checkbox"
+      className={`${CHECKBOX_CLASS} ${className}`}
+      {...rest}
+    />
   );
 
   if (variant === 'row') {

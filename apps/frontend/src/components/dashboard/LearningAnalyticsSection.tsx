@@ -38,10 +38,7 @@ interface LearningAnalyticsSectionProps {
 }
 
 /** Charts section of the student dashboard. Receives ready-to-render series. */
-export function LearningAnalyticsSection({
-  analytics,
-  isDarkMode,
-}: LearningAnalyticsSectionProps) {
+export function LearningAnalyticsSection({ analytics, isDarkMode }: LearningAnalyticsSectionProps) {
   const { progressOverTime, streak, quizScores, isLoading } = analytics;
 
   return (

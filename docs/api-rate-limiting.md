@@ -15,13 +15,13 @@ The API supports multiple tiers of rate limiting:
 
 Example thresholds:
 
-| Tier | Endpoint examples | Threshold |
-|---|---|---|
-| Authentication | `POST /auth/login`, `POST /auth/register` | 5 requests / minute |
-| Account recovery | `POST /auth/forgot-password` | 3 requests / hour |
-| High-risk operations | `POST /stellar/mint`, `POST /courses/*/submit` | 3-10 requests / minute |
-| Default API traffic | `GET /courses`, `GET /users/{id}` | 100 requests / minute |
-| Trusted service clients | internal API keys / allowlisted IPs | 1,000+ requests / minute or custom policy |
+| Tier                    | Endpoint examples                              | Threshold                                 |
+| ----------------------- | ---------------------------------------------- | ----------------------------------------- |
+| Authentication          | `POST /auth/login`, `POST /auth/register`      | 5 requests / minute                       |
+| Account recovery        | `POST /auth/forgot-password`                   | 3 requests / hour                         |
+| High-risk operations    | `POST /stellar/mint`, `POST /courses/*/submit` | 3-10 requests / minute                    |
+| Default API traffic     | `GET /courses`, `GET /users/{id}`              | 100 requests / minute                     |
+| Trusted service clients | internal API keys / allowlisted IPs            | 1,000+ requests / minute or custom policy |
 
 These values should be treated as a starting point and tuned based on actual traffic patterns and service capacity.
 

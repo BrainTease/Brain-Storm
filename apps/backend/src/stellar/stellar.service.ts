@@ -32,6 +32,7 @@ import {
   StellarTxStatus,
 } from './stellar-transaction-log.entity';
 import { SorobanRpcClientService } from './soroban-rpc-client.service';
+import { StellarClientFactory } from './stellar-client.factory';
 
 @Injectable()
 export class StellarService {
@@ -45,15 +46,12 @@ export class StellarService {
     @InjectRepository(StellarTransactionLog)
     private readonly txLogRepo: Repository<StellarTransactionLog>,
     private readonly sorobanRpc: SorobanRpcClientService,
+    private readonly clientFactory: StellarClientFactory
   ) {
-    const isTestnet = this.configService.get<string>('stellar.network') !== 'mainnet';
-    this.networkPassphrase = isTestnet ? Networks.TESTNET : Networks.PUBLIC;
-
-    this.server = new Horizon.Server(
-      isTestnet
-        ? 'https://horizon-testnet.stellar.org'
-        : 'https://horizon.stellar.org',
-    );
+    // Use centralized client factory instead of creating new instance
+    this.server = this.clientFactory.getHorizonClient();
+    this.networkPassphrase = this.clientFactory.getNetworkPassphrase();
+    this.logger.log('StellarService initialized using StellarClientFactory');
   }
 
   // ── Public API ────────────────────────────────────────────────────────────
@@ -69,7 +67,7 @@ export class StellarService {
       throw new Error('Friendbot is only available on testnet');
     }
     const response = await fetch(
-      `https://friendbot.stellar.org?addr=${encodeURIComponent(publicKey)}`,
+      `https://friendbot.stellar.org?addr=${encodeURIComponent(publicKey)}`
     );
     if (!response.ok) {
       const body = await response.text();
@@ -86,7 +84,7 @@ export class StellarService {
   async mintCertificateNFT(
     recipientPublicKey: string,
     certificateHash: string,
-    courseTitle: string,
+    courseTitle: string
   ): Promise<string> {
     try {
       const issuerKeypair = this.getIssuerKeypair();
@@ -100,7 +98,7 @@ export class StellarService {
           Operation.manageData({
             name: `brain-storm:cert:${certificateHash.slice(0, 28)}`,
             value: recipientPublicKey,
-          }),
+          })
         )
         .setTimeout(30)
         .build();
@@ -118,30 +116,29 @@ export class StellarService {
       });
 
       return result.hash;
-    } catch (error) {
+    } catch (error: unknown) {
       await this.logTransaction({
         type: StellarTxType.MINT_CERTIFICATE,
         recipientPublicKey,
         status: StellarTxStatus.FAILED,
-        errorMessage: error.message,
+        errorMessage: error instanceof Error ? error.message : String(error),
         metadata: { certificateHash, courseTitle },
       });
       throw error;
     }
   }
 
-  async issueCredential(
-    recipientPublicKey: string,
-    courseId: string,
-  ): Promise<string> {
+  async issueCredential(recipientPublicKey: string, courseId: string): Promise<string> {
     try {
       // Delegate Soroban progress-recording to the dedicated RPC service
       await this.sorobanRpc.recordProgress(recipientPublicKey, courseId, 100);
       this.logger.log(`Progress recorded on Soroban for ${courseId}`);
-    } catch (error) {
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : String(error);
+      const errStack = error instanceof Error ? error.stack : undefined;
       this.logger.error(
-        `Failed to record progress on Soroban: ${error.message}, falling back to Horizon`,
-        error.stack,
+        `Failed to record progress on Soroban: ${errMsg}, falling back to Horizon`,
+        errStack
       );
       await this.issueCredentialFallback(recipientPublicKey, courseId);
     }
@@ -161,7 +158,7 @@ export class StellarService {
   async recordProgress(
     studentPublicKey: string,
     courseId: string,
-    progressPct: number,
+    progressPct: number
   ): Promise<string> {
     return this.sorobanRpc.recordProgress(studentPublicKey, courseId, progressPct);
   }
@@ -201,9 +198,9 @@ export class StellarService {
         createdAt: tx.created_at,
         operationCount: tx.operation_count,
       };
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.warn(
-        `Transaction verification failed for ${txHash}: ${error.message}`,
+        `Transaction verification failed for ${txHash}: ${error instanceof Error ? error.message : String(error)}`
       );
       return { verified: false, hash: txHash };
     }
@@ -225,7 +222,7 @@ export class StellarService {
 
   private async issueCredentialFallback(
     recipientPublicKey: string,
-    courseId: string,
+    courseId: string
   ): Promise<void> {
     const issuerKeypair = this.getIssuerKeypair();
     const issuerAccount = await this.server.loadAccount(issuerKeypair.publicKey());
@@ -238,7 +235,7 @@ export class StellarService {
         Operation.manageData({
           name: `brain-storm:credential:${courseId}`,
           value: recipientPublicKey,
-        }),
+        })
       )
       .setTimeout(30)
       .build();
@@ -249,7 +246,7 @@ export class StellarService {
 
   private async mintCredentialViaHorizon(
     recipientPublicKey: string,
-    courseId: string,
+    courseId: string
   ): Promise<string> {
     const issuerKeypair = this.getIssuerKeypair();
     const issuerAccount = await this.server.loadAccount(issuerKeypair.publicKey());
@@ -262,7 +259,7 @@ export class StellarService {
         Operation.manageData({
           name: `brain-storm:credential:${courseId}`,
           value: recipientPublicKey,
-        }),
+        })
       )
       .setTimeout(30)
       .build();
@@ -276,8 +273,10 @@ export class StellarService {
   private async logTransaction(data: Partial<StellarTransactionLog>): Promise<void> {
     try {
       await this.txLogRepo.save(this.txLogRepo.create(data));
-    } catch (err) {
-      this.logger.error(`Failed to log transaction: ${err.message}`, err.stack);
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      const errStack = err instanceof Error ? err.stack : undefined;
+      this.logger.error(`Failed to log transaction: ${errMsg}`, errStack);
     }
   }
 
