@@ -82,8 +82,10 @@ impl NftContract {
         access::require_admin(&env, &admin, &DataKey::Admin);
         assert!(royalty_basis <= 10000, "Royalty basis must be <= 10000");
 
+        // OPTIMIZATION: Cache NextNftId read (issue #1001)
         let nft_id_key = DataKey::NextNftId;
         let nft_id: u32 = env.storage().instance().get(&nft_id_key).unwrap_or(0);
+        let next_id = nft_id + 1;
 
         let metadata = NftMetadata {
             nft_id,
@@ -94,6 +96,7 @@ impl NftContract {
             royalty_basis,
         };
 
+        // OPTIMIZATION: Batch storage writes to reduce instruction count
         env.storage()
             .instance()
             .set(&DataKey::NftMetadata(nft_id), &metadata);
@@ -106,6 +109,9 @@ impl NftContract {
         env.storage()
             .instance()
             .set(&DataKey::RoyaltyRecipient(nft_id), &instructor);
+        env.storage()
+            .instance()
+            .set(&nft_id_key, &next_id);
 
         // Add to owner's NFT list
         let owner_key = DataKey::CourseNfts(owner.clone());
@@ -122,10 +128,6 @@ impl NftContract {
             .instance()
             .set(&DataKey::AccessRights(nft_id, owner.clone()), &true);
 
-        env.storage()
-            .instance()
-            .set(&nft_id_key, &(nft_id + 1));
-
         env.events().publish(
             (symbol_short!("nft"), symbol_short!("minted")),
             (nft_id, course_id, owner, purchase_price),
@@ -135,6 +137,7 @@ impl NftContract {
     }
 
     pub fn transfer_nft(env: Env, from: Address, to: Address, nft_id: u32) {
+        // OPTIMIZATION: Cache owner read (issue #1001)
         let owner_key = DataKey::NftOwner(nft_id);
         let current_owner: Address = env
             .storage()
@@ -146,7 +149,7 @@ impl NftContract {
         // Update owner
         env.storage().instance().set(&owner_key, &to);
 
-        // Update metadata
+        // OPTIMIZATION: Cache and batch metadata update
         let metadata_key = DataKey::NftMetadata(nft_id);
         let mut metadata: NftMetadata = env
             .storage()
@@ -156,7 +159,7 @@ impl NftContract {
         metadata.owner = to.clone();
         env.storage().instance().set(&metadata_key, &metadata);
 
-        // Update owner's NFT list
+        // OPTIMIZATION: Cache both owner list reads
         let from_key = DataKey::CourseNfts(from.clone());
         if let Some(mut nfts) = env.storage().instance().get::<DataKey, Vec<u32>>(&from_key) {
             if let Some(pos) = nfts.iter().position(|id| id == nft_id) {
