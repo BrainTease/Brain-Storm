@@ -39,7 +39,7 @@ Historically, smart contract systems on other ecosystems often consolidated func
 
 ## Decision
 
-We establish a **Contract-per-Domain Architecture** where each business domain is encapsulated in an independent, individually-compiled Soroban WASM contract crate. 
+We establish a **Contract-per-Domain Architecture** where each business domain is encapsulated in an independent, individually-compiled Soroban WASM contract crate.
 
 Cross-domain interactions must strictly adhere to the following rules:
 
@@ -55,11 +55,11 @@ Cross-domain interactions must strictly adhere to the following rules:
 
 The verified on-chain call matrix across all production contracts is defined as follows:
 
-| Caller Contract | Callee Contract | Invocation Method | Target Function | Purpose |
-|---|---|---|---|---|
-| `contracts/credential_metadata` | `contracts/nft` | Local client stub (`LinkageClient`) | `mint_course_nft` | Atomically mints an associated NFT whenever a credential is issued with NFT linkage |
-| `contracts/governance` | `contracts/token` | Dynamic invocation (`env.invoke_contract`) | `balance` | Queries a voter's BST token balance at the proposal snapshot ledger to weight votes |
-| `contracts/grants` | `contracts/token` | Dynamic invocation (`env.invoke_contract`) | `transfer` | Transfers BST funds from the grant contract vault to an approved recipient upon milestone verification |
+| Caller Contract                 | Callee Contract   | Invocation Method                          | Target Function   | Purpose                                                                                                |
+| ------------------------------- | ----------------- | ------------------------------------------ | ----------------- | ------------------------------------------------------------------------------------------------------ |
+| `contracts/credential_metadata` | `contracts/nft`   | Local client stub (`LinkageClient`)        | `mint_course_nft` | Atomically mints an associated NFT whenever a credential is issued with NFT linkage                    |
+| `contracts/governance`          | `contracts/token` | Dynamic invocation (`env.invoke_contract`) | `balance`         | Queries a voter's BST token balance at the proposal snapshot ledger to weight votes                    |
+| `contracts/grants`              | `contracts/token` | Dynamic invocation (`env.invoke_contract`) | `transfer`        | Transfers BST funds from the grant contract vault to an approved recipient upon milestone verification |
 
 ```mermaid
 graph LR
@@ -96,6 +96,7 @@ graph LR
 ## Shared Error & Event Conventions (`contracts/shared`)
 
 ### 1. Unified Error Codes (`SharedError`)
+
 All contracts use the standardized `SharedError` enum (`contracts/shared/src/errors.rs`) to ensure consistent error handling across the monorepo:
 
 - **1 – 10:** Initialization & State (`NotInitialized = 1`, `AlreadyInitialized = 2`, `InvalidState = 3`)
@@ -110,7 +111,9 @@ All contracts use the standardized `SharedError` enum (`contracts/shared/src/err
 - **200:** General Execution Failure (`OperationFailed = 200`)
 
 ### 2. Standardized Event Topics & Payloads
+
 Events emitted across all contracts must conform to a two-topic structure:
+
 - **Topic 0:** Domain Symbol (e.g. `symbol_short!("cert")`, `symbol_short!("token")`, `symbol_short!("gov")`)
 - **Topic 1:** Action Symbol (e.g. `symbol_short!("mint")`, `symbol_short!("burn")`, `symbol_short!("transfer")`, `symbol_short!("paused")`)
 - **Data Payload:** Tuple containing the primary entity identifier, actor address, and relevant parameters: `(caller, id, amount_or_details)`
@@ -138,23 +141,25 @@ When a new business domain requires on-chain logic, developers must adhere to th
 
 ## Rationale & Alternatives Considered
 
-| Alternative | Evaluation | Why Rejected |
-|---|---|---|
-| **Monolithic Contract** | Single WASM binary containing all platform logic. | Exceeds Soroban WASM size limits; any bug or upgrade requires redeploying the entire platform; high blast radius. |
-| **Direct Crate Path Dependencies** | Production crates importing each other directly via Cargo. | Causes code duplication in WASM binaries, bloats binary size, and breaks Soroban resolver isolation. |
-| **All Cross-Contract Calls On-Chain** | Extensive synchronous cross-contract calls for all operations. | Expensive in transaction gas, brittle to dependency failures, and introduces reentrancy risks. |
+| Alternative                           | Evaluation                                                     | Why Rejected                                                                                                      |
+| ------------------------------------- | -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| **Monolithic Contract**               | Single WASM binary containing all platform logic.              | Exceeds Soroban WASM size limits; any bug or upgrade requires redeploying the entire platform; high blast radius. |
+| **Direct Crate Path Dependencies**    | Production crates importing each other directly via Cargo.     | Causes code duplication in WASM binaries, bloats binary size, and breaks Soroban resolver isolation.              |
+| **All Cross-Contract Calls On-Chain** | Extensive synchronous cross-contract calls for all operations. | Expensive in transaction gas, brittle to dependency failures, and introduces reentrancy risks.                    |
 
 ---
 
 ## Consequences
 
 ### Positive
+
 - **Compact Bytecode:** Each contract compiles to an optimized WASM binary well within Soroban limits.
 - **Isolated Upgrades:** Upgrading one domain contract (e.g. `analytics`) does not affect unaffected contracts (e.g. `token`).
 - **Clear Security Model:** Bounded attack surface with explicit, auditable cross-contract edges.
 - **Predictable Error Handling:** Unified error codes decoded automatically across SDK and backend.
 
 ### Negative
+
 - **Orchestration Overhead:** Multi-step workflows requiring multiple domain actions must be sequenced by backend transactions.
 
 ---

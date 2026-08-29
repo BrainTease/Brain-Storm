@@ -18,35 +18,35 @@ import { Course } from '../courses/course.entity';
 @Index(['enrolledAt'])
 export class Enrollment {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  userId: string;
+  userId!: string;
 
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
-  user: User;
+  user!: User;
 
   @Column()
-  courseId: string;
+  courseId!: string;
 
   @ManyToOne(() => Course, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'courseId' })
-  course: Course;
+  course!: Course;
 
   // Audit columns
   @Column({ nullable: true })
-  createdBy: string | null;
+  createdBy!: string | null;
 
   @Column({ nullable: true })
-  updatedBy: string | null;
+  updatedBy!: string | null;
 
   @CreateDateColumn()
-  enrolledAt: Date;
+  enrolledAt!: Date;
 
   @Column({ nullable: true, type: 'timestamptz' })
-  completedAt: Date | null;
+  completedAt!: Date | null;
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt!: Date;
 }

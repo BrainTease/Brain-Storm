@@ -92,7 +92,9 @@ export class PlatformAnalyticsService {
     try {
       await this.aggregatePlatform();
     } catch (err) {
-      this.logger.error(`Failed to aggregate platform analytics: ${err.message}`);
+      this.logger.error(
+        `Failed to aggregate platform analytics: ${err instanceof Error ? err.message : String(err)}`
+      );
     }
   }
 
@@ -102,7 +104,9 @@ export class PlatformAnalyticsService {
     try {
       await this.aggregatePlatform();
     } catch (err) {
-      this.logger.error(`Failed to aggregate platform analytics: ${err.message}`);
+      this.logger.error(
+        `Failed to aggregate platform analytics: ${err instanceof Error ? err.message : String(err)}`
+      );
     }
   }
 

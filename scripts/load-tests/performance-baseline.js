@@ -14,8 +14,8 @@ export const options = {
     { duration: '20s', target: 0 },
   ],
   thresholds: {
-    'response_time': ['p(95)<500', 'p(99)<1000'],
-    'errors': ['rate<0.1'],
+    response_time: ['p(95)<500', 'p(99)<1000'],
+    errors: ['rate<0.1'],
   },
 };
 

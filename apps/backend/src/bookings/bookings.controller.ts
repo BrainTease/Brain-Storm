@@ -21,11 +21,11 @@ import { BookingService } from './booking.service';
 class AvailabilitySlotDto {
   @ApiProperty({ example: '2026-07-01T09:00:00Z' })
   @IsDateString()
-  startTime: string;
+  startTime!: string;
 
   @ApiProperty({ example: '2026-07-01T17:00:00Z' })
   @IsDateString()
-  endTime: string;
+  endTime!: string;
 
   @ApiProperty({ example: 'Europe/London', required: false })
   @IsOptional()
@@ -38,21 +38,21 @@ class SetAvailabilityDto {
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => AvailabilitySlotDto)
-  slots: AvailabilitySlotDto[];
+  slots!: AvailabilitySlotDto[];
 }
 
 class CreateBookingDto {
   @ApiProperty()
   @IsString()
-  workerId: string;
+  workerId!: string;
 
   @ApiProperty({ example: '2026-07-01T10:00:00Z' })
   @IsDateString()
-  startTime: string;
+  startTime!: string;
 
   @ApiProperty({ example: '2026-07-01T11:00:00Z' })
   @IsDateString()
-  endTime: string;
+  endTime!: string;
 
   @ApiProperty({ example: 'UTC', required: false })
   @IsOptional()

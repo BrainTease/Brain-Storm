@@ -22,23 +22,23 @@ We adopt the following token economics for BST:
 
 ### Token Parameters
 
-| Parameter | Value |
-|---|---|
-| Name | Brain-Storm Token |
-| Symbol | BST |
-| Decimals | 7 |
-| Max supply | 1,000,000,000 BST (1 billion) |
+| Parameter               | Value                                                     |
+| ----------------------- | --------------------------------------------------------- |
+| Name                    | Brain-Storm Token                                         |
+| Symbol                  | BST                                                       |
+| Decimals                | 7                                                         |
+| Max supply              | 1,000,000,000 BST (1 billion)                             |
 | On-chain representation | `10_000_000_000_000_000` (raw i128 with 7 decimal places) |
-| Standard | SEP-0041 (Stellar token interface) |
+| Standard                | SEP-0041 (Stellar token interface)                        |
 
 ### Token Distribution Model
 
-| Allocation | Share | Purpose |
-|---|---|---|
-| Student rewards | 40% | Minted on-demand as learners complete modules and courses |
-| Instructor vesting | 30% | Released linearly over time to incentivise content quality |
-| Platform reserve | 20% | Held by the admin account for partnerships, grants, and liquidity |
-| Ecosystem / treasury | 10% | Community initiatives, bug bounties, and future governance |
+| Allocation           | Share | Purpose                                                           |
+| -------------------- | ----- | ----------------------------------------------------------------- |
+| Student rewards      | 40%   | Minted on-demand as learners complete modules and courses         |
+| Instructor vesting   | 30%   | Released linearly over time to incentivise content quality        |
+| Platform reserve     | 20%   | Held by the admin account for partnerships, grants, and liquidity |
+| Ecosystem / treasury | 10%   | Community initiatives, bug bounties, and future governance        |
 
 Student reward and instructor vesting tokens are minted lazily (only when earned or claimed), so circulating supply grows gradually rather than being pre-minted in full.
 
@@ -46,15 +46,16 @@ Student reward and instructor vesting tokens are minted lazily (only when earned
 
 Rewards are minted by the backend (`STELLAR_SECRET_KEY` admin account) after the Analytics contract confirms a verified progress event.
 
-| Activity | Reward |
-|---|---|
-| Module completion (< 100%) | `progress_delta × module_weight × base_rate` |
-| Course completion (100%) | `course_completion_bonus` (flat amount, set per course) |
-| First-time course enrolment | 0 (no reward for enrolment alone) |
+| Activity                    | Reward                                                  |
+| --------------------------- | ------------------------------------------------------- |
+| Module completion (< 100%)  | `progress_delta × module_weight × base_rate`            |
+| Course completion (100%)    | `course_completion_bonus` (flat amount, set per course) |
+| First-time course enrolment | 0 (no reward for enrolment alone)                       |
 
 `base_rate` and `course_completion_bonus` are off-chain configuration values stored in the backend. They are not encoded in the contract, allowing adjustment without a contract upgrade.
 
 Reward minting calls `TokenContract::mint(to, amount)`, which:
+
 1. Requires admin authorisation (`admin.require_auth()`).
 2. Checks `new_supply <= MAX_SUPPLY` before writing.
 3. Uses `checked_add` / `checked_sub` throughout to prevent arithmetic overflow.
@@ -112,6 +113,7 @@ Stellar's native XLM uses 7 decimal places (stroops). Matching this convention s
 ## Consequences
 
 **Positive:**
+
 - Hard supply cap prevents runaway inflation and makes reward value predictable.
 - Lazy minting minimises admin trust requirements.
 - On-chain vesting is tamper-proof and auditable by anyone.
@@ -119,12 +121,14 @@ Stellar's native XLM uses 7 decimal places (stroops). Matching this convention s
 - Deferring governance keeps the contract small and auditable.
 
 **Negative:**
+
 - Admin key is a single point of failure for minting; compromise allows minting up to the cap. Mitigated by keeping the key in a secrets manager and rotating it on any suspected exposure.
 - Reward rates (`base_rate`, `course_completion_bonus`) are off-chain config — a misconfigured backend could over-reward. Mitigated by backend validation and supply cap enforcement in the contract.
 - No governance means platform decisions are centralised. Accepted as a deliberate trade-off for launch.
 - Vesting schedule parameters (cliff, end ledger) cannot be modified after creation. Instructors must be informed of terms before a schedule is created.
 
 **Neutral:**
+
 - Circulating supply will be well below 1 billion for the foreseeable future; the cap is a ceiling, not a target.
 - Token price discovery is out of scope for this ADR; BST has no initial exchange listing.
 

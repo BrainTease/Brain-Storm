@@ -181,9 +181,7 @@ export function ReviewList({ courseId, currentUserId, isInstructor = false }: Re
                 <span className="font-medium text-sm text-gray-900 dark:text-gray-100">
                   {review.authorName}
                 </span>
-                <span className="text-xs text-gray-400">
-                  {formatDateShort(review.createdAt)}
-                </span>
+                <span className="text-xs text-gray-400">{formatDateShort(review.createdAt)}</span>
               </div>
               <StarRating value={review.rating} readOnly />
               <p className="mt-2 text-sm text-gray-700 dark:text-gray-300">{review.text}</p>

@@ -49,23 +49,23 @@ jobs:
           package-name: brain-storm
           bump-minor-pre-major: true
           bump-patch-for-minor-pre-major: true
-          
+
       # Build and tag Docker images if a release was created
       - name: Checkout
         if: ${{ steps.release.outputs.release_created }}
         uses: actions/checkout@v4
-        
+
       - name: Set up Docker Buildx
         if: ${{ steps.release.outputs.release_created }}
         uses: docker/setup-buildx-action@v3
-        
+
       - name: Login to Docker Hub
         if: ${{ steps.release.outputs.release_created }}
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-          
+
       - name: Build and push backend image
         if: ${{ steps.release.outputs.release_created }}
         uses: docker/build-push-action@v5
@@ -85,6 +85,7 @@ jobs:
 ### 3. Configure Docker Hub Secrets
 
 Add to repository secrets (Settings → Secrets and variables → Actions):
+
 - `DOCKER_USERNAME`: Your Docker Hub username
 - `DOCKER_PASSWORD`: Your Docker Hub access token
 
@@ -93,6 +94,7 @@ Add to repository secrets (Settings → Secrets and variables → Actions):
 See [COMMIT_CONVENTIONS.md](./COMMIT_CONVENTIONS.md) for detailed commit format rules.
 
 Quick reference:
+
 ```bash
 feat(courses): add video upload support
 fix(auth): prevent token refresh race condition

@@ -50,8 +50,7 @@ export function CourseApprovalList() {
           <div>
             <p className="font-medium">{course.title}</p>
             <p className="text-sm text-gray-500">
-              {course.instructorName} · Submitted{' '}
-              {formatDateShort(course.submittedAt)}
+              {course.instructorName} · Submitted {formatDateShort(course.submittedAt)}
             </p>
           </div>
           <div className="flex gap-2">

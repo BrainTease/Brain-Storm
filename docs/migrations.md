@@ -22,14 +22,14 @@ DATABASE_NAME=brain-storm
 
 Run all commands from `apps/backend/`:
 
-| Command | Description |
-|---------|-------------|
-| `npm run migration:show` | List executed and pending migrations |
-| `npm run migration:validate` | Validate ordering and detect duplicate timestamps |
-| `npm run migration:run` | Apply all pending migrations (transactional) |
-| `npm run migration:rollback` | Revert the last applied migration |
-| `npm run migration:generate -- src/migrations/<Name>` | Auto-generate migration from entity diff |
-| `npm run migration:create -- src/migrations/<Name>` | Create an empty migration file |
+| Command                                               | Description                                       |
+| ----------------------------------------------------- | ------------------------------------------------- |
+| `npm run migration:show`                              | List executed and pending migrations              |
+| `npm run migration:validate`                          | Validate ordering and detect duplicate timestamps |
+| `npm run migration:run`                               | Apply all pending migrations (transactional)      |
+| `npm run migration:rollback`                          | Revert the last applied migration                 |
+| `npm run migration:generate -- src/migrations/<Name>` | Auto-generate migration from entity diff          |
+| `npm run migration:create -- src/migrations/<Name>`   | Create an empty migration file                    |
 
 ### Generate a New Migration
 
@@ -163,7 +163,7 @@ export class AddCourseCategory1700000000000 implements MigrationInterface {
         type: 'varchar',
         length: '50',
         isNullable: true,
-      }),
+      })
     );
   }
 

@@ -1,16 +1,33 @@
 import * as request from 'supertest';
-import { setupIntegrationTest, teardownIntegrationTest, clearDatabase, createAuthToken } from './setup';
+import {
+  setupIntegrationTest,
+  teardownIntegrationTest,
+  clearDatabase,
+  createAuthToken,
+} from './setup';
+import { INestApplication } from '@nestjs/common';
+import { DataSource } from 'typeorm';
+
+interface TestContext {
+  app: INestApplication;
+  dataSource: DataSource;
+  server: any;
+}
 
 describe('Users Integration Tests (RBAC)', () => {
-  let ctx, userToken, adminToken;
+  let ctx: TestContext;
+  let userToken: string;
+  let adminToken: string;
 
-  beforeAll(async () => { 
+  beforeAll(async () => {
     ctx = await setupIntegrationTest();
     userToken = await createAuthToken(ctx.server, 'user@test.com');
     adminToken = await createAuthToken(ctx.server, 'admin@test.com');
     await ctx.dataSource.query(`UPDATE "user" SET role = 'admin' WHERE email = 'admin@test.com'`);
   });
-  afterAll(async () => { await teardownIntegrationTest(ctx); });
+  afterAll(async () => {
+    await teardownIntegrationTest(ctx);
+  });
 
   describe('GET /v1/users', () => {
     it('should deny access to regular users', async () => {
@@ -25,7 +42,7 @@ describe('Users Integration Tests (RBAC)', () => {
         .get('/v1/users')
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(200);
-      
+
       expect(Array.isArray(res.body)).toBe(true);
     });
   });
@@ -35,7 +52,7 @@ describe('Users Integration Tests (RBAC)', () => {
       const profile = await request(ctx.server)
         .get('/v1/auth/profile')
         .set('Authorization', `Bearer ${userToken}`);
-      
+
       await request(ctx.server)
         .get(`/v1/users/${profile.body.id}`)
         .set('Authorization', `Bearer ${userToken}`)
@@ -53,7 +70,7 @@ describe('Users Integration Tests (RBAC)', () => {
       const profile = await request(ctx.server)
         .get('/v1/auth/profile')
         .set('Authorization', `Bearer ${userToken}`);
-      
+
       await request(ctx.server)
         .get(`/v1/users/${profile.body.id}`)
         .set('Authorization', `Bearer ${adminToken}`)
@@ -66,7 +83,7 @@ describe('Users Integration Tests (RBAC)', () => {
       const profile = await request(ctx.server)
         .get('/v1/auth/profile')
         .set('Authorization', `Bearer ${userToken}`);
-      
+
       await request(ctx.server)
         .patch(`/v1/users/${profile.body.id}`)
         .set('Authorization', `Bearer ${userToken}`)
@@ -78,7 +95,7 @@ describe('Users Integration Tests (RBAC)', () => {
       const profile = await request(ctx.server)
         .get('/v1/auth/profile')
         .set('Authorization', `Bearer ${userToken}`);
-      
+
       await request(ctx.server)
         .patch(`/v1/users/${profile.body.id}`)
         .set('Authorization', `Bearer ${userToken}`)
@@ -90,7 +107,7 @@ describe('Users Integration Tests (RBAC)', () => {
       const profile = await request(ctx.server)
         .get('/v1/auth/profile')
         .set('Authorization', `Bearer ${userToken}`);
-      
+
       await request(ctx.server)
         .patch(`/v1/users/${profile.body.id}`)
         .set('Authorization', `Bearer ${adminToken}`)
@@ -112,7 +129,7 @@ describe('Users Integration Tests (RBAC)', () => {
       const profile = await request(ctx.server)
         .get('/v1/auth/profile')
         .set('Authorization', `Bearer ${newUser}`);
-      
+
       await request(ctx.server)
         .delete(`/v1/users/${profile.body.id}`)
         .set('Authorization', `Bearer ${adminToken}`)

@@ -26,7 +26,7 @@ export class PdfBuilderService {
     const stream = lines
       .map(
         ({ size, x, y, text }) =>
-          `BT /F1 ${size} Tf 1 0 0 1 ${x} ${y} Tm (${this.escape(text)}) Tj ET`,
+          `BT /F1 ${size} Tf 1 0 0 1 ${x} ${y} Tm (${this.escape(text)}) Tj ET`
       )
       .join('\n');
 

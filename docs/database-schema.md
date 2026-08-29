@@ -113,24 +113,24 @@ PostgreSQL database for the Brain-Storm backend. Managed via TypeORM with explic
 
 Central identity table. Every other table that tracks user activity references this table.
 
-| Column | Type | Nullable | Default | Notes |
-|---|---|---|---|---|
-| `id` | uuid | NO | `uuid_generate_v4()` | PK |
-| `email` | varchar | NO | — | UNIQUE |
-| `username` | varchar | YES | — | UNIQUE |
-| `passwordHash` | varchar | NO | — | bcrypt hash |
-| `avatar` | varchar | YES | — | URL to avatar image |
-| `bio` | text | YES | — | |
-| `stellarPublicKey` | varchar | YES | — | Stellar G-address |
-| `role` | varchar | NO | `'student'` | `'student'` \| `'instructor'` \| `'admin'` |
-| `isBanned` | boolean | NO | `false` | Soft-ban flag |
-| `isVerified` | boolean | NO | `false` | Email verified |
-| `deletedAt` | timestamp | YES | — | Soft-delete timestamp |
-| `verificationToken` | varchar | YES | — | Hashed email verification token |
-| `verificationTokenExpiresAt` | datetime | YES | — | |
-| `mfaEnabled` | boolean | NO | `false` | TOTP MFA active |
-| `mfaSecret` | varchar | YES | — | Encrypted TOTP secret |
-| `createdAt` | timestamp | NO | `now()` | |
+| Column                       | Type      | Nullable | Default              | Notes                                      |
+| ---------------------------- | --------- | -------- | -------------------- | ------------------------------------------ |
+| `id`                         | uuid      | NO       | `uuid_generate_v4()` | PK                                         |
+| `email`                      | varchar   | NO       | —                    | UNIQUE                                     |
+| `username`                   | varchar   | YES      | —                    | UNIQUE                                     |
+| `passwordHash`               | varchar   | NO       | —                    | bcrypt hash                                |
+| `avatar`                     | varchar   | YES      | —                    | URL to avatar image                        |
+| `bio`                        | text      | YES      | —                    |                                            |
+| `stellarPublicKey`           | varchar   | YES      | —                    | Stellar G-address                          |
+| `role`                       | varchar   | NO       | `'student'`          | `'student'` \| `'instructor'` \| `'admin'` |
+| `isBanned`                   | boolean   | NO       | `false`              | Soft-ban flag                              |
+| `isVerified`                 | boolean   | NO       | `false`              | Email verified                             |
+| `deletedAt`                  | timestamp | YES      | —                    | Soft-delete timestamp                      |
+| `verificationToken`          | varchar   | YES      | —                    | Hashed email verification token            |
+| `verificationTokenExpiresAt` | datetime  | YES      | —                    |                                            |
+| `mfaEnabled`                 | boolean   | NO       | `false`              | TOTP MFA active                            |
+| `mfaSecret`                  | varchar   | YES      | —                    | Encrypted TOTP secret                      |
+| `createdAt`                  | timestamp | NO       | `now()`              |                                            |
 
 **Indexes:** `email` (unique), `username` (unique)  
 **Soft-delete:** Rows are never hard-deleted. `deletedAt IS NOT NULL` means the account is deactivated. Queries should filter `WHERE "deletedAt" IS NULL` for active users.
@@ -141,18 +141,18 @@ Central identity table. Every other table that tracks user activity references t
 
 Catalogue of learning courses. Supports soft-delete via `isDeleted`.
 
-| Column | Type | Nullable | Default | Notes |
-|---|---|---|---|---|
-| `id` | uuid | NO | `uuid_generate_v4()` | PK |
-| `title` | varchar | NO | — | |
-| `description` | text | NO | — | |
-| `level` | varchar | NO | `'beginner'` | `'beginner'` \| `'intermediate'` \| `'advanced'` |
-| `durationHours` | int | NO | `0` | Estimated total hours |
-| `isPublished` | boolean | NO | `true` | Visible to students |
-| `isDeleted` | boolean | NO | `false` | Soft-delete flag |
-| `requiresKyc` | boolean | NO | `false` | KYC gate for enrollment |
-| `instructorId` | uuid | YES | — | FK → `users.id` ON DELETE SET NULL |
-| `createdAt` | timestamp | NO | `now()` | |
+| Column          | Type      | Nullable | Default              | Notes                                            |
+| --------------- | --------- | -------- | -------------------- | ------------------------------------------------ |
+| `id`            | uuid      | NO       | `uuid_generate_v4()` | PK                                               |
+| `title`         | varchar   | NO       | —                    |                                                  |
+| `description`   | text      | NO       | —                    |                                                  |
+| `level`         | varchar   | NO       | `'beginner'`         | `'beginner'` \| `'intermediate'` \| `'advanced'` |
+| `durationHours` | int       | NO       | `0`                  | Estimated total hours                            |
+| `isPublished`   | boolean   | NO       | `true`               | Visible to students                              |
+| `isDeleted`     | boolean   | NO       | `false`              | Soft-delete flag                                 |
+| `requiresKyc`   | boolean   | NO       | `false`              | KYC gate for enrollment                          |
+| `instructorId`  | uuid      | YES      | —                    | FK → `users.id` ON DELETE SET NULL               |
+| `createdAt`     | timestamp | NO       | `now()`              |                                                  |
 
 **Relationships:** `instructorId` → `users` (SET NULL on user delete), `modules` → `course_modules`, `reviews` → `reviews`
 
@@ -162,13 +162,13 @@ Catalogue of learning courses. Supports soft-delete via `isDeleted`.
 
 Ordered sections within a course. Deleted when the parent course is deleted.
 
-| Column | Type | Nullable | Default | Notes |
-|---|---|---|---|---|
-| `id` | uuid | NO | `uuid_generate_v4()` | PK |
-| `courseId` | uuid | NO | — | FK → `courses.id` ON DELETE CASCADE |
-| `title` | varchar | NO | — | |
-| `order` | int | NO | `0` | Display order within course |
-| `createdAt` | timestamp | NO | `now()` | |
+| Column      | Type      | Nullable | Default              | Notes                               |
+| ----------- | --------- | -------- | -------------------- | ----------------------------------- |
+| `id`        | uuid      | NO       | `uuid_generate_v4()` | PK                                  |
+| `courseId`  | uuid      | NO       | —                    | FK → `courses.id` ON DELETE CASCADE |
+| `title`     | varchar   | NO       | —                    |                                     |
+| `order`     | int       | NO       | `0`                  | Display order within course         |
+| `createdAt` | timestamp | NO       | `now()`              |                                     |
 
 ---
 
@@ -176,16 +176,16 @@ Ordered sections within a course. Deleted when the parent course is deleted.
 
 Individual content units within a module. Deleted when the parent module is deleted.
 
-| Column | Type | Nullable | Default | Notes |
-|---|---|---|---|---|
-| `id` | uuid | NO | `uuid_generate_v4()` | PK |
-| `moduleId` | uuid | NO | — | FK → `course_modules.id` ON DELETE CASCADE |
-| `title` | varchar | NO | — | |
-| `content` | text | NO | — | Lesson body (HTML/Markdown) |
-| `videoUrl` | varchar | YES | — | Optional video embed URL |
-| `order` | int | NO | `0` | Display order within module |
-| `durationMinutes` | int | NO | `0` | Estimated reading/watch time |
-| `createdAt` | timestamp | NO | `now()` | |
+| Column            | Type      | Nullable | Default              | Notes                                      |
+| ----------------- | --------- | -------- | -------------------- | ------------------------------------------ |
+| `id`              | uuid      | NO       | `uuid_generate_v4()` | PK                                         |
+| `moduleId`        | uuid      | NO       | —                    | FK → `course_modules.id` ON DELETE CASCADE |
+| `title`           | varchar   | NO       | —                    |                                            |
+| `content`         | text      | NO       | —                    | Lesson body (HTML/Markdown)                |
+| `videoUrl`        | varchar   | YES      | —                    | Optional video embed URL                   |
+| `order`           | int       | NO       | `0`                  | Display order within module                |
+| `durationMinutes` | int       | NO       | `0`                  | Estimated reading/watch time               |
+| `createdAt`       | timestamp | NO       | `now()`              |                                            |
 
 ---
 
@@ -193,13 +193,13 @@ Individual content units within a module. Deleted when the parent module is dele
 
 Records which users are enrolled in which courses. The composite unique constraint prevents duplicate enrollments.
 
-| Column | Type | Nullable | Default | Notes |
-|---|---|---|---|---|
-| `id` | uuid | NO | `uuid_generate_v4()` | PK |
-| `userId` | uuid | NO | — | FK → `users.id` ON DELETE CASCADE |
-| `courseId` | uuid | NO | — | FK → `courses.id` ON DELETE CASCADE |
-| `enrolledAt` | timestamp | NO | `now()` | |
-| `completedAt` | timestamp | YES | — | Set when progress reaches 100% |
+| Column        | Type      | Nullable | Default              | Notes                               |
+| ------------- | --------- | -------- | -------------------- | ----------------------------------- |
+| `id`          | uuid      | NO       | `uuid_generate_v4()` | PK                                  |
+| `userId`      | uuid      | NO       | —                    | FK → `users.id` ON DELETE CASCADE   |
+| `courseId`    | uuid      | NO       | —                    | FK → `courses.id` ON DELETE CASCADE |
+| `enrolledAt`  | timestamp | NO       | `now()`              |                                     |
+| `completedAt` | timestamp | YES      | —                    | Set when progress reaches 100%      |
 
 **Indexes:** UNIQUE (`userId`, `courseId`)
 
@@ -209,16 +209,16 @@ Records which users are enrolled in which courses. The composite unique constrai
 
 Tracks a student's current progress percentage for each enrolled course. Updated on every lesson completion. The `txHash` column links to the corresponding on-chain Analytics contract transaction.
 
-| Column | Type | Nullable | Default | Notes |
-|---|---|---|---|---|
-| `id` | uuid | NO | `uuid_generate_v4()` | PK |
-| `userId` | uuid | NO | — | FK → `users.id` ON DELETE CASCADE |
-| `courseId` | uuid | NO | — | FK → `courses.id` ON DELETE CASCADE |
-| `lessonId` | uuid | YES | — | Last completed lesson (no FK constraint) |
-| `progressPct` | int | NO | `0` | 0–100 |
-| `completedAt` | timestamp | YES | — | Set when `progressPct` reaches 100 |
-| `txHash` | varchar | YES | — | Stellar transaction hash from Analytics contract |
-| `updatedAt` | timestamp | NO | auto | Updated on every write |
+| Column        | Type      | Nullable | Default              | Notes                                            |
+| ------------- | --------- | -------- | -------------------- | ------------------------------------------------ |
+| `id`          | uuid      | NO       | `uuid_generate_v4()` | PK                                               |
+| `userId`      | uuid      | NO       | —                    | FK → `users.id` ON DELETE CASCADE                |
+| `courseId`    | uuid      | NO       | —                    | FK → `courses.id` ON DELETE CASCADE              |
+| `lessonId`    | uuid      | YES      | —                    | Last completed lesson (no FK constraint)         |
+| `progressPct` | int       | NO       | `0`                  | 0–100                                            |
+| `completedAt` | timestamp | YES      | —                    | Set when `progressPct` reaches 100               |
+| `txHash`      | varchar   | YES      | —                    | Stellar transaction hash from Analytics contract |
+| `updatedAt`   | timestamp | NO       | auto                 | Updated on every write                           |
 
 ---
 
@@ -226,14 +226,14 @@ Tracks a student's current progress percentage for each enrolled course. Updated
 
 Issued on-chain certificates. One credential per `(userId, courseId)` pair. The `txHash` is the Stellar transaction that recorded the credential issuance.
 
-| Column | Type | Nullable | Default | Notes |
-|---|---|---|---|---|
-| `id` | uuid | NO | `uuid_generate_v4()` | PK |
-| `userId` | uuid | NO | — | FK → `users.id` ON DELETE CASCADE |
-| `courseId` | uuid | NO | — | FK → `courses.id` ON DELETE CASCADE |
-| `txHash` | varchar | YES | — | Stellar transaction hash |
-| `stellarPublicKey` | varchar | YES | — | Recipient's Stellar address at issuance time |
-| `issuedAt` | timestamp | NO | `now()` | |
+| Column             | Type      | Nullable | Default              | Notes                                        |
+| ------------------ | --------- | -------- | -------------------- | -------------------------------------------- |
+| `id`               | uuid      | NO       | `uuid_generate_v4()` | PK                                           |
+| `userId`           | uuid      | NO       | —                    | FK → `users.id` ON DELETE CASCADE            |
+| `courseId`         | uuid      | NO       | —                    | FK → `courses.id` ON DELETE CASCADE          |
+| `txHash`           | varchar   | YES      | —                    | Stellar transaction hash                     |
+| `stellarPublicKey` | varchar   | YES      | —                    | Recipient's Stellar address at issuance time |
+| `issuedAt`         | timestamp | NO       | `now()`              |                                              |
 
 ---
 
@@ -241,14 +241,14 @@ Issued on-chain certificates. One credential per `(userId, courseId)` pair. The 
 
 In-app notification feed per user. Not linked via FK to `users` — userId is stored as a plain column to allow notifications to survive user soft-deletes.
 
-| Column | Type | Nullable | Default | Notes |
-|---|---|---|---|---|
-| `id` | uuid | NO | `uuid_generate_v4()` | PK |
-| `userId` | uuid | NO | — | References `users.id` (no FK constraint) |
-| `type` | enum | NO | — | `enrollment` \| `completion` \| `credential_issued` |
-| `message` | varchar | NO | — | Human-readable message |
-| `isRead` | boolean | NO | `false` | |
-| `createdAt` | timestamp | NO | `now()` | |
+| Column      | Type      | Nullable | Default              | Notes                                               |
+| ----------- | --------- | -------- | -------------------- | --------------------------------------------------- |
+| `id`        | uuid      | NO       | `uuid_generate_v4()` | PK                                                  |
+| `userId`    | uuid      | NO       | —                    | References `users.id` (no FK constraint)            |
+| `type`      | enum      | NO       | —                    | `enrollment` \| `completion` \| `credential_issued` |
+| `message`   | varchar   | NO       | —                    | Human-readable message                              |
+| `isRead`    | boolean   | NO       | `false`              |                                                     |
+| `createdAt` | timestamp | NO       | `now()`              |                                                     |
 
 **Indexes:** `userId` (recommended for `WHERE userId = ?` queries)
 
@@ -258,14 +258,14 @@ In-app notification feed per user. Not linked via FK to `users` — userId is st
 
 One review per `(userId, courseId)` pair. Rating is an integer (expected range 1–5, enforced at application layer).
 
-| Column | Type | Nullable | Default | Notes |
-|---|---|---|---|---|
-| `id` | uuid | NO | `uuid_generate_v4()` | PK |
-| `userId` | uuid | NO | — | FK → `users.id` ON DELETE CASCADE |
-| `courseId` | uuid | NO | — | FK → `courses.id` ON DELETE CASCADE |
-| `rating` | int | NO | — | 1–5 |
-| `comment` | text | YES | — | |
-| `createdAt` | timestamp | NO | `now()` | |
+| Column      | Type      | Nullable | Default              | Notes                               |
+| ----------- | --------- | -------- | -------------------- | ----------------------------------- |
+| `id`        | uuid      | NO       | `uuid_generate_v4()` | PK                                  |
+| `userId`    | uuid      | NO       | —                    | FK → `users.id` ON DELETE CASCADE   |
+| `courseId`  | uuid      | NO       | —                    | FK → `courses.id` ON DELETE CASCADE |
+| `rating`    | int       | NO       | —                    | 1–5                                 |
+| `comment`   | text      | YES      | —                    |                                     |
+| `createdAt` | timestamp | NO       | `now()`              |                                     |
 
 **Indexes:** UNIQUE (`userId`, `courseId`)
 
@@ -275,16 +275,16 @@ One review per `(userId, courseId)` pair. Rating is an integer (expected range 1
 
 Forum discussion threads scoped to a course. `answerReplyId` is set when an instructor or moderator marks a reply as the accepted answer.
 
-| Column | Type | Nullable | Default | Notes |
-|---|---|---|---|---|
-| `id` | uuid | NO | `uuid_generate_v4()` | PK |
-| `courseId` | uuid | NO | — | FK → `courses.id` ON DELETE CASCADE |
-| `userId` | uuid | NO | — | FK → `users.id` ON DELETE CASCADE |
-| `title` | varchar | NO | — | |
-| `content` | text | NO | — | |
-| `isPinned` | boolean | NO | `false` | Pinned to top of forum |
-| `answerReplyId` | uuid | YES | — | Self-referencing accepted answer (no FK) |
-| `createdAt` | timestamp | NO | `now()` | |
+| Column          | Type      | Nullable | Default              | Notes                                    |
+| --------------- | --------- | -------- | -------------------- | ---------------------------------------- |
+| `id`            | uuid      | NO       | `uuid_generate_v4()` | PK                                       |
+| `courseId`      | uuid      | NO       | —                    | FK → `courses.id` ON DELETE CASCADE      |
+| `userId`        | uuid      | NO       | —                    | FK → `users.id` ON DELETE CASCADE        |
+| `title`         | varchar   | NO       | —                    |                                          |
+| `content`       | text      | NO       | —                    |                                          |
+| `isPinned`      | boolean   | NO       | `false`              | Pinned to top of forum                   |
+| `answerReplyId` | uuid      | YES      | —                    | Self-referencing accepted answer (no FK) |
+| `createdAt`     | timestamp | NO       | `now()`              |                                          |
 
 ---
 
@@ -292,14 +292,14 @@ Forum discussion threads scoped to a course. `answerReplyId` is set when an inst
 
 Replies to forum posts. `isAnswer` is `true` when this reply is the accepted answer (mirrors `posts.answerReplyId`).
 
-| Column | Type | Nullable | Default | Notes |
-|---|---|---|---|---|
-| `id` | uuid | NO | `uuid_generate_v4()` | PK |
-| `postId` | uuid | NO | — | FK → `posts.id` ON DELETE CASCADE |
-| `userId` | uuid | NO | — | FK → `users.id` ON DELETE CASCADE |
-| `content` | text | NO | — | |
-| `isAnswer` | boolean | NO | `false` | |
-| `createdAt` | timestamp | NO | `now()` | |
+| Column      | Type      | Nullable | Default              | Notes                             |
+| ----------- | --------- | -------- | -------------------- | --------------------------------- |
+| `id`        | uuid      | NO       | `uuid_generate_v4()` | PK                                |
+| `postId`    | uuid      | NO       | —                    | FK → `posts.id` ON DELETE CASCADE |
+| `userId`    | uuid      | NO       | —                    | FK → `users.id` ON DELETE CASCADE |
+| `content`   | text      | NO       | —                    |                                   |
+| `isAnswer`  | boolean   | NO       | `false`              |                                   |
+| `createdAt` | timestamp | NO       | `now()`              |                                   |
 
 ---
 
@@ -307,14 +307,14 @@ Replies to forum posts. `isAnswer` is `true` when this reply is the accepted ans
 
 Stores hashed refresh tokens for JWT rotation. Tokens are revoked (not deleted) on logout so that replay attacks can be detected.
 
-| Column | Type | Nullable | Default | Notes |
-|---|---|---|---|---|
-| `id` | uuid | NO | `uuid_generate_v4()` | PK |
-| `userId` | uuid | NO | — | FK → `users.id` ON DELETE CASCADE |
-| `tokenHash` | varchar | NO | — | SHA-256 hash of the opaque token |
-| `expiresAt` | timestamp | NO | — | |
-| `revoked` | boolean | NO | `false` | Set to `true` on logout |
-| `createdAt` | timestamp | NO | `now()` | |
+| Column      | Type      | Nullable | Default              | Notes                             |
+| ----------- | --------- | -------- | -------------------- | --------------------------------- |
+| `id`        | uuid      | NO       | `uuid_generate_v4()` | PK                                |
+| `userId`    | uuid      | NO       | —                    | FK → `users.id` ON DELETE CASCADE |
+| `tokenHash` | varchar   | NO       | —                    | SHA-256 hash of the opaque token  |
+| `expiresAt` | timestamp | NO       | —                    |                                   |
+| `revoked`   | boolean   | NO       | `false`              | Set to `true` on logout           |
+| `createdAt` | timestamp | NO       | `now()`              |                                   |
 
 ---
 
@@ -322,14 +322,14 @@ Stores hashed refresh tokens for JWT rotation. Tokens are revoked (not deleted) 
 
 Single-use tokens for the forgot-password flow. Marked `used = true` after redemption rather than deleted.
 
-| Column | Type | Nullable | Default | Notes |
-|---|---|---|---|---|
-| `id` | uuid | NO | `uuid_generate_v4()` | PK |
-| `userId` | uuid | NO | — | FK → `users.id` ON DELETE CASCADE |
-| `tokenHash` | varchar | NO | — | SHA-256 hash of the emailed token |
-| `expiresAt` | timestamp | NO | — | |
-| `used` | boolean | NO | `false` | |
-| `createdAt` | timestamp | NO | `now()` | |
+| Column      | Type      | Nullable | Default              | Notes                             |
+| ----------- | --------- | -------- | -------------------- | --------------------------------- |
+| `id`        | uuid      | NO       | `uuid_generate_v4()` | PK                                |
+| `userId`    | uuid      | NO       | —                    | FK → `users.id` ON DELETE CASCADE |
+| `tokenHash` | varchar   | NO       | —                    | SHA-256 hash of the emailed token |
+| `expiresAt` | timestamp | NO       | —                    |                                   |
+| `used`      | boolean   | NO       | `false`              |                                   |
+| `createdAt` | timestamp | NO       | `now()`              |                                   |
 
 ---
 
@@ -337,15 +337,15 @@ Single-use tokens for the forgot-password flow. Marked `used = true` after redem
 
 Programmatic API access keys for integrations. The raw key is shown once at creation; only the hash is stored.
 
-| Column | Type | Nullable | Default | Notes |
-|---|---|---|---|---|
-| `id` | uuid | NO | `uuid_generate_v4()` | PK |
-| `userId` | uuid | NO | — | FK → `users.id` ON DELETE CASCADE |
-| `name` | varchar | NO | — | Human label |
-| `keyHash` | varchar | NO | — | UNIQUE — SHA-256 of the raw key |
-| `isActive` | boolean | NO | `true` | Revoke by setting to `false` |
-| `lastUsedAt` | timestamp | YES | — | Updated on each authenticated request |
-| `createdAt` | timestamp | NO | `now()` | |
+| Column       | Type      | Nullable | Default              | Notes                                 |
+| ------------ | --------- | -------- | -------------------- | ------------------------------------- |
+| `id`         | uuid      | NO       | `uuid_generate_v4()` | PK                                    |
+| `userId`     | uuid      | NO       | —                    | FK → `users.id` ON DELETE CASCADE     |
+| `name`       | varchar   | NO       | —                    | Human label                           |
+| `keyHash`    | varchar   | NO       | —                    | UNIQUE — SHA-256 of the raw key       |
+| `isActive`   | boolean   | NO       | `true`               | Revoke by setting to `false`          |
+| `lastUsedAt` | timestamp | YES      | —                    | Updated on each authenticated request |
+| `createdAt`  | timestamp | NO       | `now()`              |                                       |
 
 **Indexes:** `keyHash` (unique) — used for O(1) lookup on every API request
 
@@ -355,14 +355,14 @@ Programmatic API access keys for integrations. The raw key is shown once at crea
 
 KYC verification status keyed by Stellar public key. Decoupled from `users` so that KYC state can be checked without a user account lookup.
 
-| Column | Type | Nullable | Default | Notes |
-|---|---|---|---|---|
-| `id` | uuid | NO | `uuid_generate_v4()` | PK |
-| `stellarPublicKey` | varchar | NO | — | UNIQUE |
-| `status` | varchar | NO | `'none'` | `'none'` \| `'pending'` \| `'approved'` \| `'rejected'` |
-| `providerId` | varchar | YES | — | External ID from KYC provider |
-| `createdAt` | timestamp | NO | `now()` | |
-| `updatedAt` | timestamp | NO | auto | |
+| Column             | Type      | Nullable | Default              | Notes                                                   |
+| ------------------ | --------- | -------- | -------------------- | ------------------------------------------------------- |
+| `id`               | uuid      | NO       | `uuid_generate_v4()` | PK                                                      |
+| `stellarPublicKey` | varchar   | NO       | —                    | UNIQUE                                                  |
+| `status`           | varchar   | NO       | `'none'`             | `'none'` \| `'pending'` \| `'approved'` \| `'rejected'` |
+| `providerId`       | varchar   | YES      | —                    | External ID from KYC provider                           |
+| `createdAt`        | timestamp | NO       | `now()`              |                                                         |
+| `updatedAt`        | timestamp | NO       | auto                 |                                                         |
 
 ---
 
@@ -384,13 +384,13 @@ courses ──< course_modules ──< lessons
 
 **Cascade behaviour:**
 
-| Parent deleted | Child behaviour |
-|---|---|
-| `users` | CASCADE: enrollments, progress, credentials, reviews, posts, replies, refresh_tokens, password_reset_tokens, api_keys |
-| `courses` | CASCADE: course_modules, enrollments, progress, credentials, reviews, posts |
-| `course_modules` | CASCADE: lessons |
-| `posts` | CASCADE: replies |
-| `courses` (instructor deleted) | SET NULL: `courses.instructorId` |
+| Parent deleted                 | Child behaviour                                                                                                       |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
+| `users`                        | CASCADE: enrollments, progress, credentials, reviews, posts, replies, refresh_tokens, password_reset_tokens, api_keys |
+| `courses`                      | CASCADE: course_modules, enrollments, progress, credentials, reviews, posts                                           |
+| `course_modules`               | CASCADE: lessons                                                                                                      |
+| `posts`                        | CASCADE: replies                                                                                                      |
+| `courses` (instructor deleted) | SET NULL: `courses.instructorId`                                                                                      |
 
 ---
 
@@ -398,16 +398,17 @@ courses ──< course_modules ──< lessons
 
 Migrations live in `apps/backend/src/migrations/` and are applied in timestamp order.
 
-| Timestamp | Class | Tables Created |
-|---|---|---|
+| Timestamp       | Class              | Tables Created                      |
+| --------------- | ------------------ | ----------------------------------- |
 | `1700000000000` | `InitialMigration` | `users`, `courses`, `notifications` |
-| `1711700000000` | `AddApiKeys` | `api_keys` |
-| `1711800000000` | `AddReviews` | `reviews` |
-| `1711900000000` | `AddForums` | `posts`, `replies` |
+| `1711700000000` | `AddApiKeys`       | `api_keys`                          |
+| `1711800000000` | `AddReviews`       | `reviews`                           |
+| `1711900000000` | `AddForums`        | `posts`, `replies`                  |
 
 > The following tables are managed by TypeORM `synchronize` during initial development and do not yet have explicit migration files: `course_modules`, `lessons`, `enrollments`, `progress`, `credentials`, `refresh_tokens`, `password_reset_tokens`, `kyc_customers`.
 >
 > **Action required:** Before the next production deployment, generate explicit migrations for these tables:
+>
 > ```bash
 > npm run typeorm:generate -- src/migrations/AddRemainingTables
 > ```
@@ -434,26 +435,26 @@ See [migrations.md](./migrations.md) for the full workflow and production checkl
 
 ### Active Data
 
-| Table | Retention | Notes |
-|---|---|---|
-| `users` | Indefinite | Soft-deleted via `deletedAt`; hard-delete only on explicit GDPR erasure request |
-| `courses` | Indefinite | Soft-deleted via `isDeleted`; preserves credential/progress history |
-| `course_modules` / `lessons` | Lifetime of course | Cascade-deleted with course |
-| `enrollments` | Indefinite | Historical record of participation |
-| `progress` | Indefinite | Source of truth for completion; backed by on-chain record |
-| `credentials` | Indefinite | Legal record of certification; must never be deleted |
-| `reviews` | Indefinite | Deleted only if user requests erasure |
-| `posts` / `replies` | Indefinite | Moderation soft-delete recommended (add `deletedAt` column in future migration) |
-| `notifications` | 90 days | Purge `WHERE "isRead" = true AND "createdAt" < NOW() - INTERVAL '90 days'` |
-| `kyc_customers` | Indefinite | Regulatory requirement; status changes are audited via `updatedAt` |
+| Table                        | Retention          | Notes                                                                           |
+| ---------------------------- | ------------------ | ------------------------------------------------------------------------------- |
+| `users`                      | Indefinite         | Soft-deleted via `deletedAt`; hard-delete only on explicit GDPR erasure request |
+| `courses`                    | Indefinite         | Soft-deleted via `isDeleted`; preserves credential/progress history             |
+| `course_modules` / `lessons` | Lifetime of course | Cascade-deleted with course                                                     |
+| `enrollments`                | Indefinite         | Historical record of participation                                              |
+| `progress`                   | Indefinite         | Source of truth for completion; backed by on-chain record                       |
+| `credentials`                | Indefinite         | Legal record of certification; must never be deleted                            |
+| `reviews`                    | Indefinite         | Deleted only if user requests erasure                                           |
+| `posts` / `replies`          | Indefinite         | Moderation soft-delete recommended (add `deletedAt` column in future migration) |
+| `notifications`              | 90 days            | Purge `WHERE "isRead" = true AND "createdAt" < NOW() - INTERVAL '90 days'`      |
+| `kyc_customers`              | Indefinite         | Regulatory requirement; status changes are audited via `updatedAt`              |
 
 ### Short-Lived / Expiring Data
 
-| Table | Retention | Cleanup Strategy |
-|---|---|---|
-| `refresh_tokens` | Until `expiresAt` | Scheduled job: `DELETE WHERE "expiresAt" < NOW()` — run nightly |
+| Table                   | Retention                          | Cleanup Strategy                                                                 |
+| ----------------------- | ---------------------------------- | -------------------------------------------------------------------------------- |
+| `refresh_tokens`        | Until `expiresAt`                  | Scheduled job: `DELETE WHERE "expiresAt" < NOW()` — run nightly                  |
 | `password_reset_tokens` | Until `expiresAt` or `used = true` | Scheduled job: `DELETE WHERE "expiresAt" < NOW() OR "used" = true` — run nightly |
-| `api_keys` | Until revoked | No automatic expiry; `isActive = false` disables without deleting audit trail |
+| `api_keys`              | Until revoked                      | No automatic expiry; `isActive = false` disables without deleting audit trail    |
 
 ### Recommended Cleanup Job
 
@@ -495,18 +496,18 @@ When a user requests account deletion:
 
 ### Current Indexes
 
-| Table | Columns | Type | Reason |
-|---|---|---|---|
-| `users` | `email` | UNIQUE | Login lookups |
-| `users` | `username` | UNIQUE | Profile lookups |
-| `courses` | `(isPublished, isDeleted)` | Composite | Every list query filters on both |
-| `courses` | `createdAt` | Single | Default sort column |
-| `enrollments` | `(userId, courseId)` | UNIQUE | Prevent duplicate enrollments |
-| `progress` | `(userId, courseId)` | Composite | Progress lookups by student + course |
-| `reviews` | `(userId, courseId)` | UNIQUE | One review per student per course |
-| `api_keys` | `keyHash` | UNIQUE | O(1) lookup on every API request |
-| `kyc_customers` | `stellarPublicKey` | UNIQUE | KYC status lookups |
-| `notifications` | `userId` | Single | Notification feed queries |
+| Table           | Columns                    | Type      | Reason                               |
+| --------------- | -------------------------- | --------- | ------------------------------------ |
+| `users`         | `email`                    | UNIQUE    | Login lookups                        |
+| `users`         | `username`                 | UNIQUE    | Profile lookups                      |
+| `courses`       | `(isPublished, isDeleted)` | Composite | Every list query filters on both     |
+| `courses`       | `createdAt`                | Single    | Default sort column                  |
+| `enrollments`   | `(userId, courseId)`       | UNIQUE    | Prevent duplicate enrollments        |
+| `progress`      | `(userId, courseId)`       | Composite | Progress lookups by student + course |
+| `reviews`       | `(userId, courseId)`       | UNIQUE    | One review per student per course    |
+| `api_keys`      | `keyHash`                  | UNIQUE    | O(1) lookup on every API request     |
+| `kyc_customers` | `stellarPublicKey`         | UNIQUE    | KYC status lookups                   |
+| `notifications` | `userId`                   | Single    | Notification feed queries            |
 
 ### Adding New Indexes
 
@@ -719,6 +720,7 @@ LIMIT 20;
 ```
 
 Look for:
+
 - **Seq Scan:** Full table scan — add an index.
 - **Index Scan:** Good — index is being used.
 - **Nested Loop:** May indicate missing index on join column.

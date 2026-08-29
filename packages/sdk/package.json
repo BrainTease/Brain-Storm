@@ -23,7 +23,12 @@
     "ts-jest": "^29.1.4",
     "typescript": "^5.4.0"
   },
-  "keywords": ["brain-storm", "sdk", "api", "stellar"],
+  "keywords": [
+    "brain-storm",
+    "sdk",
+    "api",
+    "stellar"
+  ],
   "author": "Brain-Storm",
   "license": "MIT"
 }

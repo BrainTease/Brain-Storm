@@ -11,27 +11,27 @@ export enum QuestionType {
 @Entity('quiz_questions')
 export class QuizQuestion {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  quizId: string;
+  quizId!: string;
 
   @ManyToOne(() => Quiz, (q) => q.questions, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'quizId' })
-  quiz: Quiz;
+  quiz!: Quiz;
 
   @Column('text')
-  text: string;
+  text!: string;
 
   @Column({ type: 'enum', enum: QuestionType })
-  type: QuestionType;
+  type!: QuestionType;
 
   @Column({ default: 1 })
-  points: number;
+  points!: number;
 
   @Column({ default: 0 })
-  order: number;
+  order!: number;
 
   @OneToMany(() => QuizAnswer, (a) => a.question, { cascade: true })
-  answers: QuizAnswer[];
+  answers!: QuizAnswer[];
 }

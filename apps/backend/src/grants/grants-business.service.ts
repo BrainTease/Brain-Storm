@@ -37,7 +37,7 @@ export class GrantsBusinessService {
 
     // Non-applicants may only touch reviewer-specific fields
     const hasNonReviewerField = (Object.keys(dto) as Array<keyof UpdateGrantDto>).some(
-      (key) => !REVIEWER_FIELDS.includes(key),
+      (key) => !REVIEWER_FIELDS.includes(key)
     );
 
     if (hasNonReviewerField) {
@@ -65,7 +65,7 @@ export class GrantsBusinessService {
    */
   resolvePagination(
     rawPage?: number,
-    rawLimit?: number,
+    rawLimit?: number
   ): { page: number; limit: number; skip: number } {
     const page = rawPage && rawPage > 0 ? rawPage : 1;
     const limit = rawLimit && rawLimit > 0 ? Math.min(rawLimit, 100) : 20;

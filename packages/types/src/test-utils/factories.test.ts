@@ -196,9 +196,7 @@ describe('EnrollmentFactory', () => {
       expect(['active', 'completed', 'dropped']).toContain(enrollment.status);
       expect(enrollment.enrolledAt).toBeInstanceOf(Date);
       // completedAt is nullable
-      expect(
-        enrollment.completedAt === null || enrollment.completedAt instanceof Date,
-      ).toBe(true);
+      expect(enrollment.completedAt === null || enrollment.completedAt instanceof Date).toBe(true);
     });
 
     it('defaults status to "active"', () => {

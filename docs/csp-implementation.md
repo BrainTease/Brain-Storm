@@ -9,6 +9,7 @@ Content Security Policy (CSP) is a security standard that helps prevent XSS (Cro
 ### Middleware-Based CSP with Nonce Support
 
 CSP is implemented via Next.js middleware (`middleware.ts`) which:
+
 - Generates a unique nonce for each request
 - Injects nonce into response headers
 - Supports different policies for development and production
@@ -16,6 +17,7 @@ CSP is implemented via Next.js middleware (`middleware.ts`) which:
 ### CSP Directives
 
 #### Development Environment
+
 ```
 default-src 'self'
 script-src 'self' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://*.stellar.org https://*.sentry.io
@@ -30,6 +32,7 @@ upgrade-insecure-requests
 ```
 
 #### Production Environment
+
 ```
 default-src 'self'
 script-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://*.stellar.org https://*.sentry.io
@@ -107,6 +110,7 @@ curl -I https://brain-storm.example.com
 ### CSP Violations
 
 CSP violations are logged to browser console:
+
 ```
 Refused to load the script 'https://example.com/script.js' because it violates the following Content Security Policy directive: "script-src 'self'"
 ```
@@ -114,6 +118,7 @@ Refused to load the script 'https://example.com/script.js' because it violates t
 ### CSP Evaluator
 
 Use [CSP Evaluator](https://csp-evaluator.withgoogle.com/) to test your policy:
+
 1. Paste your CSP header
 2. Get recommendations for improvements
 
@@ -124,6 +129,7 @@ Use [CSP Evaluator](https://csp-evaluator.withgoogle.com/) to test your policy:
 **Problem**: Styles with `style=` attribute are blocked
 
 **Solution**: Use CSS classes or styled-components with nonce:
+
 ```typescript
 // ❌ Blocked
 <div style={{ color: 'red' }}>Text</div>
@@ -137,6 +143,7 @@ Use [CSP Evaluator](https://csp-evaluator.withgoogle.com/) to test your policy:
 **Problem**: External scripts fail to load
 
 **Solution**: Add domain to `script-src` in CSP config:
+
 ```typescript
 'script-src': [
   "'self'",
@@ -155,12 +162,14 @@ Use [CSP Evaluator](https://csp-evaluator.withgoogle.com/) to test your policy:
 ### Report-Only Mode
 
 CSP is sent in both modes:
+
 - `Content-Security-Policy`: Enforced
 - `Content-Security-Policy-Report-Only`: Logged but not enforced
 
 ### Collecting Reports
 
 Configure a report endpoint:
+
 ```typescript
 'report-uri': ['https://your-domain.com/csp-report']
 ```

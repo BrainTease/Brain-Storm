@@ -35,6 +35,7 @@ Complete reference for all Data Transfer Objects (DTOs), payload types, and resp
 ## Client Options & Config
 
 ### `BrainStormClientOptions`
+
 ```typescript
 export interface BrainStormClientOptions {
   baseURL: string;
@@ -43,6 +44,7 @@ export interface BrainStormClientOptions {
 ```
 
 ### `HttpAdapter`
+
 ```typescript
 export interface HttpAdapter {
   get<T>(url: string, options?: RequestInit): Promise<T>;
@@ -57,6 +59,7 @@ export interface HttpAdapter {
 ## Authentication Models
 
 ### `LoginDto`
+
 ```typescript
 export interface LoginDto {
   email: string;
@@ -66,6 +69,7 @@ export interface LoginDto {
 ```
 
 ### `RegisterDto`
+
 ```typescript
 export interface RegisterDto {
   email: string;
@@ -74,6 +78,7 @@ export interface RegisterDto {
 ```
 
 ### `AuthResponse`
+
 ```typescript
 export interface AuthResponse {
   access_token: string;
@@ -86,6 +91,7 @@ export interface AuthResponse {
 ## Course Models
 
 ### `CourseDto`
+
 ```typescript
 export interface CourseDto {
   id: string;
@@ -100,6 +106,7 @@ export interface CourseDto {
 ```
 
 ### `CreateCourseDto`
+
 ```typescript
 export interface CreateCourseDto {
   title: string;
@@ -111,6 +118,7 @@ export interface CreateCourseDto {
 ```
 
 ### `UpdateCourseDto`
+
 ```typescript
 export interface UpdateCourseDto {
   title?: string;
@@ -122,6 +130,7 @@ export interface UpdateCourseDto {
 ```
 
 ### `CourseListResponse`
+
 ```typescript
 export interface CourseListResponse {
   data: CourseDto[];
@@ -132,6 +141,7 @@ export interface CourseListResponse {
 ```
 
 ### `CourseQueryParams`
+
 ```typescript
 export interface CourseQueryParams {
   search?: string;
@@ -146,6 +156,7 @@ export interface CourseQueryParams {
 ## Progress Models
 
 ### `RecordProgressDto`
+
 ```typescript
 export interface RecordProgressDto {
   courseId: string;
@@ -155,6 +166,7 @@ export interface RecordProgressDto {
 ```
 
 ### `ProgressDto`
+
 ```typescript
 export interface ProgressDto {
   id: string;
@@ -171,6 +183,7 @@ export interface ProgressDto {
 ## User Models
 
 ### `UserDto`
+
 ```typescript
 export interface UserDto {
   id: string;
@@ -186,6 +199,7 @@ export interface UserDto {
 ```
 
 ### `UpdateUserDto`
+
 ```typescript
 export interface UpdateUserDto {
   username?: string;
@@ -199,6 +213,7 @@ export interface UpdateUserDto {
 ## Stellar Models
 
 ### `StellarBalanceResponse`
+
 ```typescript
 export interface StellarBalanceResponse {
   balances: Array<{
@@ -214,6 +229,7 @@ export interface StellarBalanceResponse {
 ## Error Models
 
 ### `ApiError`
+
 ```typescript
 export interface ApiError {
   statusCode: number;

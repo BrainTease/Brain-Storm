@@ -85,9 +85,9 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
       const dialog = dialogRef.current;
       if (!dialog) return;
 
-      const focusable = Array.from(dialog.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTORS)).filter(
-        (el) => !el.closest('[aria-hidden="true"]'),
-      );
+      const focusable = Array.from(
+        dialog.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTORS)
+      ).filter((el) => !el.closest('[aria-hidden="true"]'));
 
       if (focusable.length === 0) {
         e.preventDefault();

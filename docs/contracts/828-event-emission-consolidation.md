@@ -14,14 +14,14 @@ currently has three Soroban contracts:
 
 None of them currently call `env.events().publish(...)` — none emit any
 Soroban events at all (checked via repo-wide search for `events()` and
-`publish`, both had zero matches). So there is no *duplication* to
+`publish`, both had zero matches). So there is no _duplication_ to
 consolidate yet. The issue is really a prerequisite: establish one shared
 event-emission pattern before contracts start emitting events independently
 and drift.
 
 ## Why this matters
 
-Note on architecture: `contracts/shared` is itself a *deployed* Soroban
+Note on architecture: `contracts/shared` is itself a _deployed_ Soroban
 contract (`SharedContract`, handling admin/role assignment) — it is not a
 code-sharing library crate. Neither `contracts/token/Cargo.toml` nor
 `contracts/analytics/Cargo.toml` depends on it; each contract only depends

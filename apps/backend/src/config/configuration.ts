@@ -55,8 +55,7 @@ export default () => ({
   stellar: {
     network: process.env.STELLAR_NETWORK as 'testnet' | 'mainnet',
     secretKey: process.env.STELLAR_SECRET_KEY!,
-    horizonUrl:
-      process.env.STELLAR_HORIZON_URL || 'https://horizon-testnet.stellar.org',
+    horizonUrl: process.env.STELLAR_HORIZON_URL || 'https://horizon-testnet.stellar.org',
     sorobanRpcUrl: process.env.SOROBAN_RPC_URL || 'https://soroban-testnet.stellar.org',
     contractId: process.env.SOROBAN_CONTRACT_ID || '',
     analyticsContractId: process.env.ANALYTICS_CONTRACT_ID || '',

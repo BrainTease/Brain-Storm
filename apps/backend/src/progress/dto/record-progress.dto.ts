@@ -6,7 +6,7 @@ export class RecordProgressDto {
   @ApiProperty({ example: '3fa85f64-5717-4562-b3fc-2c963f66afa6', description: 'Course ID' })
   @IsUUID()
   @Trim()
-  courseId: string;
+  courseId!: string;
 
   @ApiPropertyOptional({
     example: '7cb2e9a1-1234-4abc-8def-0011223344ff',
@@ -26,5 +26,5 @@ export class RecordProgressDto {
   @IsInt()
   @Min(0)
   @Max(100)
-  progressPct: number;
+  progressPct!: number;
 }

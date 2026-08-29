@@ -3,6 +3,7 @@
 ## Overview
 
 All API endpoints implement comprehensive input validation and sanitization to prevent:
+
 - XSS (Cross-Site Scripting) attacks
 - SQL injection
 - HTML injection
@@ -22,7 +23,13 @@ All requests are automatically sanitized through:
 ### In DTOs
 
 ```typescript
-import { SanitizeHtml, TrimString, RemoveControlChars, SanitizeUrl, SanitizeEmail } from '@common/decorators/sanitize.decorator';
+import {
+  SanitizeHtml,
+  TrimString,
+  RemoveControlChars,
+  SanitizeUrl,
+  SanitizeEmail,
+} from '@common/decorators/sanitize.decorator';
 import { IsString, IsEmail, IsUrl } from 'class-validator';
 
 export class CreatePostDto {
@@ -48,35 +55,45 @@ export class CreatePostDto {
 ## Sanitization Methods
 
 ### SanitizeHtml()
+
 Removes all HTML tags and attributes:
+
 ```
 Input:  "<script>alert('xss')</script>Hello"
 Output: "Hello"
 ```
 
 ### TrimString()
+
 Removes leading/trailing whitespace:
+
 ```
 Input:  "  hello world  "
 Output: "hello world"
 ```
 
 ### RemoveControlChars()
+
 Removes null bytes and control characters:
+
 ```
 Input:  "hello\x00world"
 Output: "helloworld"
 ```
 
 ### SanitizeUrl()
+
 Validates URL protocol (only http/https allowed):
+
 ```
 Input:  "javascript:alert('xss')"
 Output: Error - Invalid protocol
 ```
 
 ### SanitizeEmail()
+
 Normalizes email (lowercase, trim):
+
 ```
 Input:  "  USER@EXAMPLE.COM  "
 Output: "user@example.com"
@@ -114,9 +131,7 @@ const user = await this.userRepository.findOne({
 });
 
 // ❌ Unsafe - string concatenation
-const user = await this.userRepository.query(
-  `SELECT * FROM users WHERE email = '${userInput}'`
-);
+const user = await this.userRepository.query(`SELECT * FROM users WHERE email = '${userInput}'`);
 ```
 
 ## Testing Sanitization
@@ -136,19 +151,14 @@ Test with OWASP ZAP or similar tools:
 Sanitization is configured in `main.ts`:
 
 ```typescript
-app.useGlobalPipes(
-  new ValidationPipe({ whitelist: true }),
-  new SanitizationPipe()
-);
-app.useGlobalFilters(
-  new HttpExceptionFilter(),
-  new ValidationExceptionFilter()
-);
+app.useGlobalPipes(new ValidationPipe({ whitelist: true }), new SanitizationPipe());
+app.useGlobalFilters(new HttpExceptionFilter(), new ValidationExceptionFilter());
 ```
 
 ## Monitoring
 
 Monitor sanitization events:
+
 - Track validation failures
 - Alert on repeated invalid inputs
 - Log suspicious patterns

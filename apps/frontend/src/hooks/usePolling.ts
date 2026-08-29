@@ -38,11 +38,7 @@ export interface UsePollingResult<T> {
  */
 export function usePolling<T>(
   fetchFn: () => Promise<T>,
-  {
-    interval = 5000,
-    immediate = true,
-    paused = false,
-  }: UsePollingOptions = {},
+  { interval = 5000, immediate = true, paused = false }: UsePollingOptions = {}
 ): UsePollingResult<T> {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(immediate && !paused);

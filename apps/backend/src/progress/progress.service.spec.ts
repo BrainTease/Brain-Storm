@@ -114,7 +114,7 @@ describe('ProgressService', () => {
       expect(mockBadgeAwardService.awardOnCompletion).toHaveBeenCalledWith(
         userId,
         courseId,
-        stellarKey,
+        stellarKey
       );
     });
 

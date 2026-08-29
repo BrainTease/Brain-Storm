@@ -87,7 +87,13 @@ export default function WalletSection({ userId, stellarPublicKey, onLinked, onUn
           </div>
           {bstBalance !== null && (
             <p className="text-sm">
-              BST Balance: <TokenBalance balance={bstBalance} symbol="BST" decimals={7} className="font-semibold" />
+              BST Balance:{' '}
+              <TokenBalance
+                balance={bstBalance}
+                symbol="BST"
+                decimals={7}
+                className="font-semibold"
+              />
             </p>
           )}
           <Button variant="outline" onClick={unlinkWallet}>

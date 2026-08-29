@@ -22,7 +22,10 @@
     "test": "jest",
     "test:coverage": "jest --coverage"
   },
-  "keywords": ["types", "typescript"],
+  "keywords": [
+    "types",
+    "typescript"
+  ],
   "author": "Brain-Storm",
   "license": "MIT",
   "devDependencies": {

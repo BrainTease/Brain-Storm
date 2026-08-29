@@ -44,7 +44,7 @@ export class Job {
   @UpdateDateColumn() updatedAt: Date;
   @ManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'instructorId' })
-  instructor: User;
+  instructor!: User;
   @OneToMany(() => JobApplication, (a) => a.job) applications: JobApplication[];
 }
 
@@ -57,14 +57,14 @@ export class JobApplication {
   @Column() applicantId: string;
   @Column('text', { nullable: true }) coverLetter?: string;
   @Column({ type: 'enum', enum: ApplicationStatus, default: ApplicationStatus.PENDING })
-  status: ApplicationStatus;
+  status!: ApplicationStatus;
   @Column({ nullable: true, type: 'text' }) reviewNote?: string;
   @CreateDateColumn() appliedAt: Date;
   @UpdateDateColumn() updatedAt: Date;
   @ManyToOne(() => Job, (j) => j.applications, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'jobId' })
-  job: Job;
+  job!: Job;
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'applicantId' })
-  applicant: User;
+  applicant!: User;
 }

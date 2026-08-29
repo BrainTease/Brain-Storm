@@ -5,6 +5,7 @@ This document tracks the visual regression test baselines for the Brain-Storm pl
 ## Baseline Structure
 
 Baselines are organized by test category and stored in:
+
 ```
 apps/frontend/e2e/visual/
 ├── components/
@@ -27,11 +28,13 @@ apps/frontend/e2e/visual/
 ## Baseline Naming Convention
 
 Snapshots follow this naming pattern:
+
 ```
 {test-name}-{browser}-{platform}.png
 ```
 
 Examples:
+
 - `homepage-light-desktop-chromium-linux.png`
 - `button-primary-dark-firefox-linux.png`
 - `navbar-mobile-webkit-linux.png`
@@ -41,33 +44,37 @@ Examples:
 Baselines are captured for multiple browsers:
 
 ### Desktop Browsers
+
 - **Chromium**: Primary browser for visual testing
 - **Firefox**: Gecko engine coverage
 - **WebKit**: Safari/WebKit engine coverage
 
 ### Mobile Browsers
+
 - **Mobile Chrome**: Android perspective (Pixel 5 viewport)
 - **Mobile Safari**: iOS perspective (iPhone 12 viewport)
 
 ## Viewport Sizes
 
-| Device Type | Viewport Size | Usage |
-|-------------|---------------|-------|
-| Desktop | 1920x1080 | Default desktop view |
-| Tablet | 768x1024 | iPad/tablet layouts |
-| Mobile | 375x667 | iPhone SE/small mobile |
-| Mobile Large | 414x896 | iPhone 11/large mobile |
+| Device Type  | Viewport Size | Usage                  |
+| ------------ | ------------- | ---------------------- |
+| Desktop      | 1920x1080     | Default desktop view   |
+| Tablet       | 768x1024      | iPad/tablet layouts    |
+| Mobile       | 375x667       | iPhone SE/small mobile |
+| Mobile Large | 414x896       | iPhone 11/large mobile |
 
 ## Theme Coverage
 
 All component and page tests cover:
 
 ### Light Mode
+
 - Default color scheme
 - Standard contrast ratios
 - Light backgrounds, dark text
 
 ### Dark Mode
+
 - Dark color scheme
 - High contrast maintained
 - Dark backgrounds, light text
@@ -75,12 +82,14 @@ All component and page tests cover:
 ## Component Baselines
 
 ### Buttons
+
 - Primary, secondary, tertiary variants
 - Hover, focus, disabled states
 - Loading states
 - Different sizes (sm, md, lg)
 
 ### Course Cards
+
 - Default state
 - Enrolled state
 - Hover effects
@@ -88,12 +97,14 @@ All component and page tests cover:
 - Mobile responsive views
 
 ### Modals
+
 - Enrollment modal
 - Confirmation modal
 - With backdrop blur
 - Mobile responsive
 
 ### Navbar
+
 - Desktop and mobile layouts
 - With/without user menu
 - Mobile menu expanded
@@ -102,24 +113,28 @@ All component and page tests cover:
 ## Page Baselines
 
 ### Homepage
+
 - Hero section
 - Features section
 - Full page (light/dark)
 - Responsive layouts
 
 ### Courses Page
+
 - Course grid
 - Search active
 - Filters applied
 - Empty state
 
 ### Dashboard
+
 - Stats cards
 - Progress section
 - Enrolled courses
 - Responsive layouts
 
 ### Profile Page
+
 - View mode
 - Edit mode
 - Achievements section
@@ -128,6 +143,7 @@ All component and page tests cover:
 ## RTL Baselines
 
 Arabic (ar) locale coverage:
+
 - Homepage RTL layout
 - Navigation RTL
 - Button alignment
@@ -140,6 +156,7 @@ Arabic (ar) locale coverage:
 Track significant baseline updates here:
 
 ### 2026-06-29 - Initial Baselines
+
 - **Author**: Brain-Storm QA Team
 - **Reason**: Initial visual regression test coverage
 - **Components**: Buttons, Course Cards, Modals, Navbar
@@ -151,6 +168,7 @@ Track significant baseline updates here:
 
 ```markdown
 ### YYYY-MM-DD - [Update Description]
+
 - **Author**: [Name/Team]
 - **Reason**: [Why baselines were updated]
 - **PR**: #[PR Number]
@@ -164,6 +182,7 @@ Track significant baseline updates here:
 ### What Makes a Good Baseline
 
 ✅ **Good Baselines**:
+
 - Stable content (no dynamic data visible)
 - Fully loaded (all assets, fonts, images)
 - Consistent timing (animations complete)
@@ -171,6 +190,7 @@ Track significant baseline updates here:
 - Representative of production
 
 ❌ **Bad Baselines**:
+
 - Loading states visible
 - Dynamic content not masked
 - Incomplete rendering
@@ -182,43 +202,49 @@ Track significant baseline updates here:
 To maintain stable baselines:
 
 1. **Mask Dynamic Content**
+
    ```typescript
    mask: [
      page.locator('[data-testid="timestamp"]'),
      page.locator('[data-testid="user-avatar"]'),
-     page.locator('[data-testid="dynamic-content"]')
-   ]
+     page.locator('[data-testid="dynamic-content"]'),
+   ];
    ```
 
 2. **Wait for Stability**
+
    ```typescript
    await page.waitForLoadState('networkidle');
    await page.waitForTimeout(500); // Let animations settle
    ```
 
 3. **Disable Animations** (when needed)
+
    ```typescript
-   animations: 'disabled'
+   animations: 'disabled';
    ```
 
 4. **Use Pixel Thresholds** (sparingly)
    ```typescript
-   maxDiffPixels: 100 // For minor rendering differences
+   maxDiffPixels: 100; // For minor rendering differences
    ```
 
 ## Maintenance Schedule
 
 ### Weekly
+
 - [ ] Review flaky test reports
 - [ ] Check baseline file sizes
 - [ ] Monitor test execution times
 
 ### Monthly
+
 - [ ] Audit unused baselines
 - [ ] Review test coverage gaps
 - [ ] Update this documentation
 
 ### Quarterly
+
 - [ ] Major baseline audit
 - [ ] Archive old baselines
 - [ ] Review browser versions

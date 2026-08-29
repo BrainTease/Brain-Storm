@@ -33,18 +33,22 @@ ZAP performs baseline security scans on the running application to identify comm
 ### Common ZAP Findings and Fixes
 
 #### Missing Security Headers
+
 - **Issue**: Application missing security headers (CSP, X-Frame-Options, etc.)
 - **Fix**: Add security headers in backend middleware or frontend meta tags
 
 #### SQL Injection
+
 - **Issue**: Unsanitized user input in database queries
 - **Fix**: Use parameterized queries and ORM features (TypeORM in this project)
 
 #### Cross-Site Scripting (XSS)
+
 - **Issue**: Unescaped user input in HTML output
 - **Fix**: Use framework's built-in escaping (React/Next.js auto-escapes by default)
 
 #### Insecure Direct Object References (IDOR)
+
 - **Issue**: Direct access to resources without authorization checks
 - **Fix**: Implement proper authorization guards (RolesGuard in NestJS)
 
@@ -63,6 +67,7 @@ docker run -t owasp/zap2docker-stable zap-baseline.py -t http://localhost:3000 -
 ### CI/CD Integration
 
 ZAP runs automatically on:
+
 - Pull requests to main branch
 - Pushes to main branch
 
@@ -100,6 +105,7 @@ Configuration is in `deny.toml` at the repository root.
 ## Code Quality
 
 See `sonar-project.properties` for SonarCloud configuration. Quality gates require:
+
 - Code coverage ≥ 70%
 - No new critical issues
 - Maintainability rating A or B

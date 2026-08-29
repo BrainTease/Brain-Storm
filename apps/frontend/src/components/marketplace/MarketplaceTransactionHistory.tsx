@@ -78,18 +78,14 @@ const COLUMNS: ColumnDef<MarketplaceTx>[] = [
     header: 'Fee (BST)',
     sortable: true,
     width: '110px',
-    render: (row) => (
-      <span className="text-gray-600 dark:text-gray-400">{row.fee} BST</span>
-    ),
+    render: (row) => <span className="text-gray-600 dark:text-gray-400">{row.fee} BST</span>,
   },
   {
     key: 'status',
     header: 'Status',
     sortable: true,
     width: '110px',
-    render: (row) => (
-      <Badge className={STATUS_STYLES[row.status]}>{row.status}</Badge>
-    ),
+    render: (row) => <Badge className={STATUS_STYLES[row.status]}>{row.status}</Badge>,
   },
 ];
 

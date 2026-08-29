@@ -47,9 +47,7 @@ const COLUMNS: ColumnDef<WalletTransaction>[] = [
     header: 'Type',
     sortable: true,
     width: '100px',
-    render: (row) => (
-      <span className="font-medium capitalize">{TYPE_LABELS[row.type]}</span>
-    ),
+    render: (row) => <span className="font-medium capitalize">{TYPE_LABELS[row.type]}</span>,
   },
   {
     key: 'amount',
@@ -68,9 +66,7 @@ const COLUMNS: ColumnDef<WalletTransaction>[] = [
     header: 'Status',
     sortable: true,
     width: '110px',
-    render: (row) => (
-      <Badge className={STATUS_STYLES[row.status]}>{row.status}</Badge>
-    ),
+    render: (row) => <Badge className={STATUS_STYLES[row.status]}>{row.status}</Badge>,
   },
   {
     key: 'txHash',

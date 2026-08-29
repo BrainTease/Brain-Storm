@@ -4,27 +4,27 @@ import { Survey } from './survey.entity';
 @Entity('survey_questions')
 export class SurveyQuestion {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  surveyId: string;
+  surveyId!: string;
 
   @ManyToOne(() => Survey, (s) => s.questions, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'surveyId' })
-  survey: Survey;
+  survey!: Survey;
 
   @Column()
-  text: string;
+  text!: string;
 
   @Column({ type: 'enum', enum: ['rating', 'text', 'mcq'] })
-  type: 'rating' | 'text' | 'mcq';
+  type!: 'rating' | 'text' | 'mcq';
 
   @Column({ type: 'simple-array', nullable: true })
-  options: string[];
+  options!: string[];
 
   @Column({ type: 'int' })
-  order: number;
+  order!: number;
 
   @Column({ default: true })
-  required: boolean;
+  required!: boolean;
 }

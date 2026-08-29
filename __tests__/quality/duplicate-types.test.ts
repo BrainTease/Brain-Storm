@@ -9,9 +9,9 @@ describe('Duplicate Type Definitions', () => {
   it('should have no duplicate type names', () => {
     function getTypeNames(dir: string): Set<string> {
       const types = new Set<string>();
-      
+
       if (!fs.existsSync(dir)) return types;
-      
+
       function scanDir(d: string) {
         const files = fs.readdirSync(d);
         for (const file of files) {
@@ -31,7 +31,7 @@ describe('Duplicate Type Definitions', () => {
           }
         }
       }
-      
+
       scanDir(dir);
       return types;
     }
@@ -49,7 +49,7 @@ describe('Duplicate Type Definitions', () => {
     if (duplicates.length > 0) {
       console.log('❌ Duplicate types found:', duplicates);
     }
-    
+
     expect(duplicates).toHaveLength(0);
   });
 

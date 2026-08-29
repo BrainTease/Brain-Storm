@@ -76,7 +76,9 @@ export function fetchAdminUsers(params: {
   limit?: number;
   search?: string;
   role?: string;
-}): Promise<ApiResult<{ data: AdminUser[]; meta: { total: number; page: number; totalPages: number } }>> {
+}): Promise<
+  ApiResult<{ data: AdminUser[]; meta: { total: number; page: number; totalPages: number } }>
+> {
   return apiClient.get('/admin/users', { params });
 }
 

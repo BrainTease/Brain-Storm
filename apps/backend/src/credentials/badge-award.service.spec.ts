@@ -62,7 +62,7 @@ describe('BadgeAwardService (#818)', () => {
       mockCredentialsService.issue.mockRejectedValue(new Error('Stellar timeout'));
 
       await expect(service.awardOnCompletion(userId, courseId, stellarKey)).rejects.toThrow(
-        'Stellar timeout',
+        'Stellar timeout'
       );
     });
 
@@ -128,7 +128,7 @@ describe('BadgeAwardService (#818)', () => {
 
       // Must not throw
       await expect(
-        service.awardOnCompletion(userId, courseId, stellarKey),
+        service.awardOnCompletion(userId, courseId, stellarKey)
       ).resolves.toBeUndefined();
 
       // Credential was still issued
@@ -141,7 +141,7 @@ describe('BadgeAwardService (#818)', () => {
 
       // Must not throw
       await expect(
-        service.awardOnCompletion(userId, courseId, stellarKey),
+        service.awardOnCompletion(userId, courseId, stellarKey)
       ).resolves.toBeUndefined();
 
       // Credential was still issued

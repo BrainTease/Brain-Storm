@@ -19,42 +19,42 @@ export enum ContentType {
 @Entity('cdn_assets')
 export class CdnAsset {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  lessonId: string;
+  lessonId!: string;
 
   @ManyToOne(() => Lesson, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'lessonId' })
-  lesson: Lesson;
+  lesson!: Lesson;
 
   @Column()
-  fileName: string;
+  fileName!: string;
 
   @Column()
-  cdnUrl: string;
+  cdnUrl!: string;
 
   @Column({ type: 'enum', enum: ContentType })
-  contentType: ContentType;
+  contentType!: ContentType;
 
   @Column({ type: 'bigint' })
-  fileSize: number;
+  fileSize!: number;
 
   @Column({ nullable: true })
-  duration: number;
+  duration!: number;
 
   @Column({ default: false })
-  isTranscoded: boolean;
+  isTranscoded!: boolean;
 
   @Column('simple-array', { nullable: true })
-  availableBitrates: string[];
+  availableBitrates!: string[];
 
   @Column({ nullable: true })
-  thumbnailUrl: string;
+  thumbnailUrl!: string;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt!: Date;
 }

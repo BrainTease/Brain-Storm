@@ -15,11 +15,13 @@ Mutation testing is configured using Stryker with the following setup:
 ## Running Mutation Tests
 
 ### Full mutation test suite
+
 ```bash
 npm run test:mutation
 ```
 
 ### Generate HTML report
+
 ```bash
 npm run test:mutation:report
 ```
@@ -54,6 +56,7 @@ The Stryker configuration is in `stryker.conf.js` with:
 ## Example
 
 If a mutation test shows a high survival rate in authentication logic, it means:
+
 - Tests may not cover all edge cases
 - Consider adding tests for boundary conditions
 - Verify error handling is tested

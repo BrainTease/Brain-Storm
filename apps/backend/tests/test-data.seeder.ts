@@ -20,9 +20,7 @@ export class TestDataSeeder {
     const enrollments = [];
     for (const userId of userIds) {
       for (const courseId of courseIds) {
-        enrollments.push(
-          EnrollmentFactory.create({ userId, courseId })
-        );
+        enrollments.push(EnrollmentFactory.create({ userId, courseId }));
       }
     }
     const enrollmentRepo = this.dataSource.getRepository('Enrollment');

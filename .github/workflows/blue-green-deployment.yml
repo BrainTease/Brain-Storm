@@ -39,7 +39,7 @@ jobs:
         run: |
           IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.event.inputs.image-tag }}"
           echo "Checking image: $IMAGE"
-          
+
           if docker pull "$IMAGE"; then
             echo "✅ Image verified: $IMAGE"
           else
@@ -80,7 +80,7 @@ jobs:
           # Query current active environment (blue or green)
           # This would typically query your infrastructure (ECS, K8s, etc.)
           ACTIVE_ENV=$(curl -s https://api.brain-storm.example.com/health/environment || echo "blue")
-          
+
           if [ "$ACTIVE_ENV" = "blue" ]; then
             echo "active=blue" >> $GITHUB_OUTPUT
             echo "inactive=green" >> $GITHUB_OUTPUT
@@ -88,7 +88,7 @@ jobs:
             echo "active=green" >> $GITHUB_OUTPUT
             echo "inactive=blue" >> $GITHUB_OUTPUT
           fi
-          
+
           echo "Current active environment: $ACTIVE_ENV"
 
   deploy-to-inactive:
@@ -121,10 +121,10 @@ jobs:
         run: |
           ENVIRONMENT="${{ needs.get-current-environment.outputs.inactive-env }}"
           IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.event.inputs.image-tag }}"
-          
+
           echo "🚀 Deploying to $ENVIRONMENT environment..."
           echo "Image: $IMAGE"
-          
+
           # Example ECS deployment
           aws ecs update-service \
             --cluster "${{ github.event.inputs.environment }}-cluster" \
@@ -134,7 +134,7 @@ jobs:
             echo "❌ Deployment failed"
             exit 1
           }
-          
+
           echo "deployment_status=in_progress" >> $GITHUB_OUTPUT
 
       - name: Wait for deployment to stabilize
@@ -142,9 +142,9 @@ jobs:
           ENVIRONMENT="${{ needs.get-current-environment.outputs.inactive-env }}"
           MAX_ATTEMPTS=60
           ATTEMPT=0
-          
+
           echo "⏳ Waiting for $ENVIRONMENT deployment to stabilize..."
-          
+
           while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
             TASK_COUNT=$(aws ecs describe-services \
               --cluster "${{ github.event.inputs.environment }}-cluster" \
@@ -169,7 +169,7 @@ jobs:
             sleep 10
             ATTEMPT=$((ATTEMPT+1))
           done
-          
+
           if [ $ATTEMPT -eq $MAX_ATTEMPTS ]; then
             echo "❌ Deployment failed to stabilize"
             exit 1
@@ -186,9 +186,9 @@ jobs:
         run: |
           ENVIRONMENT="${{ needs.get-current-environment.outputs.inactive-env }}"
           HEALTH_URL="https://$ENVIRONMENT-api.brain-storm.example.com/health"
-          
+
           echo "🔍 Running health checks on $ENVIRONMENT environment..."
-          
+
           for i in {1..30}; do
             if curl -sf "$HEALTH_URL"; then
               echo "✅ Health check passed"
@@ -198,7 +198,7 @@ jobs:
             echo "Attempt $i/30 failed, retrying in 5s..."
             sleep 5
           done
-          
+
           echo "❌ Health check failed"
           exit 1
 
@@ -206,13 +206,13 @@ jobs:
         run: |
           ENVIRONMENT="${{ needs.get-current-environment.outputs.inactive-env }}"
           API_URL="https://$ENVIRONMENT-api.brain-storm.example.com"
-          
+
           echo "🧪 Running smoke tests..."
-          
+
           # Test key endpoints
           curl -sf "$API_URL/v1/courses" > /dev/null || exit 1
           curl -sf "$API_URL/v1/health" > /dev/null || exit 1
-          
+
           echo "✅ Smoke tests passed"
 
   switch-traffic:
@@ -241,15 +241,15 @@ jobs:
         run: |
           NEW_ACTIVE="${{ needs.get-current-environment.outputs.inactive-env }}"
           OLD_ACTIVE="${{ needs.get-current-environment.outputs.active-env }}"
-          
+
           echo "🔄 Switching traffic from $OLD_ACTIVE to $NEW_ACTIVE..."
-          
+
           # Update load balancer target group
           aws elbv2 modify-target-group \
             --target-group-arn "${{ secrets.ALB_TARGET_GROUP_ARN }}" \
             --health-check-path "/health" \
             --region ${{ secrets.AWS_REGION }} || true
-          
+
           # Update Route53 or ALB to point to new environment
           aws route53 change-resource-record-sets \
             --hosted-zone-id "${{ secrets.ROUTE53_ZONE_ID }}" \
@@ -265,7 +265,7 @@ jobs:
               }]
             }" \
             --region ${{ secrets.AWS_REGION }} || true
-          
+
           echo "✅ Traffic switched to $NEW_ACTIVE"
           echo "switch_status=success" >> $GITHUB_OUTPUT
 
@@ -273,7 +273,7 @@ jobs:
         run: |
           echo "⏳ Verifying traffic switch..."
           sleep 10
-          
+
           for i in {1..10}; do
             if curl -sf https://api.brain-storm.example.com/health; then
               echo "✅ Traffic switch verified"
@@ -282,7 +282,7 @@ jobs:
             echo "Attempt $i/10 failed, retrying..."
             sleep 5
           done
-          
+
           echo "❌ Traffic switch verification failed"
           exit 1
 
@@ -296,9 +296,9 @@ jobs:
       - name: Monitor for errors
         run: |
           NEW_ACTIVE="${{ needs.get-current-environment.outputs.inactive-env }}"
-          
+
           echo "📊 Monitoring $NEW_ACTIVE environment for 5 minutes..."
-          
+
           for i in {1..30}; do
             # Check error rates, latency, etc.
             ERROR_RATE=$(curl -s https://api.brain-storm.example.com/metrics | grep -oP 'error_rate \K[0-9.]+' || echo "0")
@@ -310,7 +310,7 @@ jobs:
             
             sleep 10
           done
-          
+
           echo "✅ Monitoring complete"
 
   rollback:
@@ -337,9 +337,9 @@ jobs:
       - name: Rollback to ${{ needs.get-current-environment.outputs.active-env }}
         run: |
           PREVIOUS_ACTIVE="${{ needs.get-current-environment.outputs.active-env }}"
-          
+
           echo "🔄 Rolling back to $PREVIOUS_ACTIVE environment..."
-          
+
           # Switch traffic back to previous environment
           aws route53 change-resource-record-sets \
             --hosted-zone-id "${{ secrets.ROUTE53_ZONE_ID }}" \
@@ -355,7 +355,7 @@ jobs:
               }]
             }" \
             --region ${{ secrets.AWS_REGION }} || true
-          
+
           echo "✅ Rolled back to $PREVIOUS_ACTIVE"
 
       - name: Create incident issue

@@ -15,37 +15,37 @@ jobs:
     permissions:
       contents: read
       packages: write
-      id-token: write  # ADD THIS LINE
+      id-token: write # ADD THIS LINE
 ```
 
 ```yaml
-  deploy:
-    name: Deploy to Production
-    runs-on: ubuntu-latest
-    needs: [build-and-push, deploy-approval]
+deploy:
+  name: Deploy to Production
+  runs-on: ubuntu-latest
+  needs: [build-and-push, deploy-approval]
 
-    permissions:
-      id-token: write  # ADD THIS LINE
-      contents: read   # ADD THIS LINE
+  permissions:
+    id-token: write # ADD THIS LINE
+    contents: read # ADD THIS LINE
 
-    environment:
-      name: production
-      url: https://api.brain-storm.example.com
+  environment:
+    name: production
+    url: https://api.brain-storm.example.com
 ```
 
 ```yaml
-  rollback:
-    name: Rollback on Failure
-    runs-on: ubuntu-latest
-    needs: [build-and-push, deploy]
-    if: failure()
+rollback:
+  name: Rollback on Failure
+  runs-on: ubuntu-latest
+  needs: [build-and-push, deploy]
+  if: failure()
 
-    permissions:
-      id-token: write  # ADD THIS LINE
-      contents: read   # ADD THIS LINE
+  permissions:
+    id-token: write # ADD THIS LINE
+    contents: read # ADD THIS LINE
 
-    environment:
-      name: production
+  environment:
+    name: production
 ```
 
 ### 2. Update AWS credentials configuration
@@ -67,7 +67,7 @@ With:
   uses: aws-actions/configure-aws-credentials@v4
   with:
     role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-    role-session-name: GitHubActions-BrainStorm-Production  # or -Rollback for rollback job
+    role-session-name: GitHubActions-BrainStorm-Production # or -Rollback for rollback job
     aws-region: ${{ secrets.AWS_REGION }}
 ```
 

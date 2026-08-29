@@ -61,7 +61,10 @@ export default function CredentialsPage() {
           const matched = credentials.find((c) => c.id === item.id);
           if (matched) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            setSelectedCert({ ...matched, studentName: (user as any)?.name || t('defaultStudentName') });
+            setSelectedCert({
+              ...matched,
+              studentName: (user as any)?.name || t('defaultStudentName'),
+            });
           }
         }}
       />

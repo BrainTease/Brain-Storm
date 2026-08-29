@@ -56,8 +56,10 @@ export class KycService {
         } else {
           this.logger.warn(`KYC provider returned ${res.status} for ${stellarPublicKey}`);
         }
-      } catch (err) {
-        this.logger.error(`KYC provider request failed: ${err.message}`);
+      } catch (err: unknown) {
+        this.logger.error(
+          `KYC provider request failed: ${err instanceof Error ? err.message : String(err)}`
+        );
       }
     }
 
@@ -103,8 +105,10 @@ export class KycService {
         } else {
           this.logger.warn(`KYC document upload failed with ${response.status}`);
         }
-      } catch (err) {
-        this.logger.error(`KYC document upload failed: ${err.message}`);
+      } catch (err: unknown) {
+        this.logger.error(
+          `KYC document upload failed: ${err instanceof Error ? err.message : String(err)}`
+        );
       }
     }
 

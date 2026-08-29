@@ -136,7 +136,7 @@ describe('TokenRestrictionsPanel', () => {
       RESTRICTION_RULES.map((r) => [
         r.key,
         r.valueType === 'boolean' ? true : r.valueType === 'amount' ? 1000 : 5,
-      ]),
+      ])
     );
     render(<TokenRestrictionsPanel restrictions={allRestrictions} />);
 

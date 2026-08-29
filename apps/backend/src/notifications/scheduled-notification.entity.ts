@@ -10,27 +10,27 @@ export enum ScheduledNotificationStatus {
 @Entity('scheduled_notifications')
 export class ScheduledNotification {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  userId: string;
+  userId!: string;
 
   @Column({ type: 'enum', enum: NotificationType })
-  type: NotificationType;
+  type!: NotificationType;
 
   @Column()
-  message: string;
+  message!: string;
 
   @Column({ type: 'timestamp' })
-  scheduledAt: Date;
+  scheduledAt!: Date;
 
   @Column({
     type: 'enum',
     enum: ScheduledNotificationStatus,
     default: ScheduledNotificationStatus.PENDING,
   })
-  status: ScheduledNotificationStatus;
+  status!: ScheduledNotificationStatus;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 }

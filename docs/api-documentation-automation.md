@@ -9,26 +9,31 @@ The API documentation pipeline automatically generates, validates, and deploys c
 ## Features
 
 ### 1. OpenAPI Specification Validation
+
 - Validates OpenAPI spec syntax and structure
 - Detects breaking changes from previous versions
 - Ensures API compliance with OpenAPI standards
 
 ### 2. Multi-Format Documentation
+
 - **Swagger UI**: Interactive API explorer
 - **ReDoc**: Beautiful, responsive API documentation
 - **Search Index**: Full-text searchable API reference
 
 ### 3. Version Management
+
 - Tracks API versions automatically
 - Maintains version history
 - Supports multiple API versions
 
 ### 4. SDK Generation
+
 - Automatically generates TypeScript SDK
 - Automatically generates Python SDK
 - Keeps SDKs in sync with API changes
 
 ### 5. Deployment
+
 - Deploys to GitHub Pages automatically
 - Maintains documentation history
 - Provides PR previews for documentation changes
@@ -36,6 +41,7 @@ The API documentation pipeline automatically generates, validates, and deploys c
 ## Workflow Triggers
 
 The API documentation pipeline runs automatically when:
+
 - Code is pushed to `main` branch with backend changes
 - Pull requests modify backend API code
 - Pull requests modify API documentation
@@ -44,22 +50,26 @@ The API documentation pipeline runs automatically when:
 ## Documentation Formats
 
 ### Swagger UI
+
 Interactive API documentation with "Try it out" functionality.
 
 **Access**: `https://your-domain/api/docs` or GitHub Pages URL
 
 **Features**:
+
 - Interactive endpoint testing
 - Request/response examples
 - Authentication testing
 - Schema visualization
 
 ### ReDoc
+
 Beautiful, responsive API documentation optimized for reading.
 
 **Access**: `https://your-domain/api/redoc` or GitHub Pages URL
 
 **Features**:
+
 - Responsive design
 - Search functionality
 - Code examples
@@ -187,11 +197,13 @@ Lives in **`packages/sdk`** (not `packages/sdk-typescript/`).
 > **Only the spec is generated, not the client.** `scripts/generate-sdk.sh` builds the backend, exports its OpenAPI spec and copies `openapi.json` into the package. It does **not** write `packages/sdk/src/index.ts`, which is hand-maintained. See [Keeping the surface honest](./api/sdk-versioning.md#keeping-the-surface-honest).
 
 **Installation**:
+
 ```bash
 npm install @brain-storm/sdk
 ```
 
 **Usage**:
+
 ```typescript
 import { BrainStormClient } from '@brain-storm/sdk';
 
@@ -269,6 +281,7 @@ When you create a pull request that modifies the API:
 4. Detects breaking changes
 
 Example PR comment:
+
 ```
 ## 📚 API Documentation Preview
 
@@ -285,6 +298,7 @@ Documentation will be deployed to GitHub Pages on merge to main.
 ### GitHub Pages Deployment
 
 Documentation is automatically deployed to GitHub Pages when:
+
 - Code is pushed to `main` branch
 - API changes are detected
 
@@ -306,6 +320,7 @@ To deploy to a custom domain:
 **Issue**: "Invalid OpenAPI specification"
 
 **Solution**:
+
 1. Check NestJS Swagger decorators
 2. Verify all endpoints are documented
 3. Ensure DTOs have proper decorators
@@ -319,6 +334,7 @@ To deploy to a custom domain:
 **Issue**: "Documentation not deployed"
 
 **Solution**:
+
 1. Check GitHub Actions logs
 2. Verify backend changes are detected
 3. Ensure OpenAPI export is working
@@ -329,6 +345,7 @@ To deploy to a custom domain:
 **Issue**: "SDK generation failed"
 
 **Solution**:
+
 1. Verify OpenAPI spec is valid
 2. Check OpenAPI Generator CLI installation
 3. Review SDK generation logs
@@ -337,11 +354,13 @@ To deploy to a custom domain:
 ## Best Practices
 
 ### 1. Keep Documentation Updated
+
 - Document all new endpoints immediately
 - Update documentation when changing API
 - Include examples in documentation
 
 ### 2. Use Meaningful Descriptions
+
 ```typescript
 // ✅ Good: Clear, descriptive
 @ApiOperation({ summary: 'Get all published courses' })
@@ -351,6 +370,7 @@ To deploy to a custom domain:
 ```
 
 ### 3. Document Error Responses
+
 ```typescript
 @ApiResponse({ status: 400, description: 'Invalid input' })
 @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -358,6 +378,7 @@ To deploy to a custom domain:
 ```
 
 ### 4. Include Examples
+
 ```typescript
 @ApiProperty({
   example: 'Introduction to Stellar',
@@ -367,6 +388,7 @@ title: string;
 ```
 
 ### 5. Version Your API
+
 - Use versioning in routes: `/v1/`, `/v2/`
 - Maintain backward compatibility
 - Document deprecations

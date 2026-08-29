@@ -7,12 +7,12 @@ export class IssueCertificateDto {
     description: 'User ID to issue certificate for',
   })
   @IsUUID()
-  userId: string;
+  userId!: string;
 
   @ApiProperty({
     example: 'a1b2c3d4-1234-5678-abcd-ef0123456789',
     description: 'Course ID the certificate is for',
   })
   @IsUUID()
-  courseId: string;
+  courseId!: string;
 }

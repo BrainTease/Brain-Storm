@@ -11,6 +11,7 @@ Common issues and solutions for developers and operators running Brain-Storm.
 PostgreSQL is not running or the connection details are wrong.
 
 **Fix:**
+
 ```bash
 docker compose up -d postgres
 
@@ -27,6 +28,7 @@ DATABASE_NAME=brain-storm
 Redis is not running.
 
 **Fix:**
+
 ```bash
 docker compose up -d redis
 redis-cli ping   # should return PONG
@@ -37,6 +39,7 @@ redis-cli ping   # should return PONG
 The `.env` file is missing or incomplete.
 
 **Fix:**
+
 ```bash
 cp .env.example .env
 openssl rand -hex 32   # paste result as JWT_SECRET in .env
@@ -47,6 +50,7 @@ openssl rand -hex 32   # paste result as JWT_SECRET in .env
 `node_modules` is missing.
 
 **Fix:**
+
 ```bash
 npm install
 ```
@@ -54,6 +58,7 @@ npm install
 ### `Port 3000 already in use`
 
 **Fix:**
+
 ```bash
 lsof -ti:3000 | xargs kill -9
 ```
@@ -67,6 +72,7 @@ lsof -ti:3000 | xargs kill -9
 The Stellar account has not been funded.
 
 **Fix (testnet):**
+
 ```bash
 curl "https://friendbot.stellar.org?addr=<YOUR_PUBLIC_KEY>"
 # or
@@ -111,6 +117,7 @@ cd apps/backend && npm run typeorm:run
 A partial migration left the schema inconsistent.
 
 **Fix:**
+
 ```bash
 npm run typeorm:revert   # roll back last migration
 npm run typeorm:run      # re-apply
@@ -121,6 +128,7 @@ npm run typeorm:run      # re-apply
 Code references a column that hasn't been migrated yet.
 
 **Fix:**
+
 ```bash
 npm run typeorm:run
 ```
@@ -175,6 +183,7 @@ The backend signer (`STELLAR_SECRET_KEY`) does not match the admin stored in the
 The leaderboard caches results in Redis for 5 minutes (`leaderboard:top50`). If the cache is cold or Redis is unavailable, the endpoint fetches BST balances for every user with a wallet.
 
 **Fix:**
+
 ```bash
 redis-cli ping          # confirm Redis is reachable
 redis-cli ttl leaderboard:top50   # check remaining cache TTL
@@ -193,6 +202,7 @@ Use the Prometheus `/metrics` endpoint and the Grafana dashboards in `infra/moni
 The JWT token is missing, expired, or invalid.
 
 **Fix:**
+
 ```bash
 # Verify token in Authorization header
 curl -H "Authorization: Bearer <TOKEN>" http://localhost:3000/v1/users/me
@@ -211,6 +221,7 @@ curl -X POST http://localhost:3000/v1/auth/refresh \
 The user's role does not allow the operation.
 
 **Fix:**
+
 - Verify user role: `GET /v1/users/me` → check `role` field.
 - Ensure the route guard matches the user's role (e.g. `@Roles('admin')`).
 
@@ -219,6 +230,7 @@ The user's role does not allow the operation.
 Rate limiting is active.
 
 **Fix:**
+
 - Wait for the `Retry-After` header duration.
 - Check rate limit config in `AppModule` — default is 100 requests per 60 seconds.
 - For sensitive endpoints (e.g. credential minting), the limit is tighter (3 per 60 seconds).
@@ -228,6 +240,7 @@ Rate limiting is active.
 Request body or query parameters are invalid.
 
 **Fix:**
+
 - Check the error message in the response body.
 - Validate against the Swagger schema: `GET /api/docs`.
 - Ensure all required fields are present and have the correct type.
@@ -241,11 +254,13 @@ Request body or query parameters are invalid.
 The backend's Stellar account does not have enough XLM to pay transaction fees.
 
 **Fix (testnet):**
+
 ```bash
 ./scripts/fund-testnet.sh
 ```
 
 **Fix (mainnet):**
+
 - Deposit XLM to the account specified in `STELLAR_SECRET_KEY`.
 - Verify balance: `GET /v1/stellar/balance/<PUBLIC_KEY>`
 
@@ -254,6 +269,7 @@ The backend's Stellar account does not have enough XLM to pay transaction fees.
 The Analytics or Token contract rejected the transaction.
 
 **Fix:**
+
 1. Check backend logs for the contract error message.
 2. Verify the contract is initialized:
    ```bash
@@ -270,11 +286,13 @@ The Analytics or Token contract rejected the transaction.
 The account has not been funded on the network.
 
 **Fix (testnet):**
+
 ```bash
 curl "https://friendbot.stellar.org?addr=<PUBLIC_KEY>"
 ```
 
 **Fix (mainnet):**
+
 - Deposit at least 2 XLM to the account.
 - Wait for the transaction to be confirmed (~5 seconds).
 
@@ -287,6 +305,7 @@ curl "https://friendbot.stellar.org?addr=<PUBLIC_KEY>"
 The backend is not allowing requests from the frontend origin.
 
 **Fix:**
+
 1. Verify `NEXT_PUBLIC_API_URL` in `.env.local` matches the backend URL.
 2. Check backend CORS config in `AppModule`:
    ```typescript
@@ -302,6 +321,7 @@ The backend is not allowing requests from the frontend origin.
 The frontend failed to build or hydrate.
 
 **Fix:**
+
 ```bash
 npm run build:frontend
 npm run dev:frontend
@@ -315,6 +335,7 @@ npm run dev:frontend
 The Stellar wallet extension is not installed or not responding.
 
 **Fix:**
+
 1. Install [Stellar Expert Wallet](https://stellar.expert/wallet) or [Freighter](https://www.freighter.app/).
 2. Ensure the wallet is unlocked.
 3. Check browser console for wallet errors.
@@ -337,6 +358,7 @@ DEBUG=* npm run dev:frontend
 ### Inspect Network Requests
 
 Use browser DevTools (F12) → Network tab:
+
 - Check request/response headers.
 - Verify status codes (200, 400, 401, 500).
 - Inspect JSON payloads.
@@ -369,6 +391,7 @@ stellar contract invoke --id <CONTRACT_ID> --fn get_admin
 ### Log Aggregation
 
 Logs are written to:
+
 - **Backend:** `apps/backend/logs/` (if file transport is enabled)
 - **Frontend:** Browser console (F12)
 - **Docker:** `docker compose logs -f backend`
@@ -455,6 +478,7 @@ Expected response:
 ### Level 3: Bug Report
 
 If the issue is a bug, open a [GitHub Issue](https://github.com/BrainTease/Brain-Storm/issues/new) with:
+
 - Title: Clear, concise description
 - Description: Steps to reproduce, expected vs. actual behavior
 - Logs: Full error stack trace
@@ -463,6 +487,7 @@ If the issue is a bug, open a [GitHub Issue](https://github.com/BrainTease/Brain
 ### Level 4: Security Issue
 
 Do **not** open a public issue. Email [security@brainstorm.dev](mailto:security@brainstorm.dev) with:
+
 - Description of the vulnerability
 - Steps to reproduce
 - Potential impact

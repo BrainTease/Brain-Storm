@@ -22,25 +22,25 @@ pub struct ProgressRecord {
 
 ### Storage Layout
 
-| Key | Type | Description |
-|-----|------|-------------|
-| `Progress(Address, Symbol)` | `ProgressRecord` | Per-student, per-course record |
-| `StudentCourses(Address)` | `Vec<Symbol>` | Secondary index: all courses a student has progress in |
-| `Admin` | `Address` | Contract administrator |
+| Key                         | Type             | Description                                            |
+| --------------------------- | ---------------- | ------------------------------------------------------ |
+| `Progress(Address, Symbol)` | `ProgressRecord` | Per-student, per-course record                         |
+| `StudentCourses(Address)`   | `Vec<Symbol>`    | Secondary index: all courses a student has progress in |
+| `Admin`                     | `Address`        | Contract administrator                                 |
 
 Both `Progress` and `StudentCourses` entries use persistent storage with automatic TTL extension (threshold: 100 ledgers, extended to: 500 ledgers) on every read or write.
 
 ### Contract Functions
 
-| Function | Auth | Description |
-|----------|------|-------------|
-| `initialize(admin)` | admin | One-time setup |
-| `set_admin(new_admin)` | current admin | Transfer admin role |
-| `get_admin()` | — | Read current admin |
-| `record_progress(caller, student, course_id, progress_pct)` | caller (student or admin) | Record or update progress (0–100) |
-| `get_progress(student, course_id)` | — | Read a single progress record |
-| `get_all_progress(student)` | — | Read all progress records for a student via secondary index |
-| `reset_progress(admin, student, course_id)` | admin | Delete a progress record and remove from secondary index |
+| Function                                                    | Auth                      | Description                                                 |
+| ----------------------------------------------------------- | ------------------------- | ----------------------------------------------------------- |
+| `initialize(admin)`                                         | admin                     | One-time setup                                              |
+| `set_admin(new_admin)`                                      | current admin             | Transfer admin role                                         |
+| `get_admin()`                                               | —                         | Read current admin                                          |
+| `record_progress(caller, student, course_id, progress_pct)` | caller (student or admin) | Record or update progress (0–100)                           |
+| `get_progress(student, course_id)`                          | —                         | Read a single progress record                               |
+| `get_all_progress(student)`                                 | —                         | Read all progress records for a student via secondary index |
+| `reset_progress(admin, student, course_id)`                 | admin                     | Delete a progress record and remove from secondary index    |
 
 ### Authorization Rules
 
@@ -100,6 +100,7 @@ POST /v1/progress
 ```
 
 When `progressPct >= 100`, the backend automatically:
+
 1. Sets `completedAt` on the progress record.
 2. Issues an on-chain credential (Certificate NFT + 100 BST reward).
 3. Mints 50 BST to the referrer if this is the student's first completed course.

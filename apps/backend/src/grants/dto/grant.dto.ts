@@ -20,23 +20,19 @@ export class CreateGrantDto {
   @IsString()
   @IsNotEmpty()
   @MaxLength(255)
-  @Trim()
-  @Sanitize(StripHtmlSanitizer)
-  title: string;
+  title!: string;
 
   @ApiProperty({ example: 'A grant to fund blockchain education in underserved communities.' })
   @IsString()
   @IsNotEmpty()
-  @Trim()
-  @Sanitize(StripHtmlSanitizer)
-  description: string;
+  description!: string;
 
   @ApiProperty({ example: 5000 })
   @IsNumber()
   @IsPositive()
   @Min(1)
   @Type(() => Number)
-  amount: number;
+  amount!: number;
 
   @ApiPropertyOptional({ example: 'USD' })
   @IsOptional()
@@ -47,7 +43,7 @@ export class CreateGrantDto {
   @ApiProperty({ example: 'user-uuid-here' })
   @IsString()
   @IsNotEmpty()
-  applicantId: string;
+  applicantId!: string;
 }
 
 export class UpdateGrantDto {

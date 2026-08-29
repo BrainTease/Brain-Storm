@@ -76,7 +76,7 @@ describe('Component Accessibility', () => {
           <footer>
             <p>&copy; 2024 Brain-Storm</p>
           </footer>
-        </div>,
+        </div>
       );
 
       const results = await axe(container);

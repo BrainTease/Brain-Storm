@@ -1,7 +1,13 @@
 'use client';
 
 import { z } from 'zod';
-import { TextField, TextareaField, StepWizard, useZodForm, type WizardStep } from '@/components/forms';
+import {
+  TextField,
+  TextareaField,
+  StepWizard,
+  useZodForm,
+  type WizardStep,
+} from '@/components/forms';
 
 export interface ScholarshipApplicationValues {
   firstName: string;

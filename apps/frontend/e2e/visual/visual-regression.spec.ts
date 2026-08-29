@@ -20,7 +20,7 @@ test.describe('Visual Regression Tests', () => {
   test('course card component visual regression', async ({ page }) => {
     await page.goto('/courses');
     await page.waitForLoadState('networkidle');
-    
+
     const courseCard = page.locator('[data-testid="course-card"]').first();
     await expect(courseCard).toHaveScreenshot('course-card.png');
   });
@@ -53,11 +53,11 @@ test.describe('Visual Regression Tests', () => {
   test('dark mode visual regression', async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
-    
+
     // Toggle dark mode
     await page.click('[data-testid="theme-toggle"]');
     await page.waitForTimeout(500); // Wait for theme transition
-    
+
     await expect(page).toHaveScreenshot('homepage-dark.png');
   });
 });

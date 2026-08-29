@@ -148,8 +148,10 @@ export class NotificationsService implements OnModuleInit {
       try {
         await this.create(item.userId, item.type, item.message);
         item.status = ScheduledNotificationStatus.SENT;
-      } catch (err) {
-        this.logger.error(`Failed to send scheduled notification ${item.id}: ${err.message}`);
+      } catch (err: unknown) {
+        this.logger.error(
+          `Failed to send scheduled notification ${item.id}: ${err instanceof Error ? err.message : String(err)}`
+        );
       }
       await this.scheduledRepo.save(item);
     }

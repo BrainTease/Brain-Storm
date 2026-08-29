@@ -12,25 +12,25 @@ import { User } from '../users/user.entity';
 @Entity('cohort_members')
 export class CohortMember {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  cohortId: string;
+  cohortId!: string;
 
   @ManyToOne(() => Cohort, (c) => c.members, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'cohortId' })
-  cohort: Cohort;
+  cohort!: Cohort;
 
   @Column()
-  userId: string;
+  userId!: string;
 
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
-  user: User;
+  user!: User;
 
   @Column({ type: 'float', default: 0 })
-  progressPercentage: number;
+  progressPercentage!: number;
 
   @CreateDateColumn()
-  enrolledAt: Date;
+  enrolledAt!: Date;
 }

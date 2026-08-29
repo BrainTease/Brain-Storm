@@ -86,9 +86,7 @@ export function NFTGrid({
         <span className="text-4xl block mb-2" role="img" aria-label="No items">
           🔍
         </span>
-        <h3 className="text-base font-semibold text-gray-900 dark:text-white">
-          {emptyTitle}
-        </h3>
+        <h3 className="text-base font-semibold text-gray-900 dark:text-white">{emptyTitle}</h3>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 max-w-sm mx-auto">
           {emptyDescription}
         </p>
@@ -98,11 +96,7 @@ export function NFTGrid({
   }
 
   return (
-    <div
-      data-testid="nft-grid"
-      className={`grid gap-5 ${columnClasses} ${className}`}
-      role="list"
-    >
+    <div data-testid="nft-grid" className={`grid gap-5 ${columnClasses} ${className}`} role="list">
       {items.map((nft) => (
         <div key={nft.id} role="listitem">
           <NFTCard

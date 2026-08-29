@@ -70,10 +70,10 @@ Use `class-validator` and `class-transformer` with the global `ValidationPipe`.
 // main.ts
 app.useGlobalPipes(
   new ValidationPipe({
-    whitelist: true,       // strip unknown properties
+    whitelist: true, // strip unknown properties
     forbidNonWhitelisted: true,
     transform: true,
-  }),
+  })
 );
 ```
 
@@ -90,9 +90,7 @@ app.useGlobalPipes(
 
 ```typescript
 // Safe
-repo.createQueryBuilder('user')
-  .where('user.email = :email', { email })
-  .getOne();
+repo.createQueryBuilder('user').where('user.email = :email', { email }).getOne();
 
 // Never do this
 repo.query(`SELECT * FROM user WHERE email = '${email}'`);
@@ -128,13 +126,13 @@ repo.query(`SELECT * FROM user WHERE email = '${email}'`);
 
 ### Key Variables Reference
 
-| Variable | Sensitivity | Notes |
-|---|---|---|
-| `JWT_SECRET` | Critical | Min 32 chars, random |
-| `STELLAR_SECRET_KEY` | Critical | Never log or expose |
-| `DATABASE_PASSWORD` | High | Use strong password |
-| `REDIS_PASSWORD` | High | Enable AUTH in Redis |
-| `NEXT_PUBLIC_*` | Public | Safe to expose to browser |
+| Variable             | Sensitivity | Notes                     |
+| -------------------- | ----------- | ------------------------- |
+| `JWT_SECRET`         | Critical    | Min 32 chars, random      |
+| `STELLAR_SECRET_KEY` | Critical    | Never log or expose       |
+| `DATABASE_PASSWORD`  | High        | Use strong password       |
+| `REDIS_PASSWORD`     | High        | Enable AUTH in Redis      |
+| `NEXT_PUBLIC_*`      | Public      | Safe to expose to browser |
 
 ### What Not to Do
 
@@ -171,7 +169,7 @@ repo.query(`SELECT * FROM user WHERE email = '${email}'`);
 
 ```typescript
 // Using @nestjs/throttler
-ThrottlerModule.forRoot([{ ttl: 60000, limit: 10 }])
+ThrottlerModule.forRoot([{ ttl: 60000, limit: 10 }]);
 ```
 
 ### A05 — Security Misconfiguration
@@ -234,13 +232,13 @@ Before opening a pull request, verify:
 
 The following security checks run automatically on every PR (see `.github/workflows/`):
 
-| Check | Tool | Failure Threshold |
-|---|---|---|
-| Dependency vulnerabilities (Node) | `npm audit` | High/Critical |
-| Dependency vulnerabilities (Rust) | `cargo audit` | Any advisory |
-| DAST scan | OWASP ZAP | High severity |
-| Static analysis | ESLint security rules | Error level |
-| Rust linting | `cargo clippy` | Warnings as errors |
+| Check                             | Tool                  | Failure Threshold  |
+| --------------------------------- | --------------------- | ------------------ |
+| Dependency vulnerabilities (Node) | `npm audit`           | High/Critical      |
+| Dependency vulnerabilities (Rust) | `cargo audit`         | Any advisory       |
+| DAST scan                         | OWASP ZAP             | High severity      |
+| Static analysis                   | ESLint security rules | Error level        |
+| Rust linting                      | `cargo clippy`        | Warnings as errors |
 
 ### Manual Security Review
 
@@ -266,4 +264,4 @@ Do not open public GitHub issues for security vulnerabilities. Instead:
 
 ---
 
-*For tooling-specific details (ZAP setup, cargo audit, SonarCloud), see [docs/security.md](./security.md).*
+_For tooling-specific details (ZAP setup, cargo audit, SonarCloud), see [docs/security.md](./security.md)._

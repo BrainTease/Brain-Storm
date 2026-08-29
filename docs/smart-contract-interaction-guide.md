@@ -45,8 +45,14 @@ npm install @stellar/stellar-sdk
 
 ```typescript
 import {
-  Keypair, Networks, TransactionBuilder, BASE_FEE,
-  Operation, Address, nativeToScVal, xdr,
+  Keypair,
+  Networks,
+  TransactionBuilder,
+  BASE_FEE,
+  Operation,
+  Address,
+  nativeToScVal,
+  xdr,
 } from '@stellar/stellar-sdk';
 import { SorobanRpc } from '@stellar/stellar-sdk';
 
@@ -63,11 +69,13 @@ const issuerKeypair = Keypair.fromSecret(process.env.STELLAR_SECRET_KEY!);
 async function invokeContract(
   contractId: string,
   method: string,
-  args: xdr.ScVal[],
+  args: xdr.ScVal[]
 ): Promise<string> {
   const source = await server.getAccount(issuerKeypair.publicKey());
   const tx = new TransactionBuilder(source, { fee: BASE_FEE, networkPassphrase })
-    .addOperation(Operation.invokeContractFunction({ contract: contractId, function: method, args }))
+    .addOperation(
+      Operation.invokeContractFunction({ contract: contractId, function: method, args })
+    )
     .setTimeout(30)
     .build();
 
@@ -80,7 +88,7 @@ async function invokeContract(
   // Poll for confirmation
   let response = await server.getTransaction(result.hash);
   while (response.status === SorobanRpc.Api.GetTransactionStatus.NOT_FOUND) {
-    await new Promise(r => setTimeout(r, 1000));
+    await new Promise((r) => setTimeout(r, 1000));
     response = await server.getTransaction(result.hash);
   }
   if (response.status === SorobanRpc.Api.GetTransactionStatus.FAILED)
@@ -92,11 +100,13 @@ async function invokeContract(
 async function simulateContract(
   contractId: string,
   method: string,
-  args: xdr.ScVal[],
+  args: xdr.ScVal[]
 ): Promise<xdr.ScVal | undefined> {
   const source = await server.getAccount(issuerKeypair.publicKey());
   const tx = new TransactionBuilder(source, { fee: BASE_FEE, networkPassphrase })
-    .addOperation(Operation.invokeContractFunction({ contract: contractId, function: method, args }))
+    .addOperation(
+      Operation.invokeContractFunction({ contract: contractId, function: method, args })
+    )
     .setTimeout(30)
     .build();
 
@@ -110,13 +120,13 @@ async function simulateContract(
 
 ## 2. Contract Overview
 
-| Contract | ID Env Var | Purpose |
-|---|---|---|
-| Analytics | `ANALYTICS_CONTRACT_ID` | Records per-student, per-course progress on-chain |
-| Token | `TOKEN_CONTRACT_ID` | BST reward token (SEP-0041 compatible) |
-| Certificate | `CERTIFICATE_CONTRACT_ID` | Soulbound NFT certificates for course completion |
-| Governance | `GOVERNANCE_CONTRACT_ID` | Token-weighted proposal voting |
-| Shared | `SHARED_CONTRACT_ID` | RBAC — roles and permissions |
+| Contract    | ID Env Var                | Purpose                                           |
+| ----------- | ------------------------- | ------------------------------------------------- |
+| Analytics   | `ANALYTICS_CONTRACT_ID`   | Records per-student, per-course progress on-chain |
+| Token       | `TOKEN_CONTRACT_ID`       | BST reward token (SEP-0041 compatible)            |
+| Certificate | `CERTIFICATE_CONTRACT_ID` | Soulbound NFT certificates for course completion  |
+| Governance  | `GOVERNANCE_CONTRACT_ID`  | Token-weighted proposal voting                    |
+| Shared      | `SHARED_CONTRACT_ID`      | RBAC — roles and permissions                      |
 
 All contracts require an `initialize(admin)` call once after deployment. Double-initialization panics with `"Already initialized"`.
 
@@ -128,22 +138,24 @@ Tracks student progress (0–100%) per course. Progress is stored in persistent 
 
 ### Public Interface
 
-| Function | Auth Required | Description |
-|---|---|---|
-| `initialize(admin)` | admin | One-time setup |
-| `set_admin(new_admin)` | current admin | Transfer admin |
-| `get_admin()` | none | Read current admin |
-| `record_progress(caller, student, course_id, progress_pct)` | caller (student or admin) | Write progress (0–100) |
-| `reset_progress(admin, student, course_id)` | admin | Delete a progress record |
-| `get_progress(student, course_id)` | none | Read one record |
-| `get_all_progress(student)` | none | Read all records for a student |
+| Function                                                    | Auth Required             | Description                    |
+| ----------------------------------------------------------- | ------------------------- | ------------------------------ |
+| `initialize(admin)`                                         | admin                     | One-time setup                 |
+| `set_admin(new_admin)`                                      | current admin             | Transfer admin                 |
+| `get_admin()`                                               | none                      | Read current admin             |
+| `record_progress(caller, student, course_id, progress_pct)` | caller (student or admin) | Write progress (0–100)         |
+| `reset_progress(admin, student, course_id)`                 | admin                     | Delete a progress record       |
+| `get_progress(student, course_id)`                          | none                      | Read one record                |
+| `get_all_progress(student)`                                 | none                      | Read all records for a student |
 
 **`ProgressRecord` shape:**
+
 ```
 { student, course_id, progress_pct: u32, completed: bool, timestamp: u64 }
 ```
 
 **Events emitted by `record_progress`:**
+
 - `("analytics", "prog_upd")` → `(student, course_id, progress_pct)` — always
 - `("analytics", "completed")` → `(student, course_id)` — only when `progress_pct == 100`
 
@@ -154,10 +166,10 @@ const ANALYTICS = process.env.ANALYTICS_CONTRACT_ID!;
 
 // Record progress (backend, signed by admin/issuer)
 await invokeContract(ANALYTICS, 'record_progress', [
-  new Address(issuerKeypair.publicKey()).toScVal(),   // caller
-  new Address(studentPublicKey).toScVal(),            // student
-  nativeToScVal('RUST101', { type: 'symbol' }),       // course_id
-  nativeToScVal(75, { type: 'u32' }),                 // progress_pct
+  new Address(issuerKeypair.publicKey()).toScVal(), // caller
+  new Address(studentPublicKey).toScVal(), // student
+  nativeToScVal('RUST101', { type: 'symbol' }), // course_id
+  nativeToScVal(75, { type: 'u32' }), // progress_pct
 ]);
 
 // Read progress (simulate — no fee)
@@ -186,27 +198,28 @@ SEP-0041 compatible fungible token. Max supply: 1 billion BST (stored with 7 dec
 
 ### Public Interface
 
-| Function | Auth Required | Description |
-|---|---|---|
-| `initialize(admin)` | admin | One-time setup |
-| `name()` | none | Returns `"Brain-Storm Token"` |
-| `symbol()` | none | Returns `"BST"` |
-| `decimals()` | none | Returns `7` |
-| `balance(addr)` | none | Token balance for address |
-| `total_supply()` | none | Total minted supply |
-| `mint(to, amount)` | admin | Mint tokens (admin only) |
-| `mint_reward(caller, recipient, amount)` | caller (admin) | Mint reward tokens |
-| `burn(from, amount)` | from | Burn own tokens |
-| `burn_from(spender, from, amount)` | spender | Burn with allowance |
-| `transfer(from, to, amount)` | from | Transfer tokens |
-| `transfer_from(spender, from, to, amount)` | spender | Transfer with allowance |
-| `approve(owner, spender, amount)` | owner | Set allowance |
-| `allowance(owner, spender)` | none | Read allowance |
-| `create_vesting(admin, beneficiary, total, start, cliff, end)` | admin | Create vesting schedule |
-| `claim_vesting(beneficiary)` | beneficiary | Claim vested tokens |
-| `get_vesting(beneficiary)` | none | Read vesting schedule |
+| Function                                                       | Auth Required  | Description                   |
+| -------------------------------------------------------------- | -------------- | ----------------------------- |
+| `initialize(admin)`                                            | admin          | One-time setup                |
+| `name()`                                                       | none           | Returns `"Brain-Storm Token"` |
+| `symbol()`                                                     | none           | Returns `"BST"`               |
+| `decimals()`                                                   | none           | Returns `7`                   |
+| `balance(addr)`                                                | none           | Token balance for address     |
+| `total_supply()`                                               | none           | Total minted supply           |
+| `mint(to, amount)`                                             | admin          | Mint tokens (admin only)      |
+| `mint_reward(caller, recipient, amount)`                       | caller (admin) | Mint reward tokens            |
+| `burn(from, amount)`                                           | from           | Burn own tokens               |
+| `burn_from(spender, from, amount)`                             | spender        | Burn with allowance           |
+| `transfer(from, to, amount)`                                   | from           | Transfer tokens               |
+| `transfer_from(spender, from, to, amount)`                     | spender        | Transfer with allowance       |
+| `approve(owner, spender, amount)`                              | owner          | Set allowance                 |
+| `allowance(owner, spender)`                                    | none           | Read allowance                |
+| `create_vesting(admin, beneficiary, total, start, cliff, end)` | admin          | Create vesting schedule       |
+| `claim_vesting(beneficiary)`                                   | beneficiary    | Claim vested tokens           |
+| `get_vesting(beneficiary)`                                     | none           | Read vesting schedule         |
 
 **Events:**
+
 - `("transfer", "to", to)` → `amount`
 - `("approve", ...)` → `amount`
 - `("mint", "to", to)` → `amount`
@@ -218,16 +231,14 @@ SEP-0041 compatible fungible token. Max supply: 1 billion BST (stored with 7 dec
 const TOKEN = process.env.TOKEN_CONTRACT_ID!;
 
 // Read balance (simulate)
-const retval = await simulateContract(TOKEN, 'balance', [
-  new Address(studentPublicKey).toScVal(),
-]);
+const retval = await simulateContract(TOKEN, 'balance', [new Address(studentPublicKey).toScVal()]);
 const balance = retval ? BigInt(retval.value() as bigint).toString() : '0';
 
 // Mint reward (state-changing, signed by admin)
 await invokeContract(TOKEN, 'mint_reward', [
   new Address(issuerKeypair.publicKey()).toScVal(), // caller (admin)
-  new Address(studentPublicKey).toScVal(),          // recipient
-  nativeToScVal(100_0000000, { type: 'i128' }),     // 100 BST (7 decimals)
+  new Address(studentPublicKey).toScVal(), // recipient
+  nativeToScVal(100_0000000, { type: 'i128' }), // 100 BST (7 decimals)
 ]);
 
 // Transfer (signed by token holder — requires their keypair)
@@ -245,21 +256,23 @@ Issues soulbound (non-transferable) NFT certificates. Each certificate has an au
 
 ### Public Interface
 
-| Function | Auth Required | Description |
-|---|---|---|
-| `initialize(admin)` | admin | One-time setup |
-| `get_admin()` | none | Read admin |
-| `mint_certificate(admin, recipient, course_id, metadata_url)` | admin | Issue certificate, returns `u64` ID |
-| `get_certificate(id)` | none | Fetch by ID → `Option<CertificateRecord>` |
-| `get_certificates_by_owner(owner)` | none | All certificates for an address |
-| `transfer(...)` | — | Always panics (`"soulbound"`) |
+| Function                                                      | Auth Required | Description                               |
+| ------------------------------------------------------------- | ------------- | ----------------------------------------- |
+| `initialize(admin)`                                           | admin         | One-time setup                            |
+| `get_admin()`                                                 | none          | Read admin                                |
+| `mint_certificate(admin, recipient, course_id, metadata_url)` | admin         | Issue certificate, returns `u64` ID       |
+| `get_certificate(id)`                                         | none          | Fetch by ID → `Option<CertificateRecord>` |
+| `get_certificates_by_owner(owner)`                            | none          | All certificates for an address           |
+| `transfer(...)`                                               | —             | Always panics (`"soulbound"`)             |
 
 **`CertificateRecord` shape:**
+
 ```
 { id: u64, owner, course_id, metadata_url: String, issued_at: u64 }
 ```
 
 **Events:**
+
 - `("mint", "to", recipient)` → `(id, course_id)`
 
 ### TypeScript Examples
@@ -269,9 +282,9 @@ const CERT = process.env.CERTIFICATE_CONTRACT_ID!;
 
 // Mint a certificate
 await invokeContract(CERT, 'mint_certificate', [
-  new Address(issuerKeypair.publicKey()).toScVal(),  // admin
-  new Address(studentPublicKey).toScVal(),           // recipient
-  nativeToScVal('RUST101', { type: 'symbol' }),      // course_id
+  new Address(issuerKeypair.publicKey()).toScVal(), // admin
+  new Address(studentPublicKey).toScVal(), // recipient
+  nativeToScVal('RUST101', { type: 'symbol' }), // course_id
   nativeToScVal('https://brainstorm.io/certs/42', { type: 'string' }), // metadata_url
 ]);
 
@@ -289,23 +302,25 @@ Token-weighted proposal voting. Voting power equals the voter's BST balance at v
 
 ### Public Interface
 
-| Function | Auth Required | Description |
-|---|---|---|
-| `initialize(admin, token_contract)` | admin | One-time setup |
-| `get_admin()` | none | Read admin |
-| `create_proposal(proposer, title, description, voting_end_ledger)` | proposer | Create proposal, returns `u64` ID |
-| `vote(voter, proposal_id, support)` | voter | Cast vote (once per address) |
-| `execute_proposal(proposal_id)` | none | Execute a passed proposal |
-| `get_proposal(proposal_id)` | none | Fetch proposal → `Option<ProposalRecord>` |
-| `has_voted(proposal_id, voter)` | none | Check if address has voted |
+| Function                                                           | Auth Required | Description                               |
+| ------------------------------------------------------------------ | ------------- | ----------------------------------------- |
+| `initialize(admin, token_contract)`                                | admin         | One-time setup                            |
+| `get_admin()`                                                      | none          | Read admin                                |
+| `create_proposal(proposer, title, description, voting_end_ledger)` | proposer      | Create proposal, returns `u64` ID         |
+| `vote(voter, proposal_id, support)`                                | voter         | Cast vote (once per address)              |
+| `execute_proposal(proposal_id)`                                    | none          | Execute a passed proposal                 |
+| `get_proposal(proposal_id)`                                        | none          | Fetch proposal → `Option<ProposalRecord>` |
+| `has_voted(proposal_id, voter)`                                    | none          | Check if address has voted                |
 
 **`ProposalRecord` shape:**
+
 ```
 { id, proposer, title, description, voting_end_ledger: u32,
   votes_for: i128, votes_against: i128, executed: bool, created_at: u64 }
 ```
 
 **Events:**
+
 - `("prop_new", "id")` → `id`
 - `("vote", "voter")` → `(proposal_id, support)`
 - `("exec", ...)` on execution
@@ -327,14 +342,12 @@ await invokeContract(GOV, 'create_proposal', [
 // Cast vote: support=true means "for"
 await invokeContract(GOV, 'vote', [
   new Address(voterPublicKey).toScVal(),
-  nativeToScVal(1n, { type: 'u64' }),   // proposal_id
+  nativeToScVal(1n, { type: 'u64' }), // proposal_id
   nativeToScVal(true, { type: 'bool' }),
 ]);
 
 // Execute after voting ends
-await invokeContract(GOV, 'execute_proposal', [
-  nativeToScVal(1n, { type: 'u64' }),
-]);
+await invokeContract(GOV, 'execute_proposal', [nativeToScVal(1n, { type: 'u64' })]);
 ```
 
 > **Note:** `vote` requires the voter's auth. The backend cannot sign on behalf of voters. This call must originate from the frontend with the user's wallet.
@@ -347,25 +360,26 @@ Provides role assignment and permission checks used across the platform.
 
 ### Roles & Permissions
 
-| Role | Permissions |
-|---|---|
-| `Admin` | All permissions |
+| Role         | Permissions                     |
+| ------------ | ------------------------------- |
+| `Admin`      | All permissions                 |
 | `Instructor` | `CreateCourse`, `EnrollStudent` |
-| `Student` | None |
+| `Student`    | None                            |
 
 Available permissions: `CreateCourse`, `EnrollStudent`, `IssueCredential`, `MintToken`, `ManageUsers`.
 
 ### Public Interface
 
-| Function | Auth Required | Description |
-|---|---|---|
-| `initialize(admin)` | admin | One-time setup |
-| `assign_role(caller, target, role)` | admin | Assign role to address |
-| `has_role(addr, role)` | none | Check role |
-| `has_permission(addr, permission)` | none | Check permission |
-| `upgrade(admin, new_wasm_hash)` | admin | Upgrade contract WASM |
+| Function                            | Auth Required | Description            |
+| ----------------------------------- | ------------- | ---------------------- |
+| `initialize(admin)`                 | admin         | One-time setup         |
+| `assign_role(caller, target, role)` | admin         | Assign role to address |
+| `has_role(addr, role)`              | none          | Check role             |
+| `has_permission(addr, permission)`  | none          | Check permission       |
+| `upgrade(admin, new_wasm_hash)`     | admin         | Upgrade contract WASM  |
 
 **Events:**
+
 - `("rbac", "role_asgn")` → `(target, role)`
 
 ### TypeScript Examples
@@ -376,7 +390,7 @@ const SHARED = process.env.SHARED_CONTRACT_ID!;
 // Assign instructor role
 await invokeContract(SHARED, 'assign_role', [
   new Address(issuerKeypair.publicKey()).toScVal(), // caller (admin)
-  new Address(instructorPublicKey).toScVal(),       // target
+  new Address(instructorPublicKey).toScVal(), // target
   // Role enum variant — encode as ScVal symbol
   xdr.ScVal.scvVec([xdr.ScVal.scvSymbol('Instructor')]),
 ]);
@@ -456,7 +470,16 @@ The frontend should only call **read-only** (simulate) operations directly. Stat
 
 ```typescript
 // apps/frontend — e.g. in a React hook
-import { SorobanRpc, TransactionBuilder, BASE_FEE, Networks, Operation, Address, nativeToScVal, Keypair } from '@stellar/stellar-sdk';
+import {
+  SorobanRpc,
+  TransactionBuilder,
+  BASE_FEE,
+  Networks,
+  Operation,
+  Address,
+  nativeToScVal,
+  Keypair,
+} from '@stellar/stellar-sdk';
 
 const server = new SorobanRpc.Server(process.env.NEXT_PUBLIC_SOROBAN_RPC_URL!);
 
@@ -472,11 +495,13 @@ async function fetchTokenBalance(publicKey: string): Promise<string> {
     fee: BASE_FEE,
     networkPassphrase: Networks.TESTNET,
   })
-    .addOperation(Operation.invokeContractFunction({
-      contract: process.env.NEXT_PUBLIC_TOKEN_CONTRACT_ID!,
-      function: 'balance',
-      args: [new Address(publicKey).toScVal()],
-    }))
+    .addOperation(
+      Operation.invokeContractFunction({
+        contract: process.env.NEXT_PUBLIC_TOKEN_CONTRACT_ID!,
+        function: 'balance',
+        args: [new Address(publicKey).toScVal()],
+      })
+    )
     .setTimeout(30)
     .build();
 
@@ -502,15 +527,17 @@ async function castVote(proposalId: bigint, support: boolean) {
     fee: BASE_FEE,
     networkPassphrase: Networks.TESTNET,
   })
-    .addOperation(Operation.invokeContractFunction({
-      contract: process.env.NEXT_PUBLIC_GOVERNANCE_CONTRACT_ID!,
-      function: 'vote',
-      args: [
-        new Address(publicKey).toScVal(),
-        nativeToScVal(proposalId, { type: 'u64' }),
-        nativeToScVal(support, { type: 'bool' }),
-      ],
-    }))
+    .addOperation(
+      Operation.invokeContractFunction({
+        contract: process.env.NEXT_PUBLIC_GOVERNANCE_CONTRACT_ID!,
+        function: 'vote',
+        args: [
+          new Address(publicKey).toScVal(),
+          nativeToScVal(proposalId, { type: 'u64' }),
+          nativeToScVal(support, { type: 'bool' }),
+        ],
+      })
+    )
     .setTimeout(30)
     .build();
 
@@ -520,7 +547,7 @@ async function castVote(proposalId: bigint, support: boolean) {
   });
 
   const result = await server.sendTransaction(
-    TransactionBuilder.fromXDR(signedXdr, Networks.TESTNET),
+    TransactionBuilder.fromXDR(signedXdr, Networks.TESTNET)
   );
   return result.hash;
 }
@@ -541,15 +568,22 @@ async function safeInvoke(contractId: string, method: string, args: xdr.ScVal[])
   } catch (err: any) {
     const msg: string = err.message ?? '';
 
-    if (msg.includes('Already initialized'))   throw new ConflictException('Contract already initialized');
-    if (msg.includes('Unauthorized'))          throw new ForbiddenException('Caller not authorized');
-    if (msg.includes('Progress must be 0-100')) throw new BadRequestException('Progress must be between 0 and 100');
-    if (msg.includes('Insufficient balance'))  throw new BadRequestException('Insufficient token balance');
-    if (msg.includes('Already voted'))         throw new ConflictException('Address has already voted on this proposal');
-    if (msg.includes('Voting period ended'))   throw new BadRequestException('Voting period has ended');
-    if (msg.includes('Proposal did not pass')) throw new BadRequestException('Proposal did not reach quorum');
-    if (msg.includes('soulbound'))             throw new BadRequestException('Certificates are non-transferable');
-    if (msg.includes('Only admin'))            throw new ForbiddenException('Admin authorization required');
+    if (msg.includes('Already initialized'))
+      throw new ConflictException('Contract already initialized');
+    if (msg.includes('Unauthorized')) throw new ForbiddenException('Caller not authorized');
+    if (msg.includes('Progress must be 0-100'))
+      throw new BadRequestException('Progress must be between 0 and 100');
+    if (msg.includes('Insufficient balance'))
+      throw new BadRequestException('Insufficient token balance');
+    if (msg.includes('Already voted'))
+      throw new ConflictException('Address has already voted on this proposal');
+    if (msg.includes('Voting period ended'))
+      throw new BadRequestException('Voting period has ended');
+    if (msg.includes('Proposal did not pass'))
+      throw new BadRequestException('Proposal did not reach quorum');
+    if (msg.includes('soulbound'))
+      throw new BadRequestException('Certificates are non-transferable');
+    if (msg.includes('Only admin')) throw new ForbiddenException('Admin authorization required');
 
     throw new InternalServerErrorException(`Contract error: ${msg}`);
   }

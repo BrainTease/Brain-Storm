@@ -18,15 +18,11 @@ export class CreateProposalDto {
   @ApiProperty({ description: 'Proposal title', maxLength: 200 })
   @IsString()
   @MaxLength(200)
-  @Trim()
-  @Sanitize(StripHtmlSanitizer)
-  title: string;
+  title!: string;
 
   @ApiProperty({ description: 'Detailed description of the proposal' })
   @IsString()
-  @Trim()
-  @Sanitize(StripHtmlSanitizer)
-  description: string;
+  description!: string;
 
   @ApiPropertyOptional({ enum: ProposalType, default: ProposalType.TEXT })
   @IsOptional()
@@ -35,7 +31,7 @@ export class CreateProposalDto {
 
   @ApiProperty({ description: 'Stellar address of the proposer' })
   @IsString()
-  proposerAddress: string;
+  proposerAddress!: string;
 
   @ApiPropertyOptional({ description: 'Minimum votes needed to pass' })
   @IsOptional()
@@ -105,10 +101,10 @@ export class ProposalQueryDto extends PaginationDto {
 export class VoteDto {
   @ApiProperty({ description: 'Voter Stellar address' })
   @IsString()
-  voter: string;
+  voter!: string;
 
   @ApiProperty({ description: 'true = vote for, false = vote against' })
-  support: boolean;
+  support!: boolean;
 
   @ApiPropertyOptional({ description: 'Signed Stellar transaction XDR' })
   @IsOptional()

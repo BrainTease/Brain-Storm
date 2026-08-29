@@ -5,10 +5,7 @@
  * authorisation logic live in `GrantsBusinessService` so they can be tested
  * independently of the database.
  */
-import {
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindOptionsWhere } from 'typeorm';
 import { Grant } from './grant.entity';
@@ -27,7 +24,7 @@ export class GrantsService {
   constructor(
     @InjectRepository(Grant)
     private readonly grantsRepo: Repository<Grant>,
-    private readonly businessService: GrantsBusinessService,
+    private readonly businessService: GrantsBusinessService
   ) {}
 
   async create(dto: CreateGrantDto): Promise<Grant> {

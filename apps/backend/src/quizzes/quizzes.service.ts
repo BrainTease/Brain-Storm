@@ -124,8 +124,9 @@ export class QuizzesService {
       where: { id: attemptId },
       relations: ['answers', 'quiz'],
     });
+    if (!attempt) throw new NotFoundException('Attempt not found');
 
-    const totalPoints = attempt.quiz.questions.reduce((sum, q) => sum + q.points, 0);
+    const totalPoints = attempt.quiz!.questions.reduce((sum, q) => sum + q.points, 0);
     const totalScore = attempt.answers.reduce((sum, a) => sum + (a.points || 0), 0);
 
     attempt.score = totalPoints > 0 ? (totalScore / totalPoints) * 100 : 0;

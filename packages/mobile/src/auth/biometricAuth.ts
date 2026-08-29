@@ -46,7 +46,7 @@ export async function authenticateWithBiometrics(
     if (!available) {
       return {
         success: false,
-        error: hasHardware 
+        error: hasHardware
           ? 'No biometrics enrolled. Please set up Face ID or Touch ID in device settings.'
           : 'Biometric authentication not available on this device.',
       };
@@ -84,7 +84,7 @@ export async function enableBiometricAuth(): Promise<boolean> {
     if (!available) {
       return false;
     }
-    
+
     // Verify user can authenticate before enabling
     const result = await authenticateWithBiometrics('Set up biometric authentication');
     if (!result.success) {

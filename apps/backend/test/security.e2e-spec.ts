@@ -35,7 +35,7 @@ async function createTestApp(): Promise<INestApplication> {
       hsts: { maxAge: 31536000, includeSubDomains: true },
       xContentTypeOptions: true,
       xFrameOptions: { action: 'deny' },
-    }),
+    })
   );
 
   app.use(express.json({ limit: '1mb' }));

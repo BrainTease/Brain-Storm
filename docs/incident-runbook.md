@@ -22,12 +22,12 @@ Actionable playbooks for on-call engineers responding to Brain-Storm alerts.
 
 ## On-Call Escalation Policy
 
-| Tier | Who | When | Channel |
-|---|---|---|---|
-| L1 (Primary) | On-call engineer | Immediate (0 min) | PagerDuty → Slack `#platform-oncall` |
-| L2 (Secondary) | On-call backup | No acknowledgement after 15 min | PagerDuty escalation |
-| L3 (Engineering Lead) | Engineering lead | No acknowledgement after 30 min | PagerDuty + phone |
-| L4 (Incident Commander) | Engineering manager | P0 declared or >60 min unresolved | Direct contact |
+| Tier                    | Who                 | When                              | Channel                              |
+| ----------------------- | ------------------- | --------------------------------- | ------------------------------------ |
+| L1 (Primary)            | On-call engineer    | Immediate (0 min)                 | PagerDuty → Slack `#platform-oncall` |
+| L2 (Secondary)          | On-call backup      | No acknowledgement after 15 min   | PagerDuty escalation                 |
+| L3 (Engineering Lead)   | Engineering lead    | No acknowledgement after 30 min   | PagerDuty + phone                    |
+| L4 (Incident Commander) | Engineering manager | P0 declared or >60 min unresolved | Direct contact                       |
 
 ### Declaring an Incident
 
@@ -38,22 +38,22 @@ Actionable playbooks for on-call engineers responding to Brain-Storm alerts.
 
 ### Severity Levels
 
-| Level | Criteria | Response Time |
-|---|---|---|
-| P0 | Total service outage, data loss risk | Immediate |
-| P1 | Major feature broken, >10% users impacted | <15 min |
-| P2 | Degraded performance, partial outage | <1 h |
-| P3 | Minor issue, workaround available | <4 h |
+| Level | Criteria                                  | Response Time |
+| ----- | ----------------------------------------- | ------------- |
+| P0    | Total service outage, data loss risk      | Immediate     |
+| P1    | Major feature broken, >10% users impacted | <15 min       |
+| P2    | Degraded performance, partial outage      | <1 h          |
+| P3    | Minor issue, workaround available         | <4 h          |
 
 ---
 
 ## Alert Severity Definitions
 
-| Prometheus Severity | Meaning |
-|---|---|
-| `critical` | Pages on-call immediately via PagerDuty |
-| `warning` | Posts to `#platform-oncall` Slack; no page |
-| `info` | Informational; goes to `#alerts` only |
+| Prometheus Severity | Meaning                                    |
+| ------------------- | ------------------------------------------ |
+| `critical`          | Pages on-call immediately via PagerDuty    |
+| `warning`           | Posts to `#platform-oncall` Slack; no page |
+| `info`              | Informational; goes to `#alerts` only      |
 
 ---
 

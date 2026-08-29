@@ -41,7 +41,11 @@ export function ProposalDetail({
     );
   }
 
-  const tally = calculateVoteTally(proposal.votesFor, proposal.votesAgainst, proposal.quorumRequired);
+  const tally = calculateVoteTally(
+    proposal.votesFor,
+    proposal.votesAgainst,
+    proposal.quorumRequired
+  );
   const timeRemaining = new Date(proposal.votingDeadline).getTime() - Date.now();
   const isExpired = timeRemaining <= 0;
   const isActive = proposal.status === 'active' && !isExpired;

@@ -30,9 +30,12 @@ const BASE_URL = __ENV.API_URL || 'http://localhost:3000';
 export default function () {
   group('High Concurrency - Read Heavy', () => {
     // Simulate read-heavy workload
-    const coursesRes = http.get(`${BASE_URL}/v1/courses?page=${Math.floor(Math.random() * 10)}&limit=20`, {
-      tags: { endpoint: 'courses' },
-    });
+    const coursesRes = http.get(
+      `${BASE_URL}/v1/courses?page=${Math.floor(Math.random() * 10)}&limit=20`,
+      {
+        tags: { endpoint: 'courses' },
+      }
+    );
 
     check(coursesRes, {
       'courses status 200': (r) => r.status === 200,

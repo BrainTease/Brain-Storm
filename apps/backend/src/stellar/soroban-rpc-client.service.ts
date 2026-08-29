@@ -221,12 +221,11 @@ export class SorobanRpcClientService implements OnModuleInit {
   private async retryWithBackoff<T>(fn: () => Promise<T>, attempt = 1): Promise<T> {
     try {
       return await fn();
-    } catch (error) {
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : String(error);
       if (attempt >= MAX_RETRIES) throw error;
       const delay = BASE_DELAY_MS * Math.pow(2, attempt - 1);
-      this.logger.warn(
-        `Soroban RPC attempt ${attempt} failed (${error.message}), retrying in ${delay}ms`
-      );
+      this.logger.warn(`Soroban RPC attempt ${attempt} failed (${errMsg}), retrying in ${delay}ms`);
       await new Promise((r) => setTimeout(r, delay));
       return this.retryWithBackoff(fn, attempt + 1);
     }

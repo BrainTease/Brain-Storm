@@ -108,26 +108,31 @@ k6 run --env PROFILE=soak packages/api/load/scenarios/search-discovery.js
 ## Load Profiles
 
 ### Smoke Test
+
 - **Purpose**: Verify script works and basic functionality
 - **Load**: 1-5 VUs for 1 minute
 - **When**: After any script changes
 
 ### Load Test
+
 - **Purpose**: Assess performance under normal conditions
 - **Load**: Ramp up to 100 VUs over 5 minutes, sustain for 10 minutes
 - **When**: Before releases, nightly
 
 ### Stress Test
+
 - **Purpose**: Find the breaking point
 - **Load**: Gradually increase to 500+ VUs
 - **When**: Weekly, before major releases
 
 ### Spike Test
+
 - **Purpose**: Test sudden traffic increases
 - **Load**: Sudden jump to 500 VUs for 2 minutes
 - **When**: Before marketing campaigns
 
 ### Soak Test
+
 - **Purpose**: Test stability over time
 - **Load**: 50 VUs for 2-4 hours
 - **When**: Before releases, monthly
@@ -138,29 +143,30 @@ Our Service Level Objectives (SLOs) for API endpoints:
 
 ### Search & Discovery Endpoints
 
-| Endpoint | P95 Latency | P99 Latency | Error Rate | Throughput |
-|----------|-------------|-------------|------------|------------|
-| `/api/search/courses` | < 300ms | < 500ms | < 1% | > 50 req/s |
-| `/api/courses` | < 200ms | < 400ms | < 0.5% | > 100 req/s |
-| `/api/courses/:id` | < 150ms | < 300ms | < 0.5% | > 150 req/s |
-| `/api/search/instructors` | < 250ms | < 450ms | < 1% | > 30 req/s |
-| `/api/tags` | < 100ms | < 200ms | < 0.1% | > 200 req/s |
-| `/api/categories` | < 100ms | < 200ms | < 0.1% | > 200 req/s |
+| Endpoint                  | P95 Latency | P99 Latency | Error Rate | Throughput  |
+| ------------------------- | ----------- | ----------- | ---------- | ----------- |
+| `/api/search/courses`     | < 300ms     | < 500ms     | < 1%       | > 50 req/s  |
+| `/api/courses`            | < 200ms     | < 400ms     | < 0.5%     | > 100 req/s |
+| `/api/courses/:id`        | < 150ms     | < 300ms     | < 0.5%     | > 150 req/s |
+| `/api/search/instructors` | < 250ms     | < 450ms     | < 1%       | > 30 req/s  |
+| `/api/tags`               | < 100ms     | < 200ms     | < 0.1%     | > 200 req/s |
+| `/api/categories`         | < 100ms     | < 200ms     | < 0.1%     | > 200 req/s |
 
 ### Other Critical Endpoints
 
-| Endpoint | P95 Latency | P99 Latency | Error Rate |
-|----------|-------------|-------------|------------|
-| `/api/auth/login` | < 500ms | < 1000ms | < 2% |
-| `/api/auth/register` | < 800ms | < 1500ms | < 2% |
-| `/api/enrollments` | < 400ms | < 800ms | < 1% |
-| `/api/user/profile` | < 200ms | < 400ms | < 0.5% |
+| Endpoint             | P95 Latency | P99 Latency | Error Rate |
+| -------------------- | ----------- | ----------- | ---------- |
+| `/api/auth/login`    | < 500ms     | < 1000ms    | < 2%       |
+| `/api/auth/register` | < 800ms     | < 1500ms    | < 2%       |
+| `/api/enrollments`   | < 400ms     | < 800ms     | < 1%       |
+| `/api/user/profile`  | < 200ms     | < 400ms     | < 0.5%     |
 
 ## Test Scenarios
 
 ### 1. Search & Discovery (`search-discovery.js`)
 
 Tests search and discovery functionality:
+
 - Course search with various queries
 - Instructor search
 - Tag-based filtering
@@ -169,6 +175,7 @@ Tests search and discovery functionality:
 - Auto-complete suggestions
 
 **Key Metrics**:
+
 - Search response time
 - Result relevance (via status codes)
 - Cache hit rates
@@ -177,6 +184,7 @@ Tests search and discovery functionality:
 ### 2. Course Browsing (`course-browsing.js`)
 
 Tests course listing and detail views:
+
 - Browse all courses
 - Filter by category
 - Sort by various criteria
@@ -185,6 +193,7 @@ Tests course listing and detail views:
 - View course content
 
 **Key Metrics**:
+
 - Page load times
 - API response times
 - Cache effectiveness
@@ -193,6 +202,7 @@ Tests course listing and detail views:
 ### 3. User Workflows (`user-workflows.js`)
 
 Complete user journeys:
+
 1. Register → Login
 2. Browse courses → Search
 3. View details → Enroll
@@ -200,6 +210,7 @@ Complete user journeys:
 5. Complete quiz → Get certificate
 
 **Key Metrics**:
+
 - End-to-end flow time
 - Success rate
 - Step completion rate
@@ -208,6 +219,7 @@ Complete user journeys:
 ### 4. Authentication Flows (`auth-flows.js`)
 
 Authentication and authorization:
+
 - User registration
 - User login
 - Token refresh
@@ -215,6 +227,7 @@ Authentication and authorization:
 - Session management
 
 **Key Metrics**:
+
 - Auth latency
 - Token generation time
 - Session validation speed
@@ -245,6 +258,7 @@ k6 run packages/api/load/scenarios/search-discovery.js
 ### CI/CD Integration
 
 Tests run automatically:
+
 - **Nightly**: Full suite against staging
 - **On PR**: Smoke tests only
 - **Pre-release**: Comprehensive suite
@@ -308,6 +322,7 @@ git commit -m "chore: update search performance baseline"
 ### Baseline Comparison
 
 Automated comparison in CI:
+
 - **Regression**: > 10% slower than baseline → ❌ Fail
 - **Warning**: 5-10% slower → ⚠️ Warning
 - **Acceptable**: < 5% difference → ✅ Pass
@@ -368,32 +383,38 @@ Automated comparison in CI:
 ## Best Practices
 
 ### 1. Test Realistic Scenarios
+
 - Use realistic user behavior patterns
 - Include think time between requests
 - Vary request parameters
 
 ### 2. Start Small
+
 - Run smoke tests first
 - Gradually increase load
 - Monitor system metrics
 
 ### 3. Establish Baselines
+
 - Record baseline performance
 - Track trends over time
 - Alert on regressions
 
 ### 4. Test Regularly
+
 - Nightly automated tests
 - Before releases
 - After infrastructure changes
 
 ### 5. Monitor Everything
+
 - Application metrics
 - Database performance
 - Infrastructure resources
 - Business metrics
 
 ### 6. Document Findings
+
 - Record test results
 - Document bottlenecks
 - Track improvements
@@ -408,6 +429,7 @@ Automated comparison in CI:
 ## Support
 
 For issues or questions:
+
 1. Check k6 documentation
 2. Review test results
 3. Check application logs

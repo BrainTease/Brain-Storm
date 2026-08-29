@@ -59,9 +59,7 @@ const config = {
   timeoutFactor: 1.25,
   maxConcurrentTestRunners: 4,
   concurrency: 4,
-  plugins: [
-    '@stryker-mutator/typescript-checker',
-  ],
+  plugins: ['@stryker-mutator/typescript-checker'],
   checkers: ['typescript'],
   tsconfigFile: 'tsconfig.json',
 };

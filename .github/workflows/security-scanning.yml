@@ -199,17 +199,17 @@ jobs:
       - name: Check for critical vulnerabilities
         run: |
           echo "## Security Gate Check" >> $GITHUB_STEP_SUMMARY
-          
+
           if [ "${{ needs.sast-sonarqube.result }}" == "failure" ]; then
             echo "❌ SAST scan failed - critical issues detected" >> $GITHUB_STEP_SUMMARY
             exit 1
           fi
-          
+
           if [ "${{ needs.container-scanning.result }}" == "failure" ]; then
             echo "❌ Container scan failed - critical vulnerabilities detected" >> $GITHUB_STEP_SUMMARY
             exit 1
           fi
-          
+
           echo "✅ All security gates passed" >> $GITHUB_STEP_SUMMARY
 
   vulnerability-tracking:
@@ -302,7 +302,7 @@ jobs:
           script: |
             const fs = require('fs');
             const report = fs.readFileSync('security-reports/vulnerability-report.md', 'utf8');
-            
+
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,

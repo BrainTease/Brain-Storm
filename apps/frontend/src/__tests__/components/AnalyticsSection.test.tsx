@@ -46,7 +46,7 @@ const REACT_MEMO_TYPE = Symbol.for('react.memo');
 describe('Analytics chart memoization (issue #956)', () => {
   it('ProgressOverTimeChart is wrapped with React.memo', () => {
     expect((ProgressOverTimeChart as unknown as { $$typeof: symbol }).$$typeof).toBe(
-      REACT_MEMO_TYPE,
+      REACT_MEMO_TYPE
     );
   });
 

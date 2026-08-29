@@ -72,14 +72,17 @@ npx playwright show-report
 We target **WCAG 2.1 AA** compliance as our baseline:
 
 ### Level A (Must Have)
+
 - Basic web accessibility features
 - Essential for some users
 
 ### Level AA (Should Have) - Our Target
+
 - Deals with common barriers for disabled users
 - Required for many legal frameworks
 
 ### Level AAA (Nice to Have)
+
 - Highest level of accessibility
 - May not be possible for all content
 
@@ -155,21 +158,25 @@ PRs with critical accessibility violations **cannot be merged**. The CI workflow
 ## Violation Severity Levels
 
 ### Critical ❌
+
 - **Impact**: Severe - Blocks access for users
 - **Action**: Must fix before merge
 - **Examples**: Missing form labels, poor color contrast, no keyboard access
 
 ### Serious ⚠️
+
 - **Impact**: High - Significant barrier
 - **Action**: Should fix soon (may be flagged in PR)
 - **Examples**: Missing alt text, improper heading hierarchy
 
 ### Moderate ℹ️
+
 - **Impact**: Medium - Some users affected
 - **Action**: Fix in follow-up
 - **Examples**: Missing lang attribute, redundant links
 
 ### Minor 💡
+
 - **Impact**: Low - Best practice
 - **Action**: Fix when convenient
 - **Examples**: Missing page titles, ARIA best practices
@@ -195,9 +202,9 @@ test.describe('Page Accessibility @a11y', () => {
       // Only fail on critical and serious violations
       rules: {
         'color-contrast': { enabled: true },
-        'label': { enabled: true },
-        'button-name': { enabled: true }
-      }
+        label: { enabled: true },
+        'button-name': { enabled: true },
+      },
     });
   });
 });
@@ -209,10 +216,10 @@ test.describe('Page Accessibility @a11y', () => {
 test('button should be accessible', async ({ page }) => {
   await page.goto('/page-with-button');
   await injectAxe(page);
-  
+
   // Check specific element
   await checkA11y(page, '[data-testid="my-button"]', {
-    detailedReport: true
+    detailedReport: true,
   });
 });
 ```
@@ -222,12 +229,12 @@ test('button should be accessible', async ({ page }) => {
 ```typescript
 test('should be keyboard navigable', async ({ page }) => {
   await page.goto('/');
-  
+
   // Tab through elements
   await page.keyboard.press('Tab');
   const focused = await page.evaluate(() => document.activeElement?.tagName);
   expect(focused).toBeTruthy();
-  
+
   // Check focus visibility
   const focusVisible = await page.evaluate(() => {
     const el = document.activeElement as HTMLElement;
@@ -241,29 +248,35 @@ test('should be keyboard navigable', async ({ page }) => {
 ## Best Practices
 
 ### 1. Test Early and Often
+
 - Run tests during development
 - Fix issues before committing
 - Don't wait for CI to catch problems
 
 ### 2. Use Semantic HTML
+
 - Use proper HTML5 elements
 - Add ARIA only when necessary
 - Let browsers do the work
 
 ### 3. Think Beyond Automation
+
 - Automated tests catch ~30-40% of issues
 - Manual testing with screen readers is essential
 - User testing with people with disabilities is invaluable
 
 ### 4. Document Exceptions
+
 If you must suppress a violation:
+
 ```typescript
 await checkA11y(page, null, {
   rules: {
-    'rule-id': { enabled: false }
-  }
+    'rule-id': { enabled: false },
+  },
 });
 ```
+
 Document WHY in a comment and create a ticket to fix it.
 
 ## Common Accessibility Patterns
@@ -299,16 +312,20 @@ Document WHY in a comment and create a ticket to fix it.
     aria-invalid={hasError}
     aria-describedby="email-error"
   />
-</label>
-{hasError && (
-  <span id="email-error" role="alert">
-    Please enter a valid email
-  </span>
-)}
+</label>;
+{
+  hasError && (
+    <span id="email-error" role="alert">
+      Please enter a valid email
+    </span>
+  );
+}
 
 // ❌ Bad
-<input type="email" placeholder="Email" />
-{hasError && <span>Error!</span>}
+<input type="email" placeholder="Email" />;
+{
+  hasError && <span>Error!</span>;
+}
 ```
 
 ### Accessible Modal
@@ -338,16 +355,19 @@ Document WHY in a comment and create a ticket to fix it.
 ## Resources
 
 ### Official Documentation
+
 - [WCAG 2.1 Guidelines](https://www.w3.org/WAI/WCAG21/quickref/)
 - [axe-core Rules](https://github.com/dequelabs/axe-core/blob/develop/doc/rule-descriptions.md)
 - [ARIA Authoring Practices](https://www.w3.org/WAI/ARIA/apg/)
 
 ### Tools
+
 - [axe DevTools Browser Extension](https://www.deque.com/axe/devtools/)
 - [WAVE Browser Extension](https://wave.webaim.org/extension/)
 - [Lighthouse](https://developers.google.com/web/tools/lighthouse)
 
 ### Testing
+
 - [Screen Reader Testing](https://webaim.org/articles/screenreader_testing/)
 - [Keyboard Testing](https://webaim.org/articles/keyboard/)
 - [Color Contrast Checker](https://webaim.org/resources/contrastchecker/)

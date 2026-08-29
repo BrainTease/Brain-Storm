@@ -25,22 +25,26 @@ packages/
 ## Key Features
 
 ### 1. API Integration
+
 - Axios-based client with auth token management
 - Base URL configuration via Expo Constants
 - Automatic retry and error handling
 
 ### 2. Navigation
+
 - React Navigation with native stack
 - Bottom tabs for main sections (Discovery, Profile)
 - Deep linking support for notifications
 
 ### 3. Stellar Wallet Integration
+
 - Deep link-based wallet connection
 - Transaction signing via external wallet apps
 - Support for tips and escrow on testnet
 - Secure storage of connection state
 
 ### 4. Push Notifications
+
 - FCM (Android) and APNs (iOS) via Expo
 - Device token registration with backend
 - Foreground and background notification handling
@@ -48,6 +52,7 @@ packages/
 - User notification preferences
 
 ### 5. Design System
+
 - Shared design tokens (colors, typography, spacing)
 - Consistent styling across components
 - Reusable theme from `@brain-storm/types`

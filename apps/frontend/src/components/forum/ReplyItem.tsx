@@ -88,9 +88,7 @@ export function ReplyItem({
                 </span>
               )}
             </div>
-            <p className="text-xs text-gray-500">
-              {formatDateTime(reply.createdAt)}
-            </p>
+            <p className="text-xs text-gray-500">{formatDateTime(reply.createdAt)}</p>
           </div>
         </div>
 

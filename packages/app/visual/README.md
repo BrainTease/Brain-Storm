@@ -70,10 +70,11 @@ Visual tests run automatically on pull requests. The workflow:
 
 2. **Intentional Changes**
    If the visual changes are intentional:
+
    ```bash
    # Update baselines locally
    npm run test:visual:update --workspace=apps/frontend
-   
+
    # Commit the updated snapshots
    git add apps/frontend/e2e/visual/**/*.png
    git commit -m "chore: update visual regression baselines"
@@ -98,32 +99,36 @@ Visual tests run automatically on pull requests. The workflow:
 ### Writing Visual Tests
 
 1. **Wait for Stability**
+
    ```typescript
    await page.waitForLoadState('networkidle');
    await page.waitForTimeout(500); // Allow animations to complete
    ```
 
 2. **Mask Dynamic Content**
+
    ```typescript
    await expect(page).toHaveScreenshot('page.png', {
      mask: [
        page.locator('[data-testid="timestamp"]'),
-       page.locator('[data-testid="dynamic-content"]')
-     ]
+       page.locator('[data-testid="dynamic-content"]'),
+     ],
    });
    ```
 
 3. **Test Multiple Viewports**
+
    ```typescript
    await page.setViewportSize({ width: 375, height: 667 }); // Mobile
    await page.setViewportSize({ width: 1920, height: 1080 }); // Desktop
    ```
 
 4. **Test Both Themes**
+
    ```typescript
    // Light mode
    await expect(page).toHaveScreenshot('component-light.png');
-   
+
    // Dark mode
    await page.click('[data-testid="theme-toggle"]');
    await page.waitForTimeout(500);
@@ -133,6 +138,7 @@ Visual tests run automatically on pull requests. The workflow:
 ### What to Test
 
 ✅ **Do Test:**
+
 - Critical user-facing pages
 - Reusable UI components
 - Different theme modes
@@ -141,6 +147,7 @@ Visual tests run automatically on pull requests. The workflow:
 - Error and empty states
 
 ❌ **Don't Test:**
+
 - Highly dynamic content (real-time data)
 - Third-party widgets
 - Time-dependent displays
@@ -151,6 +158,7 @@ Visual tests run automatically on pull requests. The workflow:
 ### Flaky Tests
 
 If tests are inconsistent:
+
 - Add more wait time for animations
 - Mask dynamic content
 - Use `maxDiffPixels` threshold for minor rendering differences
@@ -159,6 +167,7 @@ If tests are inconsistent:
 ### Large Diffs
 
 If every test shows large diffs:
+
 - Check if fonts loaded correctly
 - Verify base URL is correct
 - Ensure test data is consistent
@@ -167,6 +176,7 @@ If every test shows large diffs:
 ### Performance
 
 If tests are slow:
+
 - Use `fullyParallel: true` in config
 - Reduce number of browsers tested
 - Test critical paths only in visual suite
@@ -179,6 +189,7 @@ If tests are slow:
 Location: `apps/frontend/playwright-visual.config.ts`
 
 Key settings:
+
 - `testDir`: `./e2e/visual`
 - `reporter`: HTML and JSON
 - `projects`: Chromium, Firefox, WebKit, Mobile Chrome, Mobile Safari
@@ -188,6 +199,7 @@ Key settings:
 Location: `.github/workflows/visual-regression-testing.yml`
 
 Triggers:
+
 - Pull requests to `main`
 - Changes in `apps/frontend/**`
 
@@ -200,6 +212,7 @@ Triggers:
 ## Support
 
 For issues or questions:
+
 1. Check this documentation
 2. Review existing test examples
 3. Open an issue with the `testing` label

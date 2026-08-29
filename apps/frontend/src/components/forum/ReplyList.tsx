@@ -64,9 +64,7 @@ export function ReplyList({
           <div className="flex items-center justify-between mb-2">
             <span className="font-medium text-sm">{reply.authorName}</span>
             <div className="flex items-center gap-3">
-              <span className="text-xs text-gray-400">
-                {formatDateShort(reply.createdAt)}
-              </span>
+              <span className="text-xs text-gray-400">{formatDateShort(reply.createdAt)}</span>
               {canModerate && (
                 <button
                   className="text-xs text-red-500 hover:underline"

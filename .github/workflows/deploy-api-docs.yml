@@ -156,15 +156,15 @@ jobs:
         run: |
           cat > docs/api/dist/CHANGELOG.md << 'EOF'
           # API Changelog
-          
+
           ## Version ${{ steps.version.outputs.version }}
-          
+
           Generated: $(date -u +'%Y-%m-%d %H:%M:%S UTC')
-          
+
           ### Endpoints
-          
+
           EOF
-          
+
           # Extract endpoints from OpenAPI spec
           jq -r '.paths | keys[]' apps/backend/openapi.json >> docs/api/dist/CHANGELOG.md || true
 
@@ -178,7 +178,7 @@ jobs:
             "tags": []
           }
           EOF
-          
+
           # Build search index from OpenAPI spec
           jq '.paths | to_entries[] | {path: .key, methods: .value | keys}' apps/backend/openapi.json >> docs/api/dist/search-index.json || true
 
@@ -195,7 +195,7 @@ jobs:
         with:
           script: |
             const version = '${{ steps.version.outputs.version }}';
-            
+
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
@@ -294,7 +294,7 @@ jobs:
         with:
           script: |
             const version = '${{ needs.build-documentation.outputs.doc_version }}';
-            
+
             github.rest.repos.createDeployment({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -304,4 +304,3 @@ jobs:
               auto_merge: false,
               required_contexts: []
             });
-
