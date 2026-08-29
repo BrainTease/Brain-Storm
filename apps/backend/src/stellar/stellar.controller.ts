@@ -7,6 +7,8 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { ValidateRequest } from '../common/decorators/validate-request.decorator';
+import { RateLimit } from '../common/decorators/rate-limit.decorator';
+import { RateLimitPresets } from '../middleware/rate-limit.middleware';
 import {
   fundTestnetSchema,
   mintCredentialSchema,
@@ -37,6 +39,7 @@ export class StellarController {
 
   @Post('fund-testnet')
   @ValidateRequest({ body: fundTestnetSchema })
+  @RateLimit(RateLimitPresets.testnetFunding)
   @ApiOperation({ summary: 'Fund a testnet account via Friendbot (testnet only)' })
   @ApiResponse({ status: 201, description: 'Account funded successfully' })
   @ApiResponse({ status: 400, description: 'Not available on mainnet or Friendbot error' })
@@ -46,6 +49,7 @@ export class StellarController {
 
   @Post('mint')
   @ValidateRequest({ body: mintCredentialSchema })
+  @RateLimit({ ...RateLimitPresets.transaction, useAccountId: true })
   @Throttle({ default: { limit: 3, ttl: 60000 } })
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
@@ -96,6 +100,7 @@ export class CredentialsController {
 
   @Post('issue')
   @ValidateRequest({ body: issueCredentialSchema })
+  @RateLimit({ ...RateLimitPresets.transaction, useAccountId: true })
   @Throttle({ default: { limit: 3, ttl: 60000 } })
   @Roles('admin')
   @ApiOperation({ summary: 'Issue a credential for course completion' })
