@@ -97,6 +97,7 @@ pub enum GovernanceKey {
     Proposal(u64),
     VoteRecord(u64, Address),
     Delegate(Address),
+    VotingPowerCheckpoint(Address),
     NextProposalId,
     TotalSupply,
     QuorumPercentage,
@@ -421,8 +422,31 @@ pub fn delegate_vote(env: &Env, delegator: Address, delegate: Address) {
         .instance()
         .set(&GovernanceKey::Delegate(delegator.clone()), &delegate);
 
+    let checkpoint: Option<i128> = env
+        .storage()
+        .instance()
+        .get(&GovernanceKey::VotingPowerCheckpoint(delegate.clone()));
+    if checkpoint.is_none() {
+        env.storage()
+            .instance()
+            .set(&GovernanceKey::VotingPowerCheckpoint(delegate.clone()), &0_i128);
+    }
+
     env.events()
         .publish((VOTE_DELEGATED,), (delegator, delegate));
+}
+
+pub fn get_checkpointed_voting_power(env: &Env, voter: Address) -> i128 {
+    env.storage()
+        .instance()
+        .get(&GovernanceKey::VotingPowerCheckpoint(voter))
+        .unwrap_or(0)
+}
+
+pub fn checkpoint_voting_power(env: &Env, voter: Address, power: i128) {
+    env.storage()
+        .instance()
+        .set(&GovernanceKey::VotingPowerCheckpoint(voter), &power);
 }
 
 pub fn get_proposal(env: &Env, proposal_id: u64) -> Option<VotingProposal> {
