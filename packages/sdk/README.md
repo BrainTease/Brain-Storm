@@ -152,3 +152,30 @@ cd packages/sdk && npm run test:coverage             # with coverage
 ```
 
 Tests live alongside the source as `src/*.test.ts` (`ts-jest`, config in `jest.config.js`) and mock the global `fetch` — no network access or fetch polyfill required.
+
+## Contract ABI Drift Detection
+
+The repository includes automated drift-detection tests (`__tests__/quality/sdk-contract-abi-drift.test.ts`) that validate the SDK types remain consistent with the Soroban contract interfaces. These tests:
+
+1. **Parse contract Rust source** to extract public method signatures from all `#[contractimpl]` blocks.
+2. **Parse the backend** `soroban-rpc-client.service.ts` to verify every invoked contract method actually exists in the contract source.
+3. **Validate SDK TypeScript types** (e.g. `RecordProgressDto`, `ProgressDto`, `CourseDto`) match expected field names and types.
+4. **Cross-check type consistency** — e.g. `progressPct` must be `number` (maps to contract `u32`), `courseId` must be `string` (maps to contract `Symbol`).
+
+Run the drift tests from the monorepo root:
+
+```bash
+npx vitest run __tests__/quality/sdk-contract-abi-drift.test.ts
+npx vitest run __tests__/quality/sdk-contract-staleness-regression.test.ts
+```
+
+### When a contract interface intentionally changes
+
+If you change a Soroban contract's public method signature (rename, add/remove params, change types), you must update the following in order:
+
+1. **Contract source** — update the `#[contractimpl]` method in `contracts/<name>/src/lib.rs`.
+2. **Backend Soroban RPC client** — update `apps/backend/src/stellar/soroban-rpc-client.service.ts` to call the new method name / argument list.
+3. **Backend DTOs** — update any affected DTOs in `apps/backend/src/**/dto/`.
+4. **SDK types** — update `packages/sdk/src/index.ts` to mirror the backend DTOs.
+5. **Drift test mapping** — update the `CONTRACT_METHOD_TO_CONTRACT` map in `__tests__/quality/sdk-contract-abi-drift.test.ts` if you added a new contract method mapping.
+6. **Run tests** — verify `npx vitest run __tests__/quality/` passes.
