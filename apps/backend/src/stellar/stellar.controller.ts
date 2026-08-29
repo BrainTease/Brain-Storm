@@ -6,6 +6,12 @@ import { NetworkMonitorService } from './network-monitor.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+import { ValidateRequest } from '../common/decorators/validate-request.decorator';
+import {
+  fundTestnetSchema,
+  mintCredentialSchema,
+  issueCredentialSchema,
+} from '../common/validation/schemas';
 
 @ApiTags('stellar')
 @Controller('stellar')
@@ -30,6 +36,7 @@ export class StellarController {
   }
 
   @Post('fund-testnet')
+  @ValidateRequest({ body: fundTestnetSchema })
   @ApiOperation({ summary: 'Fund a testnet account via Friendbot (testnet only)' })
   @ApiResponse({ status: 201, description: 'Account funded successfully' })
   @ApiResponse({ status: 400, description: 'Not available on mainnet or Friendbot error' })
@@ -38,6 +45,7 @@ export class StellarController {
   }
 
   @Post('mint')
+  @ValidateRequest({ body: mintCredentialSchema })
   @Throttle({ default: { limit: 3, ttl: 60000 } })
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
@@ -87,6 +95,7 @@ export class CredentialsController {
   constructor(private stellarService: StellarService) {}
 
   @Post('issue')
+  @ValidateRequest({ body: issueCredentialSchema })
   @Throttle({ default: { limit: 3, ttl: 60000 } })
   @Roles('admin')
   @ApiOperation({ summary: 'Issue a credential for course completion' })
