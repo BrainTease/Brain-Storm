@@ -36,6 +36,7 @@ import {
 } from '@stellar/stellar-sdk';
 import { decodeBigIntValue } from './soroban-xdr.utils';
 import { CircuitBreaker, CircuitBreakerFactory } from './circuit-breaker';
+import { StellarClientFactory } from './stellar-client.factory';
 
 const MAX_RETRIES = 3;
 const BASE_DELAY_MS = 1_000;
@@ -53,17 +54,19 @@ export class SorobanRpcClientService implements OnModuleInit {
   private circuitBreakerFactory = new CircuitBreakerFactory();
   private circuitBreakers = new Map<string, CircuitBreaker<any>>();
 
-  constructor(private readonly configService: ConfigService) {
-    const isTestnet = this.configService.get<string>('stellar.network') !== 'mainnet';
-
-    this.networkPassphrase = isTestnet ? Networks.TESTNET : Networks.PUBLIC;
-
-    const rpcUrl = this.configService.get<string>('stellar.sorobanRpcUrl') ?? '';
-    this.server = new SorobanRpc.Server(rpcUrl);
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly clientFactory: StellarClientFactory
+  ) {
+    // Use centralized client factory instead of creating new instance
+    this.server = this.clientFactory.getSorobanClient();
+    this.networkPassphrase = this.clientFactory.getNetworkPassphrase();
 
     this.contractId = this.configService.get<string>('stellar.contractId') ?? '';
     this.analyticsContractId = this.configService.get<string>('stellar.analyticsContractId') ?? '';
     this.tokenContractId = this.configService.get<string>('stellar.tokenContractId') ?? '';
+
+    this.logger.log('SorobanRpcClientService initialized using StellarClientFactory');
   }
 
   onModuleInit() {

@@ -32,6 +32,7 @@ import {
   StellarTxStatus,
 } from './stellar-transaction-log.entity';
 import { SorobanRpcClientService } from './soroban-rpc-client.service';
+import { StellarClientFactory } from './stellar-client.factory';
 
 @Injectable()
 export class StellarService {
@@ -44,14 +45,13 @@ export class StellarService {
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     @InjectRepository(StellarTransactionLog)
     private readonly txLogRepo: Repository<StellarTransactionLog>,
-    private readonly sorobanRpc: SorobanRpcClientService
+    private readonly sorobanRpc: SorobanRpcClientService,
+    private readonly clientFactory: StellarClientFactory
   ) {
-    const isTestnet = this.configService.get<string>('stellar.network') !== 'mainnet';
-    this.networkPassphrase = isTestnet ? Networks.TESTNET : Networks.PUBLIC;
-
-    this.server = new Horizon.Server(
-      isTestnet ? 'https://horizon-testnet.stellar.org' : 'https://horizon.stellar.org'
-    );
+    // Use centralized client factory instead of creating new instance
+    this.server = this.clientFactory.getHorizonClient();
+    this.networkPassphrase = this.clientFactory.getNetworkPassphrase();
+    this.logger.log('StellarService initialized using StellarClientFactory');
   }
 
   // ── Public API ────────────────────────────────────────────────────────────
