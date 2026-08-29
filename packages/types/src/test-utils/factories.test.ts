@@ -16,10 +16,16 @@ import {
   CourseFactory,
   EnrollmentFactory,
   QuizFactory,
+  CredentialFactory,
+  ProgressFactory,
+  PaymentFactory,
   type TestUser,
   type TestCourse,
   type TestEnrollment,
   type TestQuiz,
+  type TestCredential,
+  type TestProgress,
+  type TestPayment,
 } from './index';
 
 // ---------------------------------------------------------------------------
@@ -315,6 +321,259 @@ describe('QuizFactory', () => {
     it('returns objects with distinct ids', () => {
       const quizzes = QuizFactory.createMany(5);
       const ids = quizzes.map((q) => q.id);
+      expect(new Set(ids).size).toBe(5);
+    });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// CredentialFactory
+// ---------------------------------------------------------------------------
+
+describe('CredentialFactory', () => {
+  describe('create()', () => {
+    it('returns an object with all required TestCredential fields', () => {
+      const credential = CredentialFactory.create();
+      expect(typeof credential.id).toBe('string');
+      expect(typeof credential.userId).toBe('string');
+      expect(typeof credential.courseId).toBe('string');
+      expect(typeof credential.courseName).toBe('string');
+      expect(['pending', 'issued', 'revoked']).toContain(credential.status);
+      expect(
+        credential.issuedAt === null || credential.issuedAt instanceof Date,
+      ).toBe(true);
+      expect(
+        credential.txHash === null || typeof credential.txHash === 'string',
+      ).toBe(true);
+      expect(credential.createdAt).toBeInstanceOf(Date);
+    });
+
+    it('defaults status to "issued"', () => {
+      expect(CredentialFactory.create().status).toBe('issued');
+    });
+
+    it('defaults issuedAt to a recent date', () => {
+      const credential = CredentialFactory.create();
+      expect(credential.issuedAt).toBeInstanceOf(Date);
+    });
+
+    it('defaults txHash to a non-null string', () => {
+      const credential = CredentialFactory.create();
+      expect(typeof credential.txHash).toBe('string');
+    });
+
+    it('applies status override', () => {
+      const pending = CredentialFactory.create({ status: 'pending' });
+      expect(pending.status).toBe('pending');
+    });
+
+    it('applies txHash override', () => {
+      const credential = CredentialFactory.create({ txHash: 'abc123' });
+      expect(credential.txHash).toBe('abc123');
+    });
+
+    it('applies null txHash override', () => {
+      const credential = CredentialFactory.create({ txHash: null });
+      expect(credential.txHash).toBeNull();
+    });
+
+    it('applies courseId override', () => {
+      const credential = CredentialFactory.create({ courseId: 'course-xyz' });
+      expect(credential.courseId).toBe('course-xyz');
+    });
+
+    it('produces unique ids on successive calls', () => {
+      expect(CredentialFactory.create().id).not.toBe(CredentialFactory.create().id);
+    });
+  });
+
+  describe('createMany()', () => {
+    it('returns exactly the requested count', () => {
+      expect(CredentialFactory.createMany(4)).toHaveLength(4);
+    });
+
+    it('applies overrides to every element', () => {
+      const pending = CredentialFactory.createMany(3, { status: 'pending' });
+      pending.forEach((c) => expect(c.status).toBe('pending'));
+    });
+
+    it('returns objects with distinct ids', () => {
+      const credentials = CredentialFactory.createMany(5);
+      const ids = credentials.map((c) => c.id);
+      expect(new Set(ids).size).toBe(5);
+    });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// ProgressFactory
+// ---------------------------------------------------------------------------
+
+describe('ProgressFactory', () => {
+  describe('create()', () => {
+    it('returns an object with all required TestProgress fields', () => {
+      const progress = ProgressFactory.create();
+      expect(typeof progress.id).toBe('string');
+      expect(typeof progress.userId).toBe('string');
+      expect(typeof progress.courseId).toBe('string');
+      expect(typeof progress.progressPct).toBe('number');
+      expect(typeof progress.completed).toBe('boolean');
+      expect(
+        progress.txHash === null || typeof progress.txHash === 'string',
+      ).toBe(true);
+      expect(progress.updatedAt).toBeInstanceOf(Date);
+    });
+
+    it('progressPct is within 0–100', () => {
+      for (let i = 0; i < 20; i++) {
+        const { progressPct } = ProgressFactory.create();
+        expect(progressPct).toBeGreaterThanOrEqual(0);
+        expect(progressPct).toBeLessThanOrEqual(100);
+      }
+    });
+
+    it('completed is true when progressPct is 100', () => {
+      const progress = ProgressFactory.create({ progressPct: 100 });
+      expect(progress.completed).toBe(true);
+    });
+
+    it('completed is false when progressPct is less than 100', () => {
+      const progress = ProgressFactory.create({ progressPct: 50 });
+      expect(progress.completed).toBe(false);
+    });
+
+    it('txHash is null when progressPct is 0', () => {
+      const progress = ProgressFactory.create({ progressPct: 0 });
+      expect(progress.txHash).toBeNull();
+    });
+
+    it('txHash is a string when progressPct > 0', () => {
+      const progress = ProgressFactory.create({ progressPct: 25 });
+      expect(typeof progress.txHash).toBe('string');
+    });
+
+    it('applies progressPct override', () => {
+      const progress = ProgressFactory.create({ progressPct: 42 });
+      expect(progress.progressPct).toBe(42);
+    });
+
+    it('applies completed override', () => {
+      const progress = ProgressFactory.create({ completed: true, progressPct: 99 });
+      expect(progress.completed).toBe(true);
+    });
+
+    it('applies courseId override', () => {
+      const progress = ProgressFactory.create({ courseId: 'course-xyz' });
+      expect(progress.courseId).toBe('course-xyz');
+    });
+
+    it('produces unique ids on successive calls', () => {
+      expect(ProgressFactory.create().id).not.toBe(ProgressFactory.create().id);
+    });
+  });
+
+  describe('createMany()', () => {
+    it('returns exactly the requested count', () => {
+      expect(ProgressFactory.createMany(6)).toHaveLength(6);
+    });
+
+    it('applies overrides to every element', () => {
+      const completed = ProgressFactory.createMany(3, { progressPct: 100, completed: true });
+      completed.forEach((p) => {
+        expect(p.progressPct).toBe(100);
+        expect(p.completed).toBe(true);
+      });
+    });
+
+    it('returns objects with distinct ids', () => {
+      const progressList = ProgressFactory.createMany(5);
+      const ids = progressList.map((p) => p.id);
+      expect(new Set(ids).size).toBe(5);
+    });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// PaymentFactory
+// ---------------------------------------------------------------------------
+
+describe('PaymentFactory', () => {
+  describe('create()', () => {
+    it('returns an object with all required TestPayment fields', () => {
+      const payment = PaymentFactory.create();
+      expect(typeof payment.id).toBe('string');
+      expect(typeof payment.userId).toBe('string');
+      expect(typeof payment.courseId).toBe('string');
+      expect(typeof payment.amount).toBe('number');
+      expect(typeof payment.currency).toBe('string');
+      expect(['pending', 'completed', 'failed', 'refunded']).toContain(payment.status);
+      expect(['stripe', 'stellar']).toContain(payment.provider);
+      expect(
+        payment.providerSessionId === null || typeof payment.providerSessionId === 'string',
+      ).toBe(true);
+      expect(
+        payment.txHash === null || typeof payment.txHash === 'string',
+      ).toBe(true);
+      expect(payment.createdAt).toBeInstanceOf(Date);
+    });
+
+    it('defaults status to "completed"', () => {
+      expect(PaymentFactory.create().status).toBe('completed');
+    });
+
+    it('defaults provider to "stripe"', () => {
+      expect(PaymentFactory.create().provider).toBe('stripe');
+    });
+
+    it('defaults currency to "usd"', () => {
+      expect(PaymentFactory.create().currency).toBe('usd');
+    });
+
+    it('amount is positive', () => {
+      for (let i = 0; i < 20; i++) {
+        expect(PaymentFactory.create().amount).toBeGreaterThan(0);
+      }
+    });
+
+    it('applies amount override', () => {
+      const payment = PaymentFactory.create({ amount: 4999 });
+      expect(payment.amount).toBe(4999);
+    });
+
+    it('applies status override', () => {
+      const payment = PaymentFactory.create({ status: 'failed' });
+      expect(payment.status).toBe('failed');
+    });
+
+    it('applies provider override to stellar', () => {
+      const payment = PaymentFactory.create({ provider: 'stellar', txHash: 'tx123' });
+      expect(payment.provider).toBe('stellar');
+      expect(payment.txHash).toBe('tx123');
+    });
+
+    it('applies courseId override', () => {
+      const payment = PaymentFactory.create({ courseId: 'course-xyz' });
+      expect(payment.courseId).toBe('course-xyz');
+    });
+
+    it('produces unique ids on successive calls', () => {
+      expect(PaymentFactory.create().id).not.toBe(PaymentFactory.create().id);
+    });
+  });
+
+  describe('createMany()', () => {
+    it('returns exactly the requested count', () => {
+      expect(PaymentFactory.createMany(4)).toHaveLength(4);
+    });
+
+    it('applies overrides to every element', () => {
+      const refunds = PaymentFactory.createMany(3, { status: 'refunded' });
+      refunds.forEach((p) => expect(p.status).toBe('refunded'));
+    });
+
+    it('returns objects with distinct ids', () => {
+      const payments = PaymentFactory.createMany(5);
+      const ids = payments.map((p) => p.id);
       expect(new Set(ids).size).toBe(5);
     });
   });
