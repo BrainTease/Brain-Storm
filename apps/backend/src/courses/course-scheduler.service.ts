@@ -14,7 +14,7 @@ export class CourseSchedulerService {
   constructor(
     @InjectRepository(Course) private courseRepo: Repository<Course>,
     @InjectRepository(Enrollment) private enrollmentRepo: Repository<Enrollment>,
-    private notificationsService: NotificationsService,
+    private notificationsService: NotificationsService
   ) {}
 
   /** Runs every minute to publish courses whose scheduledAt has passed. */
@@ -52,9 +52,9 @@ export class CourseSchedulerService {
         this.notificationsService.create(
           e.userId,
           NotificationType.COURSE_PUBLISHED,
-          `"${course.title}" is now live!`,
-        ),
-      ),
+          `"${course.title}" is now live!`
+        )
+      )
     );
   }
 }

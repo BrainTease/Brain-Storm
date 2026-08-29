@@ -41,7 +41,7 @@ const defaultJobOptions = {
       { name: QUEUE_EMAIL },
       { name: QUEUE_NOTIFICATION },
       { name: QUEUE_CERTIFICATE },
-      { name: QUEUE_INDEXING },
+      { name: QUEUE_INDEXING }
     ),
     EmailModule,
     SearchModule,

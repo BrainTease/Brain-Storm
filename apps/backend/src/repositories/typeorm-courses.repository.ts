@@ -4,6 +4,7 @@ import { In, Repository } from 'typeorm';
 import { Course } from '../courses/course.entity';
 import { CourseQueryDto } from '../courses/dto/course-query.dto';
 import { CoursesRepository } from './courses-repository.interface';
+import { QueryOptimizer } from '../common/database/query-optimizer';
 
 @Injectable()
 export class TypeOrmCoursesRepository implements CoursesRepository {
@@ -36,39 +37,26 @@ export class TypeOrmCoursesRepository implements CoursesRepository {
   async findAll(query: CourseQueryDto = {}) {
     const { search, level, page = 1, limit = 20 } = query;
 
-    const qb = this.repo.createQueryBuilder('course')
-      .select([
-        'course.id',
-        'course.title',
-        'course.description',
-        'course.level',
-        'course.durationHours',
-        'course.status',
-        'course.isPublished',
-        'course.requiresKyc',
-        'course.instructorId',
-        'course.publishedAt',
-        'course.createdAt',
-        'course.updatedAt',
-      ])
+    let qb = this.repo
+      .createQueryBuilder('course')
       .where('course.isPublished = :isPublished', { isPublished: true })
       .andWhere('course.isDeleted = :isDeleted', { isDeleted: false });
 
     if (search) {
-      qb.andWhere(
-        '(course.title ILIKE :search OR course.description ILIKE :search)',
-        { search: `%${search}%` },
-      );
+      qb = qb.andWhere('(course.title ILIKE :search OR course.description ILIKE :search)', {
+        search: `%${search}%`,
+      });
     }
 
     if (level) {
-      qb.andWhere('course.level = :level', { level });
+      qb = qb.andWhere('course.level = :level', { level });
     }
 
-    const offset = (page - 1) * limit;
-    qb.skip(offset).take(limit).orderBy('course.createdAt', 'DESC');
-
-    const [data, total] = await qb.getManyAndCount();
+    qb = QueryOptimizer.eagerLoadRelations(qb, ['modules', 'reviews']);
+    const total = await qb.clone().getCount();
+    qb = QueryOptimizer.paginate(qb, page, limit);
+    qb = QueryOptimizer.sort(qb, 'createdAt', 'DESC');
+    const data = await qb.getMany();
 
     return { data, total, page, limit };
   }

@@ -31,7 +31,7 @@ export class PrerequisitesController {
   @ApiOperation({ summary: 'Add a prerequisite to a course' })
   addPrerequisite(
     @Param('courseId') courseId: string,
-    @Body('prerequisiteId') prerequisiteId: string,
+    @Body('prerequisiteId') prerequisiteId: string
   ) {
     return this.prereqService.addPrerequisite(courseId, prerequisiteId);
   }
@@ -41,7 +41,7 @@ export class PrerequisitesController {
   @ApiOperation({ summary: 'Remove a prerequisite from a course' })
   removePrerequisite(
     @Param('courseId') courseId: string,
-    @Param('prerequisiteId') prerequisiteId: string,
+    @Param('prerequisiteId') prerequisiteId: string
   ) {
     return this.prereqService.removePrerequisite(courseId, prerequisiteId);
   }
@@ -52,7 +52,7 @@ export class PrerequisitesController {
   validatePrerequisites(
     @Param('courseId') courseId: string,
     @Param('userId') userId: string,
-    @Body('adminOverride') adminOverride?: boolean,
+    @Body('adminOverride') adminOverride?: boolean
   ) {
     return this.prereqService.validatePrerequisites(userId, courseId, adminOverride ?? false);
   }

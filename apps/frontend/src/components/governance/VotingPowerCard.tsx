@@ -9,11 +9,7 @@ export interface VotingPowerCardProps {
   walletAddress?: string | null;
 }
 
-export function VotingPowerCard({
-  votingPower,
-  loading,
-  walletAddress,
-}: VotingPowerCardProps) {
+export function VotingPowerCard({ votingPower, loading, walletAddress }: VotingPowerCardProps) {
   if (!walletAddress) {
     return (
       <Card className="p-6 bg-gray-50 dark:bg-gray-900/50">

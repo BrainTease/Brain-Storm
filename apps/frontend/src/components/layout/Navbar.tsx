@@ -11,7 +11,12 @@ import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 
 const WalletButton = dynamic(
   () => import('@/components/wallet/WalletButton').then((m) => ({ default: m.WalletButton })),
-  { ssr: false, loading: () => <div className="w-28 h-9 rounded-lg animate-pulse bg-gray-200 dark:bg-gray-700" /> },
+  {
+    ssr: false,
+    loading: () => (
+      <div className="w-28 h-9 rounded-lg animate-pulse bg-gray-200 dark:bg-gray-700" />
+    ),
+  }
 );
 
 export function Navbar() {

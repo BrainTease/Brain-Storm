@@ -8,7 +8,7 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: [
     ['html', { outputFolder: 'playwright-report-visual' }],
-    ['json', { outputFile: 'test-results-visual.json' }]
+    ['json', { outputFile: 'test-results-visual.json' }],
   ],
   use: {
     baseURL: 'http://localhost:3001',

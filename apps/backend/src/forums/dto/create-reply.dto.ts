@@ -8,7 +8,7 @@ export class CreateReplyDto {
   @IsString()
   @Trim()
   @Sanitize(StripHtmlSanitizer)
-  content: string;
+  content!: string;
 
   @ApiPropertyOptional({
     description: 'Mark the reply as the answer (instructors/admins only)',

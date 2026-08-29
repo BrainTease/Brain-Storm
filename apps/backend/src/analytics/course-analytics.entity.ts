@@ -3,33 +3,33 @@ import { Entity, PrimaryGeneratedColumn, Column, UpdateDateColumn, Index } from 
 @Entity('course_analytics')
 export class CourseAnalytics {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Index({ unique: true })
   @Column()
-  courseId: string;
+  courseId!: string;
 
   @Column({ default: 0 })
-  totalEnrollments: number;
+  totalEnrollments!: number;
 
   @Column({ default: 0 })
-  totalCompletions: number;
+  totalCompletions!: number;
 
   @Column({ type: 'float', default: 0 })
-  completionRate: number;
+  completionRate!: number;
 
   @Column({ type: 'float', default: 0 })
-  averageRating: number;
+  averageRating!: number;
 
   @Column({ default: 0 })
-  totalReviews: number;
+  totalReviews!: number;
 
   @Column({ type: 'float', default: 0 })
-  averageProgressPct: number;
+  averageProgressPct!: number;
 
   @Column({ default: 0 })
-  activeLearnersLast30Days: number;
+  activeLearnersLast30Days!: number;
 
   @UpdateDateColumn()
-  lastAggregatedAt: Date;
+  lastAggregatedAt!: Date;
 }

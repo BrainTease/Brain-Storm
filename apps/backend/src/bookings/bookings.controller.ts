@@ -21,11 +21,11 @@ import { BookingService } from './booking.service';
 class AvailabilitySlotDto {
   @ApiProperty({ example: '2026-07-01T09:00:00Z' })
   @IsDateString()
-  startTime: string;
+  startTime!: string;
 
   @ApiProperty({ example: '2026-07-01T17:00:00Z' })
   @IsDateString()
-  endTime: string;
+  endTime!: string;
 
   @ApiProperty({ example: 'Europe/London', required: false })
   @IsOptional()
@@ -38,21 +38,21 @@ class SetAvailabilityDto {
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => AvailabilitySlotDto)
-  slots: AvailabilitySlotDto[];
+  slots!: AvailabilitySlotDto[];
 }
 
 class CreateBookingDto {
   @ApiProperty()
   @IsString()
-  workerId: string;
+  workerId!: string;
 
   @ApiProperty({ example: '2026-07-01T10:00:00Z' })
   @IsDateString()
-  startTime: string;
+  startTime!: string;
 
   @ApiProperty({ example: '2026-07-01T11:00:00Z' })
   @IsDateString()
-  endTime: string;
+  endTime!: string;
 
   @ApiProperty({ example: 'UTC', required: false })
   @IsOptional()
@@ -77,15 +77,12 @@ export class BookingsController {
   @Post('availability')
   @ApiOperation({ summary: 'Set worker availability schedule (replaces existing slots)' })
   @ApiResponse({ status: 201, description: 'Availability slots saved' })
-  setAvailability(
-    @Req() req: { user: { id: string } },
-    @Body() dto: SetAvailabilityDto,
-  ) {
+  setAvailability(@Req() req: { user: { id: string } }, @Body() dto: SetAvailabilityDto) {
     return this.bookingService.setAvailability(req.user.id, dto.slots);
   }
 
   @Get('availability/:workerId')
-  @ApiOperation({ summary: 'Get a worker\'s available slots' })
+  @ApiOperation({ summary: "Get a worker's available slots" })
   @ApiResponse({ status: 200, description: 'List of availability slots' })
   getAvailability(@Param('workerId') workerId: string) {
     return this.bookingService.getAvailability(workerId);
@@ -97,17 +94,14 @@ export class BookingsController {
   @ApiOperation({ summary: 'Request a booking with a worker' })
   @ApiResponse({ status: 201, description: 'Booking request created' })
   @ApiResponse({ status: 409, description: 'Double-booking conflict' })
-  createBooking(
-    @Req() req: { user: { id: string } },
-    @Body() dto: CreateBookingDto,
-  ) {
+  createBooking(@Req() req: { user: { id: string } }, @Body() dto: CreateBookingDto) {
     return this.bookingService.createBooking(
       req.user.id,
       dto.workerId,
       dto.startTime,
       dto.endTime,
       dto.timezone,
-      dto.message,
+      dto.message
     );
   }
 

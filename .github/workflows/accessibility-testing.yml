@@ -75,7 +75,7 @@ jobs:
           echo "" >> a11y-report.md
           echo "## Summary" >> a11y-report.md
           echo "" >> a11y-report.md
-          
+
           if [ -f "apps/frontend/test-results.json" ]; then
             node -e "
               const fs = require('fs');
@@ -142,9 +142,9 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            
+
             let body = '## ♿ Accessibility Test Results\n\n';
-            
+
             // Read test results
             const resultsPath = 'apps/frontend/test-results.json';
             if (fs.existsSync(resultsPath)) {
@@ -196,19 +196,19 @@ jobs:
             } else {
               body += '⚠️ Test results file not found. The tests may not have run successfully.\n';
             }
-            
+
             // Post or update comment
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
             });
-            
+
             const botComment = comments.find(comment => 
               comment.user.type === 'Bot' && 
               comment.body.includes('♿ Accessibility Test Results')
             );
-            
+
             if (botComment) {
               await github.rest.issues.updateComment({
                 owner: context.repo.owner,

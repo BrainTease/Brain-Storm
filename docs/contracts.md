@@ -6,12 +6,12 @@ This guide covers all deployed Soroban smart contracts on the Stellar network fo
 
 ## Contract Addresses
 
-| Contract | Testnet | Mainnet |
-|----------|---------|---------|
-| Certificate | `CDA...` *(replace with deployed address)* | TBD |
-| Token (BST) | `CAS...` *(replace with deployed address)* | TBD |
-| Analytics | `CBZ...` *(replace with deployed address)* | TBD |
-| Governance | `CGV...` *(replace with deployed address)* | TBD |
+| Contract    | Testnet                                    | Mainnet |
+| ----------- | ------------------------------------------ | ------- |
+| Certificate | `CDA...` _(replace with deployed address)_ | TBD     |
+| Token (BST) | `CAS...` _(replace with deployed address)_ | TBD     |
+| Analytics   | `CBZ...` _(replace with deployed address)_ | TBD     |
+| Governance  | `CGV...` _(replace with deployed address)_ | TBD     |
 
 > Deployed addresses are also stored in `scripts/deployed-contracts.json` after running `./scripts/deploy.sh`.
 
@@ -36,17 +36,17 @@ Manages soulbound NFT certificates issued to students upon course completion.
 
 ### Function Signatures
 
-| Function | Parameters | Returns | Auth |
-|----------|-----------|---------|------|
-| `initialize` | `admin: Address` | — | None (once) |
-| `mint_certificate` | `admin: Address, recipient: Address, course_id: Symbol, metadata_url: String` | `u64` (cert ID) | Admin |
-| `get_certificate` | `id: u64` | `Option<CertificateRecord>` | None |
-| `get_certificates_by_owner` | `owner: Address` | `Vec<CertificateRecord>` | None |
+| Function                    | Parameters                                                                    | Returns                     | Auth        |
+| --------------------------- | ----------------------------------------------------------------------------- | --------------------------- | ----------- |
+| `initialize`                | `admin: Address`                                                              | —                           | None (once) |
+| `mint_certificate`          | `admin: Address, recipient: Address, course_id: Symbol, metadata_url: String` | `u64` (cert ID)             | Admin       |
+| `get_certificate`           | `id: u64`                                                                     | `Option<CertificateRecord>` | None        |
+| `get_certificates_by_owner` | `owner: Address`                                                              | `Vec<CertificateRecord>`    | None        |
 
 ### Event Schema
 
-| Topic 1 | Topic 2 | Data |
-|---------|---------|------|
+| Topic 1          | Topic 2        | Data                           |
+| ---------------- | -------------- | ------------------------------ |
 | `Symbol("mint")` | `Symbol("to")` | `(id: u64, course_id: Symbol)` |
 
 ### CLI Examples
@@ -89,20 +89,20 @@ Brain-Storm Token (BST) — SEP-0041 compatible token with instructor vesting.
 
 ### Function Signatures
 
-| Function | Parameters | Returns | Auth |
-|----------|-----------|---------|------|
-| `mint` | `to: Address, amount: i128` | — | Admin |
-| `transfer` | `from: Address, to: Address, amount: i128` | — | `from` |
-| `balance` | `id: Address` | `i128` | None |
-| `create_vesting` | `admin: Address, beneficiary: Address, total_amount: i128, cliff_ledger: u32, end_ledger: u32` | — | Admin |
-| `claim_vesting` | `beneficiary: Address` | `i128` (claimed) | Beneficiary |
+| Function         | Parameters                                                                                     | Returns          | Auth        |
+| ---------------- | ---------------------------------------------------------------------------------------------- | ---------------- | ----------- |
+| `mint`           | `to: Address, amount: i128`                                                                    | —                | Admin       |
+| `transfer`       | `from: Address, to: Address, amount: i128`                                                     | —                | `from`      |
+| `balance`        | `id: Address`                                                                                  | `i128`           | None        |
+| `create_vesting` | `admin: Address, beneficiary: Address, total_amount: i128, cliff_ledger: u32, end_ledger: u32` | —                | Admin       |
+| `claim_vesting`  | `beneficiary: Address`                                                                         | `i128` (claimed) | Beneficiary |
 
 ### Event Schema
 
-| Topic 1 | Topic 2 | Data |
-|---------|---------|------|
+| Topic 1              | Topic 2          | Data                                         |
+| -------------------- | ---------------- | -------------------------------------------- |
 | `Symbol("transfer")` | `Symbol("from")` | `(from: Address, to: Address, amount: i128)` |
-| `Symbol("mint")` | `Symbol("to")` | `(to: Address, amount: i128)` |
+| `Symbol("mint")`     | `Symbol("to")`   | `(to: Address, amount: i128)`                |
 
 ### CLI Examples
 
@@ -147,17 +147,17 @@ Tracks per-student, per-course progress on-chain.
 
 ### Function Signatures
 
-| Function | Parameters | Returns | Auth |
-|----------|-----------|---------|------|
-| `record_progress` | `caller: Address, student: Address, course_id: Symbol, progress_pct: u32` | — | Caller (backend) |
-| `get_progress` | `student: Address, course_id: Symbol` | `Option<ProgressRecord>` | None |
+| Function          | Parameters                                                                | Returns                  | Auth             |
+| ----------------- | ------------------------------------------------------------------------- | ------------------------ | ---------------- |
+| `record_progress` | `caller: Address, student: Address, course_id: Symbol, progress_pct: u32` | —                        | Caller (backend) |
+| `get_progress`    | `student: Address, course_id: Symbol`                                     | `Option<ProgressRecord>` | None             |
 
 ### Event Schema
 
-| Topic 1 | Topic 2 | Data |
-|---------|---------|------|
-| `Symbol("analytics")` | `Symbol("prog_upd")` | `(student: Address, course_id: Symbol, progress_pct: u32)` |
-| `Symbol("analytics")` | `Symbol("completed")` | `(student: Address, course_id: Symbol)` |
+| Topic 1               | Topic 2               | Data                                                       |
+| --------------------- | --------------------- | ---------------------------------------------------------- |
+| `Symbol("analytics")` | `Symbol("prog_upd")`  | `(student: Address, course_id: Symbol, progress_pct: u32)` |
+| `Symbol("analytics")` | `Symbol("completed")` | `(student: Address, course_id: Symbol)`                    |
 
 ### CLI Examples
 
@@ -192,12 +192,12 @@ On-chain proposal and voting for platform parameter changes.
 
 ### Function Signatures
 
-| Function | Parameters | Returns | Auth |
-|----------|-----------|---------|------|
-| `create_proposal` | `proposer: Address, title: Symbol, description: String, voting_end_ledger: u32` | `u32` (proposal ID) | BST holder |
-| `vote` | `voter: Address, proposal_id: u32, support: bool` | — | BST holder |
-| `execute_proposal` | `proposal_id: u32` | — | Anyone (after voting ends) |
-| `get_proposal` | `proposal_id: u32` | `Option<Proposal>` | None |
+| Function           | Parameters                                                                      | Returns             | Auth                       |
+| ------------------ | ------------------------------------------------------------------------------- | ------------------- | -------------------------- |
+| `create_proposal`  | `proposer: Address, title: Symbol, description: String, voting_end_ledger: u32` | `u32` (proposal ID) | BST holder                 |
+| `vote`             | `voter: Address, proposal_id: u32, support: bool`                               | —                   | BST holder                 |
+| `execute_proposal` | `proposal_id: u32`                                                              | —                   | Anyone (after voting ends) |
+| `get_proposal`     | `proposal_id: u32`                                                              | `Option<Proposal>`  | None                       |
 
 ### CLI Examples
 
@@ -256,7 +256,7 @@ async function mintCertificate(
   adminKeypair: Keypair,
   studentAddress: string,
   courseId: string,
-  metadataUrl: string,
+  metadataUrl: string
 ): Promise<string> {
   const adminAccount = await server.getAccount(adminKeypair.publicKey());
   const contract = new Contract(CERT_CONTRACT_ID);
@@ -271,8 +271,8 @@ async function mintCertificate(
         Address.fromString(adminKeypair.publicKey()).toScVal(),
         Address.fromString(studentAddress).toScVal(),
         xdr.ScVal.scvSymbol(courseId),
-        xdr.ScVal.scvString(metadataUrl),
-      ),
+        xdr.ScVal.scvString(metadataUrl)
+      )
     )
     .setTimeout(30)
     .build();
@@ -292,7 +292,7 @@ async function recordProgress(
   backendKeypair: Keypair,
   studentAddress: string,
   courseId: string,
-  progressPct: number,
+  progressPct: number
 ): Promise<void> {
   const account = await server.getAccount(backendKeypair.publicKey());
   const contract = new Contract(process.env.ANALYTICS_CONTRACT_ID!);
@@ -307,8 +307,8 @@ async function recordProgress(
         Address.fromString(backendKeypair.publicKey()).toScVal(),
         Address.fromString(studentAddress).toScVal(),
         xdr.ScVal.scvSymbol(courseId),
-        xdr.ScVal.scvU32(progressPct),
-      ),
+        xdr.ScVal.scvU32(progressPct)
+      )
     )
     .setTimeout(30)
     .build();
@@ -330,9 +330,7 @@ async function getTokenBalance(userAddress: string): Promise<bigint> {
     fee: '100',
     networkPassphrase: Networks.TESTNET,
   })
-    .addOperation(
-      contract.call('balance', Address.fromString(userAddress).toScVal()),
-    )
+    .addOperation(contract.call('balance', Address.fromString(userAddress).toScVal()))
     .setTimeout(30)
     .build();
 

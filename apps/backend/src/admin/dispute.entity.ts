@@ -27,35 +27,35 @@ export enum DisputeType {
 @Index(['submittedByUserId'])
 export class Dispute {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column({ type: 'enum', enum: DisputeType, default: DisputeType.OTHER })
-  type: DisputeType;
+  type!: DisputeType;
 
   @Column({ type: 'enum', enum: DisputeStatus, default: DisputeStatus.OPEN })
-  status: DisputeStatus;
+  status!: DisputeStatus;
 
   @Column()
-  submittedByUserId: string;
+  submittedByUserId!: string;
 
   @Column({ type: 'text' })
-  description: string;
+  description!: string;
 
   @Column({ nullable: true })
-  targetEntityId: string | null;
+  targetEntityId!: string | null;
 
   @Column({ nullable: true })
-  targetEntityType: string | null;
+  targetEntityType!: string | null;
 
   @Column({ nullable: true })
-  resolvedByUserId: string | null;
+  resolvedByUserId!: string | null;
 
   @Column({ type: 'text', nullable: true })
-  resolution: string | null;
+  resolution!: string | null;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt!: Date;
 }

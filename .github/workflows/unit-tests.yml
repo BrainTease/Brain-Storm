@@ -126,9 +126,9 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            
+
             let body = '## 📊 Unit Test Coverage Report\n\n';
-            
+
             if (fs.existsSync('apps/frontend/coverage/coverage-summary.json')) {
               const summary = JSON.parse(fs.readFileSync('apps/frontend/coverage/coverage-summary.json', 'utf8'));
               const total = summary.total;
@@ -176,19 +176,19 @@ jobs:
             } else {
               body += '⚠️ Coverage report not generated. Check the workflow logs for errors.\n';
             }
-            
+
             // Post or update comment
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
             });
-            
+
             const botComment = comments.find(comment => 
               comment.user.type === 'Bot' && 
               comment.body.includes('📊 Unit Test Coverage Report')
             );
-            
+
             if (botComment) {
               await github.rest.issues.updateComment({
                 owner: context.repo.owner,

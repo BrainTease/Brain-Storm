@@ -55,11 +55,13 @@ npx playwright show-report playwright-report-visual
 ### 3. Reviewing Visual Diffs
 
 The Playwright report shows three versions of each screenshot:
+
 - **Expected**: The baseline image
 - **Actual**: The new screenshot after your changes
 - **Diff**: Highlighted differences between them
 
 **Decision Points**:
+
 - ✅ **Changes are intentional**: Update baselines (next step)
 - ❌ **Changes are bugs**: Fix your code and re-run tests
 - ⚠️ **Unclear**: Ask for team review
@@ -86,6 +88,7 @@ git commit -m "chore: update visual regression baselines for navbar redesign"
 ### 5. Pre-Commit Checklist
 
 Before committing:
+
 - [ ] All visual tests pass locally
 - [ ] Baseline updates are intentional and reviewed
 - [ ] Test report has been reviewed
@@ -98,11 +101,13 @@ Before committing:
 The visual regression workflow (`.github/workflows/visual-regression-testing.yml`) runs automatically:
 
 **Triggers**:
+
 - Pull requests targeting `main`
 - Changes to `apps/frontend/**`
 - Changes to the workflow file itself
 
 **Process**:
+
 1. Checks out code
 2. Installs dependencies
 3. Builds frontend application
@@ -113,14 +118,17 @@ The visual regression workflow (`.github/workflows/visual-regression-testing.yml
 ### Understanding CI Results
 
 **✅ Green Check**: All visual tests passed
+
 - No visual differences detected
 - Safe to merge (pending other checks)
 
 **❌ Red X**: Visual tests failed
+
 - Visual differences detected
 - Review required before merging
 
 **⚠️ Yellow Dot**: Tests running
+
 - Wait for completion
 
 ## PR Review Workflow
@@ -145,23 +153,25 @@ When your PR triggers visual test failures:
    - Document reasons in PR description
 
 4. **Update PR Description**
+
    ```markdown
    ## Visual Changes
-   
+
    This PR includes the following intentional visual changes:
-   
+
    - Updated navbar color scheme to improve contrast (accessibility)
    - Adjusted button padding for better mobile experience
    - Fixed alignment issue in course cards
-   
+
    ### Screenshots
-   
+
    ![Before](link-to-before)
    ![After](link-to-after)
-   
+
    ### Baseline Updates Required
-   
+
    The following baselines need to be updated:
+
    - [ ] navbar-light-desktop.png
    - [ ] button-primary-light.png
    - [ ] course-card-mobile.png
@@ -211,6 +221,7 @@ When reviewing PRs with visual changes:
 ### When to Update Baselines
 
 Update baselines when:
+
 - ✅ Intentional design changes
 - ✅ Component improvements
 - ✅ Bug fixes that change appearance
@@ -218,6 +229,7 @@ Update baselines when:
 - ✅ Responsive layout adjustments
 
 Do NOT update baselines for:
+
 - ❌ Unexplained differences
 - ❌ Flaky test results
 - ❌ Temporary workarounds
@@ -287,6 +299,7 @@ Before committing baseline updates:
 **Cause**: Browser rendering differences, font loading, or timing issues
 
 **Solutions**:
+
 ```bash
 # Use CI-matching Docker image
 docker run -v $(pwd):/work -w /work/apps/frontend mcr.microsoft.com/playwright:v1.44.0-jammy npm run test:visual
@@ -304,23 +317,21 @@ await page.waitForFunction(() => document.fonts.ready);
 **Cause**: Animations, dynamic content, or timing races
 
 **Solutions**:
+
 ```typescript
 // Disable animations
 await expect(page).toHaveScreenshot('page.png', {
-  animations: 'disabled'
+  animations: 'disabled',
 });
 
 // Mask dynamic content
 await expect(page).toHaveScreenshot('page.png', {
-  mask: [
-    page.locator('[data-testid="timestamp"]'),
-    page.locator('.animated-element')
-  ]
+  mask: [page.locator('[data-testid="timestamp"]'), page.locator('.animated-element')],
 });
 
 // Allow small pixel differences
 await expect(page).toHaveScreenshot('page.png', {
-  maxDiffPixels: 100
+  maxDiffPixels: 100,
 });
 ```
 
@@ -329,6 +340,7 @@ await expect(page).toHaveScreenshot('page.png', {
 **Cause**: Font loading, theme persistence, or environment issues
 
 **Solutions**:
+
 ```bash
 # Clear test cache
 rm -rf apps/frontend/test-results-visual/
@@ -350,6 +362,7 @@ npm run test:visual
 **Cause**: New test added without baselines
 
 **Solution**:
+
 ```bash
 # Generate baselines for new tests
 npm run test:visual:update
@@ -364,6 +377,7 @@ git commit -m "chore: add visual baselines for new tests"
 **Cause**: Slow page load or network issues
 
 **Solutions**:
+
 ```typescript
 // Increase timeout in test
 test.setTimeout(60000); // 60 seconds

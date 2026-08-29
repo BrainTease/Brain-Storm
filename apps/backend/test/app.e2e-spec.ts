@@ -49,10 +49,7 @@ describe('App E2E', () => {
     const email = 'e2e-register@example.com';
     const password = 'password123';
 
-    await request(app.getHttpServer())
-      .post('/auth/register')
-      .send({ email, password })
-      .expect(201);
+    await request(app.getHttpServer()).post('/auth/register').send({ email, password }).expect(201);
 
     const user = await userRepo.findOne({ where: { email } });
     expect(user).toBeDefined();
@@ -80,10 +77,7 @@ describe('App E2E', () => {
     const email = 'student-role@example.com';
     const password = 'password123';
 
-    await request(app.getHttpServer())
-      .post('/auth/register')
-      .send({ email, password })
-      .expect(201);
+    await request(app.getHttpServer()).post('/auth/register').send({ email, password }).expect(201);
 
     const user = await userRepo.findOne({ where: { email } });
     await userRepo.save({ ...user!, isVerified: true, role: 'student' });

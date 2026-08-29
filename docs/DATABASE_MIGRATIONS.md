@@ -51,11 +51,11 @@ Instead, each change is split across **three deployments**, ensuring the old and
 
 ### 1.2 Why Use It?
 
-| Benefit | Description |
-|---------|-------------|
-| **Zero downtime** | No `ACCESS EXCLUSIVE` locks that block reads/writes |
-| **Rollback safety** | Each phase is reversible independently |
-| **Gradual rollout** | Canary or blue/green deployments work naturally |
+| Benefit               | Description                                            |
+| --------------------- | ------------------------------------------------------ |
+| **Zero downtime**     | No `ACCESS EXCLUSIVE` locks that block reads/writes    |
+| **Rollback safety**   | Each phase is reversible independently                 |
+| **Gradual rollout**   | Canary or blue/green deployments work naturally        |
 | **Team coordination** | Decouples schema changes from application code changes |
 
 ### 1.3 Phase 1: Expand
@@ -63,6 +63,7 @@ Instead, each change is split across **three deployments**, ensuring the old and
 **Goal:** Add the new schema elements without affecting existing queries.
 
 **Rules:**
+
 - New columns must be **nullable** or have a **default value**
 - New tables must not have `NOT NULL` constraints without defaults
 - New indexes should use `CONCURRENTLY` to avoid table locks
@@ -99,6 +100,7 @@ public async down(queryRunner: QueryRunner): Promise<void> {
 **Goal:** Backfill existing data into the new schema elements and switch reads.
 
 **Steps:**
+
 1. Run a backfill job to populate `display_name` for existing rows
 2. Deploy application code that **reads from** `display_name` (while still writing to both)
 3. Monitor for errors or data inconsistencies
@@ -116,6 +118,7 @@ public async down(queryRunner: QueryRunner): Promise<void> {
 **Goal:** Remove the old schema elements after confirming no code paths depend on them.
 
 **Rules:**
+
 - Wait at least **one full release cycle** after Phase 2
 - Verify no running instances still reference the old column
 - Monitor error rates for 24 hours after removal
@@ -144,19 +147,19 @@ public async down(queryRunner: QueryRunner): Promise<void> {
 
 #### 1.6.1 Renaming a Column (`email` → `primary_email`)
 
-| Phase | Schema Change | Application Code |
-|-------|--------------|------------------|
-| **Expand** | Add `primary_email` (nullable) | Write to both `email` and `primary_email`; read from `email` |
-| **Migrate** | Backfill `primary_email = email` | Read from `primary_email`; write to both |
-| **Contract** | Drop `email` | Use only `primary_email` |
+| Phase        | Schema Change                    | Application Code                                             |
+| ------------ | -------------------------------- | ------------------------------------------------------------ |
+| **Expand**   | Add `primary_email` (nullable)   | Write to both `email` and `primary_email`; read from `email` |
+| **Migrate**  | Backfill `primary_email = email` | Read from `primary_email`; write to both                     |
+| **Contract** | Drop `email`                     | Use only `primary_email`                                     |
 
 #### 1.6.2 Splitting a Table (Single `users` → `users` + `user_profiles`)
 
-| Phase | Schema Change | Application Code |
-|-------|--------------|------------------|
-| **Expand** | Create `user_profiles` table; add FK to `users` | Write to both tables; read from `users` |
-| **Migrate** | Backfill `user_profiles` from `users` profile columns | Read from `user_profiles`; write to both |
-| **Contract** | Drop profile columns from `users` | Use only `user_profiles` |
+| Phase        | Schema Change                                         | Application Code                         |
+| ------------ | ----------------------------------------------------- | ---------------------------------------- |
+| **Expand**   | Create `user_profiles` table; add FK to `users`       | Write to both tables; read from `users`  |
+| **Migrate**  | Backfill `user_profiles` from `users` profile columns | Read from `user_profiles`; write to both |
+| **Contract** | Drop profile columns from `users`                     | Use only `user_profiles`                 |
 
 #### 1.6.3 Adding a NOT NULL Constraint
 
@@ -185,15 +188,15 @@ public async up(queryRunner: QueryRunner): Promise<void> {
 
 These checks run in CI for every PR that modifies migration files:
 
-| # | Check | Description | Severity |
-|---|-------|-------------|----------|
-| 1 | **Naming convention** | File must match `{13-digit-timestamp}-{PascalCase}.ts` | ❌ Error |
-| 2 | **Up method exists** | Migration must have a `public async up()` method | ❌ Error |
-| 3 | **Down method exists** | Migration must have a `public async down()` method | ❌ Error |
-| 4 | **No destructive ops** | Warn if migration contains `DROP TABLE`, `DROP COLUMN`, `ALTER COLUMN ... DROP NOT NULL` | ⚠️ Warning |
-| 5 | **Sequential timestamps** | Timestamps must be in chronological order | ❌ Error |
-| 6 | **No duplicate IDs** | No two migrations may share the same timestamp | ❌ Error |
-| 7 | **CONCURRENTLY for indexes** | `CREATE INDEX` without `CONCURRENTLY` in production tables | ⚠️ Warning |
+| #   | Check                        | Description                                                                              | Severity   |
+| --- | ---------------------------- | ---------------------------------------------------------------------------------------- | ---------- |
+| 1   | **Naming convention**        | File must match `{13-digit-timestamp}-{PascalCase}.ts`                                   | ❌ Error   |
+| 2   | **Up method exists**         | Migration must have a `public async up()` method                                         | ❌ Error   |
+| 3   | **Down method exists**       | Migration must have a `public async down()` method                                       | ❌ Error   |
+| 4   | **No destructive ops**       | Warn if migration contains `DROP TABLE`, `DROP COLUMN`, `ALTER COLUMN ... DROP NOT NULL` | ⚠️ Warning |
+| 5   | **Sequential timestamps**    | Timestamps must be in chronological order                                                | ❌ Error   |
+| 6   | **No duplicate IDs**         | No two migrations may share the same timestamp                                           | ❌ Error   |
+| 7   | **CONCURRENTLY for indexes** | `CREATE INDEX` without `CONCURRENTLY` in production tables                               | ⚠️ Warning |
 
 ### 2.2 Manual Review Checklist
 
@@ -237,6 +240,7 @@ Code reviewers should verify each item before approving:
 ### 3.1 When to Use a Backfill
 
 A backfill is needed when:
+
 - Adding a new column to an existing table with millions of rows
 - Populating a new table from legacy data
 - Transforming data in-place (e.g., normalizing a column)
@@ -268,15 +272,12 @@ export class BackfillDisplayNameCommand extends CommandRunner {
 
   constructor(
     @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
+    private readonly userRepository: Repository<User>
   ) {
     super();
   }
 
-  async run(
-    _passedParams: string[],
-    options: BackfillOptions,
-  ): Promise<void> {
+  async run(_passedParams: string[], options: BackfillOptions): Promise<void> {
     const batchSize = options.batchSize ?? 1000;
     const dryRun = options.dryRun ?? false;
     const force = options.force ?? false;
@@ -301,7 +302,7 @@ export class BackfillDisplayNameCommand extends CommandRunner {
     if (!force && count > 100_000) {
       this.logger.warn(
         `Large backfill detected (${count} records). ` +
-        `Use --force to proceed or increase batch size.`,
+          `Use --force to proceed or increase batch size.`
       );
       if (!dryRun) {
         process.exit(1);
@@ -338,7 +339,7 @@ export class BackfillDisplayNameCommand extends CommandRunner {
       cursor = batch[batch.length - 1].createdAt;
 
       this.logger.log(
-        `Progress: ${processed}/${count} (${Math.round((processed / count) * 100)}%)`,
+        `Progress: ${processed}/${count} (${Math.round((processed / count) * 100)}%)`
       );
     }
 
@@ -432,117 +433,117 @@ END $$;
 The following job should be added to `.github/workflows/database-migrations.yml`:
 
 ```yaml
-  detect-destructive-migrations:
-    name: Flag Destructive Migrations
-    runs-on: ubuntu-latest
-    needs: validate-migrations
-    steps:
-      - uses: actions/checkout@v4
+detect-destructive-migrations:
+  name: Flag Destructive Migrations
+  runs-on: ubuntu-latest
+  needs: validate-migrations
+  steps:
+    - uses: actions/checkout@v4
 
-      - name: Check for destructive operations
-        id: destructive_check
-        working-directory: apps/backend
-        run: |
-          DESTRUCTIVE_FOUND=false
-          REPORT="# ⚠️ Destructive Migration Report\n\n"
-          REPORT+="The following destructive operations were detected:\n\n"
+    - name: Check for destructive operations
+      id: destructive_check
+      working-directory: apps/backend
+      run: |
+        DESTRUCTIVE_FOUND=false
+        REPORT="# ⚠️ Destructive Migration Report\n\n"
+        REPORT+="The following destructive operations were detected:\n\n"
 
-          for file in $(git diff --name-only origin/main...HEAD -- 'src/migrations/*.ts' 2>/dev/null || ls src/migrations/*.ts); do
-            if [ ! -f "$file" ]; then continue; fi
+        for file in $(git diff --name-only origin/main...HEAD -- 'src/migrations/*.ts' 2>/dev/null || ls src/migrations/*.ts); do
+          if [ ! -f "$file" ]; then continue; fi
 
-            filename=$(basename "$file")
+          filename=$(basename "$file")
 
-            # Check for DROP TABLE
-            if grep -qE "(await queryRunner\.dropTable|DROP TABLE)" "$file" 2>/dev/null; then
-              REPORT+="- **$filename**: 🗑️ Contains \`DROP TABLE\`\n"
-              DESTRUCTIVE_FOUND=true
-            fi
-
-            # Check for DROP COLUMN
-            if grep -qE "(await queryRunner\.dropColumn|ALTER TABLE.*DROP COLUMN)" "$file" 2>/dev/null; then
-              REPORT+="- **$filename**: 🗑️ Contains \`DROP COLUMN\`\n"
-              DESTRUCTIVE_FOUND=true
-            fi
-
-            # Check for ALTER COLUMN ... DROP NOT NULL
-            if grep -qE "DROP NOT NULL|SET NOT NULL" "$file" 2>/dev/null; then
-              REPORT+="- **$filename**: ⚠️ Contains \`ALTER COLUMN ... (SET|DROP) NOT NULL\`\n"
-              DESTRUCTIVE_FOUND=true
-            fi
-
-            # Check for DROP INDEX (without IF EXISTS safety)
-            if grep -qE "await queryRunner\.dropIndex" "$file" 2>/dev/null; then
-              REPORT+="- **$filename**: ⚠️ Contains \`DROP INDEX\` — ensure it uses CONCURRENTLY and IF EXISTS\n"
-              DESTRUCTIVE_FOUND=true
-            fi
-
-            # Check for TRUNCATE
-            if grep -qE "(TRUNCATE|await queryRunner\.query.*TRUNCATE)" "$file" 2>/dev/null; then
-              REPORT+="- **$filename**: 🗑️ Contains \`TRUNCATE\` — data loss risk\n"
-              DESTRUCTIVE_FOUND=true
-            fi
-
-            # Check for RENAME COLUMN (breaking for running code)
-            if grep -qE "RENAME COLUMN" "$file" 2>/dev/null; then
-              REPORT+="- **$filename**: ⚠️ Contains \`RENAME COLUMN\` — ensure expand/contract pattern\n"
-              DESTRUCTIVE_FOUND=true
-            fi
-          done
-
-          if [ "$DESTRUCTIVE_FOUND" = false ]; then
-            REPORT+="\n✅ No destructive operations detected."
-          else
-            REPORT+="\n\n> **Action required:** Destructive migrations must follow the expand/contract pattern documented in DATABASE_MIGRATIONS.md. Consider splitting this into multiple deployments."
+          # Check for DROP TABLE
+          if grep -qE "(await queryRunner\.dropTable|DROP TABLE)" "$file" 2>/dev/null; then
+            REPORT+="- **$filename**: 🗑️ Contains \`DROP TABLE\`\n"
+            DESTRUCTIVE_FOUND=true
           fi
 
-          echo -e "$REPORT" > destructive-migration-report.md
-          cat destructive-migration-report.md
-
-          if [ "$DESTRUCTIVE_FOUND" = true ]; then
-            echo "has_destructive=true" >> $GITHUB_OUTPUT
-          else
-            echo "has_destructive=false" >> $GITHUB_OUTPUT
+          # Check for DROP COLUMN
+          if grep -qE "(await queryRunner\.dropColumn|ALTER TABLE.*DROP COLUMN)" "$file" 2>/dev/null; then
+            REPORT+="- **$filename**: 🗑️ Contains \`DROP COLUMN\`\n"
+            DESTRUCTIVE_FOUND=true
           fi
 
-      - name: Comment destructive migration report on PR
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-            const report = fs.readFileSync('apps/backend/destructive-migration-report.md', 'utf8');
+          # Check for ALTER COLUMN ... DROP NOT NULL
+          if grep -qE "DROP NOT NULL|SET NOT NULL" "$file" 2>/dev/null; then
+            REPORT+="- **$filename**: ⚠️ Contains \`ALTER COLUMN ... (SET|DROP) NOT NULL\`\n"
+            DESTRUCTIVE_FOUND=true
+          fi
 
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: report
-            });
+          # Check for DROP INDEX (without IF EXISTS safety)
+          if grep -qE "await queryRunner\.dropIndex" "$file" 2>/dev/null; then
+            REPORT+="- **$filename**: ⚠️ Contains \`DROP INDEX\` — ensure it uses CONCURRENTLY and IF EXISTS\n"
+            DESTRUCTIVE_FOUND=true
+          fi
 
-      - name: Fail CI for destructive migrations (soft)
-        if: steps.destructive_check.outputs.has_destructive == 'true'
-        run: |
-          echo "⚠️ Destructive migration detected. Review the report above."
-          echo "This is a soft failure — the PR can still merge with maintainer approval."
-          exit 1
+          # Check for TRUNCATE
+          if grep -qE "(TRUNCATE|await queryRunner\.query.*TRUNCATE)" "$file" 2>/dev/null; then
+            REPORT+="- **$filename**: 🗑️ Contains \`TRUNCATE\` — data loss risk\n"
+            DESTRUCTIVE_FOUND=true
+          fi
+
+          # Check for RENAME COLUMN (breaking for running code)
+          if grep -qE "RENAME COLUMN" "$file" 2>/dev/null; then
+            REPORT+="- **$filename**: ⚠️ Contains \`RENAME COLUMN\` — ensure expand/contract pattern\n"
+            DESTRUCTIVE_FOUND=true
+          fi
+        done
+
+        if [ "$DESTRUCTIVE_FOUND" = false ]; then
+          REPORT+="\n✅ No destructive operations detected."
+        else
+          REPORT+="\n\n> **Action required:** Destructive migrations must follow the expand/contract pattern documented in DATABASE_MIGRATIONS.md. Consider splitting this into multiple deployments."
+        fi
+
+        echo -e "$REPORT" > destructive-migration-report.md
+        cat destructive-migration-report.md
+
+        if [ "$DESTRUCTIVE_FOUND" = true ]; then
+          echo "has_destructive=true" >> $GITHUB_OUTPUT
+        else
+          echo "has_destructive=false" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Comment destructive migration report on PR
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const report = fs.readFileSync('apps/backend/destructive-migration-report.md', 'utf8');
+
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: report
+          });
+
+    - name: Fail CI for destructive migrations (soft)
+      if: steps.destructive_check.outputs.has_destructive == 'true'
+      run: |
+        echo "⚠️ Destructive migration detected. Review the report above."
+        echo "This is a soft failure — the PR can still merge with maintainer approval."
+        exit 1
 ```
 
 ### 4.2 Destructive Operations List
 
 The following operations are flagged as potentially destructive and require explicit review:
 
-| Operation | Risk Level | Expand/Contract Alternative |
-|-----------|-----------|---------------------------|
-| `DROP TABLE` | 🔴 Critical | Deprecate table, wait N cycles, then drop |
-| `DROP COLUMN` | 🔴 Critical | Expand/Contract: add new column, migrate, drop old |
-| `ALTER COLUMN ... DROP NOT NULL` | 🟡 Medium | Usually safe, but verify no code depends on non-null |
-| `ALTER COLUMN ... SET NOT NULL` | 🟡 Medium | Requires backfill first; may lock table |
-| `DROP INDEX` | 🟡 Medium | Don't drop until no queries use it |
-| `RENAME COLUMN` | 🟡 Medium | Expand/Contract: add new name, migrate, drop old |
-| `RENAME TABLE` | 🔴 Critical | Expand/Contract: create new table, migrate, drop old |
-| `TRUNCATE` | 🔴 Critical | Never truncate production data |
-| `ALTER TABLE ... SET DEFAULT` | 🟢 Low | Safe if value matches existing data |
-| Adding FK constraint | 🟡 Medium | Use `NOT VALID` then `VALIDATE CONSTRAINT` |
+| Operation                        | Risk Level  | Expand/Contract Alternative                          |
+| -------------------------------- | ----------- | ---------------------------------------------------- |
+| `DROP TABLE`                     | 🔴 Critical | Deprecate table, wait N cycles, then drop            |
+| `DROP COLUMN`                    | 🔴 Critical | Expand/Contract: add new column, migrate, drop old   |
+| `ALTER COLUMN ... DROP NOT NULL` | 🟡 Medium   | Usually safe, but verify no code depends on non-null |
+| `ALTER COLUMN ... SET NOT NULL`  | 🟡 Medium   | Requires backfill first; may lock table              |
+| `DROP INDEX`                     | 🟡 Medium   | Don't drop until no queries use it                   |
+| `RENAME COLUMN`                  | 🟡 Medium   | Expand/Contract: add new name, migrate, drop old     |
+| `RENAME TABLE`                   | 🔴 Critical | Expand/Contract: create new table, migrate, drop old |
+| `TRUNCATE`                       | 🔴 Critical | Never truncate production data                       |
+| `ALTER TABLE ... SET DEFAULT`    | 🟢 Low      | Safe if value matches existing data                  |
+| Adding FK constraint             | 🟡 Medium   | Use `NOT VALID` then `VALIDATE CONSTRAINT`           |
 
 ---
 

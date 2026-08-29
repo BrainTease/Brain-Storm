@@ -11,30 +11,30 @@ import { CourseModule } from './course-module.entity';
 @Entity('lessons')
 export class Lesson {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  moduleId: string;
+  moduleId!: string;
 
   @ManyToOne(() => CourseModule, (m) => m.lessons, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'moduleId' })
-  module: CourseModule;
+  module!: CourseModule;
 
   @Column()
-  title: string;
+  title!: string;
 
   @Column('text')
-  content: string;
+  content!: string;
 
   @Column({ nullable: true })
-  videoUrl: string;
+  videoUrl!: string;
 
   @Column({ default: 0 })
-  order: number;
+  order!: number;
 
   @Column({ default: 0 })
-  durationMinutes: number;
+  durationMinutes!: number;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 }

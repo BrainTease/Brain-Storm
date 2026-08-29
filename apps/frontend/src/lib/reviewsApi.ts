@@ -41,14 +41,13 @@ export const reviewsApi = {
 
   voteReview: (courseId: string, reviewId: string, vote: VoteType) =>
     api
-      .post<{ upvotes: number; downvotes: number; userVote: VoteType | null }>(
-        `/courses/${courseId}/reviews/${reviewId}/vote`,
-        { vote }
-      )
+      .post<{
+        upvotes: number;
+        downvotes: number;
+        userVote: VoteType | null;
+      }>(`/courses/${courseId}/reviews/${reviewId}/vote`, { vote })
       .then((r) => r.data),
 
   flagReview: (courseId: string, reviewId: string, reason: string) =>
-    api
-      .post(`/courses/${courseId}/reviews/${reviewId}/flag`, { reason })
-      .then((r) => r.data),
+    api.post(`/courses/${courseId}/reviews/${reviewId}/flag`, { reason }).then((r) => r.data),
 };

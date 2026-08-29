@@ -28,6 +28,11 @@ const MONTH_YEAR_OPTIONS = {
   year: 'numeric' as const,
 };
 
+const MONTH_DAY_OPTIONS = {
+  month: 'short' as const,
+  day: 'numeric' as const,
+};
+
 /**
  * Convert various date input formats to a Date object
  */
@@ -61,6 +66,13 @@ export function formatDateTime(date: Date | number | string): string {
  */
 export function formatMonthYear(date: Date | number | string): string {
   return toDate(date).toLocaleDateString('en-US', MONTH_YEAR_OPTIONS);
+}
+
+/**
+ * Format month and day: "Jan 1"
+ */
+export function formatMonthDay(date: Date | number | string): string {
+  return toDate(date).toLocaleDateString('en-US', MONTH_DAY_OPTIONS);
 }
 
 /**

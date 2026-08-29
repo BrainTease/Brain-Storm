@@ -15,6 +15,7 @@ use soroban_sdk::{
 };
 
 use brain_storm_shared::access;
+use brain_storm_shared::pagination::paginate;
 
 // ── Storage keys ──────────────────────────────────────────────────────────────
 
@@ -335,16 +336,7 @@ impl RegistryContract {
             .instance()
             .get(&DataKey::UserList)
             .unwrap_or_else(|| Vec::new(&env));
-        let total = list.len();
-        let start = offset.min(total);
-        let end = (offset + limit).min(total);
-        let mut page = Vec::new(&env);
-        let mut i = start;
-        while i < end {
-            page.push_back(list.get(i).unwrap());
-            i += 1;
-        }
-        page
+        paginate(&env, &list, offset, limit)
     }
 
     /// Return users filtered by minimum verification level.
@@ -373,16 +365,7 @@ impl RegistryContract {
             }
         }
 
-        let total = filtered.len();
-        let start = offset.min(total);
-        let end = (offset + limit).min(total);
-        let mut page = Vec::new(&env);
-        let mut i = start;
-        while i < end {
-            page.push_back(filtered.get(i).unwrap());
-            i += 1;
-        }
-        page
+        paginate(&env, &filtered, offset, limit)
     }
 
     pub fn total_users(env: Env) -> u32 {
@@ -425,4 +408,8 @@ impl RegistryContract {
 mod fuzz_tests;
 
 #[cfg(test)]
-mod test;
+mod tests;
+
+// #862 — lookup-function unit tests
+#[cfg(test)]
+mod lookup_tests;

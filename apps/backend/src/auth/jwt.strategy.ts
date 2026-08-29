@@ -6,6 +6,12 @@ import { UsersService } from '../users/users.service';
 import { TokenBlacklistService } from './token-blacklist.service';
 import { Request } from 'express';
 
+export interface JwtPayload {
+  id: string;
+  email: string;
+  role: string;
+}
+
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
@@ -23,8 +29,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   async validate(req: Request, payload: { sub: string; email: string }) {
     const token = ExtractJwt.fromAuthHeaderAsBearerToken()(req);
-    
-    if (token && await this.tokenBlacklistService.isTokenBlacklisted(token)) {
+
+    if (token && (await this.tokenBlacklistService.isTokenBlacklisted(token))) {
       throw new UnauthorizedException('Token has been revoked');
     }
 

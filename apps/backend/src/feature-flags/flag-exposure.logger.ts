@@ -6,7 +6,7 @@ export class FlagExposureLogger {
 
   log(key: string, userId: string | undefined, result: boolean) {
     this.logger.log(
-      JSON.stringify({ event: 'flag_exposure', key, userId, result, ts: new Date().toISOString() }),
+      JSON.stringify({ event: 'flag_exposure', key, userId, result, ts: new Date().toISOString() })
     );
   }
 }

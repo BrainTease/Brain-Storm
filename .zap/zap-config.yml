@@ -56,19 +56,19 @@ jobs:
       defaultStrength: medium
       defaultThreshold: medium
       rules:
-        - id: 40012  # Cross Site Scripting (Reflected)
+        - id: 40012 # Cross Site Scripting (Reflected)
           strength: high
           threshold: medium
-        - id: 40014  # Cross Site Scripting (Persistent)
+        - id: 40014 # Cross Site Scripting (Persistent)
           strength: high
           threshold: medium
-        - id: 40018  # SQL Injection
+        - id: 40018 # SQL Injection
           strength: high
           threshold: high
-        - id: 90019  # Server Side Code Injection
+        - id: 90019 # Server Side Code Injection
           strength: high
           threshold: high
-        - id: 40024  # NoSQL Injection
+        - id: 40024 # NoSQL Injection
           strength: high
           threshold: high
 

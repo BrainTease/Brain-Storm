@@ -5,7 +5,7 @@
   "description": "Brain-Storm - Blockchain Education Platform on Stellar",
   "workspaces": [
     "packages/types",
-    "packages/mobile",
+    "packages/sdk",
     "apps/frontend",
     "apps/backend"
   ],
@@ -23,6 +23,7 @@
     "test:grants": "npm run test:grants --workspace=apps/backend",
     "test:certificates": "npm run test:certificates --workspace=apps/backend",
     "test:load": "./scripts/load-test.sh",
+    "test:load:marketplace": "k6 run scripts/load-tests/marketplace-purchase.js",
     "test:mutation": "stryker run",
     "test:mutation:report": "stryker run --reporters html",
     "prepare": "husky install"
@@ -38,7 +39,5 @@
     "@stryker-mutator/typescript-checker": "^9.6.1",
     "husky": "^9.0.0"
   },
-  "dependencies": {
-    "passport": "^0.7.0"
-  }
+  "dependencies": {}
 }

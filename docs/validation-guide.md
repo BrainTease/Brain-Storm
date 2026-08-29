@@ -5,6 +5,7 @@ This guide explains how to use the centralized validation system in Brain-Storm 
 ## Overview
 
 The validation system provides:
+
 - Reusable validation schemas
 - Custom validators for domain-specific rules
 - Centralized validation service
@@ -24,6 +25,7 @@ export class RegisterDto extends EmailSchema, PasswordSchema {
 ```
 
 Available schemas:
+
 - `EmailSchema` - Email validation
 - `PasswordSchema` - Strong password validation
 - `UUIDSchema` - UUID validation
@@ -49,7 +51,11 @@ Available schemas:
 Domain-specific validators:
 
 ```typescript
-import { IsStellarPublicKey, IsStrongPassword, IsValidUrl } from '@common/validation/custom.validators';
+import {
+  IsStellarPublicKey,
+  IsStrongPassword,
+  IsValidUrl,
+} from '@common/validation/custom.validators';
 
 export class MyDto {
   @IsStellarPublicKey()
@@ -64,6 +70,7 @@ export class MyDto {
 ```
 
 Available custom validators:
+
 - `@IsStellarPublicKey()` - Validates Stellar public key format
 - `@IsStrongPassword()` - Validates password strength
 - `@IsValidCouponCode()` - Validates coupon code format
@@ -129,7 +136,10 @@ export class CoursesController {
   @Patch(':id')
   async update(@Param('id') id: string, @Body() updateCourseDto: UpdateCourseDto) {
     // Validate partial update
-    const validated = await this.validationService.validatePartialDto(UpdateCourseDto, updateCourseDto);
+    const validated = await this.validationService.validatePartialDto(
+      UpdateCourseDto,
+      updateCourseDto
+    );
     return this.coursesService.update(id, validated);
   }
 }
@@ -145,7 +155,9 @@ Validation errors are formatted consistently:
   "message": "Validation failed",
   "errors": {
     "email": ["must be an email"],
-    "password": ["Password must be 8-128 characters with uppercase, lowercase, number, and special character"],
+    "password": [
+      "Password must be 8-128 characters with uppercase, lowercase, number, and special character"
+    ],
     "title": ["must be longer than or equal to 3 characters"]
   },
   "timestamp": "2026-06-01T05:24:18.838Z"
@@ -200,7 +212,9 @@ describe('ValidationService', () => {
   });
 
   it('should validate Stellar public key', () => {
-    expect(service.isValidStellarPublicKey('GBRPYHIL2CI3WHZDTOOQFC6EB4KJJGUJJBBQ2EIISQE2BNXQ5BNRQ5')).toBe(true);
+    expect(
+      service.isValidStellarPublicKey('GBRPYHIL2CI3WHZDTOOQFC6EB4KJJGUJJBBQ2EIISQE2BNXQ5BNRQ5')
+    ).toBe(true);
     expect(service.isValidStellarPublicKey('invalid-key')).toBe(false);
   });
 });

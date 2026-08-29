@@ -42,7 +42,7 @@ export class ApiResponseDto<T = any> {
     data: T,
     statusCode: number,
     message?: string,
-    pagination?: { page: number; limit: number; total: number; totalPages: number },
+    pagination?: { page: number; limit: number; total: number; totalPages: number }
   ) {
     this.data = data;
     this.statusCode = statusCode;
@@ -56,13 +56,7 @@ export class ApiResponseDto<T = any> {
  * Paginated response wrapper
  */
 export class PaginatedResponseDto<T = any> extends ApiResponseDto<T[]> {
-  constructor(
-    data: T[],
-    statusCode: number,
-    page: number,
-    limit: number,
-    total: number,
-  ) {
+  constructor(data: T[], statusCode: number, page: number, limit: number, total: number) {
     super(data, statusCode, undefined, {
       page,
       limit,

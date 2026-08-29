@@ -19,38 +19,38 @@ import { Course } from './course.entity';
 @Index(['createdAt'])
 export class Review {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  userId: string;
+  userId!: string;
 
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
-  user: User;
+  user!: User;
 
   @Column()
-  courseId: string;
+  courseId!: string;
 
   @ManyToOne(() => Course, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'courseId' })
-  course: Course;
+  course!: Course;
 
   @Column({ type: 'int' })
-  rating: number;
+  rating!: number;
 
   @Column({ type: 'text', nullable: true })
-  comment: string | null;
+  comment!: string | null;
 
   // Audit columns
   @Column({ nullable: true })
-  createdBy: string | null;
+  createdBy!: string | null;
 
   @Column({ nullable: true })
-  updatedBy: string | null;
+  updatedBy!: string | null;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt!: Date;
 }

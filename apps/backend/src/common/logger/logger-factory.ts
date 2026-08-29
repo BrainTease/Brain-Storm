@@ -72,7 +72,7 @@ export class LoggerFactory {
 export class StandardizedLogger {
   constructor(
     private readonly winstonLogger: Logger,
-    private readonly context: string,
+    private readonly context: string
   ) {}
 
   /**
@@ -135,7 +135,7 @@ export class StandardizedLogger {
     statusCode: number,
     duration: number,
     userId?: string,
-    metadata?: Record<string, any>,
+    metadata?: Record<string, any>
   ): void {
     this.info(`${method} ${path}`, {
       statusCode,
@@ -154,7 +154,7 @@ export class StandardizedLogger {
     error: Error,
     statusCode: number,
     duration: number,
-    userId?: string,
+    userId?: string
   ): void {
     this.error(`${method} ${path} - ${error.message}`, error, {
       statusCode,
@@ -191,11 +191,11 @@ export class StandardizedLogger {
     operation: string,
     status: 'start' | 'success' | 'failure',
     duration?: number,
-    metadata?: Record<string, any>,
+    metadata?: Record<string, any>
   ): void {
     const message = `Operation ${operation} - ${status}`;
     const level = status === 'failure' ? 'error' : 'info';
-    
+
     this.winstonLogger.log(level, message, {
       context: this.context,
       operation,

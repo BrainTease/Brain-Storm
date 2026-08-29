@@ -61,7 +61,7 @@ export class MailService {
   }
 
   async sendNotificationEmail(userId: string, message: string) {
-    if (process.env.EMAIL_ENABLED !== 'true') {
+    if (!this.configService.get<boolean>('mail.enabled')) {
       this.logger.log(`[DEV] Notification for user ${userId}: ${message}`);
       return;
     }

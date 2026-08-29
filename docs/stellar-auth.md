@@ -16,10 +16,10 @@ The JWT is identical to the one issued by the email/password login flow and can 
 
 ## Environment Variables
 
-| Variable | Description | Default |
-|---|---|---|
-| `STELLAR_WEB_AUTH_DOMAIN` | Domain embedded in the challenge transaction | `localhost` |
-| `STELLAR_SECRET_KEY` | Server signing keypair (same key used for credential issuance) | required |
+| Variable                  | Description                                                    | Default     |
+| ------------------------- | -------------------------------------------------------------- | ----------- |
+| `STELLAR_WEB_AUTH_DOMAIN` | Domain embedded in the challenge transaction                   | `localhost` |
+| `STELLAR_SECRET_KEY`      | Server signing keypair (same key used for credential issuance) | required    |
 
 Set `STELLAR_WEB_AUTH_DOMAIN` to your public hostname in production, e.g. `api.brainstorm.app`.
 
@@ -33,8 +33,8 @@ Returns an unsigned SEP-0010 challenge transaction.
 
 **Query parameters**
 
-| Parameter | Description |
-|---|---|
+| Parameter | Description                          |
+| --------- | ------------------------------------ |
 | `account` | Client's Stellar public key (`G...`) |
 
 **Response**
@@ -70,9 +70,9 @@ Verifies the signed challenge and returns a JWT.
 
 **Error responses**
 
-| Status | Reason |
-|---|---|
-| `401` | Signature invalid, challenge expired, or wrong server key |
+| Status | Reason                                                    |
+| ------ | --------------------------------------------------------- |
+| `401`  | Signature invalid, challenge expired, or wrong server key |
 
 ---
 
@@ -84,17 +84,19 @@ import { getPublicKey, signTransaction } from '@stellar/freighter-api';
 // 1. Get challenge
 const { transaction, network_passphrase } = await fetch(
   `/auth/stellar?account=${await getPublicKey()}`
-).then(r => r.json());
+).then((r) => r.json());
 
 // 2. Sign with Freighter
-const { signedTxXdr } = await signTransaction(transaction, { networkPassphrase: network_passphrase });
+const { signedTxXdr } = await signTransaction(transaction, {
+  networkPassphrase: network_passphrase,
+});
 
 // 3. Exchange for JWT
 const { access_token } = await fetch('/auth/stellar', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({ transaction: signedTxXdr }),
-}).then(r => r.json());
+}).then((r) => r.json());
 ```
 
 ---

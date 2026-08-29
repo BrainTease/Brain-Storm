@@ -15,7 +15,8 @@ export class SessionsService {
   constructor(
     @InjectRepository(CohortSession) private sessionRepo: Repository<CohortSession>,
     @InjectRepository(SessionAttendance) private attendanceRepo: Repository<SessionAttendance>,
-    @Inject(forwardRef(() => NotificationsService)) private notificationsService: NotificationsService,
+    @Inject(forwardRef(() => NotificationsService))
+    private notificationsService: NotificationsService
   ) {}
 
   async createSession(cohortId: string, instructorId: string, dto: CreateSessionDto) {
@@ -33,7 +34,13 @@ export class SessionsService {
   async getSession(id: string) {
     return this.sessionRepo.findOne({
       where: { id },
-      relations: ['cohort', 'cohort.members', 'cohort.members.user', 'attendances', 'attendances.user'],
+      relations: [
+        'cohort',
+        'cohort.members',
+        'cohort.members.user',
+        'attendances',
+        'attendances.user',
+      ],
     });
   }
 
@@ -45,7 +52,11 @@ export class SessionsService {
     });
   }
 
-  async recordAttendance(sessionId: string, userId: string, status: AttendanceStatus = AttendanceStatus.PRESENT) {
+  async recordAttendance(
+    sessionId: string,
+    userId: string,
+    status: AttendanceStatus = AttendanceStatus.PRESENT
+  ) {
     const attendance = await this.attendanceRepo.findOne({
       where: { sessionId, userId },
     });
@@ -112,7 +123,7 @@ export class SessionsService {
 
     // Schedule reminder 24 hours before
     const remindTime = new Date(session.startTime.getTime() - 24 * 60 * 60 * 1000);
-    
+
     for (const member of cohort.cohort.members) {
       await this.notificationsService.scheduleNotification({
         userId: member.user.id,
@@ -133,7 +144,7 @@ export class SessionsService {
         status: SessionStatus.SCHEDULED,
         startTime: LessThanOrEqual(now),
       },
-      { status: SessionStatus.LIVE },
+      { status: SessionStatus.LIVE }
     );
 
     // Update sessions to COMPLETED if endTime has passed
@@ -142,7 +153,7 @@ export class SessionsService {
         status: SessionStatus.LIVE,
         endTime: LessThanOrEqual(now),
       },
-      { status: SessionStatus.COMPLETED },
+      { status: SessionStatus.COMPLETED }
     );
   }
 

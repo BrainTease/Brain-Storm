@@ -18,9 +18,9 @@ import { Course } from '../courses/course.entity';
 
 const SIGNAL_BASE_WEIGHTS: Record<SignalType, number> = {
   [SignalType.COMPLETE]: 10,
-  [SignalType.RATING]: 4,   // multiplied by value (1-5) → max 20
+  [SignalType.RATING]: 4, // multiplied by value (1-5) → max 20
   [SignalType.CLICK]: 2,
-  [SignalType.DWELL]: 1,    // multiplied by log(seconds+1)
+  [SignalType.DWELL]: 1, // multiplied by log(seconds+1)
   [SignalType.VIEW]: 0.5,
   [SignalType.DISMISS]: -5,
 };
@@ -56,7 +56,7 @@ export class RecommendationSignalsService {
     @InjectRepository(Course)
     private readonly courseRepo: Repository<Course>,
     @Inject(CACHE_MANAGER)
-    private readonly cache: Cache,
+    private readonly cache: Cache
   ) {}
 
   // ── Signal ingestion ───────────────────────────────────────────────────────
@@ -76,7 +76,7 @@ export class RecommendationSignalsService {
         signalType,
         value,
         consentGranted,
-      }),
+      })
     );
 
     // Bust the recommendation cache for this user
@@ -199,9 +199,7 @@ export class RecommendationSignalsService {
         select: ['courseId', 'signalType'],
       });
 
-      const positiveSignals = testSignals.filter(
-        (s) => s.signalType !== SignalType.DISMISS,
-      );
+      const positiveSignals = testSignals.filter((s) => s.signalType !== SignalType.DISMISS);
       if (!positiveSignals.length) continue;
 
       const groundTruth = new Set(positiveSignals.map((s) => s.courseId));
@@ -222,11 +220,12 @@ export class RecommendationSignalsService {
         const ageDays = ageMs / (1000 * 60 * 60 * 24);
         const decay = Math.pow(0.5, ageDays / DECAY_HALF_LIFE_DAYS);
         const base = SIGNAL_BASE_WEIGHTS[sig.signalType] ?? 0;
-        const contrib = sig.signalType === SignalType.DWELL
-          ? base * Math.log1p(sig.value) * decay
-          : sig.signalType === SignalType.RATING
-            ? base * sig.value * decay
-            : base * decay;
+        const contrib =
+          sig.signalType === SignalType.DWELL
+            ? base * Math.log1p(sig.value) * decay
+            : sig.signalType === SignalType.RATING
+              ? base * sig.value * decay
+              : base * decay;
         tempScores.set(sig.courseId, (tempScores.get(sig.courseId) ?? 0) + contrib);
       }
 

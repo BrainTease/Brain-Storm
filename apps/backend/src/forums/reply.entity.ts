@@ -12,28 +12,28 @@ import { Post } from './post.entity';
 @Entity('replies')
 export class Reply {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  postId: string;
+  postId!: string;
 
   @ManyToOne(() => Post, (post) => post.replies, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'postId' })
-  post: Post;
+  post!: Post;
 
   @Column()
-  userId: string;
+  userId!: string;
 
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
-  user: User;
+  user!: User;
 
   @Column({ type: 'text' })
-  content: string;
+  content!: string;
 
   @Column({ default: false })
-  isAnswer: boolean;
+  isAnswer!: boolean;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 }

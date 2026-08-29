@@ -8,7 +8,12 @@ import { WalletProvider } from '@/lib/wallet';
 
 const WalletButton = dynamic(
   () => import('@/components/wallet/WalletButton').then((m) => ({ default: m.WalletButton })),
-  { ssr: false, loading: () => <div className="w-28 h-9 rounded-lg animate-pulse bg-gray-200 dark:bg-gray-700" /> },
+  {
+    ssr: false,
+    loading: () => (
+      <div className="w-28 h-9 rounded-lg animate-pulse bg-gray-200 dark:bg-gray-700" />
+    ),
+  }
 );
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://brain-storm.app';
@@ -70,12 +75,22 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <WalletProvider>
             <TourProvider>
               <nav className="border-b px-6 py-3 flex items-center justify-between">
-                <a href="/" className="font-bold text-lg text-blue-600">Brain-Storm</a>
+                <a href="/" className="font-bold text-lg text-blue-600">
+                  Brain-Storm
+                </a>
                 <div className="flex items-center gap-4">
-                  <a href="/courses" className="text-sm text-gray-600 hover:text-gray-900">Courses</a>
-                  <a href="/referrals" className="text-sm text-gray-600 hover:text-gray-900">Referrals</a>
-                  <a href="/profile" className="text-sm text-gray-600 hover:text-gray-900">Profile</a>
-                  <a href="/admin" className="text-sm text-gray-600 hover:text-gray-900">Admin</a>
+                  <a href="/courses" className="text-sm text-gray-600 hover:text-gray-900">
+                    Courses
+                  </a>
+                  <a href="/referrals" className="text-sm text-gray-600 hover:text-gray-900">
+                    Referrals
+                  </a>
+                  <a href="/profile" className="text-sm text-gray-600 hover:text-gray-900">
+                    Profile
+                  </a>
+                  <a href="/admin" className="text-sm text-gray-600 hover:text-gray-900">
+                    Admin
+                  </a>
                   <WalletButton />
                 </div>
               </nav>

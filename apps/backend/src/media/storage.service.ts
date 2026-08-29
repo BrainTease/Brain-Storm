@@ -31,16 +31,26 @@ import { Media, MediaStatus } from './media.entity';
 const MAX_SIZE_BYTES = 50 * 1024 * 1024; // 50 MB
 
 const ALLOWED_MIME_TYPES = new Set([
-  'image/jpeg', 'image/png', 'image/webp', 'image/gif',
-  'video/mp4', 'video/webm',
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/gif',
+  'video/mp4',
+  'video/webm',
   'application/pdf',
   'text/plain',
 ]);
 
 const ALLOWED_EXTENSIONS = new Set([
-  '.jpg', '.jpeg', '.png', '.webp', '.gif',
-  '.mp4', '.webm',
-  '.pdf', '.txt',
+  '.jpg',
+  '.jpeg',
+  '.png',
+  '.webp',
+  '.gif',
+  '.mp4',
+  '.webm',
+  '.pdf',
+  '.txt',
 ]);
 
 // ── Image derivative sizes ────────────────────────────────────────────────────
@@ -60,7 +70,7 @@ export class StorageService {
 
   constructor(
     @InjectRepository(Media) private mediaRepo: Repository<Media>,
-    private config: ConfigService,
+    private config: ConfigService
   ) {
     this.region = config.get('AWS_REGION', 'us-east-1');
     this.bucket = config.get('S3_BUCKET', 'brainstorm-media');
@@ -81,7 +91,9 @@ export class StorageService {
   /** Validate MIME type, extension, and file size. Throws BadRequestException on failure. */
   validateFile(file: Express.Multer.File): void {
     if (file.size > MAX_SIZE_BYTES) {
-      throw new BadRequestException(`File too large. Maximum size is ${MAX_SIZE_BYTES / 1024 / 1024} MB.`);
+      throw new BadRequestException(
+        `File too large. Maximum size is ${MAX_SIZE_BYTES / 1024 / 1024} MB.`
+      );
     }
     if (!ALLOWED_MIME_TYPES.has(file.mimetype)) {
       throw new BadRequestException(`MIME type not allowed: ${file.mimetype}`);
@@ -95,7 +107,8 @@ export class StorageService {
   /** Sanitise a filename: strip path separators, non-ASCII, limit length. */
   sanitiseFilename(original: string): string {
     const ext = path.extname(original).toLowerCase();
-    const base = path.basename(original, ext)
+    const base = path
+      .basename(original, ext)
       .replace(/[^a-zA-Z0-9_-]/g, '_')
       .substring(0, 80);
     return `${base}${ext}`;
@@ -111,7 +124,7 @@ export class StorageService {
   async upload(
     file: Express.Multer.File,
     ownerId: string,
-    meta?: Record<string, unknown>,
+    meta?: Record<string, unknown>
   ): Promise<Media> {
     this.validateFile(file);
 
@@ -121,15 +134,17 @@ export class StorageService {
     const storageKey = `uploads/${ownerId}/${uid}/${safeName}`;
 
     // Upload original to S3
-    await this.s3.send(new PutObjectCommand({
-      Bucket: this.bucket,
-      Key: storageKey,
-      Body: file.buffer,
-      ContentType: file.mimetype,
-      ContentDisposition: `attachment; filename="${safeName}"`,
-      ServerSideEncryption: 'AES256',
-      Metadata: { ownerId, originalName: file.originalname },
-    }));
+    await this.s3.send(
+      new PutObjectCommand({
+        Bucket: this.bucket,
+        Key: storageKey,
+        Body: file.buffer,
+        ContentType: file.mimetype,
+        ContentDisposition: `attachment; filename="${safeName}"`,
+        ServerSideEncryption: 'AES256',
+        Metadata: { ownerId, originalName: file.originalname },
+      })
+    );
 
     // Generate and upload image derivatives
     const derivatives: Record<string, string> = {};
@@ -144,13 +159,15 @@ export class StorageService {
             .toBuffer();
 
           const derivKey = `uploads/${ownerId}/${uid}/${deriv.suffix}.webp`;
-          await this.s3.send(new PutObjectCommand({
-            Bucket: this.bucket,
-            Key: derivKey,
-            Body: resized,
-            ContentType: 'image/webp',
-            ServerSideEncryption: 'AES256',
-          }));
+          await this.s3.send(
+            new PutObjectCommand({
+              Bucket: this.bucket,
+              Key: derivKey,
+              Body: resized,
+              ContentType: 'image/webp',
+              ServerSideEncryption: 'AES256',
+            })
+          );
           derivatives[deriv.suffix] = derivKey;
         } catch {
           // Derivative failure is non-fatal — log and continue
@@ -230,7 +247,9 @@ export class StorageService {
     // Delete derivatives
     if (media.derivatives) {
       for (const key of Object.values(media.derivatives)) {
-        await this.s3.send(new DeleteObjectCommand({ Bucket: media.bucket, Key: key })).catch(() => {});
+        await this.s3
+          .send(new DeleteObjectCommand({ Bucket: media.bucket, Key: key }))
+          .catch(() => {});
       }
     }
 

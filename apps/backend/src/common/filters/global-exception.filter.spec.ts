@@ -46,13 +46,16 @@ describe('GlobalExceptionFilter', () => {
 
   it('includes details when AppError has them', () => {
     const details = { field: 'email' };
-    const { body } = run(new AppError(ErrorCode.VALIDATION_ERROR, 'Validation failed', 400, details));
+    const { body } = run(
+      new AppError(ErrorCode.VALIDATION_ERROR, 'Validation failed', 400, details)
+    );
     expect(body.details).toEqual(details);
   });
 
-  it('omits details key when AppError has none', () => {
+  it('defaults details to an empty object when AppError has none (#974 standardized schema)', () => {
     const { body } = run(new AppError(ErrorCode.NOT_FOUND, 'Not found', 404));
-    expect(body).not.toHaveProperty('details');
+    expect(body).toHaveProperty('details');
+    expect(body.details).toEqual({});
   });
 
   it('handles ValidationError (400)', () => {

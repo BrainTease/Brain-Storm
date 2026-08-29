@@ -11,17 +11,20 @@ This directory contains build, deployment, and contract interaction scripts for 
 Builds all Soroban smart contracts in the `contracts/` directory.
 
 **Usage:**
+
 ```bash
 ./scripts/build.sh
 ```
 
 **Features:**
+
 - Loops over all contracts in `contracts/` directory
 - Uses `--release` flag for optimized builds
 - Displays WASM file sizes
 - Error handling with `set -euo pipefail`
 
 **Output:**
+
 ```
 Building Brain-Storm smart contracts...
 Building analytics...
@@ -39,15 +42,18 @@ Build complete. WASM files and sizes:
 Deploys a specific contract to Stellar testnet or mainnet.
 
 **Usage:**
+
 ```bash
 ./scripts/deploy.sh <network> <contract_name>
 ```
 
 **Arguments:**
+
 - `network`: `testnet` or `mainnet` (default: `testnet`)
 - `contract_name`: Contract name (default: `analytics`)
 
 **Examples:**
+
 ```bash
 # Deploy analytics to testnet
 ./scripts/deploy.sh testnet analytics
@@ -57,11 +63,13 @@ Deploys a specific contract to Stellar testnet or mainnet.
 ```
 
 **Requirements:**
+
 - `STELLAR_SECRET_KEY` environment variable must be set
 - Contract must be built first (run `./scripts/build.sh`)
 - `jq` must be installed for JSON parsing
 
 **Features:**
+
 - Validates network and contract name
 - Checks for WASM file existence
 - Automatically updates `deployed-contracts.json` with contract ID
@@ -72,17 +80,20 @@ Deploys a specific contract to Stellar testnet or mainnet.
 Calls a function on a deployed contract.
 
 **Usage:**
+
 ```bash
 ./scripts/invoke.sh <network> <contract_name> <function> [args...]
 ```
 
 **Arguments:**
+
 - `network`: `testnet` or `mainnet`
 - `contract_name`: Contract name (must be in `deployed-contracts.json`)
 - `function`: Contract function to invoke
 - `args`: Function arguments (optional)
 
 **Examples:**
+
 ```bash
 # Initialize shared contract
 ./scripts/invoke.sh testnet shared initialize GBUQWP3BOUZX34ULNQG23RQ6F4YUSXHTQSXUSMIQ75XABZXVQRLLOG4
@@ -92,12 +103,14 @@ Calls a function on a deployed contract.
 ```
 
 **Requirements:**
+
 - `STELLAR_SECRET_KEY` environment variable must be set
 - Contract must be deployed first (run `./scripts/deploy.sh`)
 - `deployed-contracts.json` must exist with contract IDs
 - `jq` must be installed for JSON parsing
 
 **Features:**
+
 - Reads contract ID from `deployed-contracts.json`
 - Validates network and contract name
 - Error handling with `set -euo pipefail`
@@ -107,6 +120,7 @@ Calls a function on a deployed contract.
 Stores contract IDs for each network and contract.
 
 **Format:**
+
 ```json
 {
   "testnet": {
@@ -127,9 +141,11 @@ Stores contract IDs for each network and contract.
 ## Environment Variables
 
 All scripts require:
+
 - `STELLAR_SECRET_KEY`: Your Stellar account secret key for signing transactions
 
 **Example:**
+
 ```bash
 export STELLAR_SECRET_KEY="SAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
 ./scripts/deploy.sh testnet analytics
@@ -138,6 +154,7 @@ export STELLAR_SECRET_KEY="SAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 ## Error Handling
 
 All scripts use `set -euo pipefail` for robust error handling:
+
 - `set -e`: Exit on any error
 - `set -u`: Exit on undefined variable
 - `set -o pipefail`: Exit if any command in a pipe fails
@@ -152,18 +169,23 @@ All scripts use `set -euo pipefail` for robust error handling:
 ## Troubleshooting
 
 ### "STELLAR_SECRET_KEY environment variable not set"
+
 ```bash
 export STELLAR_SECRET_KEY="your-secret-key"
 ```
 
 ### "Contract not found in contracts/"
+
 Ensure the contract directory exists and contains a `Cargo.toml` file.
 
 ### "WASM file not found"
+
 Run `./scripts/build.sh` first to build all contracts.
 
 ### "jq: command not found"
+
 Install jq:
+
 ```bash
 # macOS
 brew install jq

@@ -1,9 +1,11 @@
 # Test Data Management
 
 ## Overview
+
 Centralized test data generation and management using factories and seeders.
 
 ## Factories
+
 Located in `apps/backend/tests/factories/`:
 
 ```typescript
@@ -20,6 +22,7 @@ const course = CourseFactory.create({ title: 'Advanced Rust' });
 ```
 
 ## Seeding
+
 Use `TestDataSeeder` for test setup:
 
 ```typescript
@@ -30,6 +33,7 @@ await seeder.seedEnrollments(userIds, courseIds);
 ```
 
 ## Cleanup
+
 Always cleanup after tests:
 
 ```typescript
@@ -39,9 +43,11 @@ afterEach(async () => {
 ```
 
 ## Versioning
+
 Test data factories are versioned with the codebase. Update factories when schema changes.
 
 ## Best Practices
+
 - Use factories for all test data
 - Keep factories simple and focused
 - Override only necessary fields

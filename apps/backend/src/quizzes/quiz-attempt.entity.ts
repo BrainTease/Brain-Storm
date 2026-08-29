@@ -14,37 +14,37 @@ import { QuizAttemptAnswer } from './quiz-attempt-answer.entity';
 @Entity('quiz_attempts')
 export class QuizAttempt {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  quizId: string;
+  quizId!: string;
 
   @ManyToOne(() => Quiz, (q) => q.attempts, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'quizId' })
-  quiz: Quiz;
+  quiz!: Quiz;
 
   @Column()
-  userId: string;
+  userId!: string;
 
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
-  user: User;
+  user!: User;
 
   @Column({ type: 'float', nullable: true })
-  score: number;
+  score!: number;
 
   @Column({ default: false })
-  isGraded: boolean;
+  isGraded!: boolean;
 
   @Column({ nullable: true })
-  gradedBy: string;
+  gradedBy!: string;
 
   @Column('text', { nullable: true })
-  feedback: string;
+  feedback!: string;
 
   @OneToMany(() => QuizAttemptAnswer, (a) => a.attempt, { cascade: true })
-  answers: QuizAttemptAnswer[];
+  answers!: QuizAttemptAnswer[];
 
   @CreateDateColumn()
-  submittedAt: Date;
+  submittedAt!: Date;
 }

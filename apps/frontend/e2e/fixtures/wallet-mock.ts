@@ -39,15 +39,15 @@ export function mockWallet(page: Page, config: WalletMockConfig = {}) {
       // Mock Freighter API
       (window as any).freighter = {
         isConnected: () => Promise.resolve(true),
-        
+
         getPublicKey: async () => {
           return pk;
         },
-        
+
         getNetwork: async () => {
           return net;
         },
-        
+
         getNetworkDetails: async () => {
           return {
             network: net,
@@ -57,21 +57,21 @@ export function mockWallet(page: Page, config: WalletMockConfig = {}) {
                 : 'Public Global Stellar Network ; September 2015',
           };
         },
-        
+
         signTransaction: async (xdr: string, opts?: any) => {
           // Return a mock-signed XDR
           // In real tests, you'd use stellar-sdk to actually sign with TEST_WALLET.secretKey
           return xdr;
         },
-        
+
         signAuthEntry: async (entryXdr: string, opts?: any) => {
           return entryXdr;
         },
-        
+
         signBlob: async (blob: string, opts?: any) => {
           return blob;
         },
-        
+
         // Additional methods for completeness
         isAllowed: () => Promise.resolve(true),
         setAllowed: () => Promise.resolve(),
@@ -86,7 +86,7 @@ export function mockWallet(page: Page, config: WalletMockConfig = {}) {
         network: net,
       };
     },
-    { pk: publicKey, net: network, installed: isInstalled },
+    { pk: publicKey, net: network, installed: isInstalled }
   );
 }
 

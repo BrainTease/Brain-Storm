@@ -21,8 +21,10 @@ export class PlatformAnalyticsService {
     @InjectRepository(Enrollment) private readonly enrollmentRepo: Repository<Enrollment>,
     @InjectRepository(Progress) private readonly progressRepo: Repository<Progress>,
     @InjectRepository(Review) private readonly reviewRepo: Repository<Review>,
-    @InjectRepository(AnalyticsEvent) private readonly analyticsEventRepo: Repository<AnalyticsEvent>,
-    @InjectRepository(PlatformAnalytics) private readonly platformAnalyticsRepo: Repository<PlatformAnalytics>,
+    @InjectRepository(AnalyticsEvent)
+    private readonly analyticsEventRepo: Repository<AnalyticsEvent>,
+    @InjectRepository(PlatformAnalytics)
+    private readonly platformAnalyticsRepo: Repository<PlatformAnalytics>
   ) {}
 
   async aggregatePlatform(): Promise<PlatformAnalytics> {
@@ -40,10 +42,7 @@ export class PlatformAnalyticsService {
       this.userRepo.count(),
       this.courseRepo.count(),
       this.enrollmentRepo.count(),
-      this.enrollmentRepo
-        .createQueryBuilder('e')
-        .where('e.completedAt IS NOT NULL')
-        .getCount(),
+      this.enrollmentRepo.createQueryBuilder('e').where('e.completedAt IS NOT NULL').getCount(),
       this.reviewRepo
         .createQueryBuilder('r')
         .select('AVG(r.rating)', 'avg')
@@ -68,8 +67,7 @@ export class PlatformAnalyticsService {
         .getCount(),
     ]);
 
-    const completionRate =
-      totalEnrollments > 0 ? (totalCompletions / totalEnrollments) * 100 : 0;
+    const completionRate = totalEnrollments > 0 ? (totalCompletions / totalEnrollments) * 100 : 0;
 
     const platformAnalytics = this.platformAnalyticsRepo.create({
       totalUsers,
@@ -94,7 +92,9 @@ export class PlatformAnalyticsService {
     try {
       await this.aggregatePlatform();
     } catch (err) {
-      this.logger.error(`Failed to aggregate platform analytics: ${err.message}`);
+      this.logger.error(
+        `Failed to aggregate platform analytics: ${err instanceof Error ? err.message : String(err)}`
+      );
     }
   }
 
@@ -104,7 +104,9 @@ export class PlatformAnalyticsService {
     try {
       await this.aggregatePlatform();
     } catch (err) {
-      this.logger.error(`Failed to aggregate platform analytics: ${err.message}`);
+      this.logger.error(
+        `Failed to aggregate platform analytics: ${err instanceof Error ? err.message : String(err)}`
+      );
     }
   }
 

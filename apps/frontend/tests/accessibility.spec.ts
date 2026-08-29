@@ -64,7 +64,7 @@ test.describe('Accessibility Testing - WCAG 2.1 AA', () => {
   test('should not skip heading levels', async ({ page }) => {
     const headingLevels = await page.evaluate(() => {
       const headings = Array.from(document.querySelectorAll('h1, h2, h3, h4, h5, h6'));
-      return headings.map(h => parseInt(h.tagName[1]));
+      return headings.map((h) => parseInt(h.tagName[1]));
     });
 
     // Check for skipped levels
@@ -78,7 +78,7 @@ test.describe('Accessibility Testing - WCAG 2.1 AA', () => {
 
   test('all images should have alt text', async ({ page }) => {
     const images = await page.locator('img').all();
-    
+
     for (const img of images) {
       const alt = await img.getAttribute('alt');
       expect(alt).toBeTruthy();
@@ -87,7 +87,7 @@ test.describe('Accessibility Testing - WCAG 2.1 AA', () => {
 
   test('decorative images should have empty alt text', async ({ page }) => {
     const decorativeImages = await page.locator('img[role="presentation"]').all();
-    
+
     for (const img of decorativeImages) {
       const alt = await img.getAttribute('alt');
       expect(alt).toBe('');
@@ -98,7 +98,7 @@ test.describe('Accessibility Testing - WCAG 2.1 AA', () => {
 
   test('form inputs should have associated labels', async ({ page }) => {
     const inputs = await page.locator('input, textarea, select').all();
-    
+
     for (const input of inputs) {
       const id = await input.getAttribute('id');
       if (id) {
@@ -118,7 +118,7 @@ test.describe('Accessibility Testing - WCAG 2.1 AA', () => {
 
   test('required fields should be marked', async ({ page }) => {
     const requiredInputs = await page.locator('input[required]').all();
-    
+
     for (const input of requiredInputs) {
       const ariaRequired = await input.getAttribute('aria-required');
       expect(ariaRequired).toBe('true');
@@ -131,22 +131,22 @@ test.describe('Accessibility Testing - WCAG 2.1 AA', () => {
     const contrastIssues = await page.evaluate(() => {
       const issues: string[] = [];
       const elements = document.querySelectorAll('*');
-      
-      elements.forEach(el => {
+
+      elements.forEach((el) => {
         const style = window.getComputedStyle(el);
         const color = style.color;
         const bgColor = style.backgroundColor;
-        
+
         // Simple contrast check (would use more sophisticated algorithm in production)
         if (color && bgColor && color !== 'rgba(0, 0, 0, 0)') {
           // This is a simplified check
           issues.push(`Element: ${el.tagName}`);
         }
       });
-      
+
       return issues;
     });
-    
+
     // Should have minimal contrast issues
     expect(contrastIssues.length).toBeLessThan(10);
   });
@@ -155,7 +155,7 @@ test.describe('Accessibility Testing - WCAG 2.1 AA', () => {
 
   test('interactive elements should be focusable', async ({ page }) => {
     const buttons = await page.locator('button, a[href], input').all();
-    
+
     for (const button of buttons.slice(0, 5)) {
       await button.focus();
       const focused = await page.evaluate(() => document.activeElement?.tagName);
@@ -170,7 +170,7 @@ test.describe('Accessibility Testing - WCAG 2.1 AA', () => {
       const style = window.getComputedStyle(el);
       return style.outline || style.boxShadow;
     });
-    
+
     expect(focusedElement).toBeTruthy();
   });
 
@@ -179,12 +179,21 @@ test.describe('Accessibility Testing - WCAG 2.1 AA', () => {
   test('should use proper ARIA roles', async ({ page }) => {
     const ariaRoles = await page.evaluate(() => {
       const elements = document.querySelectorAll('[role]');
-      return Array.from(elements).map(el => el.getAttribute('role'));
+      return Array.from(elements).map((el) => el.getAttribute('role'));
     });
-    
+
     // Check for valid ARIA roles
-    const validRoles = ['button', 'link', 'navigation', 'main', 'complementary', 'contentinfo', 'alert', 'dialog'];
-    ariaRoles.forEach(role => {
+    const validRoles = [
+      'button',
+      'link',
+      'navigation',
+      'main',
+      'complementary',
+      'contentinfo',
+      'alert',
+      'dialog',
+    ];
+    ariaRoles.forEach((role) => {
       if (role) {
         expect(validRoles).toContain(role);
       }
@@ -196,7 +205,7 @@ test.describe('Accessibility Testing - WCAG 2.1 AA', () => {
       const elements = document.querySelectorAll('[aria-label], [aria-labelledby]');
       return elements.length;
     });
-    
+
     expect(ariaLabels).toBeGreaterThanOrEqual(0);
   });
 
@@ -204,10 +213,12 @@ test.describe('Accessibility Testing - WCAG 2.1 AA', () => {
 
   test('should use semantic HTML elements', async ({ page }) => {
     const semanticElements = await page.evaluate(() => {
-      const elements = document.querySelectorAll('header, nav, main, article, section, aside, footer');
+      const elements = document.querySelectorAll(
+        'header, nav, main, article, section, aside, footer'
+      );
       return elements.length;
     });
-    
+
     expect(semanticElements).toBeGreaterThan(0);
   });
 
@@ -215,7 +226,7 @@ test.describe('Accessibility Testing - WCAG 2.1 AA', () => {
 
   test('should be mobile accessible', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
-    
+
     // Check touch targets are at least 44x44px
     const buttons = await page.locator('button').all();
     for (const button of buttons.slice(0, 5)) {
@@ -231,7 +242,7 @@ test.describe('Accessibility Testing - WCAG 2.1 AA', () => {
 
   test('videos should have captions', async ({ page }) => {
     const videos = await page.locator('video').all();
-    
+
     for (const video of videos) {
       const tracks = await video.locator('track[kind="captions"]').all();
       expect(tracks.length).toBeGreaterThan(0);
@@ -242,19 +253,19 @@ test.describe('Accessibility Testing - WCAG 2.1 AA', () => {
 
   test('links should have descriptive text', async ({ page }) => {
     const links = await page.locator('a').all();
-    
+
     for (const link of links) {
       const text = await link.textContent();
       const ariaLabel = await link.getAttribute('aria-label');
       const title = await link.getAttribute('title');
-      
+
       expect(text || ariaLabel || title).toBeTruthy();
     }
   });
 
   test('should not have "click here" links', async ({ page }) => {
     const links = await page.locator('a').all();
-    
+
     for (const link of links) {
       const text = await link.textContent();
       expect(text?.toLowerCase()).not.toContain('click here');

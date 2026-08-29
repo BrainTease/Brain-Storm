@@ -26,6 +26,32 @@ jobs:
   validate-openapi:
     name: Validate OpenAPI Specification
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: brainstorm
+          POSTGRES_USER: brainstorm
+          POSTGRES_PASSWORD: brainstorm
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
     steps:
       - uses: actions/checkout@v4
 
@@ -43,6 +69,16 @@ jobs:
       - name: Export OpenAPI spec
         working-directory: apps/backend
         run: EXPORT_OPENAPI=true node dist/main --export-openapi
+        env:
+          NODE_ENV: test
+          DATABASE_HOST: localhost
+          DATABASE_PORT: '5432'
+          DATABASE_NAME: brainstorm
+          DATABASE_USER: brainstorm
+          DATABASE_PASSWORD: brainstorm
+          JWT_SECRET: ci-secret
+          REDIS_URL: redis://localhost:6379
+          STELLAR_NETWORK: testnet
 
       - name: Validate OpenAPI spec
         run: |
@@ -120,15 +156,15 @@ jobs:
         run: |
           cat > docs/api/dist/CHANGELOG.md << 'EOF'
           # API Changelog
-          
+
           ## Version ${{ steps.version.outputs.version }}
-          
+
           Generated: $(date -u +'%Y-%m-%d %H:%M:%S UTC')
-          
+
           ### Endpoints
-          
+
           EOF
-          
+
           # Extract endpoints from OpenAPI spec
           jq -r '.paths | keys[]' apps/backend/openapi.json >> docs/api/dist/CHANGELOG.md || true
 
@@ -142,7 +178,7 @@ jobs:
             "tags": []
           }
           EOF
-          
+
           # Build search index from OpenAPI spec
           jq '.paths | to_entries[] | {path: .key, methods: .value | keys}' apps/backend/openapi.json >> docs/api/dist/search-index.json || true
 
@@ -159,7 +195,7 @@ jobs:
         with:
           script: |
             const version = '${{ steps.version.outputs.version }}';
-            
+
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
@@ -258,7 +294,7 @@ jobs:
         with:
           script: |
             const version = '${{ needs.build-documentation.outputs.doc_version }}';
-            
+
             github.rest.repos.createDeployment({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -268,4 +304,3 @@ jobs:
               auto_merge: false,
               required_contexts: []
             });
-

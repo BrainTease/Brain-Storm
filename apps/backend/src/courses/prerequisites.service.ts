@@ -18,7 +18,7 @@ export class PrerequisitesService {
     @InjectRepository(Enrollment)
     private enrollmentRepo: Repository<Enrollment>,
     @InjectRepository(Course)
-    private courseRepo: Repository<Course>,
+    private courseRepo: Repository<Course>
   ) {}
 
   async addPrerequisite(courseId: string, prerequisiteId: string): Promise<CoursePrerequisite> {
@@ -73,7 +73,7 @@ export class PrerequisitesService {
   async validatePrerequisites(
     userId: string,
     courseId: string,
-    adminOverride = false,
+    adminOverride = false
   ): Promise<{ satisfied: boolean; missing: string[] }> {
     if (adminOverride) return { satisfied: true, missing: [] };
 
@@ -86,7 +86,7 @@ export class PrerequisitesService {
     });
 
     const completedCourseIds = new Set(
-      completedEnrollments.filter((e) => e.completedAt).map((e) => e.courseId),
+      completedEnrollments.filter((e) => e.completedAt).map((e) => e.courseId)
     );
 
     const missing = prereqs
@@ -97,11 +97,19 @@ export class PrerequisitesService {
   }
 
   /** Throws if prerequisites are not met (used by enrollment) */
-  async enforcePrerequisites(userId: string, courseId: string, adminOverride = false): Promise<void> {
-    const { satisfied, missing } = await this.validatePrerequisites(userId, courseId, adminOverride);
+  async enforcePrerequisites(
+    userId: string,
+    courseId: string,
+    adminOverride = false
+  ): Promise<void> {
+    const { satisfied, missing } = await this.validatePrerequisites(
+      userId,
+      courseId,
+      adminOverride
+    );
     if (!satisfied) {
       throw new ForbiddenException(
-        `Prerequisites not completed. Missing course IDs: ${missing.join(', ')}`,
+        `Prerequisites not completed. Missing course IDs: ${missing.join(', ')}`
       );
     }
   }

@@ -13,21 +13,25 @@ npm run test:integration
 ## Test Scenarios
 
 ### Analytics Contract
+
 - Record course progress on-chain
 - Retrieve student progress from contract
 - Handle concurrent progress updates
 
 ### Token Contract
+
 - Mint reward tokens on course completion
 - Query token balances
 - Track mint history
 
 ### Credential Contract
+
 - Issue certificates on course completion
 - Verify credentials on-chain
 - Store and retrieve credential metadata
 
 ### Cross-Contract Interactions
+
 - Complete course → trigger token mint
 - Handle concurrent contract calls
 - Verify state consistency across contracts
@@ -44,6 +48,7 @@ tests/integration/
 ## Setup
 
 Integration tests use the full NestJS application context with:
+
 - Real database connections (via testcontainers)
 - Contract interaction layer
 - Authentication middleware

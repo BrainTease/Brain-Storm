@@ -1,26 +1,58 @@
 import * as Joi from 'joi';
 
+/**
+ * Joi validation schema for all environment variables consumed by the backend.
+ *
+ * Every variable that is read via `process.env` or `configService.get()` must
+ * appear here so that the application fails fast at startup when a required
+ * variable is missing or malformed, rather than silently using an undefined
+ * value at runtime.
+ *
+ * Audit performed for issues #805 — the following variables were previously
+ * consumed via raw `process.env` or `configService.get()` without a matching
+ * entry in this schema:
+ *   - SENTRY_DSN / GIT_COMMIT_SHA  (used in src/instrument.ts, src/tracing.ts)
+ *   - LOG_LEVEL                    (used in src/common/logger/logger.module.ts)
+ *   - STELLAR_HORIZON_URL          (used in src/health/health.controller.ts)
+ *   - DB_POOL_MAX / DB_POOL_MIN / DB_ACQUIRE_TIMEOUT / DB_IDLE_TIMEOUT
+ *                                  (used in src/app.module.ts + src/database/db-pool.config.ts)
+ *   - CORS_ORIGINS / CORS_CREDENTIALS / CORS_MAX_AGE
+ *                                  (mapped in src/config/configuration.ts but absent here)
+ */
 export const validationSchema = Joi.object({
-  // App
+  // ── App ────────────────────────────────────────────────────────────────────
   NODE_ENV: Joi.string().valid('development', 'production', 'test').default('development'),
   PORT: Joi.number().default(3000),
 
-  // Database
+  // ── Logging ────────────────────────────────────────────────────────────────
+  LOG_LEVEL: Joi.string()
+    .valid('error', 'warn', 'info', 'http', 'verbose', 'debug', 'silly')
+    .default('info'),
+
+  // ── Database ───────────────────────────────────────────────────────────────
   DATABASE_HOST: Joi.string().required(),
   DATABASE_PORT: Joi.number().default(5432),
   DATABASE_USER: Joi.string().required(),
   DATABASE_PASSWORD: Joi.string().required(),
   DATABASE_NAME: Joi.string().required(),
 
-  // JWT
+  // Database connection-pool tuning (used via raw process.env in app.module.ts
+  // and db-pool.config.ts).
+  DB_POOL_MAX: Joi.number().integer().min(1).default(20),
+  DB_POOL_MIN: Joi.number().integer().min(0).default(5),
+  DB_ACQUIRE_TIMEOUT: Joi.number().integer().min(0).default(30000),
+  DB_IDLE_TIMEOUT: Joi.number().integer().min(0).default(10000),
+
+  // ── JWT ────────────────────────────────────────────────────────────────────
   JWT_SECRET: Joi.string().min(16).required(),
 
-  // Redis
+  // ── Redis ──────────────────────────────────────────────────────────────────
   REDIS_URL: Joi.string().uri().required(),
 
-  // Stellar
+  // ── Stellar ────────────────────────────────────────────────────────────────
   STELLAR_NETWORK: Joi.string().valid('testnet', 'mainnet').default('testnet'),
   STELLAR_SECRET_KEY: Joi.string().required(),
+  STELLAR_HORIZON_URL: Joi.string().uri().default('https://horizon-testnet.stellar.org'),
   SOROBAN_RPC_URL: Joi.string().uri().default('https://soroban-testnet.stellar.org'),
   SOROBAN_CONTRACT_ID: Joi.string().allow('').default(''),
   ANALYTICS_CONTRACT_ID: Joi.string().allow('').default(''),
@@ -28,7 +60,7 @@ export const validationSchema = Joi.object({
   INDEXER_POLL_INTERVAL_MS: Joi.number().default(5000),
   STELLAR_WEB_AUTH_DOMAIN: Joi.string().default('localhost'),
 
-  // Mail
+  // ── Mail ───────────────────────────────────────────────────────────────────
   EMAIL_HOST: Joi.string().required(),
   EMAIL_PORT: Joi.number().default(587),
   EMAIL_SECURE: Joi.boolean().default(false),
@@ -37,35 +69,67 @@ export const validationSchema = Joi.object({
   EMAIL_FROM: Joi.string().default('"Brain Storm" <no-reply@brainstorm.app>'),
   EMAIL_ENABLED: Joi.boolean().default(false),
 
-  // Frontend
+  // ── Frontend ───────────────────────────────────────────────────────────────
   FRONTEND_URL: Joi.string().uri().default('http://localhost:3001'),
 
-  // Google OAuth (optional)
+  // ── CORS ───────────────────────────────────────────────────────────────────
+  CORS_ORIGINS: Joi.string().default('http://localhost:3001'),
+  CORS_CREDENTIALS: Joi.boolean().default(false),
+  CORS_MAX_AGE: Joi.number().integer().min(0).default(86400),
+
+  // ── Google OAuth (optional) ────────────────────────────────────────────────
   GOOGLE_CLIENT_ID: Joi.string().optional(),
   GOOGLE_CLIENT_SECRET: Joi.string().optional(),
   GOOGLE_CALLBACK_URL: Joi.string().uri().default('http://localhost:3000/auth/google/callback'),
 
-  // Throttle
+  // ── Throttle ───────────────────────────────────────────────────────────────
   THROTTLE_TTL: Joi.number().default(60000),
   THROTTLE_LIMIT: Joi.number().default(100),
 
-  // KYC
+  // ── KYC ────────────────────────────────────────────────────────────────────
   KYC_PROVIDER_API_KEY: Joi.string().allow('').default(''),
 
-  // AWS
+  // ── AWS ────────────────────────────────────────────────────────────────────
   AWS_REGION: Joi.string().default('us-east-1'),
   AWS_ACCESS_KEY_ID: Joi.string().allow('').default(''),
   AWS_SECRET_ACCESS_KEY: Joi.string().allow('').default(''),
 
-  // Moderation
+  // ── Moderation ─────────────────────────────────────────────────────────────
   MODERATION_TOXICITY_THRESHOLD: Joi.number().min(0).max(1).default(0.7),
 
-  // Elasticsearch
+  // ── Elasticsearch ──────────────────────────────────────────────────────────
   ELASTICSEARCH_NODE: Joi.string().uri().default('http://localhost:9200'),
   ELASTICSEARCH_API_KEY: Joi.string().allow('').default(''),
 
-  // Stripe
+  // ── Stripe ─────────────────────────────────────────────────────────────────
   STRIPE_SECRET_KEY: Joi.string().allow('').default(''),
   STRIPE_WEBHOOK_SECRET: Joi.string().allow('').default(''),
   STRIPE_PUBLISHABLE_KEY: Joi.string().allow('').default(''),
+
+  // ── Sentry / Observability ─────────────────────────────────────────────────
+  // SENTRY_DSN is optional so the app can start without it in local dev.
+  SENTRY_DSN: Joi.string().uri().allow('').optional(),
+  // GIT_COMMIT_SHA is injected by CI/CD pipelines; falls back to 'unknown'.
+  GIT_COMMIT_SHA: Joi.string().allow('').optional(),
+
+  // ── OpenTelemetry ──────────────────────────────────────────────────────────
+  OTEL_SERVICE_NAME: Joi.string().default('brain-storm-api'),
+  OTEL_EXPORTER_OTLP_ENDPOINT: Joi.string().uri().default('http://localhost:4318'),
+  OTEL_TRACES_SAMPLER_ARG: Joi.string().default('0.1'),
+
+  // ── Rate Limiting ──────────────────────────────────────────────────────────
+  RATE_LIMIT_ADMIN: Joi.number().default(10000),
+  RATE_LIMIT_INSTRUCTOR: Joi.number().default(5000),
+  RATE_LIMIT_STUDENT: Joi.number().default(1000),
+  RATE_LIMIT_GUEST: Joi.number().default(100),
+  RATE_LIMIT_ALLOWLIST: Joi.string().allow('').default(''),
+
+  // ── Audit ──────────────────────────────────────────────────────────────────
+  AUDIT_RETENTION_DAYS: Joi.number().integer().min(1).default(365),
+
+  // ── Graceful Shutdown ──────────────────────────────────────────────────────
+  SHUTDOWN_DRAIN_TIMEOUT_MS: Joi.number().integer().min(1000).default(10000),
+
+  // ── Export OpenAPI ────────────────────────────────────────────────────────
+  EXPORT_OPENAPI: Joi.boolean().default(false),
 });

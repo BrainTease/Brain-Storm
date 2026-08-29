@@ -1,4 +1,4 @@
-import { SelectQueryBuilder } from 'typeorm';
+import { SelectQueryBuilder, ObjectLiteral } from 'typeorm';
 
 /**
  * Query optimization utilities for preventing N+1 problems and improving performance
@@ -10,17 +10,14 @@ export class QueryOptimizer {
    * @param relations - Array of relation paths to eager load
    * @returns Modified query builder
    */
-  static eagerLoadRelations<T>(
+  static eagerLoadRelations<T extends ObjectLiteral>(
     qb: SelectQueryBuilder<T>,
-    relations: string[],
+    relations: string[]
   ): SelectQueryBuilder<T> {
     let optimizedQb = qb;
     for (const relation of relations) {
       const alias = relation.split('.')[0];
-      optimizedQb = optimizedQb.leftJoinAndSelect(
-        `${qb.alias}.${relation}`,
-        alias,
-      );
+      optimizedQb = optimizedQb.leftJoinAndSelect(`${qb.alias}.${relation}`, alias);
     }
     return optimizedQb;
   }
@@ -32,10 +29,10 @@ export class QueryOptimizer {
    * @param limit - Items per page
    * @returns Modified query builder
    */
-  static paginate<T>(
+  static paginate<T extends ObjectLiteral>(
     qb: SelectQueryBuilder<T>,
     page: number = 1,
-    limit: number = 20,
+    limit: number = 20
   ): SelectQueryBuilder<T> {
     const offset = (page - 1) * limit;
     return qb.skip(offset).take(limit);
@@ -48,10 +45,10 @@ export class QueryOptimizer {
    * @param order - Sort order (ASC or DESC)
    * @returns Modified query builder
    */
-  static sort<T>(
+  static sort<T extends ObjectLiteral>(
     qb: SelectQueryBuilder<T>,
     sortBy: string,
-    order: 'ASC' | 'DESC' = 'ASC',
+    order: 'ASC' | 'DESC' = 'ASC'
   ): SelectQueryBuilder<T> {
     return qb.orderBy(`${qb.alias}.${sortBy}`, order);
   }
@@ -62,9 +59,9 @@ export class QueryOptimizer {
    * @param filters - Object with field names and values
    * @returns Modified query builder
    */
-  static filter<T>(
+  static filter<T extends ObjectLiteral>(
     qb: SelectQueryBuilder<T>,
-    filters: Record<string, any>,
+    filters: Record<string, any>
   ): SelectQueryBuilder<T> {
     let optimizedQb = qb;
     let paramIndex = 0;
@@ -74,20 +71,17 @@ export class QueryOptimizer {
 
       const paramName = `param_${paramIndex++}`;
       if (Array.isArray(value)) {
-        optimizedQb = optimizedQb.andWhere(
-          `${qb.alias}.${field} IN (:...${paramName})`,
-          { [paramName]: value },
-        );
+        optimizedQb = optimizedQb.andWhere(`${qb.alias}.${field} IN (:...${paramName})`, {
+          [paramName]: value,
+        });
       } else if (typeof value === 'string' && value.includes('%')) {
-        optimizedQb = optimizedQb.andWhere(
-          `${qb.alias}.${field} ILIKE :${paramName}`,
-          { [paramName]: value },
-        );
+        optimizedQb = optimizedQb.andWhere(`${qb.alias}.${field} ILIKE :${paramName}`, {
+          [paramName]: value,
+        });
       } else {
-        optimizedQb = optimizedQb.andWhere(
-          `${qb.alias}.${field} = :${paramName}`,
-          { [paramName]: value },
-        );
+        optimizedQb = optimizedQb.andWhere(`${qb.alias}.${field} = :${paramName}`, {
+          [paramName]: value,
+        });
       }
     }
 
@@ -100,9 +94,9 @@ export class QueryOptimizer {
    * @param columns - Array of column names to select
    * @returns Modified query builder
    */
-  static selectColumns<T>(
+  static selectColumns<T extends ObjectLiteral>(
     qb: SelectQueryBuilder<T>,
-    columns: string[],
+    columns: string[]
   ): SelectQueryBuilder<T> {
     const alias = qb.alias;
     const selectedColumns = columns.map((col) => `${alias}.${col}`);
@@ -115,9 +109,9 @@ export class QueryOptimizer {
    * @param indexName - Name of the index to use
    * @returns Modified query builder
    */
-  static useIndex<T>(
+  static useIndex<T extends ObjectLiteral>(
     qb: SelectQueryBuilder<T>,
-    indexName: string,
+    indexName: string
   ): SelectQueryBuilder<T> {
     // Note: Index hints are database-specific
     // This is a placeholder for future implementation
@@ -130,7 +124,7 @@ export class QueryOptimizer {
    * @param options - Optimization options
    * @returns Modified query builder
    */
-  static optimize<T>(
+  static optimize<T extends ObjectLiteral>(
     qb: SelectQueryBuilder<T>,
     options: {
       relations?: string[];
@@ -140,7 +134,7 @@ export class QueryOptimizer {
       sortOrder?: 'ASC' | 'DESC';
       filters?: Record<string, any>;
       columns?: string[];
-    },
+    }
   ): SelectQueryBuilder<T> {
     let optimizedQb = qb;
 

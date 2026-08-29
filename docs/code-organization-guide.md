@@ -128,6 +128,7 @@ feature/
 ## Naming Conventions
 
 ### Files
+
 - Controllers: `*.controller.ts`
 - Services: `*.service.ts`
 - Entities: `*.entity.ts`
@@ -138,6 +139,7 @@ feature/
 - Tests: `*.spec.ts` (unit), `*.integration-spec.ts` (integration)
 
 ### Classes
+
 - Controllers: `FeatureController`
 - Services: `FeatureService`
 - Entities: `Feature`
@@ -146,6 +148,7 @@ feature/
 - Modules: `FeatureModule`
 
 ### Methods
+
 - Create: `create(dto)`
 - Read: `findOne(id)`, `findAll(query)`
 - Update: `update(id, dto)`
@@ -182,7 +185,7 @@ export class FeatureService {
     @InjectRepository(Feature)
     private readonly repository: Repository<Feature>,
     private readonly validationService: ValidationService,
-    private readonly otherService: OtherService,
+    private readonly otherService: OtherService
   ) {}
 }
 ```
@@ -329,18 +332,23 @@ export class FeatureController {
 ## Migration Guide
 
 ### Step 1: Reorganize Directories
+
 Move files to new structure while maintaining functionality.
 
 ### Step 2: Update Imports
+
 Update all import paths to reflect new structure.
 
 ### Step 3: Update Module Exports
+
 Ensure all modules properly export their services.
 
 ### Step 4: Test
+
 Run all tests to ensure nothing broke.
 
 ### Step 5: Update Documentation
+
 Update any documentation referencing old structure.
 
 ## Benefits

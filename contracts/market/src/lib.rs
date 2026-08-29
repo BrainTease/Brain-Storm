@@ -50,6 +50,14 @@ pub struct Product {
 }
 
 #[contracttype]
+#[derive(Clone, Debug, PartialEq)]
+pub enum EscrowStatus {
+    Funded,
+    Settled,
+    Refunded,
+}
+
+#[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Purchase {
     pub product_id: u32,
@@ -405,6 +413,22 @@ impl MarketContract {
     pub fn is_locked(env: Env) -> bool {
         let guard = ReentrancyGuard::new(&env);
         guard.is_locked()
+    }
+
+    // ── Fee config ────────────────────────────────────────────────────────────
+
+    fn is_paused_internal(env: &Env) -> bool {
+        env.storage().instance().get(&Symbol::new(env, "paused")).unwrap_or(false)
+    }
+
+    fn require_not_paused(env: &Env) {
+        assert!(!Self::is_paused_internal(env), "Contract is paused");
+    }
+
+    fn assert_admin_addr(env: &Env, caller: &Address) {
+        let admin: Address = env.storage().instance().get(&Symbol::new(env, "admin"))
+            .unwrap();
+        assert_eq!(&admin, caller, "Only admin");
     }
 }
 

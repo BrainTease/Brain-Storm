@@ -29,6 +29,7 @@ stellar network stop local --docker
 ## CI
 
 The `.github/workflows/contract-integration.yml` workflow:
+
 1. Starts `stellar-quickstart` in Docker (local network mode).
 2. Builds all WASM contracts.
 3. Deploys analytics + token + shared contracts.

@@ -13,24 +13,24 @@ import { Lesson } from './lesson.entity';
 @Entity('course_modules')
 export class CourseModule {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  courseId: string;
+  courseId!: string;
 
   @ManyToOne(() => Course, (course) => course.modules, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'courseId' })
-  course: Course;
+  course!: Course;
 
   @OneToMany(() => Lesson, (lesson) => lesson.module, { cascade: true })
-  lessons: Lesson[];
+  lessons!: Lesson[];
 
   @Column()
-  title: string;
+  title!: string;
 
   @Column({ default: 0 })
-  order: number;
+  order!: number;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 }

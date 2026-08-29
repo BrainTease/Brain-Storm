@@ -1,4 +1,9 @@
-import { Injectable, ForbiddenException, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  ForbiddenException,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Organization, OrgRole } from './organization.entity';
@@ -13,7 +18,8 @@ export class OrganizationsService {
   constructor(
     @InjectRepository(Organization) private orgRepo: Repository<Organization>,
     @InjectRepository(OrganizationMember) private memberRepo: Repository<OrganizationMember>,
-    @InjectRepository(OrganizationBillingProfile) private billingRepo: Repository<OrganizationBillingProfile>,
+    @InjectRepository(OrganizationBillingProfile)
+    private billingRepo: Repository<OrganizationBillingProfile>
   ) {}
 
   async createOrganization(userId: string, dto: CreateOrgDto) {
@@ -115,7 +121,12 @@ export class OrganizationsService {
     return member;
   }
 
-  async assignRoleToMember(orgId: string, memberId: string, role: OrgRole, updatedByUserId: string) {
+  async assignRoleToMember(
+    orgId: string,
+    memberId: string,
+    role: OrgRole,
+    updatedByUserId: string
+  ) {
     const updater = await this.memberRepo.findOne({
       where: { organizationId: orgId, userId: updatedByUserId },
     });
@@ -167,9 +178,6 @@ export class OrganizationsService {
   }
 
   async updateBillingBudget(orgId: string, monthlyBudget: number) {
-    return this.billingRepo.update(
-      { organizationId: orgId },
-      { monthlyBudget },
-    );
+    return this.billingRepo.update({ organizationId: orgId }, { monthlyBudget });
   }
 }

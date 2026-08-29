@@ -11,20 +11,20 @@ export type KycStatus = 'none' | 'pending' | 'approved' | 'rejected';
 @Entity('kyc_customers')
 export class KycCustomer {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column({ unique: true })
-  stellarPublicKey: string;
+  stellarPublicKey!: string;
 
   @Column({ default: 'none' })
-  status: KycStatus;
+  status!: KycStatus;
 
   @Column({ nullable: true })
-  providerId: string; // external ID from KYC provider
+  providerId!: string;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt!: Date;
 }

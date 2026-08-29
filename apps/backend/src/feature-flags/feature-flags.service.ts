@@ -12,7 +12,7 @@ export class FeatureFlagsService {
 
   constructor(
     @InjectRepository(FeatureFlag) private repo: Repository<FeatureFlag>,
-    @Inject(CACHE_MANAGER) private cache: Cache,
+    @Inject(CACHE_MANAGER) private cache: Cache
   ) {}
 
   private cacheKey(key: string) {
@@ -38,7 +38,7 @@ export class FeatureFlagsService {
       const hash = userId
         ? [...`${userId}:${key}`].reduce((acc, c) => (acc * 31 + c.charCodeAt(0)) >>> 0, 0)
         : Math.random() * 100;
-      return (hash % 100) < flag.percentage;
+      return hash % 100 < flag.percentage;
     }
 
     if (flag.type === FlagType.USER_TARGETED && userId) {

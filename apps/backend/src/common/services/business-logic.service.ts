@@ -16,7 +16,7 @@ export abstract class BusinessLogicService {
   protected validateOwnershipOrAdmin(
     userId: string,
     resourceOwnerId: string,
-    isAdmin: boolean = false,
+    isAdmin: boolean = false
   ): void {
     if (!isAdmin && userId !== resourceOwnerId) {
       throw new Error('Forbidden: You can only access your own resources');
@@ -26,7 +26,10 @@ export abstract class BusinessLogicService {
   /**
    * Validate pagination parameters
    */
-  protected validatePagination(page: number = 1, limit: number = 10): { page: number; limit: number } {
+  protected validatePagination(
+    page: number = 1,
+    limit: number = 10
+  ): { page: number; limit: number } {
     const validPage = Math.max(1, page);
     const validLimit = Math.min(Math.max(1, limit), 100); // Max 100 per page
     return { page: validPage, limit: validLimit };

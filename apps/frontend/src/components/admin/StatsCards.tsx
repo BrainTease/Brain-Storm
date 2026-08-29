@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { adminApi, PlatformStats, ActivityEvent } from '@/lib/adminApi';
+import { formatDateShort } from '@/lib/date-utils';
 
 function SkeletonCard() {
   return (
@@ -31,12 +32,16 @@ export function StatsCards() {
     }
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+  }, []);
 
   if (loading) {
     return (
       <div className="grid grid-cols-3 gap-4">
-        <SkeletonCard /><SkeletonCard /><SkeletonCard />
+        <SkeletonCard />
+        <SkeletonCard />
+        <SkeletonCard />
       </div>
     );
   }
@@ -45,7 +50,9 @@ export function StatsCards() {
     return (
       <div className="border border-red-200 rounded-lg p-6 text-center">
         <p className="text-red-600 mb-3">Failed to load statistics.</p>
-        <button className="text-blue-600 hover:underline text-sm" onClick={load}>Retry</button>
+        <button className="text-blue-600 hover:underline text-sm" onClick={load}>
+          Retry
+        </button>
       </div>
     );
   }
@@ -72,7 +79,7 @@ export function StatsCards() {
           {activity.map((e) => (
             <li key={e.id} className="text-sm text-gray-600 flex justify-between">
               <span>{e.description}</span>
-              <span className="text-gray-400">{new Date(e.createdAt).toLocaleDateString()}</span>
+              <span className="text-gray-400">{formatDateShort(e.createdAt)}</span>
             </li>
           ))}
         </ul>

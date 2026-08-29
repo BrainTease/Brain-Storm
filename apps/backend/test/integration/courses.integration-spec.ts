@@ -1,17 +1,34 @@
 import * as request from 'supertest';
-import { setupIntegrationTest, teardownIntegrationTest, clearDatabase, createAuthToken } from './setup';
+import {
+  setupIntegrationTest,
+  teardownIntegrationTest,
+  clearDatabase,
+  createAuthToken,
+} from './setup';
+import { INestApplication } from '@nestjs/common';
+import { DataSource } from 'typeorm';
+
+interface TestContext {
+  app: INestApplication;
+  dataSource: DataSource;
+  server: any;
+}
 
 describe('Courses Integration Tests', () => {
-  let ctx, token, adminToken;
+  let ctx: TestContext;
+  let token: string;
+  let adminToken: string;
 
-  beforeAll(async () => { 
+  beforeAll(async () => {
     ctx = await setupIntegrationTest();
     token = await createAuthToken(ctx.server);
     adminToken = await createAuthToken(ctx.server, 'admin@test.com');
     await ctx.dataSource.query(`UPDATE "user" SET role = 'admin' WHERE email = 'admin@test.com'`);
   });
-  afterAll(async () => { await teardownIntegrationTest(ctx); });
-  beforeEach(async () => { 
+  afterAll(async () => {
+    await teardownIntegrationTest(ctx);
+  });
+  beforeEach(async () => {
     await ctx.dataSource.query(`DELETE FROM course WHERE 1=1`);
   });
 
@@ -42,7 +59,7 @@ describe('Courses Integration Tests', () => {
         .set('Authorization', `Bearer ${token}`)
         .send({ title: 'New Course', description: 'Test description', status: 'draft' })
         .expect(201);
-      
+
       expect(res.body).toHaveProperty('id');
       expect(res.body.title).toBe('New Course');
     });
@@ -66,7 +83,7 @@ describe('Courses Integration Tests', () => {
         .post('/v1/courses')
         .set('Authorization', `Bearer ${token}`)
         .send({ title: 'Detail Test', description: 'Test', status: 'published' });
-      
+
       const res = await request(ctx.server).get(`/v1/courses/${created.body.id}`).expect(200);
       expect(res.body.title).toBe('Detail Test');
     });
@@ -78,7 +95,7 @@ describe('Courses Integration Tests', () => {
         .post('/v1/courses')
         .set('Authorization', `Bearer ${token}`)
         .send({ title: 'Original', description: 'Test', status: 'draft' });
-      
+
       await request(ctx.server)
         .patch(`/v1/courses/${created.body.id}`)
         .set('Authorization', `Bearer ${token}`)
@@ -93,7 +110,7 @@ describe('Courses Integration Tests', () => {
         .post('/v1/courses')
         .set('Authorization', `Bearer ${token}`)
         .send({ title: 'To Delete', description: 'Test', status: 'draft' });
-      
+
       await request(ctx.server)
         .delete(`/v1/courses/${created.body.id}`)
         .set('Authorization', `Bearer ${token}`)
@@ -105,7 +122,7 @@ describe('Courses Integration Tests', () => {
         .post('/v1/courses')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({ title: 'Admin Delete', description: 'Test', status: 'draft' });
-      
+
       await request(ctx.server)
         .delete(`/v1/courses/${created.body.id}`)
         .set('Authorization', `Bearer ${adminToken}`)

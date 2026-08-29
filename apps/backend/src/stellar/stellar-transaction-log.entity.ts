@@ -16,29 +16,29 @@ export enum StellarTxStatus {
 @Entity('stellar_transaction_logs')
 export class StellarTransactionLog {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column({ type: 'enum', enum: StellarTxType })
-  type: StellarTxType;
+  type!: StellarTxType;
 
   @Column({ nullable: true })
-  txHash: string;
+  txHash!: string;
 
   @Column({ nullable: true })
-  recipientPublicKey: string;
+  recipientPublicKey!: string;
 
   @Column({ nullable: true })
-  courseId: string;
+  courseId!: string;
 
   @Column({ type: 'enum', enum: StellarTxStatus })
-  status: StellarTxStatus;
+  status!: StellarTxStatus;
 
   @Column({ nullable: true, type: 'text' })
-  errorMessage: string;
+  errorMessage!: string;
 
   @Column({ type: 'jsonb', nullable: true })
-  metadata: Record<string, unknown>;
+  metadata!: Record<string, unknown>;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 }

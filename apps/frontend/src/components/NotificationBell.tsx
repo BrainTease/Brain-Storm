@@ -84,7 +84,9 @@ export function NotificationBell() {
                 <li
                   key={n.id}
                   className={`flex gap-3 px-4 py-3 transition-colors group ${
-                    !n.isRead ? 'bg-blue-50 dark:bg-blue-900/10' : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'
+                    !n.isRead
+                      ? 'bg-blue-50 dark:bg-blue-900/10'
+                      : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'
                   }`}
                 >
                   <span className="text-lg shrink-0 mt-0.5">{TYPE_ICONS[n.type]}</span>

@@ -3,9 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { SorobanRpc } from '@stellar/stellar-sdk';
-import { CredentialsService } from '../credentials/credentials.service';
-import { NotificationsService } from '../notifications/notifications.service';
-import { UsersService } from '../users/users.service';
+import { ContractEventDispatcher } from './event-handlers/contract-event.dispatcher';
 
 const LAST_LEDGER_KEY = 'indexer:last_ledger';
 
@@ -47,18 +45,14 @@ export class StellarIndexerService implements OnModuleInit, OnModuleDestroy {
   constructor(
     private configService: ConfigService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
-    private credentialsService: CredentialsService,
-    private notificationsService: NotificationsService,
-    private usersService: UsersService,
+    private eventDispatcher: ContractEventDispatcher
   ) {
     this.sorobanServer = new SorobanRpc.Server(
-      this.configService.get<string>('stellar.sorobanRpcUrl') ?? '',
+      this.configService.get<string>('stellar.sorobanRpcUrl') ?? ''
     );
-    this.analyticsContractId =
-      this.configService.get<string>('stellar.analyticsContractId') ?? '';
+    this.analyticsContractId = this.configService.get<string>('stellar.analyticsContractId') ?? '';
     this.tokenContractId = this.configService.get<string>('stellar.tokenContractId') ?? '';
-    this.basePollInterval =
-      this.configService.get<number>('stellar.indexerPollIntervalMs') ?? 5000;
+    this.basePollInterval = this.configService.get<number>('stellar.indexerPollIntervalMs') ?? 5000;
   }
 
   onModuleInit() {
@@ -80,7 +74,10 @@ export class StellarIndexerService implements OnModuleInit, OnModuleDestroy {
     // Exponential back-off while busy (capped at 4× base interval)
     const delay =
       this.consecutiveBusyCount > 0
-        ? Math.min(this.basePollInterval * 2 ** this.consecutiveBusyCount, this.basePollInterval * 4)
+        ? Math.min(
+            this.basePollInterval * 2 ** this.consecutiveBusyCount,
+            this.basePollInterval * 4
+          )
         : this.basePollInterval;
 
     this.timer = setTimeout(async () => {
@@ -95,9 +92,7 @@ export class StellarIndexerService implements OnModuleInit, OnModuleDestroy {
     // Back-pressure: skip tick if still processing previous batch
     if (this.isBusy) {
       this.consecutiveBusyCount++;
-      this.logger.warn(
-        `Indexer busy (tick ${this.consecutiveBusyCount}) — skipping poll`,
-      );
+      this.logger.warn(`Indexer busy (tick ${this.consecutiveBusyCount}) — skipping poll`);
       return;
     }
 
@@ -122,15 +117,13 @@ export class StellarIndexerService implements OnModuleInit, OnModuleDestroy {
 
       const eventList: SorobanRpc.Api.EventResponse[] = (events ?? []).slice(
         0,
-        MAX_EVENTS_PER_POLL,
+        MAX_EVENTS_PER_POLL
       );
 
       // ── Batched processing ───────────────────────────────────────────────
       for (let i = 0; i < eventList.length; i += BATCH_CONCURRENCY) {
         const chunk = eventList.slice(i, i + BATCH_CONCURRENCY);
-        const results = await Promise.allSettled(
-          chunk.map((evt) => this.handleEvent(evt)),
-        );
+        const results = await Promise.allSettled(chunk.map((evt) => this.handleEvent(evt)));
         for (const r of results) {
           if (r.status === 'rejected') {
             this.logger.error(`Event handling error: ${r.reason?.message}`, r.reason?.stack);
@@ -152,11 +145,11 @@ export class StellarIndexerService implements OnModuleInit, OnModuleDestroy {
 
       if (lagLedgers > 50) {
         this.logger.warn(
-          `Indexer lag: ${lagLedgers} ledgers behind (poll took ${pollDurationMs}ms)`,
+          `Indexer lag: ${lagLedgers} ledgers behind (poll took ${pollDurationMs}ms)`
         );
       } else {
         this.logger.debug(
-          `Poll complete — ${eventList.length} events, lag=${lagLedgers} ledgers, ${pollDurationMs}ms`,
+          `Poll complete — ${eventList.length} events, lag=${lagLedgers} ledgers, ${pollDurationMs}ms`
         );
       }
     } catch (err) {
@@ -182,40 +175,9 @@ export class StellarIndexerService implements OnModuleInit, OnModuleDestroy {
     return (await this.cacheManager.get<number>('indexer:lag_ledgers')) ?? 0;
   }
 
-  // ─── Event handlers ───────────────────────────────────────────────────────────
+  // ─── Event handling ───────────────────────────────────────────────────────────
 
   private async handleEvent(event: SorobanRpc.Api.EventResponse) {
-    const topic = (event.topic ?? []).map((t: any) => t?.value?.toString() ?? '');
-    const [contractType, eventName] = topic;
-
-    if (contractType === 'analytics' && eventName === 'completed') {
-      await this.handleAnalyticsCompleted(event);
-    } else if (contractType === 'token' && eventName === 'transfer') {
-      await this.handleTokenTransfer(event);
-    }
-  }
-
-  private async handleAnalyticsCompleted(event: SorobanRpc.Api.EventResponse) {
-    const value = event.value?.value?.() as any;
-    const studentPublicKey: string = value?.student?.toString();
-    const courseId: string = value?.course?.toString();
-
-    if (!studentPublicKey || !courseId) return;
-
-    const user = await this.usersService.findByStellarPublicKey(studentPublicKey);
-    if (!user) return;
-
-    this.logger.log(`analytics:completed — user ${user.id}, course ${courseId}`);
-    await this.credentialsService.issue(user.id, courseId, studentPublicKey);
-    await this.notificationsService.onCredentialIssued(user.id, courseId);
-  }
-
-  private async handleTokenTransfer(event: SorobanRpc.Api.EventResponse) {
-    const value = event.value?.value?.() as any;
-    const toPublicKey: string = value?.to?.toString();
-    if (!toPublicKey) return;
-
-    await this.cacheManager.del(`token_balance:${toPublicKey}`);
-    this.logger.log(`token:transfer — busted BST cache for ${toPublicKey}`);
+    await this.eventDispatcher.dispatch(event);
   }
 }

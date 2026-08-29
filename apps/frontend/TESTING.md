@@ -44,35 +44,45 @@ We use Vitest with React Testing Library for unit testing frontend components an
 ### All Tests
 
 \`\`\`bash
+
 # Run all tests
+
 npm run test
 
 # Run with coverage
+
 npm run test:coverage
 
 # Watch mode
+
 npm run test:watch
 
 # UI mode (interactive)
+
 npm run test:ui
 \`\`\`
 
 ### Specific Tests
 
 \`\`\`bash
+
 # Run specific file
-npm run test -- src/__tests__/hooks/useWallet.test.ts
+
+npm run test -- src/**tests**/hooks/useWallet.test.ts
 
 # Run tests matching pattern
+
 npm run test -- --grep="useNotifications"
 
 # Run only changed tests
+
 npm run test -- --changed
 \`\`\`
 
 ### CI/CD
 
 Tests run automatically on:
+
 - Every commit
 - Pull requests
 - Pre-merge validation
@@ -89,18 +99,19 @@ import { render, screen } from '@testing-library/react';
 import { Button } from '@/components/Button';
 
 describe('Button Component', () => {
-  it('renders with text', () => {
-    render(<Button>Click me</Button>);
-    expect(screen.getByText('Click me')).toBeInTheDocument();
-  });
+it('renders with text', () => {
+render(<Button>Click me</Button>);
+expect(screen.getByText('Click me')).toBeInTheDocument();
+});
 
-  it('calls onClick when clicked', async () => {
-    const mockClick = vi.fn();
-    render(<Button onClick={mockClick}>Click me</Button>);
-    
+it('calls onClick when clicked', async () => {
+const mockClick = vi.fn();
+render(<Button onClick={mockClick}>Click me</Button>);
+
     await userEvent.click(screen.getByText('Click me'));
     expect(mockClick).toHaveBeenCalledOnce();
-  });
+
+});
 });
 \`\`\`
 
@@ -108,28 +119,30 @@ describe('Button Component', () => {
 
 \`\`\`typescript
 describe('CourseCard', () => {
-  const mockCourse = {
-    id: '1',
-    title: 'Blockchain 101',
-    instructor: 'John Doe',
-    price: 49.99,
-  };
+const mockCourse = {
+id: '1',
+title: 'Blockchain 101',
+instructor: 'John Doe',
+price: 49.99,
+};
 
-  it('displays course information', () => {
-    render(<CourseCard course={mockCourse} />);
-    
+it('displays course information', () => {
+render(<CourseCard course={mockCourse} />);
+
     expect(screen.getByText('Blockchain 101')).toBeInTheDocument();
     expect(screen.getByText('John Doe')).toBeInTheDocument();
     expect(screen.getByText('$49.99')).toBeInTheDocument();
-  });
 
-  it('handles enrollment', async () => {
-    const mockEnroll = vi.fn();
-    render(<CourseCard course={mockCourse} onEnroll={mockEnroll} />);
-    
+});
+
+it('handles enrollment', async () => {
+const mockEnroll = vi.fn();
+render(<CourseCard course={mockCourse} onEnroll={mockEnroll} />);
+
     await userEvent.click(screen.getByText('Enroll'));
     expect(mockEnroll).toHaveBeenCalledWith(mockCourse.id);
-  });
+
+});
 });
 \`\`\`
 
@@ -142,15 +155,16 @@ import { renderHook, act } from '@testing-library/react';
 import { useCounter } from '@/hooks/useCounter';
 
 describe('useCounter', () => {
-  it('increments counter', () => {
-    const { result } = renderHook(() => useCounter());
-    
+it('increments counter', () => {
+const { result } = renderHook(() => useCounter());
+
     act(() => {
       result.current.increment();
     });
-    
+
     expect(result.current.count).toBe(1);
-  });
+
+});
 });
 \`\`\`
 
@@ -158,19 +172,19 @@ describe('useCounter', () => {
 
 \`\`\`typescript
 describe('useDebounce', () => {
-  beforeEach(() => {
-    vi.useFakeTimers();
-  });
+beforeEach(() => {
+vi.useFakeTimers();
+});
 
-  afterEach(() => {
-    vi.useRealTimers();
-  });
+afterEach(() => {
+vi.useRealTimers();
+});
 
-  it('debounces value changes', async () => {
-    const { result, rerender } = renderHook(
-      ({ value, delay }) => useDebounce(value, delay),
-      { initialProps: { value: 'initial', delay: 500 } }
-    );
+it('debounces value changes', async () => {
+const { result, rerender } = renderHook(
+({ value, delay }) => useDebounce(value, delay),
+{ initialProps: { value: 'initial', delay: 500 } }
+);
 
     rerender({ value: 'updated', delay: 500 });
 
@@ -181,7 +195,8 @@ describe('useDebounce', () => {
     await waitFor(() => {
       expect(result.current).toBe('updated');
     });
-  });
+
+});
 });
 \`\`\`
 
@@ -189,27 +204,29 @@ describe('useDebounce', () => {
 
 \`\`\`typescript
 describe('LoginForm Validation', () => {
-  it('validates email format', async () => {
-    render(<LoginForm />);
-    
+it('validates email format', async () => {
+render(<LoginForm />);
+
     const emailInput = screen.getByLabelText(/email/i);
     await userEvent.type(emailInput, 'invalid-email');
-    
-    await userEvent.click(screen.getByRole('button', { name: /submit/i }));
-    
-    expect(screen.getByText(/invalid email/i)).toBeInTheDocument();
-  });
 
-  it('validates password length', async () => {
-    render(<LoginForm />);
-    
+    await userEvent.click(screen.getByRole('button', { name: /submit/i }));
+
+    expect(screen.getByText(/invalid email/i)).toBeInTheDocument();
+
+});
+
+it('validates password length', async () => {
+render(<LoginForm />);
+
     const passwordInput = screen.getByLabelText(/password/i);
     await userEvent.type(passwordInput, 'short');
-    
+
     await userEvent.click(screen.getByRole('button', { name: /submit/i }));
-    
+
     expect(screen.getByText(/password must be at least/i)).toBeInTheDocument();
-  });
+
+});
 });
 \`\`\`
 
@@ -217,33 +234,35 @@ describe('LoginForm Validation', () => {
 
 \`\`\`typescript
 describe('DataFetching Component', () => {
-  it('displays loading state', () => {
-    render(<DataFetching />);
-    expect(screen.getByText(/loading/i)).toBeInTheDocument();
-  });
+it('displays loading state', () => {
+render(<DataFetching />);
+expect(screen.getByText(/loading/i)).toBeInTheDocument();
+});
 
-  it('displays data after fetch', async () => {
-    render(<DataFetching />);
-    
+it('displays data after fetch', async () => {
+render(<DataFetching />);
+
     await waitFor(() => {
       expect(screen.getByText(/data loaded/i)).toBeInTheDocument();
     });
-  });
 
-  it('handles error states', async () => {
-    // Mock API error
-    server.use(
-      rest.get('/api/data', (req, res, ctx) => {
-        return res(ctx.status(500));
-      })
-    );
+});
+
+it('handles error states', async () => {
+// Mock API error
+server.use(
+rest.get('/api/data', (req, res, ctx) => {
+return res(ctx.status(500));
+})
+);
 
     render(<DataFetching />);
-    
+
     await waitFor(() => {
       expect(screen.getByText(/error/i)).toBeInTheDocument();
     });
-  });
+
+});
 });
 \`\`\`
 
@@ -256,22 +275,25 @@ Coverage thresholds are enforced in CI:
 \`\`\`typescript
 // vitest.config.ts
 coverage: {
-  thresholds: {
-    lines: 70,
-    functions: 70,
-    branches: 65,
-    statements: 70,
-  },
+thresholds: {
+lines: 70,
+functions: 70,
+branches: 65,
+statements: 70,
+},
 }
 \`\`\`
 
 ### Checking Coverage
 
 \`\`\`bash
+
 # Generate coverage report
+
 npm run test:coverage
 
 # View HTML report
+
 open coverage/index.html
 \`\`\`
 
@@ -309,15 +331,15 @@ open coverage/index.html
 
 \`\`\`typescript
 it('increments counter on click', async () => {
-  // Arrange
-  render(<Counter />);
-  const button = screen.getByText('Increment');
-  
-  // Act
-  await userEvent.click(button);
-  
-  // Assert
-  expect(screen.getByText('Count: 1')).toBeInTheDocument();
+// Arrange
+render(<Counter />);
+const button = screen.getByText('Increment');
+
+// Act
+await userEvent.click(button);
+
+// Assert
+expect(screen.getByText('Count: 1')).toBeInTheDocument();
 });
 \`\`\`
 
@@ -325,18 +347,18 @@ it('increments counter on click', async () => {
 
 \`\`\`typescript
 function renderWithProviders(ui: React.ReactElement) {
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        {ui}
-      </ThemeProvider>
-    </QueryClientProvider>
-  );
+return render(
+<QueryClientProvider client={queryClient}>
+<ThemeProvider>
+{ui}
+</ThemeProvider>
+</QueryClientProvider>
+);
 }
 
 it('renders with theme', () => {
-  renderWithProviders(<MyComponent />);
-  // assertions...
+renderWithProviders(<MyComponent />);
+// assertions...
 });
 \`\`\`
 
@@ -360,9 +382,9 @@ import { rest } from 'msw';
 import { setupServer } from 'msw/node';
 
 const server = setupServer(
-  rest.get('/api/courses', (req, res, ctx) => {
-    return res(ctx.json({ courses: [] }));
-  })
+rest.get('/api/courses', (req, res, ctx) => {
+return res(ctx.json({ courses: [] }));
+})
 );
 
 beforeAll(() => server.listen());
@@ -374,8 +396,8 @@ afterAll(() => server.close());
 
 \`\`\`typescript
 vi.mock('@/lib/walletApi', () => ({
-  connectWallet: vi.fn().mockResolvedValue({ address: '0x123' }),
-  getBalance: vi.fn().mockResolvedValue('100'),
+connectWallet: vi.fn().mockResolvedValue({ address: '0x123' }),
+getBalance: vi.fn().mockResolvedValue('100'),
 }));
 \`\`\`
 
@@ -383,19 +405,19 @@ vi.mock('@/lib/walletApi', () => ({
 
 \`\`\`typescript
 beforeEach(() => {
-  vi.useFakeTimers();
+vi.useFakeTimers();
 });
 
 afterEach(() => {
-  vi.useRealTimers();
+vi.useRealTimers();
 });
 
 it('delays execution', () => {
-  const callback = vi.fn();
-  setTimeout(callback, 1000);
-  
-  vi.advanceTimersByTime(1000);
-  expect(callback).toHaveBeenCalled();
+const callback = vi.fn();
+setTimeout(callback, 1000);
+
+vi.advanceTimersByTime(1000);
+expect(callback).toHaveBeenCalled();
 });
 \`\`\`
 
@@ -411,12 +433,12 @@ it('delays execution', () => {
 \`\`\`typescript
 // Use waitFor for async assertions
 await waitFor(() => {
-  expect(element).toBeInTheDocument();
+expect(element).toBeInTheDocument();
 });
 
 // Clear mocks between tests
 beforeEach(() => {
-  vi.clearAllMocks();
+vi.clearAllMocks();
 });
 \`\`\`
 
@@ -427,7 +449,7 @@ beforeEach(() => {
 **Solution**:
 \`\`\`typescript
 await act(async () => {
-  fireEvent.click(button);
+fireEvent.click(button);
 });
 \`\`\`
 
@@ -438,8 +460,8 @@ await act(async () => {
 **Solution**:
 \`\`\`typescript
 afterEach(() => {
-  cleanup();
-  vi.clearAllTimers();
+cleanup();
+vi.clearAllTimers();
 });
 \`\`\`
 
@@ -466,6 +488,7 @@ screen.findByText('text'); // Async query with retry
 ## Support
 
 For help with testing:
+
 1. Check this guide
 2. Review existing tests for examples
 3. Ask in #frontend-testing channel

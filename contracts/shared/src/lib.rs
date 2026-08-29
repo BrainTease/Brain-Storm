@@ -8,17 +8,14 @@ use soroban_sdk::{contract, contractimpl, contracttype, symbol_short, Address, B
 
 pub mod admin;
 
-pub mod pausable;
-pub mod errors;
-pub mod validation;
-pub mod reentrancy;
-
-pub mod access;
 pub mod errors;
 pub mod math;
+pub mod pagination;
 pub mod pausable;
 pub mod reentrancy;
 pub mod validation;
+
+pub mod access;
 
 #[contracttype]
 #[derive(Clone, PartialEq)]
@@ -68,9 +65,6 @@ pub enum DataKey {
 /// this contract's entry points (`assign_role`, `upgrade`, `pause_contract`, ...)
 /// from that contract, operating on *its* storage.
 #[cfg(feature = "contract")]
-use soroban_sdk::{contract, contractimpl, symbol_short, BytesN, Env};
-
-#[cfg(feature = "contract")]
 #[contract]
 pub struct SharedContract;
 
@@ -115,12 +109,7 @@ impl SharedContract {
     /// Check if an address has a specific role
     pub fn has_role(env: Env, addr: Address, role: Role) -> bool {
         let stored: Option<Role> = env.storage().instance().get(&DataKey::Role(addr));
-        match (stored, role) {
-            (Some(Role::Admin), Role::Admin) => true,
-            (Some(Role::Instructor), Role::Instructor) => true,
-            (Some(Role::Student), Role::Student) => true,
-            _ => false,
-        }
+        matches!((stored, role), (Some(Role::Admin), Role::Admin) | (Some(Role::Instructor), Role::Instructor) | (Some(Role::Student), Role::Student))
     }
 
     /// Check if an address has a specific permission based on its assigned role

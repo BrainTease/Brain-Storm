@@ -1,135 +1,48 @@
-import { faker } from '@faker-js/faker';
-import { User, Course, Enrollment, Progress } from '../entities';
+/**
+ * Test factories for apps/backend/src/test (unit & integration specs).
+ *
+ * All factory implementations now live in the shared
+ * packages/types/src/test-utils module so that every workspace package
+ * can import them from a single canonical location.
+ *
+ * Closes #861 — consolidate duplicate test fixtures into a shared
+ * packages/types test-utils module.
+ *
+ * MIGRATION NOTE
+ * --------------
+ * The previous implementation used @faker-js/faker and TypeORM entity classes
+ * directly (User, Course, Enrollment, Progress).  The canonical factories in
+ * @brain-storm/types/test-utils produce plain objects whose shape matches
+ * those entities for all fields that matter to unit tests.
+ *
+ * If a test needs TypeORM-specific fields that are not present in the shared
+ * types (e.g. passwordHash, stellarPublicKey, isBanned, mfaEnabled, …), extend
+ * the factory result locally:
+ *
+ *   import { UserFactory } from '@brain-storm/types/test-utils';
+ *
+ *   const user = {
+ *     ...UserFactory.create({ role: 'instructor' }),
+ *     passwordHash: 'bcrypt-hash',
+ *     stellarPublicKey: 'GABCDE...',
+ *     isBanned: false,
+ *     mfaEnabled: false,
+ *     isVerified: true,
+ *   };
+ */
+export {
+  UserFactory,
+  CourseFactory,
+  EnrollmentFactory,
+  QuizFactory,
+} from '@brain-storm/types/test-utils';
 
-export class UserFactory {
-  static create(overrides: Partial<User> = {}): User {
-    return {
-      id: faker.string.uuid(),
-      email: faker.internet.email(),
-      passwordHash: faker.string.alphanumeric(60),
-      firstName: faker.person.firstName(),
-      lastName: faker.person.lastName(),
-      stellarPublicKey: faker.string.alphanumeric(56),
-      role: 'student',
-      isVerified: true,
-      isBanned: false,
-      mfaEnabled: false,
-      createdAt: faker.date.past(),
-      updatedAt: faker.date.recent(),
-      deletedAt: null,
-      ...overrides,
-    } as User;
-  }
-
-  static createMany(count: number, overrides: Partial<User> = {}): User[] {
-    return Array.from({ length: count }, () => this.create(overrides));
-  }
-
-  static createInstructor(overrides: Partial<User> = {}): User {
-    return this.create({
-      role: 'instructor',
-      isVerified: true,
-      ...overrides,
-    });
-  }
-
-  static createAdmin(overrides: Partial<User> = {}): User {
-    return this.create({
-      role: 'admin',
-      isVerified: true,
-      ...overrides,
-    });
-  }
-}
-
-export class CourseFactory {
-  static create(overrides: Partial<Course> = {}): Course {
-    return {
-      id: faker.string.uuid(),
-      title: faker.lorem.words(3),
-      description: faker.lorem.paragraph(),
-      level: faker.helpers.arrayElement(['beginner', 'intermediate', 'advanced']),
-      durationHours: faker.number.int({ min: 1, max: 40 }),
-      price: faker.number.float({ min: 0, max: 299.99, fractionDigits: 2 }),
-      isPublished: true,
-      isDeleted: false,
-      requiresKyc: false,
-      instructorId: faker.string.uuid(),
-      createdAt: faker.date.past(),
-      updatedAt: faker.date.recent(),
-      ...overrides,
-    } as Course;
-  }
-
-  static createMany(count: number, overrides: Partial<Course> = {}): Course[] {
-    return Array.from({ length: count }, () => this.create(overrides));
-  }
-
-  static createDraft(overrides: Partial<Course> = {}): Course {
-    return this.create({
-      isPublished: false,
-      ...overrides,
-    });
-  }
-
-  static createPremium(overrides: Partial<Course> = {}): Course {
-    return this.create({
-      price: faker.number.float({ min: 99.99, max: 499.99, fractionDigits: 2 }),
-      requiresKyc: true,
-      ...overrides,
-    });
-  }
-}
-
-export class EnrollmentFactory {
-  static create(overrides: Partial<Enrollment> = {}): Enrollment {
-    return {
-      id: faker.string.uuid(),
-      userId: faker.string.uuid(),
-      courseId: faker.string.uuid(),
-      enrolledAt: faker.date.past(),
-      completedAt: faker.helpers.maybe(() => faker.date.recent(), { probability: 0.3 }),
-      ...overrides,
-    } as Enrollment;
-  }
-
-  static createMany(count: number, overrides: Partial<Enrollment> = {}): Enrollment[] {
-    return Array.from({ length: count }, () => this.create(overrides));
-  }
-
-  static createCompleted(overrides: Partial<Enrollment> = {}): Enrollment {
-    return this.create({
-      completedAt: faker.date.recent(),
-      ...overrides,
-    });
-  }
-}
-
-export class ProgressFactory {
-  static create(overrides: Partial<Progress> = {}): Progress {
-    return {
-      id: faker.string.uuid(),
-      userId: faker.string.uuid(),
-      courseId: faker.string.uuid(),
-      lessonId: faker.string.uuid(),
-      progressPct: faker.number.int({ min: 0, max: 100 }),
-      completedAt: faker.helpers.maybe(() => faker.date.recent(), { probability: 0.7 }),
-      txHash: faker.helpers.maybe(() => faker.string.alphanumeric(64), { probability: 0.5 }),
-      updatedAt: faker.date.recent(),
-      ...overrides,
-    } as Progress;
-  }
-
-  static createMany(count: number, overrides: Partial<Progress> = {}): Progress[] {
-    return Array.from({ length: count }, () => this.create(overrides));
-  }
-
-  static createCompleted(overrides: Partial<Progress> = {}): Progress {
-    return this.create({
-      progressPct: 100,
-      completedAt: faker.date.recent(),
-      txHash: faker.string.alphanumeric(64),
-      ...overrides,
-    });
-  }
-}
+export type {
+  TestUser,
+  TestCourse,
+  TestEnrollment,
+  TestQuiz,
+  UserRole,
+  EnrollmentStatus,
+  CourseStatus,
+} from '@brain-storm/types/test-utils';

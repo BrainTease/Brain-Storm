@@ -26,54 +26,54 @@ export enum PaymentStatus {
 @Entity('payments')
 export class Payment {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Index()
   @Column()
-  userId: string;
+  userId!: string;
 
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
-  user: User;
+  user!: User;
 
   @Index()
   @Column({ nullable: true })
-  courseId: string;
+  courseId!: string;
 
   @ManyToOne(() => Course, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'courseId' })
-  course: Course;
+  course!: Course;
 
   @Index()
   @Column({ nullable: true })
-  subscriptionId: string;
+  subscriptionId!: string;
 
   /** Fiat amount in smallest currency unit (cents) */
   @Column({ default: 0 })
-  amountCents: number;
+  amountCents!: number;
 
   @Column({ default: 'usd' })
-  currency: string;
+  currency!: string;
 
   /** BST / XLM amount in stroops (1 XLM = 10_000_000 stroops) */
   @Column({ nullable: true, type: 'bigint' })
-  bstAmount: string;
+  bstAmount!: string;
 
   @Column({ type: 'varchar', enum: PaymentProvider })
-  provider: PaymentProvider;
+  provider!: PaymentProvider;
 
   @Index()
   @Column({ type: 'varchar', default: PaymentStatus.PENDING })
-  status: PaymentStatus;
+  status!: PaymentStatus;
 
   /** Stripe PaymentIntent ID / Checkout Session ID */
   @Index({ unique: true })
   @Column({ nullable: true })
-  stripePaymentIntentId: string;
+  stripePaymentIntentId!: string;
 
   /** Stellar transaction hash */
   @Column({ nullable: true })
-  stellarTxHash: string;
+  stellarTxHash!: string;
 
   /**
    * Idempotency key — prevents duplicate processing when Stripe fires
@@ -81,14 +81,14 @@ export class Payment {
    */
   @Index({ unique: true })
   @Column({ nullable: true })
-  idempotencyKey: string;
+  idempotencyKey!: string;
 
   @Column({ nullable: true, type: 'text' })
-  errorMessage: string;
+  errorMessage!: string;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt!: Date;
 }

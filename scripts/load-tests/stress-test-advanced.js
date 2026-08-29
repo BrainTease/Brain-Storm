@@ -15,8 +15,8 @@ export const options = {
     { duration: '2m', target: 0 },
   ],
   thresholds: {
-    'stress_response_time': ['p(95)<1000', 'p(99)<2000'],
-    'stress_errors': ['rate<0.2'],
+    stress_response_time: ['p(95)<1000', 'p(99)<2000'],
+    stress_errors: ['rate<0.2'],
   },
 };
 
@@ -33,7 +33,7 @@ export default function () {
         headers: {
           Authorization: `Bearer ${__ENV.AUTH_TOKEN || 'test-token'}`,
         },
-      },
+      }
     );
 
     check(analyticsRes, {

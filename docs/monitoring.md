@@ -4,16 +4,16 @@ Brain-Storm ships a full observability stack: **Prometheus metrics**, **OpenTele
 
 ## Stack
 
-| Component | Purpose | Port |
-|-----------|---------|------|
-| Prometheus | Metrics collection & alerting | 9090 |
-| Grafana | Dashboards | 3002 |
-| Alertmanager | Alert routing | 9093 |
-| OTel Collector | Trace + metric pipeline | 4317 (gRPC), 4318 (HTTP) |
-| Jaeger | Trace storage & UI | 16686 |
-| Blackbox Exporter | HTTP endpoint probing | 9115 |
-| Node Exporter | Host metrics | 9100 |
-| Postgres Exporter | DB metrics | 9187 |
+| Component         | Purpose                       | Port                     |
+| ----------------- | ----------------------------- | ------------------------ |
+| Prometheus        | Metrics collection & alerting | 9090                     |
+| Grafana           | Dashboards                    | 3002                     |
+| Alertmanager      | Alert routing                 | 9093                     |
+| OTel Collector    | Trace + metric pipeline       | 4317 (gRPC), 4318 (HTTP) |
+| Jaeger            | Trace storage & UI            | 16686                    |
+| Blackbox Exporter | HTTP endpoint probing         | 9115                     |
+| Node Exporter     | Host metrics                  | 9100                     |
+| Postgres Exporter | DB metrics                    | 9187                     |
 
 ## Start
 
@@ -31,12 +31,12 @@ The backend exposes Prometheus metrics at `GET /metrics` via `@willsoto/nestjs-p
 
 Custom metrics defined in `apps/backend/src/metrics/metrics.service.ts`:
 
-| Metric | Type | Description |
-|--------|------|-------------|
-| `http_requests_total` | Counter | HTTP requests by method, route, status_code |
-| `credential_issued_total` | Counter | On-chain credentials issued |
-| `bst_minted_total` | Counter | BST tokens minted |
-| `stellar_rpc_latency_seconds` | Histogram | Stellar RPC call duration |
+| Metric                        | Type      | Description                                 |
+| ----------------------------- | --------- | ------------------------------------------- |
+| `http_requests_total`         | Counter   | HTTP requests by method, route, status_code |
+| `credential_issued_total`     | Counter   | On-chain credentials issued                 |
+| `bst_minted_total`            | Counter   | BST tokens minted                           |
+| `stellar_rpc_latency_seconds` | Histogram | Stellar RPC call duration                   |
 
 Default Node.js metrics (event loop lag, heap, GC) are exported automatically.
 
@@ -46,11 +46,11 @@ OTel tracing is bootstrapped in `apps/backend/src/tracing.ts` and initialised be
 
 ### Environment variables
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | `http://localhost:4318` | OTel Collector URL |
-| `OTEL_SERVICE_NAME` | `brain-storm-api` | Service name in traces |
-| `OTEL_TRACES_SAMPLER_ARG` | `0.1` (prod), `1.0` (dev) | Sampling ratio |
+| Variable                      | Default                   | Description            |
+| ----------------------------- | ------------------------- | ---------------------- |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | `http://localhost:4318`   | OTel Collector URL     |
+| `OTEL_SERVICE_NAME`           | `brain-storm-api`         | Service name in traces |
+| `OTEL_TRACES_SAMPLER_ARG`     | `0.1` (prod), `1.0` (dev) | Sampling ratio         |
 
 Auto-instrumented: HTTP, PostgreSQL (`pg`), Redis (`ioredis`), BullMQ, NestJS.
 
@@ -58,16 +58,17 @@ Auto-instrumented: HTTP, PostgreSQL (`pg`), Redis (`ioredis`), BullMQ, NestJS.
 
 Dashboards are provisioned automatically from `infra/monitoring/grafana/dashboards/`.
 
-| Dashboard | UID | Covers |
-|-----------|-----|--------|
-| API Observability | `brainstorm-observability` | Throughput, error rate, latency (p50/p95), Stellar RPC, credentials, BST tokens, heap |
-| NestJS Metrics | `brainstorm-nestjs` | HTTP request rate, status codes |
-| Performance Overview | `brainstorm-perf` | End-to-end performance |
-| Contracts Monitoring | `brainstorm-contracts` | Soroban contract events |
+| Dashboard            | UID                        | Covers                                                                                |
+| -------------------- | -------------------------- | ------------------------------------------------------------------------------------- |
+| API Observability    | `brainstorm-observability` | Throughput, error rate, latency (p50/p95), Stellar RPC, credentials, BST tokens, heap |
+| NestJS Metrics       | `brainstorm-nestjs`        | HTTP request rate, status codes                                                       |
+| Performance Overview | `brainstorm-perf`          | End-to-end performance                                                                |
+| Contracts Monitoring | `brainstorm-contracts`     | Soroban contract events                                                               |
 
 ## Alerts
 
 Alert rules live in:
+
 - `infra/monitoring/alerts/application-rules.yml` — API error rate, latency SLOs
 - `infra/monitoring/contracts/alerting-rules.yml` — Contract-specific alerts
 

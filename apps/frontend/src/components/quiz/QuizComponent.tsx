@@ -19,8 +19,8 @@ export interface QuizQuestion {
   id: string;
   type: QuestionType;
   question: string;
-  options?: QuizOption[];   // for multiple-choice & true-false
-  correctAnswer: string;    // option id or exact text for short-answer
+  options?: QuizOption[]; // for multiple-choice & true-false
+  correctAnswer: string; // option id or exact text for short-answer
   explanation?: string;
   points?: number;
 }
@@ -30,15 +30,15 @@ export interface QuizConfig {
   title: string;
   description?: string;
   questions: QuizQuestion[];
-  timeLimitSeconds?: number;    // 0 / undefined = no limit
-  passingScore?: number;        // percentage (0–100)
+  timeLimitSeconds?: number; // 0 / undefined = no limit
+  passingScore?: number; // percentage (0–100)
   allowReview?: boolean;
 }
 
 export interface QuizResult {
   quizId: string;
-  answers: Record<string, string>;   // questionId → answer
-  score: number;                     // percentage
+  answers: Record<string, string>; // questionId → answer
+  score: number; // percentage
   earnedPoints: number;
   totalPoints: number;
   durationSeconds: number;
@@ -199,7 +199,10 @@ export function QuizComponent({ quiz, onComplete }: Props) {
     return (
       <Card className="max-w-xl mx-auto space-y-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-xl" aria-hidden="true">
+          <div
+            className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-xl"
+            aria-hidden="true"
+          >
             📝
           </div>
           <div>
@@ -211,12 +214,19 @@ export function QuizComponent({ quiz, onComplete }: Props) {
         </div>
 
         <ul className="text-sm text-gray-600 dark:text-gray-300 space-y-1">
-          <li>📋 <span className="font-medium">{totalQuestions}</span> questions</li>
+          <li>
+            📋 <span className="font-medium">{totalQuestions}</span> questions
+          </li>
           {quiz.timeLimitSeconds && (
-            <li>⏱️ Time limit: <span className="font-medium">{formatTime(quiz.timeLimitSeconds)}</span></li>
+            <li>
+              ⏱️ Time limit:{' '}
+              <span className="font-medium">{formatTime(quiz.timeLimitSeconds)}</span>
+            </li>
           )}
           {quiz.passingScore !== undefined && (
-            <li>🎯 Passing score: <span className="font-medium">{quiz.passingScore}%</span></li>
+            <li>
+              🎯 Passing score: <span className="font-medium">{quiz.passingScore}%</span>
+            </li>
           )}
         </ul>
 
@@ -230,9 +240,7 @@ export function QuizComponent({ quiz, onComplete }: Props) {
   /* ── Active ── */
   if (phase === 'active' && currentQuestion) {
     const options =
-      currentQuestion.type === 'true-false'
-        ? TRUE_FALSE_OPTIONS
-        : (currentQuestion.options ?? []);
+      currentQuestion.type === 'true-false' ? TRUE_FALSE_OPTIONS : (currentQuestion.options ?? []);
     const selected = answers[currentQuestion.id];
     const progress = Math.round(((currentIndex + 1) / totalQuestions) * 100);
 
@@ -279,9 +287,10 @@ export function QuizComponent({ quiz, onComplete }: Props) {
                     aria-selected={active}
                     onClick={() => handleAnswer(opt.id)}
                     className={`w-full text-left px-4 py-3 rounded-lg border-2 transition-colors text-sm
-                      ${active
-                        ? 'border-blue-600 bg-blue-50 dark:bg-blue-950 text-blue-800 dark:text-blue-200 font-medium'
-                        : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 text-gray-800 dark:text-gray-200'
+                      ${
+                        active
+                          ? 'border-blue-600 bg-blue-50 dark:bg-blue-950 text-blue-800 dark:text-blue-200 font-medium'
+                          : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 text-gray-800 dark:text-gray-200'
                       }`}
                   >
                     {opt.text}
@@ -311,10 +320,7 @@ export function QuizComponent({ quiz, onComplete }: Props) {
           <Button variant="outline" onClick={handlePrev} disabled={currentIndex === 0}>
             ← Back
           </Button>
-          <Button
-            onClick={handleNext}
-            disabled={selected === undefined}
-          >
+          <Button onClick={handleNext} disabled={selected === undefined}>
             {currentIndex === totalQuestions - 1 ? 'Submit Quiz' : 'Next →'}
           </Button>
         </div>
@@ -329,11 +335,12 @@ export function QuizComponent({ quiz, onComplete }: Props) {
                 onClick={() => setCurrentIndex(i)}
                 aria-label={`Go to question ${i + 1}${answers[q.id] !== undefined ? ' (answered)' : ''}`}
                 className={`w-7 h-7 rounded text-xs font-medium transition-colors
-                  ${i === currentIndex
-                    ? 'bg-blue-600 text-white'
-                    : answers[q.id] !== undefined
-                      ? 'bg-green-200 dark:bg-green-800 text-green-800 dark:text-green-200'
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                  ${
+                    i === currentIndex
+                      ? 'bg-blue-600 text-white'
+                      : answers[q.id] !== undefined
+                        ? 'bg-green-200 dark:bg-green-800 text-green-800 dark:text-green-200'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
                   }`}
               >
                 {i + 1}
@@ -375,17 +382,13 @@ export function QuizComponent({ quiz, onComplete }: Props) {
             <p className="text-2xl font-bold text-gray-900 dark:text-white">
               {result.earnedPoints}
             </p>
-            <p className="text-gray-500 dark:text-gray-400 text-xs">
-              / {result.totalPoints} pts
-            </p>
+            <p className="text-gray-500 dark:text-gray-400 text-xs">/ {result.totalPoints} pts</p>
           </div>
           <div className="bg-gray-50 dark:bg-gray-700/40 rounded-lg p-3">
             <p className="text-2xl font-bold text-gray-900 dark:text-white">
               {quiz.questions.filter((q) => isCorrect(q, result.answers[q.id] ?? '')).length}
             </p>
-            <p className="text-gray-500 dark:text-gray-400 text-xs">
-              / {totalQuestions} correct
-            </p>
+            <p className="text-gray-500 dark:text-gray-400 text-xs">/ {totalQuestions} correct</p>
           </div>
           <div className="bg-gray-50 dark:bg-gray-700/40 rounded-lg p-3">
             <p className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -395,10 +398,7 @@ export function QuizComponent({ quiz, onComplete }: Props) {
           </div>
         </div>
 
-        <ProgressBar
-          value={result.score}
-          label={`Score: ${result.score}%`}
-        />
+        <ProgressBar value={result.score} label={`Score: ${result.score}%`} />
 
         {/* Per-question summary */}
         <div className="space-y-2">
@@ -406,14 +406,16 @@ export function QuizComponent({ quiz, onComplete }: Props) {
             Question Summary
           </h3>
           {quiz.questions.map((q, i) => {
-            const correct = result.answers[q.id] !== undefined && isCorrect(q, result.answers[q.id]);
+            const correct =
+              result.answers[q.id] !== undefined && isCorrect(q, result.answers[q.id]);
             return (
               <div
                 key={q.id}
                 className={`flex items-start gap-2 text-sm rounded-lg px-3 py-2
-                  ${correct
-                    ? 'bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200'
-                    : 'bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200'
+                  ${
+                    correct
+                      ? 'bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200'
+                      : 'bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200'
                   }`}
               >
                 <span className="mt-0.5 shrink-0">{correct ? '✅' : '❌'}</span>
@@ -445,15 +447,12 @@ export function QuizComponent({ quiz, onComplete }: Props) {
     const q = quiz.questions[reviewIndex];
     const userAnswer = result.answers[q.id] ?? '';
     const correct = isCorrect(q, userAnswer);
-    const options =
-      q.type === 'true-false' ? TRUE_FALSE_OPTIONS : (q.options ?? []);
+    const options = q.type === 'true-false' ? TRUE_FALSE_OPTIONS : (q.options ?? []);
 
     return (
       <Card className="max-w-xl mx-auto space-y-5">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white">
-            📖 Review Mode
-          </h2>
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white">📖 Review Mode</h2>
           <Button variant="outline" onClick={() => setPhase('results')}>
             ← Back to Results
           </Button>
@@ -475,8 +474,7 @@ export function QuizComponent({ quiz, onComplete }: Props) {
             {options.map((opt) => {
               const isUserChoice = userAnswer === opt.id;
               const isCorrectChoice = q.correctAnswer === opt.id;
-              let style =
-                'border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300';
+              let style = 'border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300';
               if (isCorrectChoice)
                 style =
                   'border-green-500 bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200 font-medium';
@@ -499,7 +497,11 @@ export function QuizComponent({ quiz, onComplete }: Props) {
           <div className="space-y-2 text-sm">
             <p>
               <span className="text-gray-500 dark:text-gray-400">Your answer: </span>
-              <span className={correct ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
+              <span
+                className={
+                  correct ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
+                }
+              >
                 {userAnswer || '(no answer)'}
               </span>
             </p>

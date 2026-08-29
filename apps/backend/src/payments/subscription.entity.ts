@@ -26,46 +26,46 @@ export enum SubscriptionPlan {
 @Entity('subscriptions')
 export class Subscription {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Index()
   @Column()
-  userId: string;
+  userId!: string;
 
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
-  user: User;
+  user!: User;
 
   @Column({ type: 'varchar', enum: SubscriptionPlan })
-  plan: SubscriptionPlan;
+  plan!: SubscriptionPlan;
 
   @Index()
   @Column({ type: 'varchar', default: SubscriptionStatus.ACTIVE })
-  status: SubscriptionStatus;
+  status!: SubscriptionStatus;
 
   /** Stripe Subscription ID for fiat subscriptions */
   @Index({ unique: true })
   @Column({ nullable: true })
-  stripeSubscriptionId: string;
+  stripeSubscriptionId!: string;
 
   /** Stripe Customer ID */
   @Column({ nullable: true })
-  stripeCustomerId: string;
+  stripeCustomerId!: string;
 
   /** UTC timestamp when the current billing period ends */
   @Column({ nullable: true, type: 'timestamp' })
-  currentPeriodEnd: Date;
+  currentPeriodEnd!: Date;
 
   /** UTC timestamp of the trial end (if applicable) */
   @Column({ nullable: true, type: 'timestamp' })
-  trialEndsAt: Date;
+  trialEndsAt!: Date;
 
   @Column({ nullable: true, type: 'timestamp' })
-  cancelledAt: Date;
+  cancelledAt!: Date;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt!: Date;
 }

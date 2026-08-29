@@ -5,6 +5,7 @@ This document describes the automated load testing infrastructure for Brain-Stor
 ## Overview
 
 The automated load testing system provides:
+
 - **Continuous Performance Monitoring**: Scheduled load tests run automatically
 - **Baseline Comparison**: Automatic regression detection against performance baselines
 - **Performance Alerts**: Real-time notifications for performance degradation
@@ -50,9 +51,11 @@ The automated load testing system provides:
 ## Load Test Scenarios
 
 ### 1. User Journey Test
+
 **File**: `scripts/load-tests/user-journey.js`
 
 Simulates a complete user journey:
+
 - Register/Login
 - Browse courses
 - Enroll in course
@@ -60,82 +63,100 @@ Simulates a complete user journey:
 - Claim certificate
 
 **Configuration**:
+
 - VUs: 50-100
 - Duration: 5 minutes
 - Ramp-up: 30 seconds
 
 **Baseline Thresholds**:
+
 - p95 Latency: < 500ms
 - p99 Latency: < 1000ms
 - Error Rate: < 5%
 
 ### 2. High Concurrency Test
+
 **File**: `scripts/load-tests/high-concurrency.js`
 
 Tests system under high concurrent load:
+
 - 500+ simultaneous users
 - Sustained load for 2 minutes
 - Focus on API endpoints
 
 **Configuration**:
+
 - VUs: 500
 - Duration: 2 minutes
 - Ramp-up: 1 minute
 
 **Baseline Thresholds**:
+
 - p95 Latency: < 1000ms
 - p99 Latency: < 2000ms
 - Error Rate: < 5%
 
 ### 3. Stress Test
+
 **File**: `scripts/load-tests/stress-test.js`
 
 Gradually increases load until system breaks:
+
 - Starts at 100 VUs
 - Increases by 50 VUs every 30 seconds
 - Continues until error rate exceeds threshold
 
 **Configuration**:
+
 - Initial VUs: 100
 - Increment: 50 VUs per 30s
 - Max Duration: 10 minutes
 
 **Baseline Thresholds**:
+
 - p95 Latency: < 2000ms
 - p99 Latency: < 5000ms
 - Error Rate: < 20%
 
 ### 4. Spike Test
+
 **File**: `scripts/load-tests/spike-test.js`
 
 Sudden traffic spike simulation:
+
 - Normal load: 50 VUs
 - Spike to 500 VUs instantly
 - Measure recovery time
 
 **Configuration**:
+
 - Normal VUs: 50
 - Spike VUs: 500
 - Spike Duration: 1 minute
 
 **Baseline Thresholds**:
+
 - p95 Latency: < 3000ms
 - Error Rate: < 15%
 
 ### 5. Soak Test
+
 **File**: `scripts/load-tests/soak-test.js`
 
 Long-duration test to detect memory leaks:
+
 - Moderate load: 100 VUs
 - Duration: 30 minutes
 - Monitor for degradation
 
 **Configuration**:
+
 - VUs: 100
 - Duration: 30 minutes
 - Ramp-up: 2 minutes
 
 **Baseline Thresholds**:
+
 - p95 Latency: < 600ms
 - p99 Latency: < 1200ms
 - Error Rate: < 1%
@@ -190,16 +211,19 @@ gh workflow run load-testing.yml \
 ### Thresholds
 
 **Regression Threshold**: 10%
+
 - Metric exceeds baseline by 10% or more
 - Severity: HIGH
 - Action: Create GitHub issue
 
 **Warning Threshold**: 5%
+
 - Metric exceeds baseline by 5-10%
 - Severity: MEDIUM
 - Action: Slack notification
 
 **Improvement**: < -5%
+
 - Metric improves by 5% or more
 - Severity: INFO
 - Action: Log and report
@@ -257,16 +281,19 @@ Alerts are defined in `scripts/load-tests/performance-alerts.js`:
 ### Alert Channels
 
 #### Slack
+
 - **Enabled**: When `SLACK_WEBHOOK_URL` is set
 - **Format**: Rich message with metrics and links
 - **Escalation**: Critical alerts escalate after 5 minutes
 
 #### GitHub Issues
+
 - **Enabled**: Always (for critical alerts)
 - **Labels**: `performance`, `load-testing`
 - **Content**: Metrics, baseline comparison, run link
 
 #### Email
+
 - **Enabled**: When `ALERT_EMAIL` is set
 - **Recipients**: Comma-separated list
 - **Format**: HTML email with charts
@@ -300,8 +327,8 @@ Baselines should be updated when intentional performance improvements are made.
 {
   "scenarios": {
     "user_journey": {
-      "p95_ms": 450,  // Reduced from 500ms
-      "p99_ms": 900,  // Reduced from 1000ms
+      "p95_ms": 450, // Reduced from 500ms
+      "p99_ms": 900, // Reduced from 1000ms
       "error_rate_max": 0.05
     }
   }
@@ -315,11 +342,13 @@ Baselines should be updated when intentional performance improvements are made.
 **File**: `.github/workflows/load-testing.yml`
 
 **Triggers**:
+
 - Schedule: Daily at 3 AM UTC
 - Manual: Workflow dispatch
 - On deployment: Staging/production deployments
 
 **Steps**:
+
 1. Checkout code
 2. Setup Node.js and k6
 3. Start backend services (PostgreSQL, Redis)
@@ -356,12 +385,14 @@ If tests fail, deployment is blocked.
 ### Dashboards
 
 Grafana dashboards available at:
+
 - `http://localhost:3000/d/load-testing` (local)
 - `https://monitoring.example.com/d/load-testing` (production)
 
 ### Logs
 
 Load test logs stored in:
+
 - `load-test-results/` (local)
 - CloudWatch Logs (AWS)
 - ELK Stack (production)
@@ -373,12 +404,14 @@ Load test logs stored in:
 **Symptoms**: Error rate > 5%
 
 **Causes**:
+
 - Backend service down
 - Database connection issues
 - Rate limiting triggered
 - Invalid test data
 
 **Resolution**:
+
 ```bash
 # Check backend health
 curl http://localhost:3000/health
@@ -396,15 +429,17 @@ curl -I http://localhost:3000/v1/courses
 **Symptoms**: p95 latency > 500ms
 
 **Causes**:
+
 - Database slow queries
 - External API delays
 - Network issues
 - Resource constraints
 
 **Resolution**:
+
 ```bash
 # Check slow queries
-SELECT query, mean_time FROM pg_stat_statements 
+SELECT query, mean_time FROM pg_stat_statements
 ORDER BY mean_time DESC LIMIT 10;
 
 # Check resource usage
@@ -419,11 +454,13 @@ ping -c 10 api.example.com
 **Symptoms**: Latency increases over time
 
 **Causes**:
+
 - Memory leak in application
 - Connection pool exhaustion
 - Cache growth
 
 **Resolution**:
+
 ```bash
 # Monitor memory during soak test
 watch -n 1 'docker stats --no-stream'

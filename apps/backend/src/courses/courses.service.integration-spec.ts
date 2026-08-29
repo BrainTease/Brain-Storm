@@ -5,6 +5,8 @@ import { DataSource } from 'typeorm';
 import { CoursesService } from './courses.service';
 import { Course } from './course.entity';
 import { setupTestDatabase, teardownTestDatabase } from '../test/integration-test.setup';
+import { COURSES_REPOSITORY_TOKEN } from '../repositories';
+import { TypeOrmCoursesRepository } from '../repositories/typeorm-courses.repository';
 
 describe('CoursesService (Integration)', () => {
   let service: CoursesService;
@@ -16,7 +18,10 @@ describe('CoursesService (Integration)', () => {
 
     module = await Test.createTestingModule({
       imports: [TypeOrmModule.forFeature([Course]), CacheModule.register()],
-      providers: [CoursesService],
+      providers: [
+        CoursesService,
+        { provide: COURSES_REPOSITORY_TOKEN, useClass: TypeOrmCoursesRepository },
+      ],
     })
       .overrideProvider('DataSource')
       .useValue(dataSource)

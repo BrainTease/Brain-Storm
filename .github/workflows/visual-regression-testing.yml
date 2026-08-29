@@ -88,9 +88,9 @@ jobs:
           script: |
             const fs = require('fs');
             const path = require('path');
-            
+
             let body = '## 📸 Visual Regression Test Results\n\n';
-            
+
             // Read test results
             const resultsPath = 'apps/frontend/test-results-visual.json';
             if (fs.existsSync(resultsPath)) {
@@ -132,19 +132,19 @@ jobs:
             } else {
               body += '⚠️ Test results file not found. The tests may not have run successfully.\n';
             }
-            
+
             // Post or update comment
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
             });
-            
+
             const botComment = comments.find(comment => 
               comment.user.type === 'Bot' && 
               comment.body.includes('📸 Visual Regression Test Results')
             );
-            
+
             if (botComment) {
               await github.rest.issues.updateComment({
                 owner: context.repo.owner,
@@ -160,7 +160,7 @@ jobs:
                 body: body
               });
             }
-      
+
       - name: Set job status
         if: steps.visual-tests.outcome == 'failure'
         run: exit 1

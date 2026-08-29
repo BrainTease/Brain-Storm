@@ -34,7 +34,7 @@ export function useCountdown(initialSeconds = 0): UseCountdownResult {
         });
       }, 1000);
     },
-    [stop],
+    [stop]
   );
 
   useEffect(() => stop, [stop]);

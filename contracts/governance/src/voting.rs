@@ -567,4 +567,407 @@ mod tests {
         // Ratio is ~32x, far less than 1000x
         assert!(whale_quad / user_quad < 40);
     }
+
+    // ── E2E proposal creation and voting lifecycle tests ──────────────────────
+
+    #[test]
+    fn test_e2e_proposal_creation_and_voting_weighted() {
+        use soroban_sdk::testutils::{Address as _, Ledger, LedgerInfo};
+        use soroban_sdk::Env;
+
+        let env = Env::default();
+        let proposer = Address::generate(&env);
+        let voter1 = Address::generate(&env);
+        let voter2 = Address::generate(&env);
+
+        env.ledger().set(LedgerInfo {
+            sequence_number: 1,
+            timestamp: 1000,
+            protocol_version: 21,
+            network_id: Default::default(),
+            base_reserve: 10,
+            min_temp_entry_ttl: 1000,
+            min_persistent_entry_ttl: 1000,
+            max_entry_ttl: 100_000,
+        });
+
+        let prop_id = create_proposal(
+            &env,
+            proposer,
+            String::from_str(&env, "Add GPU computing"),
+            String::from_str(&env, "Enable GPU-based courses"),
+            100,
+            VotingStrategy::Weighted,
+            150,
+        );
+
+        assert_eq!(prop_id, 1);
+        let proposal = get_proposal(&env, prop_id).unwrap();
+        assert_eq!(proposal.state, ProposalState::Pending);
+        assert_eq!(proposal.votes_for, 0);
+
+        // Advance to voting start
+        env.ledger().set(LedgerInfo {
+            sequence_number: 2,
+            timestamp: 2000,
+            protocol_version: 21,
+            network_id: Default::default(),
+            base_reserve: 10,
+            min_temp_entry_ttl: 1000,
+            min_persistent_entry_ttl: 1000,
+            max_entry_ttl: 100_000,
+        });
+
+        cast_vote(&env, prop_id, voter1, VoteSupport::For, 500);
+        cast_vote(&env, prop_id, voter2, VoteSupport::Against, 200);
+
+        let proposal = get_proposal(&env, prop_id).unwrap();
+        assert_eq!(proposal.state, ProposalState::Active);
+        assert_eq!(proposal.votes_for, 500);
+        assert_eq!(proposal.votes_against, 200);
+
+        // Advance past voting end
+        env.ledger().set(LedgerInfo {
+            sequence_number: 101,
+            timestamp: 3000,
+            protocol_version: 21,
+            network_id: Default::default(),
+            base_reserve: 10,
+            min_temp_entry_ttl: 1000,
+            min_persistent_entry_ttl: 1000,
+            max_entry_ttl: 100_000,
+        });
+
+        let passed = finalise_proposal(&env, prop_id);
+        assert!(passed);
+        let proposal = get_proposal(&env, prop_id).unwrap();
+        assert_eq!(proposal.state, ProposalState::Succeeded);
+
+        // Advance past timelock
+        env.ledger().set(LedgerInfo {
+            sequence_number: 151,
+            timestamp: 4000,
+            protocol_version: 21,
+            network_id: Default::default(),
+            base_reserve: 10,
+            min_temp_entry_ttl: 1000,
+            min_persistent_entry_ttl: 1000,
+            max_entry_ttl: 100_000,
+        });
+
+        execute_proposal(&env, prop_id);
+        let proposal = get_proposal(&env, prop_id).unwrap();
+        assert_eq!(proposal.state, ProposalState::Executed);
+    }
+
+    #[test]
+    fn test_e2e_quadratic_voting_dampens_whale() {
+        use soroban_sdk::testutils::{Address as _, Ledger, LedgerInfo};
+        use soroban_sdk::Env;
+
+        let env = Env::default();
+        let proposer = Address::generate(&env);
+        let whale = Address::generate(&env);
+        let normal = Address::generate(&env);
+
+        env.ledger().set(LedgerInfo {
+            sequence_number: 1,
+            timestamp: 1000,
+            protocol_version: 21,
+            network_id: Default::default(),
+            base_reserve: 10,
+            min_temp_entry_ttl: 1000,
+            min_persistent_entry_ttl: 1000,
+            max_entry_ttl: 100_000,
+        });
+
+        let prop_id = create_proposal(
+            &env,
+            proposer,
+            String::from_str(&env, "Governance change"),
+            String::from_str(&env, "Test quadratic voting"),
+            50,
+            VotingStrategy::Quadratic,
+            100,
+        );
+
+        env.ledger().set(LedgerInfo {
+            sequence_number: 2,
+            timestamp: 2000,
+            protocol_version: 21,
+            network_id: Default::default(),
+            base_reserve: 10,
+            min_temp_entry_ttl: 1000,
+            min_persistent_entry_ttl: 1000,
+            max_entry_ttl: 100_000,
+        });
+
+        // Whale has 1M, normal has 1K
+        cast_vote(&env, prop_id, whale, VoteSupport::For, 1_000_000);
+        cast_vote(&env, prop_id, normal, VoteSupport::Against, 1_000);
+
+        let proposal = get_proposal(&env, prop_id).unwrap();
+        assert_eq!(proposal.votes_for, 1_000); // sqrt(1M)
+        assert_eq!(proposal.votes_against, 31); // sqrt(1K) ≈ 31
+
+        // Whale power is 31x, not 1000x (dampening worked)
+        assert!(proposal.votes_for / proposal.votes_against < 40);
+    }
+
+    #[test]
+    fn test_e2e_vote_delegation() {
+        use soroban_sdk::testutils::{Address as _, Ledger, LedgerInfo};
+        use soroban_sdk::Env;
+
+        let env = Env::default();
+        let proposer = Address::generate(&env);
+        let delegator = Address::generate(&env);
+
+        env.ledger().set(LedgerInfo {
+            sequence_number: 1,
+            timestamp: 1000,
+            protocol_version: 21,
+            network_id: Default::default(),
+            base_reserve: 10,
+            min_temp_entry_ttl: 1000,
+            min_persistent_entry_ttl: 1000,
+            max_entry_ttl: 100_000,
+        });
+
+        let prop_id = create_proposal(
+            &env,
+            proposer,
+            String::from_str(&env, "Delegate test"),
+            String::from_str(&env, "Test vote delegation"),
+            50,
+            VotingStrategy::Weighted,
+            100,
+        );
+
+        let delegate_addr = Address::generate(&env);
+        delegate_vote(&env, delegator.clone(), delegate_addr.clone());
+
+        let stored_delegate = get_delegate(&env, delegator).unwrap();
+        assert_eq!(stored_delegate, delegate_addr);
+    }
+
+    #[test]
+    fn test_e2e_proposal_defeated_insufficient_quorum() {
+        use soroban_sdk::testutils::{Address as _, Ledger, LedgerInfo};
+        use soroban_sdk::Env;
+
+        let env = Env::default();
+        let proposer = Address::generate(&env);
+        let voter = Address::generate(&env);
+
+        env.ledger().set(LedgerInfo {
+            sequence_number: 1,
+            timestamp: 1000,
+            protocol_version: 21,
+            network_id: Default::default(),
+            base_reserve: 10,
+            min_temp_entry_ttl: 1000,
+            min_persistent_entry_ttl: 1000,
+            max_entry_ttl: 100_000,
+        });
+
+        let prop_id = create_proposal(
+            &env,
+            proposer,
+            String::from_str(&env, "Minority proposal"),
+            String::from_str(&env, "Low participation"),
+            50,
+            VotingStrategy::Weighted,
+            100,
+        );
+
+        env.ledger().set(LedgerInfo {
+            sequence_number: 2,
+            timestamp: 2000,
+            protocol_version: 21,
+            network_id: Default::default(),
+            base_reserve: 10,
+            min_temp_entry_ttl: 1000,
+            min_persistent_entry_ttl: 1000,
+            max_entry_ttl: 100_000,
+        });
+
+        // Cast minimal vote
+        cast_vote(&env, prop_id, voter, VoteSupport::For, 1);
+
+        env.ledger().set(LedgerInfo {
+            sequence_number: 51,
+            timestamp: 3000,
+            protocol_version: 21,
+            network_id: Default::default(),
+            base_reserve: 10,
+            min_temp_entry_ttl: 1000,
+            min_persistent_entry_ttl: 1000,
+            max_entry_ttl: 100_000,
+        });
+
+        let passed = finalise_proposal(&env, prop_id);
+        assert!(!passed);
+        let proposal = get_proposal(&env, prop_id).unwrap();
+        assert_eq!(proposal.state, ProposalState::Defeated);
+    }
+
+    #[test]
+    fn test_e2e_proposal_defeated_more_against() {
+        use soroban_sdk::testutils::{Address as _, Ledger, LedgerInfo};
+        use soroban_sdk::Env;
+
+        let env = Env::default();
+        let proposer = Address::generate(&env);
+        let voter_for = Address::generate(&env);
+        let voter_against = Address::generate(&env);
+
+        env.ledger().set(LedgerInfo {
+            sequence_number: 1,
+            timestamp: 1000,
+            protocol_version: 21,
+            network_id: Default::default(),
+            base_reserve: 10,
+            min_temp_entry_ttl: 1000,
+            min_persistent_entry_ttl: 1000,
+            max_entry_ttl: 100_000,
+        });
+
+        let prop_id = create_proposal(
+            &env,
+            proposer,
+            String::from_str(&env, "Rejected proposal"),
+            String::from_str(&env, "Voted down"),
+            50,
+            VotingStrategy::Weighted,
+            100,
+        );
+
+        env.ledger().set(LedgerInfo {
+            sequence_number: 2,
+            timestamp: 2000,
+            protocol_version: 21,
+            network_id: Default::default(),
+            base_reserve: 10,
+            min_temp_entry_ttl: 1000,
+            min_persistent_entry_ttl: 1000,
+            max_entry_ttl: 100_000,
+        });
+
+        cast_vote(&env, prop_id, voter_for, VoteSupport::For, 100);
+        cast_vote(&env, prop_id, voter_against, VoteSupport::Against, 200);
+
+        env.ledger().set(LedgerInfo {
+            sequence_number: 51,
+            timestamp: 3000,
+            protocol_version: 21,
+            network_id: Default::default(),
+            base_reserve: 10,
+            min_temp_entry_ttl: 1000,
+            min_persistent_entry_ttl: 1000,
+            max_entry_ttl: 100_000,
+        });
+
+        let passed = finalise_proposal(&env, prop_id);
+        assert!(!passed);
+    }
+
+    #[test]
+    fn test_e2e_abstain_votes_count_toward_quorum() {
+        use soroban_sdk::testutils::{Address as _, Ledger, LedgerInfo};
+        use soroban_sdk::Env;
+
+        let env = Env::default();
+        let proposer = Address::generate(&env);
+        let voter_for = Address::generate(&env);
+        let voter_abstain = Address::generate(&env);
+
+        env.ledger().set(LedgerInfo {
+            sequence_number: 1,
+            timestamp: 1000,
+            protocol_version: 21,
+            network_id: Default::default(),
+            base_reserve: 10,
+            min_temp_entry_ttl: 1000,
+            min_persistent_entry_ttl: 1000,
+            max_entry_ttl: 100_000,
+        });
+
+        let prop_id = create_proposal(
+            &env,
+            proposer,
+            String::from_str(&env, "Abstain test"),
+            String::from_str(&env, "Testing abstentions"),
+            50,
+            VotingStrategy::Weighted,
+            100,
+        );
+
+        env.ledger().set(LedgerInfo {
+            sequence_number: 2,
+            timestamp: 2000,
+            protocol_version: 21,
+            network_id: Default::default(),
+            base_reserve: 10,
+            min_temp_entry_ttl: 1000,
+            min_persistent_entry_ttl: 1000,
+            max_entry_ttl: 100_000,
+        });
+
+        cast_vote(&env, prop_id, voter_for, VoteSupport::For, 1_000_000_000);
+        cast_vote(&env, prop_id, voter_abstain, VoteSupport::Abstain, 500_000_000);
+
+        let proposal = get_proposal(&env, prop_id).unwrap();
+        assert_eq!(proposal.votes_for, 1_000_000_000);
+        assert_eq!(proposal.votes_abstain, 500_000_000);
+    }
+
+    #[test]
+    fn test_e2e_flat_voting_one_person_one_vote() {
+        use soroban_sdk::testutils::{Address as _, Ledger, LedgerInfo};
+        use soroban_sdk::Env;
+
+        let env = Env::default();
+        let proposer = Address::generate(&env);
+        let whale = Address::generate(&env);
+        let normal = Address::generate(&env);
+
+        env.ledger().set(LedgerInfo {
+            sequence_number: 1,
+            timestamp: 1000,
+            protocol_version: 21,
+            network_id: Default::default(),
+            base_reserve: 10,
+            min_temp_entry_ttl: 1000,
+            min_persistent_entry_ttl: 1000,
+            max_entry_ttl: 100_000,
+        });
+
+        let prop_id = create_proposal(
+            &env,
+            proposer,
+            String::from_str(&env, "Flat voting"),
+            String::from_str(&env, "One person, one vote"),
+            50,
+            VotingStrategy::Flat,
+            100,
+        );
+
+        env.ledger().set(LedgerInfo {
+            sequence_number: 2,
+            timestamp: 2000,
+            protocol_version: 21,
+            network_id: Default::default(),
+            base_reserve: 10,
+            min_temp_entry_ttl: 1000,
+            min_persistent_entry_ttl: 1000,
+            max_entry_ttl: 100_000,
+        });
+
+        cast_vote(&env, prop_id, whale, VoteSupport::For, 1_000_000_000);
+        cast_vote(&env, prop_id, normal, VoteSupport::For, 1);
+
+        let proposal = get_proposal(&env, prop_id).unwrap();
+        assert_eq!(proposal.votes_for, 2); // Both have vote weight of 1
+    }
 }

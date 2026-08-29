@@ -6,6 +6,7 @@ import { useRovingFocus } from '@/hooks/useRovingFocus';
 import { CourseCard } from './CourseCard';
 import { CourseCardSkeleton } from './CourseCardSkeleton';
 import { CompareCheckbox } from './CompareCheckbox';
+import { Spinner } from '@/components/ui/Spinner';
 
 const SKELETON_COUNT = 6;
 
@@ -64,8 +65,8 @@ export function CourseGrid({
         {isLoading
           ? 'Loading courses…'
           : total > 0
-          ? `${total} course${total !== 1 ? 's' : ''} found`
-          : 'No courses match those filters.'}
+            ? `${total} course${total !== 1 ? 's' : ''} found`
+            : 'No courses match those filters.'}
       </p>
 
       <p id="course-grid-help" className="sr-only">
@@ -114,11 +115,8 @@ export function CourseGrid({
       {isLoadingMore && (
         <div className="flex justify-center py-8" role="status" aria-live="polite">
           <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
-            <div
-              className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"
-              aria-hidden="true"
-            />
-            Loading more courses...
+            <Spinner size="sm" label="Loading more courses…" />
+            <span aria-hidden="true">Loading more courses...</span>
           </div>
         </div>
       )}

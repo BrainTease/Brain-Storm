@@ -7,6 +7,7 @@ This guide helps migrate the codebase to the new improved organization structure
 ## Current vs New Structure
 
 ### Current Structure
+
 ```
 src/
 ├── auth/
@@ -18,6 +19,7 @@ src/
 ```
 
 ### New Structure
+
 ```
 src/
 ├── common/                  # Shared infrastructure
@@ -37,6 +39,7 @@ src/
 ### Phase 1: Prepare (No Breaking Changes)
 
 1. **Create new directory structure**
+
    ```bash
    mkdir -p apps/backend/src/features
    mkdir -p apps/backend/src/database
@@ -44,6 +47,7 @@ src/
    ```
 
 2. **Create feature directories**
+
    ```bash
    mkdir -p apps/backend/src/features/{courses,users,enrollments,progress,certificates}
    ```
@@ -58,21 +62,23 @@ src/
 For each feature module:
 
 1. **Create module structure**
+
    ```bash
    mkdir -p apps/backend/src/features/feature/{controllers,services,entities,dto}
    ```
 
 2. **Move files**
+
    ```bash
    # Move controllers
    mv apps/backend/src/feature.controller.ts apps/backend/src/features/feature/controllers/
-   
+
    # Move services
    mv apps/backend/src/feature.service.ts apps/backend/src/features/feature/services/
-   
+
    # Move entities
    mv apps/backend/src/feature.entity.ts apps/backend/src/features/feature/entities/
-   
+
    # Move DTOs
    mv apps/backend/src/feature.dto.ts apps/backend/src/features/feature/dto/
    ```
@@ -85,30 +91,33 @@ For each feature module:
 ### Phase 3: Update Imports
 
 1. **Update module imports**
+
    ```typescript
    // Before
    import { FeatureController } from './feature.controller';
    import { FeatureService } from './feature.service';
-   
+
    // After
    import { FeatureController } from './controllers/feature.controller';
    import { FeatureService } from './services/feature.service';
    ```
 
 2. **Update app.module imports**
+
    ```typescript
    // Before
    import { FeatureModule } from './feature/feature.module';
-   
+
    // After
    import { FeatureModule } from './features/feature/feature.module';
    ```
 
 3. **Update cross-module imports**
+
    ```typescript
    // Before
    import { OtherService } from '../other/other.service';
-   
+
    // After
    import { OtherService } from '../other/services/other.service';
    ```
@@ -131,16 +140,19 @@ export class FeatureModule {}
 ### Phase 5: Test
 
 1. **Run unit tests**
+
    ```bash
    npm run test
    ```
 
 2. **Run integration tests**
+
    ```bash
    npm run test:integration
    ```
 
 3. **Run e2e tests**
+
    ```bash
    npm run test:e2e
    ```
@@ -199,6 +211,7 @@ echo "Migration complete!"
 If issues occur:
 
 1. **Revert git changes**
+
    ```bash
    git reset --hard HEAD
    ```

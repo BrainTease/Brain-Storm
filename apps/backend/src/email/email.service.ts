@@ -21,7 +21,7 @@ export class EmailService implements OnModuleInit {
   constructor(
     @InjectRepository(EmailQueue) private queueRepo: Repository<EmailQueue>,
     @InjectRepository(EmailPreference) private prefRepo: Repository<EmailPreference>,
-    private config: ConfigService,
+    private config: ConfigService
   ) {}
 
   onModuleInit() {
@@ -29,7 +29,10 @@ export class EmailService implements OnModuleInit {
       host: this.config.get<string>('mail.host'),
       port: this.config.get<number>('mail.port'),
       secure: this.config.get<boolean>('mail.secure'),
-      auth: { user: this.config.get<string>('mail.user'), pass: this.config.get<string>('mail.pass') },
+      auth: {
+        user: this.config.get<string>('mail.user'),
+        pass: this.config.get<string>('mail.pass'),
+      },
     });
     // Process queue every 30 seconds
     setInterval(() => this.processQueue(), 30_000);
@@ -105,7 +108,13 @@ export class EmailService implements OnModuleInit {
   // --- Event listeners ---
 
   @OnEvent('enrollment.created')
-  async onEnrollment(payload: { userId: string; courseId: string; userEmail: string; userName: string; courseTitle: string }) {
+  async onEnrollment(payload: {
+    userId: string;
+    courseId: string;
+    userEmail: string;
+    userName: string;
+    courseTitle: string;
+  }) {
     const prefs = await this.getOrCreatePrefs(payload.userId);
     if (prefs.unsubscribedAll || !prefs.enrollment) return;
 
@@ -119,7 +128,13 @@ export class EmailService implements OnModuleInit {
   }
 
   @OnEvent('enrollment.completed')
-  async onCompletion(payload: { userId: string; courseId: string; userEmail: string; userName: string; courseTitle: string }) {
+  async onCompletion(payload: {
+    userId: string;
+    courseId: string;
+    userEmail: string;
+    userName: string;
+    courseTitle: string;
+  }) {
     const prefs = await this.getOrCreatePrefs(payload.userId);
     if (prefs.unsubscribedAll || !prefs.completion) return;
 
@@ -133,7 +148,13 @@ export class EmailService implements OnModuleInit {
   }
 
   @OnEvent('credential.issued')
-  async onCredentialIssued(payload: { userId: string; userEmail: string; userName: string; courseTitle: string; txHash: string }) {
+  async onCredentialIssued(payload: {
+    userId: string;
+    userEmail: string;
+    userName: string;
+    courseTitle: string;
+    txHash: string;
+  }) {
     const prefs = await this.getOrCreatePrefs(payload.userId);
     if (prefs.unsubscribedAll || !prefs.credentialIssued) return;
 
@@ -152,7 +173,12 @@ export class EmailService implements OnModuleInit {
     return this.getOrCreatePrefs(userId);
   }
 
-  async updatePreferences(userId: string, updates: Partial<Pick<EmailPreference, 'enrollment' | 'completion' | 'credentialIssued' | 'marketing'>>) {
+  async updatePreferences(
+    userId: string,
+    updates: Partial<
+      Pick<EmailPreference, 'enrollment' | 'completion' | 'credentialIssued' | 'marketing'>
+    >
+  ) {
     const prefs = await this.getOrCreatePrefs(userId);
     Object.assign(prefs, updates);
     return this.prefRepo.save(prefs);

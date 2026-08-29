@@ -12,18 +12,14 @@ import {
   RawBodyRequest,
   HttpCode,
   HttpStatus,
+  Query,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
-import {
-  IsString,
-  IsEnum,
-  IsOptional,
-  IsUrl,
-  IsUUID,
-} from 'class-validator';
+import { IsString, IsEnum, IsOptional, IsUrl, IsUUID } from 'class-validator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { PaymentsService } from './payments.service';
 import { SubscriptionPlan } from './subscription.entity';
+import { PaginationDto } from '../common/dto/pagination.dto';
 
 class CreateCheckoutDto {
   @IsUUID() courseId: string;
@@ -60,7 +56,7 @@ export class PaymentsController {
       dto.courseId,
       dto.priceId,
       dto.successUrl,
-      dto.cancelUrl,
+      dto.cancelUrl
     );
   }
 
@@ -73,14 +69,14 @@ export class PaymentsController {
       req.user.userId,
       dto.plan,
       dto.priceId,
-      dto.paymentMethodId,
+      dto.paymentMethodId
     );
   }
 
   @Get('subscriptions/me')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get the current user\'s active subscription' })
+  @ApiOperation({ summary: "Get the current user's active subscription" })
   getMySubscription(@Request() req: any) {
     return this.paymentsService.getSubscription(req.user.userId);
   }
@@ -88,7 +84,7 @@ export class PaymentsController {
   @Delete('subscriptions/me')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Cancel the current user\'s subscription' })
+  @ApiOperation({ summary: "Cancel the current user's subscription" })
   cancelSubscription(@Request() req: any) {
     return this.paymentsService.cancelSubscription(req.user.userId);
   }
@@ -97,16 +93,16 @@ export class PaymentsController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'List invoices for the current user' })
-  getInvoices(@Request() req: any) {
-    return this.paymentsService.getUserInvoices(req.user.userId);
+  getInvoices(@Request() req: any, @Query() query: PaginationDto) {
+    return this.paymentsService.getUserInvoices(req.user.userId, query);
   }
 
   @Get('history')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'List payment history for the current user' })
-  getPaymentHistory(@Request() req: any) {
-    return this.paymentsService.getUserPayments(req.user.userId);
+  getPaymentHistory(@Request() req: any, @Query() query: PaginationDto) {
+    return this.paymentsService.getUserPayments(req.user.userId, query);
   }
 
   // ─── Stripe webhook (raw body required) ──────────────────────────────────
@@ -121,7 +117,7 @@ export class PaymentsController {
   @ApiOperation({ summary: 'Stripe webhook endpoint (idempotent, verifies HMAC signature)' })
   async stripeWebhook(
     @Req() req: RawBodyRequest<any>,
-    @Headers('stripe-signature') signature: string,
+    @Headers('stripe-signature') signature: string
   ) {
     await this.paymentsService.handleStripeWebhook(req.rawBody!, signature);
     return { received: true };
@@ -137,7 +133,7 @@ export class PaymentsController {
     return this.paymentsService.verifyAndRecordStellarPayment(
       req.user.userId,
       dto.courseId,
-      dto.txHash,
+      dto.txHash
     );
   }
 }

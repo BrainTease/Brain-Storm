@@ -104,15 +104,15 @@ jobs:
         with:
           script: |
             const output = `#### Terraform Plan 📖
-            
+
             <details><summary>Show Plan</summary>
-            
+
             \`\`\`terraform
             ${{ steps.plan.outputs.stdout }}
             \`\`\`
-            
+
             </details>`;
-            
+
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
@@ -160,4 +160,3 @@ jobs:
               body: `Infrastructure tests failed after Terraform apply.\n\nRun: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}\n\nReview the uploaded artifacts for details.`,
               labels: ['infrastructure', 'testing', 'critical']
             });
-

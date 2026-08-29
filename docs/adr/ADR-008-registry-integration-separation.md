@@ -30,9 +30,10 @@ A contract crate that path-depends on sibling contract crates (even as `[dev-dep
 Per-contract `#[cfg(test)] mod tests` (present in `analytics`, `token`, `nft`, `market`, `registry`, `royalty_distribution`, and others) verifies a single contract's logic in isolation. It cannot verify what happens when, e.g., a student's on-chain progress record in `analytics` is used to justify an admin minting BST via `token` in the same session — that requires deploying both contracts into one `Env` and asserting on the combined outcome, which is exactly what `contracts/integration/tests/integration.rs` does. The `.github/workflows/contract-integration.yml` CI job (per `contracts/integration/README.md`) additionally spins up a real local Stellar sandbox and deploys the WASM artifacts, closer to a production deployment than the in-process `testutils::Address` scenario.
 
 **Why is `registry`'s user-directory/verification-level functionality not itself the "integration" layer?**
-`registry` answers questions about a *single* domain — "what is this user's verification level / certified skills / specialisations" — backed by its own storage. It doesn't call, and isn't called by, any other contract on-chain (confirmed: no `invoke_contract` or `#[contractclient]` usage in `contracts/registry/src/lib.rs`). Its "batch" operations (`batch_register_users`, `batch_set_verification_levels`) reduce the number of *transactions* a caller needs, but do not integrate with other contracts. Naming or treating it as an integration layer would misrepresent what it does.
+`registry` answers questions about a _single_ domain — "what is this user's verification level / certified skills / specialisations" — backed by its own storage. It doesn't call, and isn't called by, any other contract on-chain (confirmed: no `invoke_contract` or `#[contractclient]` usage in `contracts/registry/src/lib.rs`). Its "batch" operations (`batch_register_users`, `batch_set_verification_levels`) reduce the number of _transactions_ a caller needs, but do not integrate with other contracts. Naming or treating it as an integration layer would misrepresent what it does.
 
 **Alternatives considered**
+
 1. **Delete `contracts/integration` and rely solely on per-contract unit tests.** Rejected — multi-contract interaction bugs (e.g. an event topic mismatch between what `analytics` emits and what a listener expects) are exactly the class of bug unit tests in a single contract can't catch.
 2. **Move `tests/integration.rs` into the root `Cargo.toml`'s workspace-level `[dev-dependencies]` without a dedicated crate.** Rejected — Cargo workspaces don't have a "workspace-level test" concept; a crate is the natural unit, and keeping it as its own crate lets it appear as its own CI job (`contract-integration.yml`) with its own sandbox lifecycle.
 3. **Rename `registry` to something like `directory` to reduce naming confusion with `integration`.** Not adopted — out of scope for a documentation-only change, and the current name is otherwise accurate (it's the registry of users/skills/verification, in the same sense as a service registry). Noted here as a possible future cleanup if the naming confusion recurs.
@@ -40,15 +41,18 @@ Per-contract `#[cfg(test)] mod tests` (present in `analytics`, `token`, `nft`, `
 ## Consequences
 
 ### Positive
+
 - Production contracts never take on cross-sibling dependencies for the sake of testing.
 - `contracts/integration` can freely add path dependencies on any contract crate it needs to test together, without those contracts knowing or caring.
 - CI can treat `contract-integration.yml` as a distinct, sandboxed job from the fast per-crate `cargo test` runs.
 
 ### Negative
-- `contracts/integration` currently only exercises `analytics` + `token` + `shared` (3 of 18 production contracts). The three *actual* on-chain cross-contract call edges documented in [ADR-006](./ADR-006-contract-per-domain-architecture.md#verified-on-chain-call-graph) — `credential_metadata → nft`, `governance → token`, `grants → token` — are **not** covered by this harness today. This is a real test-coverage gap, not a design flaw in the separation itself; a natural follow-up is extending `contracts/integration`'s `[dev-dependencies]` to cover those three pairs.
+
+- `contracts/integration` currently only exercises `analytics` + `token` + `shared` (3 of 18 production contracts). The three _actual_ on-chain cross-contract call edges documented in [ADR-006](./ADR-006-contract-per-domain-architecture.md#verified-on-chain-call-graph) — `credential_metadata → nft`, `governance → token`, `grants → token` — are **not** covered by this harness today. This is a real test-coverage gap, not a design flaw in the separation itself; a natural follow-up is extending `contracts/integration`'s `[dev-dependencies]` to cover those three pairs.
 - Because `contracts/integration` has no `src/lib.rs`, `cargo doc` produces no crate documentation for it; its only documentation is `contracts/integration/README.md`.
 
 ### Neutral
+
 - `registry` and `integration` will keep sitting next to each other alphabetically in `contracts/` and in workspace listings; the naming similarity is coincidental, not a sign of a relationship.
 
 ## References
@@ -62,6 +66,6 @@ Per-contract `#[cfg(test)] mod tests` (present in `analytics`, `token`, `nft`, `
 
 ## Revision History
 
-| Date | Author | Change |
-|------|--------|--------|
+| Date       | Author                  | Change                          |
+| ---------- | ----------------------- | ------------------------------- |
 | 2026-07-25 | Brain-Storm maintainers | Initial proposal for issue #762 |

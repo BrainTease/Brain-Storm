@@ -12,33 +12,33 @@ import { Organization } from './organization.entity';
 @Entity('organization_billing_profiles')
 export class OrganizationBillingProfile {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  organizationId: string;
+  organizationId!: string;
 
   @ManyToOne(() => Organization, (o) => o.billingProfiles, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'organizationId' })
-  organization: Organization;
+  organization!: Organization;
 
   @Column()
-  stripeCustomerId: string;
+  stripeCustomerId!: string;
 
   @Column({ nullable: true })
-  paymentMethodId: string;
+  paymentMethodId!: string;
 
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
-  monthlyBudget: number;
+  monthlyBudget!: number;
 
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
-  spent: number;
+  spent!: number;
 
   @Column({ nullable: true })
-  billingEmail: string;
+  billingEmail!: string;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt!: Date;
 }

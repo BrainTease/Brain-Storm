@@ -8,10 +8,14 @@ import { Course } from './course.entity';
 export class CourseVersioningService {
   constructor(
     @InjectRepository(CourseVersion) private versionRepo: Repository<CourseVersion>,
-    @InjectRepository(Course) private courseRepo: Repository<Course>,
+    @InjectRepository(Course) private courseRepo: Repository<Course>
   ) {}
 
-  async createVersion(courseId: string, changeNote: string, createdById?: string): Promise<CourseVersion> {
+  async createVersion(
+    courseId: string,
+    changeNote: string,
+    createdById?: string
+  ): Promise<CourseVersion> {
     const course = await this.courseRepo.findOne({
       where: { id: courseId, isDeleted: false },
       relations: ['modules', 'modules.lessons'],
@@ -30,7 +34,7 @@ export class CourseVersioningService {
         snapshot: course as unknown as Record<string, any>,
         changeNote,
         createdById,
-      }),
+      })
     );
   }
 
@@ -38,7 +42,15 @@ export class CourseVersioningService {
     return this.versionRepo.find({
       where: { courseId },
       order: { versionNumber: 'DESC' },
-      select: ['id', 'courseId', 'versionTag', 'versionNumber', 'changeNote', 'createdAt', 'createdById'],
+      select: [
+        'id',
+        'courseId',
+        'versionTag',
+        'versionNumber',
+        'changeNote',
+        'createdAt',
+        'createdById',
+      ],
     });
   }
 

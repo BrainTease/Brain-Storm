@@ -3,16 +3,42 @@ import { validate, ValidationError } from 'class-validator';
 import { plainToClass } from 'class-transformer';
 
 /**
- * Centralized validation service for backend
+ * Centralised validation helper — issue #806.
+ *
+ * ## Design contract
+ *
+ * The **single source of truth** for all input validation rules is the
+ * class-validator decorators applied to DTO classes (e.g. `@IsEmail()`,
+ * `@MinLength(8)`, `@IsStellarPublicKey()`).  This service exposes ergonomic
+ * wrappers that run those decorators programmatically (e.g. in services that
+ * receive plain objects from queues or background jobs rather than HTTP
+ * controllers).
+ *
+ * ## What was removed (#806)
+ *
+ * The previous version contained standalone regex helpers (`isValidEmail`,
+ * `isValidPassword`, `isValidStellarPublicKey`, etc.) that duplicated the
+ * validation rules already encoded in DTO decorators and in
+ * `src/common/validation/custom.validators.ts`.  Keeping two separate rule
+ * definitions made it possible for them to drift out of sync.  They have been
+ * removed; any caller that needs those checks should:
+ *
+ *   a) Accept a typed DTO and let the global `ValidationPipe` do the work, or
+ *   b) Use the custom validator decorators from `custom.validators.ts` directly,
+ *      or
+ *   c) Call `validationService.validateDto(MyDto, plainObject)` and let the DTO
+ *      decorators carry the rules.
  */
 @Injectable()
 export class ValidationService {
   /**
-   * Validate an object against a DTO class
+   * Validate a plain object against a DTO class, throwing `BadRequestException`
+   * on failure.  Useful for validating data that arrives outside of HTTP
+   * request pipelines (e.g. queue payloads, webhook bodies).
    */
-  async validateDto<T>(dtoClass: new () => T, plainObject: any): Promise<T> {
+  async validateDto<T>(dtoClass: new () => T, plainObject: unknown): Promise<T> {
     const dto = plainToClass(dtoClass, plainObject);
-    const errors = await validate(dto, {
+    const errors = await validate(dto as object, {
       skipMissingProperties: false,
       whitelist: true,
       forbidNonWhitelisted: true,
@@ -26,11 +52,15 @@ export class ValidationService {
   }
 
   /**
-   * Validate an object without throwing (returns errors)
+   * Like `validateDto` but returns errors instead of throwing — useful when
+   * calling code wants to accumulate errors before deciding how to respond.
    */
-  async validateDtoSilent<T>(dtoClass: new () => T, plainObject: any): Promise<{ valid: boolean; errors?: ValidationError[] }> {
+  async validateDtoSilent<T>(
+    dtoClass: new () => T,
+    plainObject: unknown
+  ): Promise<{ valid: boolean; errors?: ValidationError[] }> {
     const dto = plainToClass(dtoClass, plainObject);
-    const errors = await validate(dto, {
+    const errors = await validate(dto as object, {
       skipMissingProperties: false,
       whitelist: true,
       forbidNonWhitelisted: true,
@@ -43,11 +73,12 @@ export class ValidationService {
   }
 
   /**
-   * Validate partial object (for PATCH requests)
+   * Validate a partial object (PATCH semantics) — missing properties are
+   * allowed.
    */
-  async validatePartialDto<T>(dtoClass: new () => T, plainObject: any): Promise<T> {
+  async validatePartialDto<T>(dtoClass: new () => T, plainObject: unknown): Promise<T> {
     const dto = plainToClass(dtoClass, plainObject);
-    const errors = await validate(dto, {
+    const errors = await validate(dto as object, {
       skipMissingProperties: true,
       whitelist: true,
       forbidNonWhitelisted: true,
@@ -61,14 +92,16 @@ export class ValidationService {
   }
 
   /**
-   * Validate array of objects
+   * Validate an array of plain objects against the same DTO class.  Each
+   * item's index is prepended to its property path so callers can identify
+   * which array element failed.
    */
-  async validateDtoArray<T>(dtoClass: new () => T, plainObjects: any[]): Promise<T[]> {
-    const dtos = plainObjects.map((obj) => plainToClass(dtoClass, obj));
+  async validateDtoArray<T>(dtoClass: new () => T, plainObjects: unknown[]): Promise<T[]> {
+    const dtos = (plainObjects as unknown[]).map((obj) => plainToClass(dtoClass, obj));
     const allErrors: ValidationError[] = [];
 
     for (let i = 0; i < dtos.length; i++) {
-      const errors = await validate(dtos[i], {
+      const errors = await validate(dtos[i] as object, {
         skipMissingProperties: false,
         whitelist: true,
         forbidNonWhitelisted: true,
@@ -85,8 +118,11 @@ export class ValidationService {
     return dtos;
   }
 
+  // ── Private helpers ────────────────────────────────────────────────────────
+
   /**
-   * Format validation errors for response
+   * Converts a flat or nested ValidationError tree into a map of
+   * `{ field: string[] }` for consistent API error responses.
    */
   private formatErrors(errors: ValidationError[]): Record<string, string[]> {
     const formatted: Record<string, string[]> = {};
@@ -105,84 +141,5 @@ export class ValidationService {
 
     errors.forEach((error) => flattenErrors(error));
     return formatted;
-  }
-
-  /**
-   * Validate email format
-   */
-  isValidEmail(email: string): boolean {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  }
-
-  /**
-   * Validate Stellar public key
-   */
-  isValidStellarPublicKey(publicKey: string): boolean {
-    return /^G[A-Z2-7]{55}$/.test(publicKey);
-  }
-
-  /**
-   * Validate strong password
-   */
-  isValidPassword(password: string): boolean {
-    return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,128}$/.test(password);
-  }
-
-  /**
-   * Validate URL
-   */
-  isValidUrl(url: string): boolean {
-    try {
-      new URL(url);
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
-  /**
-   * Validate phone number (E.164 format)
-   */
-  isValidPhoneNumber(phoneNumber: string): boolean {
-    return /^\+?[1-9]\d{1,14}$/.test(phoneNumber);
-  }
-
-  /**
-   * Validate percentage (0-100)
-   */
-  isValidPercentage(value: number): boolean {
-    return typeof value === 'number' && value >= 0 && value <= 100;
-  }
-
-  /**
-   * Validate date range
-   */
-  isValidDateRange(startDate: Date | string, endDate: Date | string): boolean {
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    return start < end;
-  }
-
-  /**
-   * Validate coupon code format
-   */
-  isValidCouponCode(code: string): boolean {
-    return /^[A-Z0-9-]{3,50}$/.test(code);
-  }
-
-  /**
-   * Validate UUID
-   */
-  isValidUUID(uuid: string): boolean {
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    return uuidRegex.test(uuid);
-  }
-
-  /**
-   * Validate pagination parameters
-   */
-  isValidPagination(page: number, limit: number): boolean {
-    return page >= 1 && limit >= 1 && limit <= 100;
   }
 }

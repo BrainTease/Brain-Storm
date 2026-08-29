@@ -4,20 +4,20 @@ import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, Index } from 
 @Index(['userId'])
 export class MobileDevice {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  userId: string;
+  userId!: string;
 
   @Column()
-  pushToken: string;
+  pushToken!: string;
 
   @Column()
-  platform: string;
+  platform!: string;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 
   @Column({ type: 'timestamp', nullable: true })
-  lastUsed: Date;
+  lastUsed!: Date;
 }

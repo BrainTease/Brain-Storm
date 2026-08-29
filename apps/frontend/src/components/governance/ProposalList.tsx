@@ -56,9 +56,7 @@ export function ProposalList({
     return (
       <Card className="p-8 text-center">
         <p className="text-gray-600 dark:text-gray-400">
-          {filter === 'all'
-            ? 'No proposals found.'
-            : `No ${filter} proposals found.`}
+          {filter === 'all' ? 'No proposals found.' : `No ${filter} proposals found.`}
         </p>
       </Card>
     );

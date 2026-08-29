@@ -3,3 +3,4 @@ export { TextField, TextareaField, SelectField, CheckboxField } from './FormFiel
 export { SubmitButton } from './SubmitButton';
 export { useZodForm } from './useZodForm';
 export { useAsyncValidator } from './validation';
+export { StepWizard, type WizardStep } from './StepWizard';

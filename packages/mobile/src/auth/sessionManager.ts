@@ -4,8 +4,8 @@
  */
 
 import { storeTokens, clearTokens, getTokens, hasValidTokens } from './secureStorage';
-import { 
-  authenticateWithBiometrics, 
+import {
+  authenticateWithBiometrics,
   checkBiometricAvailability,
   isBiometricEnabled,
   enableBiometricAuth,
@@ -41,8 +41,8 @@ export function initSessionManager(sessionConfig: SessionConfig = {}): void {
  * Start a new session with tokens
  */
 export async function startSession(
-  accessToken: string, 
-  refreshToken: string, 
+  accessToken: string,
+  refreshToken: string,
   userId: string
 ): Promise<void> {
   await storeTokens(accessToken, refreshToken);
@@ -72,13 +72,13 @@ export async function getSessionTokens() {
 export async function hasActiveSession(): Promise<boolean> {
   const tokens = await hasValidTokens();
   if (!tokens) return false;
-  
+
   // Check if session is locked
   const locked = await isSessionLocked();
   if (locked) {
     return false;
   }
-  
+
   return true;
 }
 
@@ -111,7 +111,7 @@ export async function lockCurrentSession(): Promise<void> {
  */
 export function resetSessionTimer(): void {
   clearSessionTimer();
-  
+
   if (config.timeoutMs && config.timeoutMs > 0) {
     sessionTimeout = setTimeout(async () => {
       await lockCurrentSession();

@@ -214,10 +214,8 @@ impl TokenRestrictionsContract {
         let from_whitelisted = Self::is_whitelisted(env.clone(), from.clone());
 
         // If either is whitelisted, check that both are in whitelist
-        if to_whitelisted || from_whitelisted {
-            if !to_whitelisted || !from_whitelisted {
-                return false;
-            }
+        if (to_whitelisted || from_whitelisted) && (!to_whitelisted || !from_whitelisted) {
+            return false;
         }
 
         // Check transfer approval status

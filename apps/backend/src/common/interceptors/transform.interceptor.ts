@@ -18,7 +18,7 @@ export class TransformInterceptor<T> implements NestInterceptor<T, ApiResponseDt
 
         // Wrap plain data in ApiResponseDto
         return new ApiResponseDto(data, statusCode);
-      }),
+      })
     );
   }
 }

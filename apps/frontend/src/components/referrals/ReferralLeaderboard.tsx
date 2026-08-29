@@ -124,63 +124,63 @@ export function ReferralLeaderboard() {
       {userRank && userRank > 5 && (
         <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 mb-6">
           <p className="text-blue-800 dark:text-blue-200">
-            You're ranked <strong>#{userRank}</strong> overall! Keep referring to climb the leaderboard.
+            You're ranked <strong>#{userRank}</strong> overall! Keep referring to climb the
+            leaderboard.
           </p>
         </div>
       )}
 
       <div className="space-y-3">
-        {isLoading ? (
-          Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="flex items-center gap-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg animate-pulse">
-              <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-full" />
-              <div className="flex-1">
-                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mb-2" />
-                <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/4" />
+        {isLoading
+          ? Array.from({ length: 5 }).map((_, i) => (
+              <div
+                key={i}
+                className="flex items-center gap-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg animate-pulse"
+              >
+                <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-full" />
+                <div className="flex-1">
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mb-2" />
+                  <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/4" />
+                </div>
+                <div className="text-right">
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-12 mb-2" />
+                  <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-16" />
+                </div>
               </div>
-              <div className="text-right">
-                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-12 mb-2" />
-                <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-16" />
-              </div>
-            </div>
-          ))
-        ) : (
-          leaderboard.map((entry) => (
-            <div
-              key={entry.id}
-              className={`flex items-center gap-4 p-3 rounded-lg transition-colors ${
-                entry.rank === userRank
-                  ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800'
-                  : 'bg-gray-50 dark:bg-gray-800'
-              }`}
-            >
-              <div className={`text-lg font-bold w-8 text-center ${getRankColor(entry.rank)}`}>
-                {getRankIcon(entry.rank)}
-              </div>
+            ))
+          : leaderboard.map((entry) => (
+              <div
+                key={entry.id}
+                className={`flex items-center gap-4 p-3 rounded-lg transition-colors ${
+                  entry.rank === userRank
+                    ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800'
+                    : 'bg-gray-50 dark:bg-gray-800'
+                }`}
+              >
+                <div className={`text-lg font-bold w-8 text-center ${getRankColor(entry.rank)}`}>
+                  {getRankIcon(entry.rank)}
+                </div>
 
-              <div className="flex-1">
-                <div className="font-medium text-gray-900 dark:text-white">
-                  {entry.username}
-                  {entry.rank === userRank && (
-                    <span className="ml-2 text-xs text-blue-600 dark:text-blue-400">(You)</span>
-                  )}
+                <div className="flex-1">
+                  <div className="font-medium text-gray-900 dark:text-white">
+                    {entry.username}
+                    {entry.rank === userRank && (
+                      <span className="ml-2 text-xs text-blue-600 dark:text-blue-400">(You)</span>
+                    )}
+                  </div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">
+                    {entry.totalReferrals} referrals
+                  </div>
                 </div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">
-                  {entry.totalReferrals} referrals
-                </div>
-              </div>
 
-              <div className="text-right">
-                <div className="font-semibold text-gray-900 dark:text-white">
-                  ${entry.totalRewards}
-                </div>
-                <div className="text-xs text-gray-600 dark:text-gray-400">
-                  earned
+                <div className="text-right">
+                  <div className="font-semibold text-gray-900 dark:text-white">
+                    ${entry.totalRewards}
+                  </div>
+                  <div className="text-xs text-gray-600 dark:text-gray-400">earned</div>
                 </div>
               </div>
-            </div>
-          ))
-        )}
+            ))}
       </div>
 
       <div className="mt-6 text-center">

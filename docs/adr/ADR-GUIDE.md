@@ -7,6 +7,7 @@ This guide explains how to create, review, and maintain Architecture Decision Re
 ## What is an ADR?
 
 An Architecture Decision Record (ADR) documents a significant technical decision made in the project. It captures:
+
 - **What** was decided
 - **Why** it was decided
 - **When** it was decided
@@ -20,6 +21,7 @@ ADRs provide historical context and help future developers understand the reason
 ## When to Create an ADR
 
 Create an ADR for decisions that:
+
 - Affect multiple components or systems
 - Have long-term implications
 - Involve trade-offs between alternatives
@@ -27,6 +29,7 @@ Create an ADR for decisions that:
 - Are likely to be questioned or revisited
 
 **Do NOT create ADRs for:**
+
 - Minor implementation details
 - Bug fixes
 - Routine maintenance
@@ -39,43 +42,55 @@ Create an ADR for decisions that:
 Use the template in `ADR-TEMPLATE.md`. Key sections:
 
 ### Status
+
 - **Proposed:** Under discussion, not yet decided
 - **Accepted:** Decision made and approved
 - **Deprecated:** No longer applicable
 - **Superseded:** Replaced by a newer ADR
 
 ### Context
+
 Explain the problem or situation. Include:
+
 - Background and history
 - Current constraints
 - Why a decision is needed
 - Stakeholders affected
 
 ### Decision
+
 State the choice clearly and concisely. Be specific.
 
 ### Rationale
+
 Explain the reasoning:
+
 - Why this option was chosen
 - Alternatives considered
 - Trade-offs accepted
 - Alignment with project goals
 
 ### Consequences
+
 Describe outcomes:
+
 - **Positive:** Benefits and improvements
 - **Negative:** Trade-offs and costs
 - **Neutral:** Side effects
 
 ### Implementation Notes
+
 Provide practical guidance:
+
 - Affected files/modules
 - Migration steps
 - Timeline
 - Rollback strategy
 
 ### References
+
 Link to related resources:
+
 - GitHub issues
 - External documentation
 - Related ADRs
@@ -155,11 +170,11 @@ When reviewing an ADR, verify:
 Track changes in the Revision History table:
 
 ```markdown
-| Date | Author | Change |
-|------|--------|--------|
-| 2024-01-15 | Alice | Initial proposal |
-| 2024-01-20 | Bob | Clarified implementation notes |
-| 2024-02-01 | Alice | Marked as Accepted |
+| Date       | Author | Change                         |
+| ---------- | ------ | ------------------------------ |
+| 2024-01-15 | Alice  | Initial proposal               |
+| 2024-01-20 | Bob    | Clarified implementation notes |
+| 2024-02-01 | Alice  | Marked as Accepted             |
 ```
 
 ---
@@ -186,13 +201,13 @@ Track changes in the Revision History table:
 
 ## Current ADRs
 
-| ADR | Title | Status |
-|-----|-------|--------|
-| [ADR-001](./ADR-001-stellar-soroban-over-ethereum.md) | Use Stellar/Soroban over Ethereum | Accepted |
-| [ADR-002](./ADR-002-nestjs-over-express.md) | Use NestJS over Express | Accepted |
-| [ADR-003](./ADR-003-nextjs-app-router.md) | Use Next.js App Router | Accepted |
+| ADR                                                            | Title                                          | Status   |
+| -------------------------------------------------------------- | ---------------------------------------------- | -------- |
+| [ADR-001](./ADR-001-stellar-soroban-over-ethereum.md)          | Use Stellar/Soroban over Ethereum              | Accepted |
+| [ADR-002](./ADR-002-nestjs-over-express.md)                    | Use NestJS over Express                        | Accepted |
+| [ADR-003](./ADR-003-nextjs-app-router.md)                      | Use Next.js App Router                         | Accepted |
 | [ADR-004](./ADR-004-soroban-persistent-storage-credentials.md) | Use Soroban Persistent Storage for Credentials | Accepted |
-| [ADR-005](./ADR-005-token-economics.md) | Brain-Storm Token (BST) Economics | Accepted |
+| [ADR-005](./ADR-005-token-economics.md)                        | Brain-Storm Token (BST) Economics              | Accepted |
 
 ---
 

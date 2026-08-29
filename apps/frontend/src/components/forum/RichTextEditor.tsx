@@ -27,12 +27,24 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
     <div className="border rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-blue-500">
       {/* Toolbar */}
       <div className="flex gap-1 p-2 border-b bg-gray-50 text-xs text-gray-500">
-        <span className="px-1 py-0.5 border rounded cursor-default" title="Bold (B)"><strong>B</strong></span>
-        <span className="px-1 py-0.5 border rounded cursor-default" title="Italic (I)"><em>I</em></span>
-        <span className="px-1 py-0.5 border rounded cursor-default" title="Bullet list">• List</span>
-        <span className="px-1 py-0.5 border rounded cursor-default" title="Ordered list">1. List</span>
-        <span className="px-1 py-0.5 border rounded cursor-default font-mono" title="Inline code">`code`</span>
-        <span className="px-1 py-0.5 border rounded cursor-default font-mono" title="Code block">```</span>
+        <span className="px-1 py-0.5 border rounded cursor-default" title="Bold (B)">
+          <strong>B</strong>
+        </span>
+        <span className="px-1 py-0.5 border rounded cursor-default" title="Italic (I)">
+          <em>I</em>
+        </span>
+        <span className="px-1 py-0.5 border rounded cursor-default" title="Bullet list">
+          • List
+        </span>
+        <span className="px-1 py-0.5 border rounded cursor-default" title="Ordered list">
+          1. List
+        </span>
+        <span className="px-1 py-0.5 border rounded cursor-default font-mono" title="Inline code">
+          `code`
+        </span>
+        <span className="px-1 py-0.5 border rounded cursor-default font-mono" title="Code block">
+          ```
+        </span>
       </div>
       <textarea
         className="w-full p-3 text-sm resize-none focus:outline-none min-h-[120px]"

@@ -1,13 +1,41 @@
 'use client';
 
 import { useState } from 'react';
+import dynamic from 'next/dynamic';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
-import { CourseAnalytics } from '@/components/instructor/CourseAnalytics';
-import { StudentList } from '@/components/instructor/StudentList';
-import { CourseEditor } from '@/components/instructor/CourseEditor';
-import { EarningsPayouts } from '@/components/instructor/EarningsPayouts';
-import { MessagingPanel } from '@/components/instructor/MessagingPanel';
-import { CoursePerformance } from '@/components/instructor/CoursePerformance';
+import {
+  StatsSkeleton,
+  TableSkeleton,
+  FormSkeleton,
+  ListSkeleton,
+} from '@/components/ui/SharedSkeletons';
+
+// Each tab is rarely viewed alongside the others, so its component bundle
+// only loads once that tab is selected rather than with the page shell.
+const CourseAnalytics = dynamic(
+  () => import('@/components/instructor/CourseAnalytics').then((m) => m.CourseAnalytics),
+  { loading: () => <StatsSkeleton /> }
+);
+const StudentList = dynamic(
+  () => import('@/components/instructor/StudentList').then((m) => m.StudentList),
+  { loading: () => <TableSkeleton /> }
+);
+const CourseEditor = dynamic(
+  () => import('@/components/instructor/CourseEditor').then((m) => m.CourseEditor),
+  { loading: () => <FormSkeleton /> }
+);
+const EarningsPayouts = dynamic(
+  () => import('@/components/instructor/EarningsPayouts').then((m) => m.EarningsPayouts),
+  { loading: () => <TableSkeleton /> }
+);
+const MessagingPanel = dynamic(
+  () => import('@/components/instructor/MessagingPanel').then((m) => m.MessagingPanel),
+  { loading: () => <ListSkeleton /> }
+);
+const CoursePerformance = dynamic(
+  () => import('@/components/instructor/CoursePerformance').then((m) => m.CoursePerformance),
+  { loading: () => <StatsSkeleton /> }
+);
 
 type Tab = 'analytics' | 'students' | 'courses' | 'earnings' | 'messages' | 'performance';
 

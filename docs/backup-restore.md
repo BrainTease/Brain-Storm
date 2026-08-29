@@ -3,6 +3,7 @@
 ## Overview
 
 All backups are stored in an S3 bucket (`{env}-brain-storm-backup-{account_id}`) with:
+
 - Server-side encryption using AWS KMS.
 - Additional AES-256-CBC application-layer encryption via `BACKUP_ENCRYPTION_KEY`.
 - Versioning enabled to protect against accidental overwrites.
@@ -10,20 +11,21 @@ All backups are stored in an S3 bucket (`{env}-brain-storm-backup-{account_id}`)
 
 ## Required environment variables
 
-| Variable | Purpose |
-|---|---|
-| `BACKUP_S3_BUCKET` | Target S3 bucket name |
+| Variable                | Purpose                                      |
+| ----------------------- | -------------------------------------------- |
+| `BACKUP_S3_BUCKET`      | Target S3 bucket name                        |
 | `BACKUP_ENCRYPTION_KEY` | Passphrase for AES-256 encryption/decryption |
-| `DATABASE_HOST` | PostgreSQL host |
-| `DATABASE_USER` | PostgreSQL user |
-| `DATABASE_PASSWORD` | PostgreSQL password |
-| `DATABASE_NAME` | PostgreSQL database name |
-| `REDIS_HOST` | Redis host |
-| `ENVIRONMENT` | Environment tag (`dev`, `staging`, `prod`) |
+| `DATABASE_HOST`         | PostgreSQL host                              |
+| `DATABASE_USER`         | PostgreSQL user                              |
+| `DATABASE_PASSWORD`     | PostgreSQL password                          |
+| `DATABASE_NAME`         | PostgreSQL database name                     |
+| `REDIS_HOST`            | Redis host                                   |
+| `ENVIRONMENT`           | Environment tag (`dev`, `staging`, `prod`)   |
 
 ## Automated backups
 
 ### Database (PostgreSQL)
+
 Scheduled daily at **01:00 UTC** via cron on the bastion host:
 
 ```bash
@@ -31,12 +33,14 @@ Scheduled daily at **01:00 UTC** via cron on the bastion host:
 ```
 
 The script:
+
 1. Runs `pg_dump` with compression level 9.
 2. Encrypts the output with AES-256-CBC (`encrypt-backup.sh`).
 3. Uploads to `s3://$BACKUP_S3_BUCKET/database/$ENVIRONMENT/$TIMESTAMP/backup.sql.gz.enc`.
 4. Updates `database/$ENVIRONMENT/manifest.json` (last 35 entries).
 
 ### Redis
+
 Scheduled every **6 hours** via cron:
 
 ```bash
@@ -52,6 +56,7 @@ Verification runs **daily at 03:00 UTC**:
 ```
 
 `verify-backup.sh`:
+
 1. Reads the latest entry from the manifest.
 2. Downloads and decrypts the backup.
 3. Restores to an isolated `VERIFY_DB_HOST` instance.
@@ -78,12 +83,12 @@ The key is stored in AWS Secrets Manager at `/{env}/brain-storm/backup-encryptio
 
 ## Retention policy
 
-| Data type | Retention |
-|---|---|
-| Database backups (S3) | 35 days |
-| Redis RDB snapshots (S3) | 7 days |
-| RDS automated snapshots | 35 days (managed by AWS) |
-| ElastiCache RDB exports | 7 days |
+| Data type                | Retention                |
+| ------------------------ | ------------------------ |
+| Database backups (S3)    | 35 days                  |
+| Redis RDB snapshots (S3) | 7 days                   |
+| RDS automated snapshots  | 35 days (managed by AWS) |
+| ElastiCache RDB exports  | 7 days                   |
 
 The `retention-cleanup.sh` script enforces this policy and runs weekly:
 
@@ -92,6 +97,7 @@ The `retention-cleanup.sh` script enforces this policy and runs weekly:
 ```
 
 Run in dry-run mode to preview what would be deleted:
+
 ```bash
 DRY_RUN=true ./scripts/backup/retention-cleanup.sh
 ```

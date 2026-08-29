@@ -39,6 +39,7 @@ BREAKING CHANGE: /auth/legacy endpoint has been removed
 ## Examples
 
 ### Feature
+
 ```
 feat(courses): add video upload support
 
@@ -46,6 +47,7 @@ Implement video upload endpoint with S3 integration
 ```
 
 ### Bug Fix
+
 ```
 fix(auth): prevent token refresh race condition
 
@@ -53,6 +55,7 @@ Add mutex lock to refresh token validation
 ```
 
 ### Documentation
+
 ```
 docs: update API authentication examples
 
@@ -60,6 +63,7 @@ Add curl examples for all auth endpoints
 ```
 
 ### Breaking Change
+
 ```
 feat(api)!: migrate to v2 API structure
 
@@ -69,6 +73,7 @@ BREAKING CHANGE: All endpoints now require /v2 prefix
 ## Scope
 
 Optional but recommended. Common scopes:
+
 - `auth`, `courses`, `users`, `stellar`, `contracts`
 - `frontend`, `backend`, `ci`, `docker`
 
