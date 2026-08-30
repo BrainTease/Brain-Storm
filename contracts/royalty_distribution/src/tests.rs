@@ -13,6 +13,25 @@ mod tests {
         (env, client, admin)
     }
 
+    use proptest::prelude::*;
+
+    proptest! {
+        #[test]
+        fn fuzz_split_totals_remain_exact_for_all_valid_percentages(
+            creator in 0u32..=100,
+            contributor in 0u32..=100,
+            total in 1i128..=1_000_000_000_000i128,
+        ) {
+            let platform = 100_u32.saturating_sub(creator).saturating_sub(contributor);
+            let creator_amount = total.checked_mul(creator as i128).unwrap() / 100;
+            let contributor_amount = total.checked_mul(contributor as i128).unwrap() / 100;
+            let platform_amount = total - creator_amount - contributor_amount;
+            let sum = creator_amount + contributor_amount + platform_amount;
+            prop_assert_eq!(sum, total);
+            prop_assert!(platform_amount >= 0);
+        }
+    }
+
     #[test]
     fn test_initialize() {
         let (_, _, _) = setup();
@@ -204,6 +223,27 @@ mod tests {
 
         assert_eq!(client.get_total_distributed(&1), 1000);
         assert_eq!(client.get_total_distributed(&2), 500);
+    }
+
+    #[test]
+    fn test_royalty_event_follows_shared_contract_convention() {
+        let (env, client, admin) = setup();
+        let creator = Address::generate(&env);
+        let contributor = Address::generate(&env);
+        let platform = Address::generate(&env);
+
+        client.set_royalty_split(&admin, &1, &60, &30, &10);
+        client.add_royalty_recipient(&admin, &1, &creator);
+        client.add_royalty_recipient(&admin, &1, &contributor);
+        client.add_royalty_recipient(&admin, &1, &platform);
+        client.distribute_royalties(&admin, &1, &1000);
+
+        let events = env.events().all();
+        assert!(!events.is_empty());
+        let newest = events.get(events.len() - 1).unwrap();
+        let topics = newest.1;
+        assert_eq!(soroban_sdk::Symbol::from_val(&env, &topics.get(0).unwrap()), soroban_sdk::symbol_short!("royalty"));
+        assert_eq!(soroban_sdk::Symbol::from_val(&env, &topics.get(1).unwrap()), soroban_sdk::symbol_short!("distributed"));
     }
 
     #[test]

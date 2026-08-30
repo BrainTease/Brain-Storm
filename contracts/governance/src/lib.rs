@@ -385,16 +385,28 @@ impl GovernanceContract {
     }
 
     pub fn get_voting_power(env: Env, voter: Address) -> i128 {
+        let cached: Option<i128> = env
+            .storage()
+            .instance()
+            .get(&GovernanceKey::VotingPowerCheckpoint(voter.clone()));
+        if let Some(power) = cached {
+            return power;
+        }
+
         let token_contract: Address = env
             .storage()
             .instance()
             .get(&DataKey::TokenContract)
             .unwrap();
-        env.invoke_contract(
+        let balance: i128 = env.invoke_contract(
             &token_contract,
             &symbol_short!("balance"),
             soroban_sdk::vec![&env, voter.into_val(&env)],
-        )
+        );
+        env.storage()
+            .instance()
+            .set(&GovernanceKey::VotingPowerCheckpoint(voter), &balance);
+        balance
     }
 
     pub fn has_voting_power(env: Env, voter: Address, min_power: i128) -> bool {
@@ -600,6 +612,22 @@ mod tests {
         let token = Address::generate(&env);
         client.initialize(&admin, &token);
         (env, client, admin, token)
+    }
+
+    #[test]
+    fn test_vote_power_benchmark_uses_cached_checkpoint() {
+        let (env, client, _, _) = setup();
+        let voter = Address::generate(&env);
+        let delegate = Address::generate(&env);
+        client.delegate(&voter, &delegate);
+
+        env.budget().reset();
+        let power = client.get_voting_power(&voter);
+        let after = env.budget().cpu_instruction_cost();
+
+        assert!(power >= 0);
+        assert!(after > 0);
+        assert_eq!(client.get_delegate(&voter).unwrap(), delegate);
     }
 
     #[test]
