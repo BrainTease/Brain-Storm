@@ -5,8 +5,9 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import type { GrantStatus } from '@brain-storm/types';
 
-export type GrantStatus = 'open' | 'under_review' | 'approved' | 'rejected' | 'closed';
+export type { GrantStatus } from '@brain-storm/types';
 
 @Entity('grants')
 export class Grant {

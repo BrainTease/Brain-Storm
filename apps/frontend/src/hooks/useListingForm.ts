@@ -1,8 +1,9 @@
 'use client';
 
-import { useForm, type UseFormReturn } from 'react-hook-form';
+import { useForm, type UseFormReturn, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import type { ListingFormData } from '@brain-storm/types';
 
 /**
  * Shared Listing Form Validation Schema.
@@ -24,7 +25,7 @@ export const listingSchema = z.object({
     .int('Quantity must be a whole number')
     .min(1, 'Quantity must be at least 1'),
   nftId: z.union([z.string(), z.number()]).optional(),
-  currency: z.enum(['BST', 'XLM', 'USDC']).default('BST'),
+  currency: z.enum(['BST', 'XLM', 'USDC'] as const).default('BST'),
   royaltyBasis: z.coerce
     .number({ invalid_type_error: 'Royalty basis must be a valid number' })
     .min(0, 'Royalty cannot be negative')
@@ -33,7 +34,7 @@ export const listingSchema = z.object({
     .default(0),
 });
 
-export type ListingFormData = z.infer<typeof listingSchema>;
+export type { ListingFormData, ListingCurrency } from '@brain-storm/types';
 
 export interface UseListingFormOptions {
   defaultValues?: Partial<ListingFormData>;
@@ -65,7 +66,7 @@ export function useListingForm(options: UseListingFormOptions = {}): UseListingF
   } = options;
 
   const form = useForm<ListingFormData>({
-    resolver: zodResolver(listingSchema) as any,
+    resolver: zodResolver(listingSchema) as unknown as Resolver<ListingFormData>,
     defaultValues: {
       title: defaultValues.title ?? '',
       description: defaultValues.description ?? '',
