@@ -13,6 +13,8 @@ module.exports = {
     // TypeScript strict rules
     '@typescript-eslint/no-explicit-any': 'error',
     '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+    // Prevent raw console.log usage - use structured logging instead
+    'no-console': ['error', { allow: ['warn', 'error'] }],
     // Import ordering rules
     'simple-import-sort/imports': [
       'error',

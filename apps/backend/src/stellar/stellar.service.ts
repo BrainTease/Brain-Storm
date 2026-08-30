@@ -20,7 +20,6 @@ import {
   Horizon,
   Keypair,
   Networks,
-  TransactionBuilder,
   BASE_FEE,
   Operation,
   nativeToScVal,
@@ -33,6 +32,7 @@ import {
 } from './stellar-transaction-log.entity';
 import { SorobanRpcClientService } from './soroban-rpc-client.service';
 import { StellarClientFactory } from './stellar-client.factory';
+import { TransactionBuilderService } from './transaction-builder.service';
 
 @Injectable()
 export class StellarService {
@@ -46,7 +46,8 @@ export class StellarService {
     @InjectRepository(StellarTransactionLog)
     private readonly txLogRepo: Repository<StellarTransactionLog>,
     private readonly sorobanRpc: SorobanRpcClientService,
-    private readonly clientFactory: StellarClientFactory
+    private readonly clientFactory: StellarClientFactory,
+    private readonly txBuilder: TransactionBuilderService
   ) {
     // Use centralized client factory instead of creating new instance
     this.server = this.clientFactory.getHorizonClient();
@@ -88,23 +89,19 @@ export class StellarService {
   ): Promise<string> {
     try {
       const issuerKeypair = this.getIssuerKeypair();
-      const issuerAccount = await this.server.loadAccount(issuerKeypair.publicKey());
 
-      const tx = new TransactionBuilder(issuerAccount, {
-        fee: BASE_FEE,
-        networkPassphrase: this.networkPassphrase,
-      })
-        .addOperation(
+      const tx = await this.txBuilder.buildAndSignTransaction(
+        issuerKeypair,
+        [
           Operation.manageData({
             name: `brain-storm:cert:${certificateHash.slice(0, 28)}`,
             value: recipientPublicKey,
-          })
-        )
-        .setTimeout(30)
-        .build();
+          }),
+        ],
+        { fee: BASE_FEE, timeout: 30 }
+      );
 
-      tx.sign(issuerKeypair);
-      const result = await this.server.submitTransaction(tx);
+      const result = await this.txBuilder.submitTransaction(tx);
       this.logger.log(`Certificate NFT minted: ${result.hash} for ${courseTitle}`);
 
       await this.logTransaction({
@@ -225,23 +222,19 @@ export class StellarService {
     courseId: string
   ): Promise<void> {
     const issuerKeypair = this.getIssuerKeypair();
-    const issuerAccount = await this.server.loadAccount(issuerKeypair.publicKey());
 
-    const tx = new TransactionBuilder(issuerAccount, {
-      fee: BASE_FEE,
-      networkPassphrase: this.networkPassphrase,
-    })
-      .addOperation(
+    const tx = await this.txBuilder.buildAndSignTransaction(
+      issuerKeypair,
+      [
         Operation.manageData({
           name: `brain-storm:credential:${courseId}`,
           value: recipientPublicKey,
-        })
-      )
-      .setTimeout(30)
-      .build();
+        }),
+      ],
+      { fee: BASE_FEE, timeout: 30 }
+    );
 
-    tx.sign(issuerKeypair);
-    await this.server.submitTransaction(tx);
+    await this.txBuilder.submitTransaction(tx);
   }
 
   private async mintCredentialViaHorizon(
@@ -249,23 +242,19 @@ export class StellarService {
     courseId: string
   ): Promise<string> {
     const issuerKeypair = this.getIssuerKeypair();
-    const issuerAccount = await this.server.loadAccount(issuerKeypair.publicKey());
 
-    const tx = new TransactionBuilder(issuerAccount, {
-      fee: BASE_FEE,
-      networkPassphrase: this.networkPassphrase,
-    })
-      .addOperation(
+    const tx = await this.txBuilder.buildAndSignTransaction(
+      issuerKeypair,
+      [
         Operation.manageData({
           name: `brain-storm:credential:${courseId}`,
           value: recipientPublicKey,
-        })
-      )
-      .setTimeout(30)
-      .build();
+        }),
+      ],
+      { fee: BASE_FEE, timeout: 30 }
+    );
 
-    tx.sign(issuerKeypair);
-    const result = await this.server.submitTransaction(tx);
+    const result = await this.txBuilder.submitTransaction(tx);
     this.logger.log(`Credential issued via Horizon: ${result.hash}`);
     return result.hash;
   }
