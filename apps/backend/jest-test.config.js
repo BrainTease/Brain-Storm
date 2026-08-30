@@ -13,12 +13,12 @@ module.exports = {
   coverageDirectory: '../coverage',
   coverageReporters: ['text', 'lcov', 'html', 'json-summary'],
   coverageThreshold: {
-    // certificates module should meet the 85 % target
+    // Issue #1023: 85% coverage threshold for core services
     global: {
-      lines: 70,
-      functions: 70,
-      branches: 60,
-      statements: 70,
+      lines: 85,
+      functions: 85,
+      branches: 80,
+      statements: 85,
     },
   },
   testEnvironment: 'node',
