@@ -3,7 +3,7 @@ use soroban_sdk::{
     contract, contractimpl, contracttype, symbol_short, Address, Env, Symbol,
 };
 
-use brain_storm_shared::access;
+use brain_storm_shared::{access, events::emit_contract_event};
 
 #[contracttype]
 pub enum DataKey {
@@ -33,9 +33,10 @@ pub struct RoyaltyPayment {
     pub timestamp: u64,
 }
 
-const DISTRIBUTE: Symbol = symbol_short!("dist");
-const WITHDRAW: Symbol = symbol_short!("wdraw");
-const SPLIT_SET: Symbol = symbol_short!("split");
+const EVT_DOMAIN: Symbol = symbol_short!("royalty");
+const DISTRIBUTE: Symbol = symbol_short!("distributed");
+const WITHDRAW: Symbol = symbol_short!("withdrawn");
+const SPLIT_SET: Symbol = symbol_short!("split_set");
 
 #[contract]
 pub struct RoyaltyDistributionContract;
@@ -76,8 +77,12 @@ impl RoyaltyDistributionContract {
             .persistent()
             .set(&DataKey::RoyaltySplit(course_id), &split);
 
-        env.events()
-            .publish((SPLIT_SET, symbol_short!("crs")), course_id);
+        emit_contract_event(
+            &env,
+            EVT_DOMAIN,
+            SPLIT_SET,
+            (admin.clone(), course_id, (creator_pct, contributor_pct, platform_pct)),
+        );
     }
 
     pub fn add_royalty_recipient(
@@ -118,9 +123,12 @@ impl RoyaltyDistributionContract {
             .get(&DataKey::RoyaltySplit(course_id))
             .expect("Royalty split not configured");
 
-        let creator_amount = (total_amount * split.creator_percentage as i128) / 100;
-        let contributor_amount = (total_amount * split.contributor_percentage as i128) / 100;
-        let platform_amount = (total_amount * split.platform_percentage as i128) / 100;
+        let creator_amount = compute_split_amount(total_amount, split.creator_percentage);
+        let contributor_amount = compute_split_amount(total_amount, split.contributor_percentage);
+        let platform_amount = total_amount
+            .checked_sub(creator_amount)
+            .and_then(|remaining| remaining.checked_sub(contributor_amount))
+            .unwrap_or(0);
 
         let creator: Address = env
             .storage()
@@ -197,8 +205,12 @@ impl RoyaltyDistributionContract {
             .instance()
             .set(&DataKey::PaymentCount, &(payment_id + 1));
 
-        env.events()
-            .publish((DISTRIBUTE, symbol_short!("crs")), (course_id, total_amount));
+        emit_contract_event(
+            &env,
+            EVT_DOMAIN,
+            DISTRIBUTE,
+            (admin.clone(), course_id, total_amount),
+        );
     }
 
     pub fn withdraw_royalties(env: Env, recipient: Address) -> i128 {
@@ -216,8 +228,7 @@ impl RoyaltyDistributionContract {
             .persistent()
             .set(&DataKey::RoyaltyBalance(recipient.clone()), &0i128);
 
-        env.events()
-            .publish((WITHDRAW, symbol_short!("addr")), (recipient, balance));
+        emit_contract_event(&env, EVT_DOMAIN, WITHDRAW, (recipient.clone(), balance, 0i128));
 
         balance
     }
@@ -271,6 +282,15 @@ impl RoyaltyDistributionContract {
         }
         total
     }
+}
+
+fn compute_split_amount(total_amount: i128, percentage: u32) -> i128 {
+    let pct: i128 = percentage as i128;
+    total_amount
+        .checked_mul(pct)
+        .expect("royalty split overflow")
+        .checked_div(100)
+        .expect("division by zero")
 }
 
 #[cfg(test)]
