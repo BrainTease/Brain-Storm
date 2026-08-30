@@ -1,65 +1,130 @@
-use soroban_sdk::contracterror;
+use soroban_sdk::contracttype;
 
-/// Standardized error codes for all contracts in the Brain-Storm protocol.
-/// These error codes are used across all contracts to provide consistent error handling.
-#[contracterror]
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
-#[repr(u32)]
+// ============================================================
+// Shared Error Types
+// ============================================================
+
+/// Common errors that can occur across all contracts
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub enum SharedError {
-    // Initialization & State (1-10)
-    NotInitialized = 1,
-    AlreadyInitialized = 2,
-    InvalidState = 3,
+    // ===== Authorization Errors =====
+    /// Caller is not authorized to perform this action
+    Unauthorized = 1000,
+    /// The provided signature is invalid
+    InvalidSignature = 1001,
+    /// The caller does not have the required role
+    InsufficientRole = 1002,
 
-    // Authorization & Access Control (11-20)
-    Unauthorized = 11,
-    AdminOnly = 12,
-    CuratorOnly = 13,
-    InvalidRole = 14,
+    // ===== Validation Errors =====
+    /// Invalid input provided
+    InvalidInput = 2000,
+    /// Invalid amount (must be > 0)
+    InvalidAmount = 2001,
+    /// Invalid address provided
+    InvalidAddress = 2002,
+    /// Invalid duration (must be > 0)
+    InvalidDuration = 2003,
+    /// Invalid state for this operation
+    InvalidState = 2004,
+    /// Invalid asset provided
+    InvalidAsset = 2005,
 
-    // Validation Errors (21-40)
-    InvalidAmount = 21,
-    InvalidPercentage = 22,
-    InvalidTimestamp = 23,
-    EmptyString = 24,
-    InvalidCredential = 25,
-    InvalidMetadata = 26,
+    // ===== Existence Errors =====
+    /// The requested resource was not found
+    NotFound = 3000,
+    /// The resource already exists
+    AlreadyExists = 3001,
+    /// The resource is not in the expected state
+    UnexpectedState = 3002,
 
-    // State & Data (41-60)
-    NotFound = 41,
-    AlreadyExists = 42,
-    AlreadyPaused = 43,
-    NotPaused = 44,
+    // ===== Balance Errors =====
+    /// Insufficient balance for this operation
+    InsufficientBalance = 4000,
+    /// Insufficient funds available
+    InsufficientFunds = 4001,
+    /// Balance limit would be exceeded
+    BalanceLimitExceeded = 4002,
 
-    // Contract State (61-70)
-    ContractPaused = 61,
-    ReentrantCall = 62,
-    OperationBlocked = 63,
+    // ===== Operation Errors =====
+    /// Operation failed
+    OperationFailed = 5000,
+    /// Operation timed out
+    Timeout = 5001,
+    /// Operation is not supported
+    UnsupportedOperation = 5002,
+    /// Operation is paused
+    Paused = 5003,
+    /// Operation would cause overflow
+    ArithmeticOverflow = 5004,
 
-    // Proposals & Governance (71-90)
-    ProposalExpired = 71,
-    ProposalAlreadyExecuted = 72,
-    InsufficientApprovals = 73,
-    ProposalNotFound = 74,
+    // ===== Permission Errors =====
+    /// Access denied
+    AccessDenied = 6000,
+    /// Resource is locked
+    Locked = 6001,
+    /// Resource is frozen
+    Frozen = 6002,
 
-    // Limits & Restrictions (91-110)
-    LimitExceeded = 91,
-    BlacklisterError = 92,
-    WhitelistError = 93,
-    TransferDenied = 94,
-    ApprovalRequired = 95,
+    // ===== System Errors =====
+    /// Internal system error
+    InternalError = 9000,
+    /// Contract is not initialized
+    NotInitialized = 9001,
+    /// Contract is already initialized
+    AlreadyInitialized = 9002,
+}
 
-    // Credential & Metadata Specific (111-130)
-    CredentialExpired = 111,
-    CredentialNotValid = 112,
-    CredentialCannotRenew = 113,
-    HashMismatch = 114,
+impl SharedError {
+    /// Check if the error is a validation error
+    pub fn is_validation_error(&self) -> bool {
+        matches!(self, SharedError::InvalidInput | SharedError::InvalidAmount | SharedError::InvalidAddress | SharedError::InvalidDuration | SharedError::InvalidState | SharedError::InvalidAsset)
+    }
 
-    // NFT & Linkage (131-150)
-    NFTContractNotSet = 131,
-    NFTMintFailed = 132,
-    LinkageNotFound = 133,
+    /// Check if the error is an existence error
+    pub fn is_existence_error(&self) -> bool {
+        matches!(self, SharedError::NotFound | SharedError::AlreadyExists | SharedError::UnexpectedState)
+    }
 
-    // General Errors (200+)
-    OperationFailed = 200,
+    /// Check if the error is a balance error
+    pub fn is_balance_error(&self) -> bool {
+        matches!(self, SharedError::InsufficientBalance | SharedError::InsufficientFunds | SharedError::BalanceLimitExceeded)
+    }
+
+    /// Check if the error is a system error
+    pub fn is_system_error(&self) -> bool {
+        matches!(self, SharedError::InternalError | SharedError::NotInitialized | SharedError::AlreadyInitialized)
+    }
+
+    /// Get the error code as a string
+    pub fn code(&self) -> &'static str {
+        match self {
+            SharedError::Unauthorized => "UNAUTHORIZED",
+            SharedError::InvalidSignature => "INVALID_SIGNATURE",
+            SharedError::InsufficientRole => "INSUFFICIENT_ROLE",
+            SharedError::InvalidInput => "INVALID_INPUT",
+            SharedError::InvalidAmount => "INVALID_AMOUNT",
+            SharedError::InvalidAddress => "INVALID_ADDRESS",
+            SharedError::InvalidDuration => "INVALID_DURATION",
+            SharedError::InvalidState => "INVALID_STATE",
+            SharedError::InvalidAsset => "INVALID_ASSET",
+            SharedError::NotFound => "NOT_FOUND",
+            SharedError::AlreadyExists => "ALREADY_EXISTS",
+            SharedError::UnexpectedState => "UNEXPECTED_STATE",
+            SharedError::InsufficientBalance => "INSUFFICIENT_BALANCE",
+            SharedError::InsufficientFunds => "INSUFFICIENT_FUNDS",
+            SharedError::BalanceLimitExceeded => "BALANCE_LIMIT_EXCEEDED",
+            SharedError::OperationFailed => "OPERATION_FAILED",
+            SharedError::Timeout => "TIMEOUT",
+            SharedError::UnsupportedOperation => "UNSUPPORTED_OPERATION",
+            SharedError::Paused => "PAUSED",
+            SharedError::ArithmeticOverflow => "ARITHMETIC_OVERFLOW",
+            SharedError::AccessDenied => "ACCESS_DENIED",
+            SharedError::Locked => "LOCKED",
+            SharedError::Frozen => "FROZEN",
+            SharedError::InternalError => "INTERNAL_ERROR",
+            SharedError::NotInitialized => "NOT_INITIALIZED",
+            SharedError::AlreadyInitialized => "ALREADY_INITIALIZED",
+        }
+    }
 }
