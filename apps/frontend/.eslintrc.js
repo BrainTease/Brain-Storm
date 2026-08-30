@@ -7,12 +7,14 @@ module.exports = {
       jsx: true,
     },
   },
-  plugins: ['@typescript-eslint/eslint-plugin', 'react', 'react-hooks'],
+  plugins: ['@typescript-eslint/eslint-plugin', 'react', 'react-hooks', 'import'],
   extends: [
     'next/core-web-vitals',
     'plugin:@typescript-eslint/recommended',
     'plugin:react/recommended',
     'plugin:react-hooks/recommended',
+    'plugin:import/recommended',
+    'plugin:import/typescript',
     'plugin:prettier/recommended',
   ],
   root: true,
@@ -22,6 +24,18 @@ module.exports = {
     node: true,
   },
   ignorePatterns: ['.eslintrc.js', '.next', 'out', 'dist', 'coverage'],
+  settings: {
+    react: {
+      version: 'detect',
+    },
+    'import/resolver': {
+      typescript: { project: './tsconfig.json' },
+      node: { extensions: ['.js', '.jsx', '.ts', '.tsx'] },
+    },
+    'import/parsers': {
+      '@typescript-eslint/parser': ['.ts', '.tsx'],
+    },
+  },
   rules: {
     '@typescript-eslint/no-explicit-any': 'warn',
     '@typescript-eslint/no-unused-vars': [
@@ -30,10 +44,26 @@ module.exports = {
     ],
     'react/react-in-jsx-scope': 'off',
     'react/prop-types': 'off',
-  },
-  settings: {
-    react: {
-      version: 'detect',
-    },
+    'import/order': [
+      'error',
+      {
+        groups: ['builtin', 'external', 'internal', 'parent', 'sibling', 'index'],
+        pathGroups: [{ pattern: '@/**', group: 'internal', position: 'after' }],
+        'newlines-between': 'always',
+        alphabetize: { order: 'asc', caseInsensitive: true },
+      },
+    ],
+    'import/no-cycle': ['warn', { maxDepth: 3, ignoreExternal: true }],
+    'import/no-duplicates': 'error',
+    complexity: ['error', { max: 15 }],
+    'max-lines-per-function': [
+      'error',
+      {
+        max: 80,
+        skipBlankLines: true,
+        skipComments: true,
+        IIFEs: true,
+      },
+    ],
   },
 };

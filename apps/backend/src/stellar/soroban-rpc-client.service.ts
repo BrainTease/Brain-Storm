@@ -8,7 +8,7 @@
  *
  * Responsibilities
  * ─────────────────
- *  • Initialise and expose the SorobanRpc.Server instance.
+ *  • Initialise and expose the rpc.Server instance.
  *  • Provide typed helpers for contract invocation (invokeContract,
  *    simulateContract).
  *  • Own the retry-with-backoff logic for RPC calls.
@@ -29,7 +29,7 @@ import {
   TransactionBuilder,
   BASE_FEE,
   Operation,
-  SorobanRpc,
+  rpc,
   nativeToScVal,
   Address,
 } from '@stellar/stellar-sdk';
@@ -41,7 +41,7 @@ const BASE_DELAY_MS = 1_000;
 export class SorobanRpcClientService {
   private readonly logger = new Logger(SorobanRpcClientService.name);
 
-  readonly server: SorobanRpc.Server;
+  readonly server: rpc.Server;
   readonly networkPassphrase: string;
   readonly analyticsContractId: string;
   readonly tokenContractId: string;
@@ -55,7 +55,7 @@ export class SorobanRpcClientService {
 
     const rpcUrl =
       this.configService.get<string>('stellar.sorobanRpcUrl') ?? '';
-    this.server = new SorobanRpc.Server(rpcUrl);
+    this.server = new rpc.Server(rpcUrl);
 
     this.contractId =
       this.configService.get<string>('stellar.contractId') ?? '';
@@ -69,7 +69,7 @@ export class SorobanRpcClientService {
 
   /**
    * Load a Soroban-aware account from the RPC node.
-   * Wraps `SorobanRpc.Server.getAccount`.
+   * Wraps `rpc.Server.getAccount`.
    */
   async getAccount(publicKey: string): Promise<any> {
     return this.server.getAccount(publicKey);
@@ -101,7 +101,7 @@ export class SorobanRpcClientService {
     contractId: string,
     method: string,
     args: any[],
-  ): Promise<SorobanRpc.Api.SimulateTransactionSuccessResponse> {
+  ): Promise<rpc.Api.SimulateTransactionSuccessResponse> {
     const issuerKeypair = this.getIssuerKeypair();
     const source = await this.server.getAccount(issuerKeypair.publicKey());
 
@@ -121,13 +121,13 @@ export class SorobanRpcClientService {
 
     const simResult = await this.server.simulateTransaction(tx);
 
-    if (SorobanRpc.Api.isSimulationError(simResult)) {
+    if (rpc.Api.isSimulationError(simResult)) {
       throw new Error(
         `Soroban simulation error for ${method}@${contractId}: ${simResult.error}`,
       );
     }
 
-    return simResult as SorobanRpc.Api.SimulateTransactionSuccessResponse;
+    return simResult as rpc.Api.SimulateTransactionSuccessResponse;
   }
 
   // ── Convenience contract methods ──────────────────────────────────────────
