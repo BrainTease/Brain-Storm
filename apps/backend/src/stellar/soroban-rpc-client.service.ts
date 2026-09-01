@@ -8,7 +8,7 @@
  *
  * Responsibilities
  * ─────────────────
- *  • Initialise and expose the SorobanRpc.Server instance.
+ *  • Initialise and expose the rpc.Server instance.
  *  • Provide typed helpers for contract invocation (invokeContract,
  *    simulateContract).
  *  • Own the retry-with-backoff logic for RPC calls.
@@ -30,7 +30,7 @@ import {
   TransactionBuilder,
   BASE_FEE,
   Operation,
-  SorobanRpc,
+  rpc,
   nativeToScVal,
   Address,
 } from '@stellar/stellar-sdk';
@@ -45,7 +45,7 @@ const BASE_DELAY_MS = 1_000;
 export class SorobanRpcClientService implements OnModuleInit {
   private readonly logger = new Logger(SorobanRpcClientService.name);
 
-  readonly server: SorobanRpc.Server;
+  readonly server: rpc.Server;
   readonly networkPassphrase: string;
   readonly analyticsContractId: string;
   readonly tokenContractId: string;
@@ -62,9 +62,9 @@ export class SorobanRpcClientService implements OnModuleInit {
     this.server = this.clientFactory.getSorobanClient();
     this.networkPassphrase = this.clientFactory.getNetworkPassphrase();
 
-    this.contractId = this.configService.get<string>('stellar.contractId') ?? '';
-    this.analyticsContractId = this.configService.get<string>('stellar.analyticsContractId') ?? '';
-    this.tokenContractId = this.configService.get<string>('stellar.tokenContractId') ?? '';
+    const rpcUrl =
+      this.configService.get<string>('stellar.sorobanRpcUrl') ?? '';
+    this.server = new rpc.Server(rpcUrl);
 
     this.logger.log('SorobanRpcClientService initialized using StellarClientFactory');
   }
@@ -77,7 +77,7 @@ export class SorobanRpcClientService implements OnModuleInit {
 
   /**
    * Load a Soroban-aware account from the RPC node.
-   * Wraps `SorobanRpc.Server.getAccount` with circuit breaker and retry logic.
+   * Wraps `rpc.Server.getAccount`.
    */
   async getAccount(publicKey: string): Promise<any> {
     return this.withCircuitBreaker('soroban-getAccount', () =>
@@ -107,18 +107,8 @@ export class SorobanRpcClientService implements OnModuleInit {
   async simulateContract(
     contractId: string,
     method: string,
-    args: any[]
-  ): Promise<SorobanRpc.Api.SimulateTransactionSuccessResponse> {
-    return this.withCircuitBreaker('soroban-simulateTransaction', () =>
-      this.retryWithBackoff(() => this.simulateContractOnce(contractId, method, args))
-    );
-  }
-
-  private async simulateContractOnce(
-    contractId: string,
-    method: string,
-    args: any[]
-  ): Promise<SorobanRpc.Api.SimulateTransactionSuccessResponse> {
+    args: any[],
+  ): Promise<rpc.Api.SimulateTransactionSuccessResponse> {
     const issuerKeypair = this.getIssuerKeypair();
     const source = await this.server.getAccount(issuerKeypair.publicKey());
 
@@ -138,11 +128,13 @@ export class SorobanRpcClientService implements OnModuleInit {
 
     const simResult = await this.server.simulateTransaction(tx);
 
-    if (SorobanRpc.Api.isSimulationError(simResult)) {
-      throw new Error(`Soroban simulation error for ${method}@${contractId}: ${simResult.error}`);
+    if (rpc.Api.isSimulationError(simResult)) {
+      throw new Error(
+        `Soroban simulation error for ${method}@${contractId}: ${simResult.error}`,
+      );
     }
 
-    return simResult as SorobanRpc.Api.SimulateTransactionSuccessResponse;
+    return simResult as rpc.Api.SimulateTransactionSuccessResponse;
   }
 
   // ── Convenience contract methods ──────────────────────────────────────────

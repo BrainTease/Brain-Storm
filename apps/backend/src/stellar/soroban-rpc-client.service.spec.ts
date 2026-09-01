@@ -24,13 +24,13 @@ const mockSorobanServer = {
   sendTransaction: jest.fn(),
 };
 
-// Mock SorobanRpc.Server so no real RPC connection is made
+// Mock rpc.Server so no real RPC connection is made
 jest.mock('@stellar/stellar-sdk', () => {
   const actual = jest.requireActual('@stellar/stellar-sdk');
   return {
     ...actual,
-    SorobanRpc: {
-      ...actual.SorobanRpc,
+    rpc: {
+      ...actual.rpc,
       Server: jest.fn().mockImplementation(() => mockSorobanServer),
     },
   };

@@ -2,8 +2,10 @@ import { Injectable, Logger, OnModuleDestroy, OnModuleInit, Inject } from '@nest
 import { ConfigService } from '@nestjs/config';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
-import { SorobanRpc } from '@stellar/stellar-sdk';
-import { ContractEventDispatcher } from './event-handlers/contract-event.dispatcher';
+import { rpc } from '@stellar/stellar-sdk';
+import { CredentialsService } from '../credentials/credentials.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { UsersService } from '../users/users.service';
 
 const LAST_LEDGER_KEY = 'indexer:last_ledger';
 
@@ -33,7 +35,7 @@ const MAX_EVENTS_PER_POLL = 500;
 @Injectable()
 export class StellarIndexerService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(StellarIndexerService.name);
-  private readonly sorobanServer: SorobanRpc.Server;
+  private readonly sorobanServer: rpc.Server;
   private readonly analyticsContractId: string;
   private readonly tokenContractId: string;
   private readonly basePollInterval: number;
@@ -47,8 +49,8 @@ export class StellarIndexerService implements OnModuleInit, OnModuleDestroy {
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     private eventDispatcher: ContractEventDispatcher
   ) {
-    this.sorobanServer = new SorobanRpc.Server(
-      this.configService.get<string>('stellar.sorobanRpcUrl') ?? ''
+    this.sorobanServer = new rpc.Server(
+      this.configService.get<string>('stellar.sorobanRpcUrl') ?? '',
     );
     this.analyticsContractId = this.configService.get<string>('stellar.analyticsContractId') ?? '';
     this.tokenContractId = this.configService.get<string>('stellar.tokenContractId') ?? '';
@@ -115,7 +117,7 @@ export class StellarIndexerService implements OnModuleInit, OnModuleDestroy {
         limit: MAX_EVENTS_PER_POLL,
       } as any);
 
-      const eventList: SorobanRpc.Api.EventResponse[] = (events ?? []).slice(
+      const eventList: rpc.Api.EventResponse[] = (events ?? []).slice(
         0,
         MAX_EVENTS_PER_POLL
       );
@@ -177,7 +179,38 @@ export class StellarIndexerService implements OnModuleInit, OnModuleDestroy {
 
   // ─── Event handling ───────────────────────────────────────────────────────────
 
-  private async handleEvent(event: SorobanRpc.Api.EventResponse) {
-    await this.eventDispatcher.dispatch(event);
+  private async handleEvent(event: rpc.Api.EventResponse) {
+    const topic = (event.topic ?? []).map((t: any) => t?.value?.toString() ?? '');
+    const [contractType, eventName] = topic;
+
+    if (contractType === 'analytics' && eventName === 'completed') {
+      await this.handleAnalyticsCompleted(event);
+    } else if (contractType === 'token' && eventName === 'transfer') {
+      await this.handleTokenTransfer(event);
+    }
+  }
+
+  private async handleAnalyticsCompleted(event: rpc.Api.EventResponse) {
+    const value = event.value?.value?.() as any;
+    const studentPublicKey: string = value?.student?.toString();
+    const courseId: string = value?.course?.toString();
+
+    if (!studentPublicKey || !courseId) return;
+
+    const user = await this.usersService.findByStellarPublicKey(studentPublicKey);
+    if (!user) return;
+
+    this.logger.log(`analytics:completed — user ${user.id}, course ${courseId}`);
+    await this.credentialsService.issue(user.id, courseId, studentPublicKey);
+    await this.notificationsService.onCredentialIssued(user.id, courseId);
+  }
+
+  private async handleTokenTransfer(event: rpc.Api.EventResponse) {
+    const value = event.value?.value?.() as any;
+    const toPublicKey: string = value?.to?.toString();
+    if (!toPublicKey) return;
+
+    await this.cacheManager.del(`token_balance:${toPublicKey}`);
+    this.logger.log(`token:transfer — busted BST cache for ${toPublicKey}`);
   }
 }
