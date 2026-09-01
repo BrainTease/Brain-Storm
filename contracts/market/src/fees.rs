@@ -7,6 +7,9 @@ use brain_storm_shared::access;
 use crate::DataKey;
 
 pub const MAX_FEE_BPS: u32 = 1_000; // 10 %
+
+/// Divisor for basis-point calculations (10 000 bps = 100 %).
+pub const BPS_DENOMINATOR: i128 = 10_000;
 const EVT_FEE_SET: Symbol = symbol_short!("fee_set");
 const EVT_FEE_DIST: Symbol = symbol_short!("fee_dist");
 
@@ -38,7 +41,7 @@ pub fn get_treasury(env: &Env) -> Option<Address> {
 /// Compute fee and net amount. Returns `(fee, net)`.
 /// Rounds fee down (truncation), net = amount - fee.
 pub fn compute_fee(amount: i128, fee_bps: u32) -> (i128, i128) {
-    let fee = amount * fee_bps as i128 / 10_000;
+    let fee = amount * fee_bps as i128 / BPS_DENOMINATOR;
     (fee, amount - fee)
 }
 

@@ -10,6 +10,7 @@
 //   - Event emission for every state transition
 // =============================================================================
 use soroban_sdk::{contracttype, symbol_short, Address, Env, String, Symbol};
+use brain_storm_shared::constants::{MIN_TEMP_ENTRY_TTL, MIN_PERSISTENT_ENTRY_TTL, MAX_ENTRY_TTL};
 
 // =============================================================================
 // Types
@@ -610,9 +611,9 @@ mod tests {
             protocol_version: 21,
             network_id: Default::default(),
             base_reserve: 10,
-            min_temp_entry_ttl: 1000,
-            min_persistent_entry_ttl: 1000,
-            max_entry_ttl: 100_000,
+            min_temp_entry_ttl: MIN_TEMP_ENTRY_TTL,
+            min_persistent_entry_ttl: MIN_PERSISTENT_ENTRY_TTL,
+            max_entry_ttl: MAX_ENTRY_TTL,
         });
 
         let prop_id = create_proposal(
@@ -637,9 +638,9 @@ mod tests {
             protocol_version: 21,
             network_id: Default::default(),
             base_reserve: 10,
-            min_temp_entry_ttl: 1000,
-            min_persistent_entry_ttl: 1000,
-            max_entry_ttl: 100_000,
+            min_temp_entry_ttl: MIN_TEMP_ENTRY_TTL,
+            min_persistent_entry_ttl: MIN_PERSISTENT_ENTRY_TTL,
+            max_entry_ttl: MAX_ENTRY_TTL,
         });
 
         cast_vote(&env, prop_id, voter1, VoteSupport::For, 500);
@@ -657,9 +658,9 @@ mod tests {
             protocol_version: 21,
             network_id: Default::default(),
             base_reserve: 10,
-            min_temp_entry_ttl: 1000,
-            min_persistent_entry_ttl: 1000,
-            max_entry_ttl: 100_000,
+            min_temp_entry_ttl: MIN_TEMP_ENTRY_TTL,
+            min_persistent_entry_ttl: MIN_PERSISTENT_ENTRY_TTL,
+            max_entry_ttl: MAX_ENTRY_TTL,
         });
 
         let passed = finalise_proposal(&env, prop_id);
@@ -674,9 +675,9 @@ mod tests {
             protocol_version: 21,
             network_id: Default::default(),
             base_reserve: 10,
-            min_temp_entry_ttl: 1000,
-            min_persistent_entry_ttl: 1000,
-            max_entry_ttl: 100_000,
+            min_temp_entry_ttl: MIN_TEMP_ENTRY_TTL,
+            min_persistent_entry_ttl: MIN_PERSISTENT_ENTRY_TTL,
+            max_entry_ttl: MAX_ENTRY_TTL,
         });
 
         execute_proposal(&env, prop_id);
@@ -700,9 +701,9 @@ mod tests {
             protocol_version: 21,
             network_id: Default::default(),
             base_reserve: 10,
-            min_temp_entry_ttl: 1000,
-            min_persistent_entry_ttl: 1000,
-            max_entry_ttl: 100_000,
+            min_temp_entry_ttl: MIN_TEMP_ENTRY_TTL,
+            min_persistent_entry_ttl: MIN_PERSISTENT_ENTRY_TTL,
+            max_entry_ttl: MAX_ENTRY_TTL,
         });
 
         let prop_id = create_proposal(
@@ -721,9 +722,9 @@ mod tests {
             protocol_version: 21,
             network_id: Default::default(),
             base_reserve: 10,
-            min_temp_entry_ttl: 1000,
-            min_persistent_entry_ttl: 1000,
-            max_entry_ttl: 100_000,
+            min_temp_entry_ttl: MIN_TEMP_ENTRY_TTL,
+            min_persistent_entry_ttl: MIN_PERSISTENT_ENTRY_TTL,
+            max_entry_ttl: MAX_ENTRY_TTL,
         });
 
         // Whale has 1M, normal has 1K
@@ -753,9 +754,9 @@ mod tests {
             protocol_version: 21,
             network_id: Default::default(),
             base_reserve: 10,
-            min_temp_entry_ttl: 1000,
-            min_persistent_entry_ttl: 1000,
-            max_entry_ttl: 100_000,
+            min_temp_entry_ttl: MIN_TEMP_ENTRY_TTL,
+            min_persistent_entry_ttl: MIN_PERSISTENT_ENTRY_TTL,
+            max_entry_ttl: MAX_ENTRY_TTL,
         });
 
         let prop_id = create_proposal(
@@ -790,9 +791,9 @@ mod tests {
             protocol_version: 21,
             network_id: Default::default(),
             base_reserve: 10,
-            min_temp_entry_ttl: 1000,
-            min_persistent_entry_ttl: 1000,
-            max_entry_ttl: 100_000,
+            min_temp_entry_ttl: MIN_TEMP_ENTRY_TTL,
+            min_persistent_entry_ttl: MIN_PERSISTENT_ENTRY_TTL,
+            max_entry_ttl: MAX_ENTRY_TTL,
         });
 
         let prop_id = create_proposal(
@@ -811,9 +812,9 @@ mod tests {
             protocol_version: 21,
             network_id: Default::default(),
             base_reserve: 10,
-            min_temp_entry_ttl: 1000,
-            min_persistent_entry_ttl: 1000,
-            max_entry_ttl: 100_000,
+            min_temp_entry_ttl: MIN_TEMP_ENTRY_TTL,
+            min_persistent_entry_ttl: MIN_PERSISTENT_ENTRY_TTL,
+            max_entry_ttl: MAX_ENTRY_TTL,
         });
 
         // Cast minimal vote
@@ -825,9 +826,9 @@ mod tests {
             protocol_version: 21,
             network_id: Default::default(),
             base_reserve: 10,
-            min_temp_entry_ttl: 1000,
-            min_persistent_entry_ttl: 1000,
-            max_entry_ttl: 100_000,
+            min_temp_entry_ttl: MIN_TEMP_ENTRY_TTL,
+            min_persistent_entry_ttl: MIN_PERSISTENT_ENTRY_TTL,
+            max_entry_ttl: MAX_ENTRY_TTL,
         });
 
         let passed = finalise_proposal(&env, prop_id);
@@ -852,9 +853,9 @@ mod tests {
             protocol_version: 21,
             network_id: Default::default(),
             base_reserve: 10,
-            min_temp_entry_ttl: 1000,
-            min_persistent_entry_ttl: 1000,
-            max_entry_ttl: 100_000,
+            min_temp_entry_ttl: MIN_TEMP_ENTRY_TTL,
+            min_persistent_entry_ttl: MIN_PERSISTENT_ENTRY_TTL,
+            max_entry_ttl: MAX_ENTRY_TTL,
         });
 
         let prop_id = create_proposal(
@@ -873,9 +874,9 @@ mod tests {
             protocol_version: 21,
             network_id: Default::default(),
             base_reserve: 10,
-            min_temp_entry_ttl: 1000,
-            min_persistent_entry_ttl: 1000,
-            max_entry_ttl: 100_000,
+            min_temp_entry_ttl: MIN_TEMP_ENTRY_TTL,
+            min_persistent_entry_ttl: MIN_PERSISTENT_ENTRY_TTL,
+            max_entry_ttl: MAX_ENTRY_TTL,
         });
 
         cast_vote(&env, prop_id, voter_for, VoteSupport::For, 100);
@@ -887,9 +888,9 @@ mod tests {
             protocol_version: 21,
             network_id: Default::default(),
             base_reserve: 10,
-            min_temp_entry_ttl: 1000,
-            min_persistent_entry_ttl: 1000,
-            max_entry_ttl: 100_000,
+            min_temp_entry_ttl: MIN_TEMP_ENTRY_TTL,
+            min_persistent_entry_ttl: MIN_PERSISTENT_ENTRY_TTL,
+            max_entry_ttl: MAX_ENTRY_TTL,
         });
 
         let passed = finalise_proposal(&env, prop_id);
@@ -912,9 +913,9 @@ mod tests {
             protocol_version: 21,
             network_id: Default::default(),
             base_reserve: 10,
-            min_temp_entry_ttl: 1000,
-            min_persistent_entry_ttl: 1000,
-            max_entry_ttl: 100_000,
+            min_temp_entry_ttl: MIN_TEMP_ENTRY_TTL,
+            min_persistent_entry_ttl: MIN_PERSISTENT_ENTRY_TTL,
+            max_entry_ttl: MAX_ENTRY_TTL,
         });
 
         let prop_id = create_proposal(
@@ -933,9 +934,9 @@ mod tests {
             protocol_version: 21,
             network_id: Default::default(),
             base_reserve: 10,
-            min_temp_entry_ttl: 1000,
-            min_persistent_entry_ttl: 1000,
-            max_entry_ttl: 100_000,
+            min_temp_entry_ttl: MIN_TEMP_ENTRY_TTL,
+            min_persistent_entry_ttl: MIN_PERSISTENT_ENTRY_TTL,
+            max_entry_ttl: MAX_ENTRY_TTL,
         });
 
         cast_vote(&env, prop_id, voter_for, VoteSupport::For, 1_000_000_000);
@@ -962,9 +963,9 @@ mod tests {
             protocol_version: 21,
             network_id: Default::default(),
             base_reserve: 10,
-            min_temp_entry_ttl: 1000,
-            min_persistent_entry_ttl: 1000,
-            max_entry_ttl: 100_000,
+            min_temp_entry_ttl: MIN_TEMP_ENTRY_TTL,
+            min_persistent_entry_ttl: MIN_PERSISTENT_ENTRY_TTL,
+            max_entry_ttl: MAX_ENTRY_TTL,
         });
 
         let prop_id = create_proposal(
@@ -983,9 +984,9 @@ mod tests {
             protocol_version: 21,
             network_id: Default::default(),
             base_reserve: 10,
-            min_temp_entry_ttl: 1000,
-            min_persistent_entry_ttl: 1000,
-            max_entry_ttl: 100_000,
+            min_temp_entry_ttl: MIN_TEMP_ENTRY_TTL,
+            min_persistent_entry_ttl: MIN_PERSISTENT_ENTRY_TTL,
+            max_entry_ttl: MAX_ENTRY_TTL,
         });
 
         cast_vote(&env, prop_id, whale, VoteSupport::For, 1_000_000_000);

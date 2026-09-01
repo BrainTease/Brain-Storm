@@ -6,6 +6,10 @@ use brain_storm_shared::math::checked_mul_div_i128;
 
 use crate::types::{DataKey, PoolConfig, SwapRecord};
 
+/// Denominator used in the constant-product fee calculation.
+/// The fee fraction is fee_numerator / FEE_SCALE (e.g. 3/1000 = 0.3 %).
+const FEE_SCALE: i128 = 1000;
+
 pub fn swap(
     env: &Env,
     user: Address,
@@ -27,13 +31,13 @@ pub fn swap(
     let reserve_b: i128 = env.storage().instance().get(&DataKey::ReserveB).unwrap_or(0);
     
     // Constant-product formula: (amount_in * fee_complement * reserve_out) / (reserve_in * fee_denom + amount_in_with_fee)
-    let fee_amount = checked_mul_div_i128(amount_in, 1000 - config.fee_numerator, 1000);
+    let fee_amount = checked_mul_div_i128(amount_in, FEE_SCALE - config.fee_numerator as i128, FEE_SCALE);
     let amount_in_with_fee = amount_in - fee_amount;
     
     let amount_out = if token_in == soroban_sdk::symbol_short!("BST") {
-        checked_mul_div_i128(amount_in_with_fee * reserve_b, 1, reserve_a * 1000 + amount_in_with_fee)
+        checked_mul_div_i128(amount_in_with_fee * reserve_b, 1, reserve_a * FEE_SCALE + amount_in_with_fee)
     } else {
-        checked_mul_div_i128(amount_in_with_fee * reserve_a, 1, reserve_b * 1000 + amount_in_with_fee)
+        checked_mul_div_i128(amount_in_with_fee * reserve_a, 1, reserve_b * FEE_SCALE + amount_in_with_fee)
     };
     
     assert!(amount_out >= amount_out_min, "Slippage exceeded");
