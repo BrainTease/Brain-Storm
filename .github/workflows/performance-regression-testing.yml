@@ -244,7 +244,6 @@ jobs:
           fi
 
   performance-alerts:
-    name: Performance Alerts & Notifications
     runs-on: ubuntu-latest
     needs: compare-with-baseline
     if: always()

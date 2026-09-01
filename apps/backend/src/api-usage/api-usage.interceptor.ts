@@ -1,9 +1,4 @@
-import {
-  CallHandler,
-  ExecutionContext,
-  Injectable,
-  NestInterceptor,
-} from '@nestjs/common';
+import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nestjs/common';
 import { Observable, tap } from 'rxjs';
 import { ApiUsageService } from './api-usage.service';
 
@@ -19,7 +14,7 @@ export class ApiUsageInterceptor implements NestInterceptor {
       tap({
         next: () => this.record(context, req, start),
         error: () => this.record(context, req, start),
-      }),
+      })
     );
   }
 

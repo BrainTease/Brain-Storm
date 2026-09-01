@@ -47,11 +47,7 @@ export const CSP_CONFIG = {
     'style-src': ["'self'", "'unsafe-inline'"],
     'img-src': ["'self'", 'data:', 'https:'],
     'font-src': ["'self'", 'data:'],
-    'connect-src': [
-      "'self'",
-      'https://*.stellar.org',
-      'https://*.sentry.io',
-    ],
+    'connect-src': ["'self'", 'https://*.stellar.org', 'https://*.sentry.io'],
     'frame-ancestors': ["'none'"],
     'base-uri': ["'self'"],
     'form-action': ["'self'"],

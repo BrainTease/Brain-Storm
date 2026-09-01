@@ -1,6 +1,6 @@
 /**
  * Event Taxonomy for Brain-Storm Analytics
- * 
+ *
  * Defines a privacy-respecting event schema and naming convention.
  * All events follow: category_action format
  */
@@ -22,36 +22,36 @@ export const CORE_EVENTS = {
   SEARCH: 'discovery_search',
   COURSE_VIEW: 'discovery_course_view',
   INSTRUCTOR_VIEW: 'discovery_instructor_view',
-  
-  // Profile funnel  
+
+  // Profile funnel
   PROFILE_VIEW: 'profile_view',
   PROFILE_UPDATE: 'profile_update',
-  
+
   // Enrollment funnel
   ENROLLMENT_START: 'enrollment_start',
   ENROLLMENT_COMPLETE: 'enrollment_complete',
   PROGRESS_UPDATE: 'course_progress_update',
-  
+
   // Tip/Transaction funnel
   TIP_INITIATED: 'tip_initiated',
   TIP_SENT: 'tip_sent',
   TIP_RECEIVED: 'tip_received',
-  
+
   // Review funnel
   REVIEW_SUBMITTED: 'review_submitted',
   REVIEW_VOTED: 'review_voted',
-  
+
   // Credential events
   CREDENTIAL_ISSUED: 'credential_issued',
   CREDENTIAL_VERIFIED: 'credential_verified',
-  
+
   // Auth events
   LOGIN: 'auth_login',
   LOGOUT: 'auth_logout',
   REGISTER: 'auth_register',
 } as const;
 
-export type EventType = typeof CORE_EVENTS[keyof typeof CORE_EVENTS];
+export type EventType = (typeof CORE_EVENTS)[keyof typeof CORE_EVENTS];
 
 /**
  * Base event schema - PII fields are explicitly excluded
@@ -62,11 +62,11 @@ export interface AnalyticsEvent {
   timestamp: string;
   userId?: string; // Anonymized, never PII
   sessionId: string;
-  
+
   // Context
   source: 'web' | 'mobile' | 'api';
   locale?: string;
-  
+
   // Event-specific payload (no PII)
   payload: Record<string, unknown>;
 }
@@ -78,7 +78,7 @@ export const PII_FIELDS = [
   'email',
   'name',
   'fullName',
-  'firstName', 
+  'firstName',
   'lastName',
   'phone',
   'address',

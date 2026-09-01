@@ -71,12 +71,12 @@ brain-storm/
 
 ### Prerequisites
 
-| Tool | Version | Install |
-|---|---|---|
-| Node.js | v18+ | [nodejs.org](https://nodejs.org) |
-| Rust | v1.75+ | `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \| sh` |
-| Docker | any | [docker.com](https://docs.docker.com/get-docker/) |
-| Stellar CLI | v21.5.0 | See below |
+| Tool        | Version | Install                                                           |
+| ----------- | ------- | ----------------------------------------------------------------- |
+| Node.js     | v18+    | [nodejs.org](https://nodejs.org)                                  |
+| Rust        | v1.75+  | `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \| sh` |
+| Docker      | any     | [docker.com](https://docs.docker.com/get-docker/)                 |
+| Stellar CLI | v21.5.0 | See below                                                         |
 
 ```bash
 # Install Stellar CLI
@@ -121,10 +121,10 @@ npm run dev:frontend  # http://localhost:3001
 
 The only values you must set manually after copying `.env.example`:
 
-| Variable | How to get it |
-|---|---|
-| `JWT_SECRET` | `openssl rand -hex 32` |
-| `STELLAR_SECRET_KEY` | Generate below |
+| Variable             | How to get it          |
+| -------------------- | ---------------------- |
+| `JWT_SECRET`         | `openssl rand -hex 32` |
+| `STELLAR_SECRET_KEY` | Generate below         |
 
 Everything else works with the defaults for local development.
 
@@ -141,16 +141,16 @@ stellar keys show dev-account   # starts with S...
 
 ### Troubleshooting
 
-| Error | Fix |
-|---|---|
-| `ECONNREFUSED 127.0.0.1:5432` | `docker compose up -d postgres` |
-| `ECONNREFUSED 127.0.0.1:6379` | `docker compose up -d redis` |
-| `Account not found` (Stellar) | Re-fund via Friendbot (testnet resets periodically) |
-| `can't find crate for wasm32` | `rustup target add wasm32-unknown-unknown` |
-| `Port 3000 already in use` | `lsof -ti:3000 \| xargs kill -9` |
-| `nest: command not found` | Run `npm install` from the repo root first |
-| `JWT_SECRET is not defined` | Ensure `.env` exists with `JWT_SECRET` set |
-| Contract deploy fails `insufficient funds` | Re-fund testnet account via Friendbot |
+| Error                                      | Fix                                                 |
+| ------------------------------------------ | --------------------------------------------------- |
+| `ECONNREFUSED 127.0.0.1:5432`              | `docker compose up -d postgres`                     |
+| `ECONNREFUSED 127.0.0.1:6379`              | `docker compose up -d redis`                        |
+| `Account not found` (Stellar)              | Re-fund via Friendbot (testnet resets periodically) |
+| `can't find crate for wasm32`              | `rustup target add wasm32-unknown-unknown`          |
+| `Port 3000 already in use`                 | `lsof -ti:3000 \| xargs kill -9`                    |
+| `nest: command not found`                  | Run `npm install` from the repo root first          |
+| `JWT_SECRET is not defined`                | Ensure `.env` exists with `JWT_SECRET` set          |
+| Contract deploy fails `insufficient funds` | Re-fund testnet account via Friendbot               |
 
 ---
 
@@ -241,6 +241,7 @@ git push origin feat/course-category
 ```
 
 Open a pull request on GitHub against `main`. Fill in the PR template completely:
+
 - Link the issue: `Closes #<number>`
 - Describe what changed and why
 - Check off the checklist items
@@ -262,6 +263,7 @@ The pattern is: **entity → service → controller → module**.
 Here's how `GET /v1/courses` is wired up end-to-end:
 
 **Entity** (`courses/course.entity.ts`) — TypeORM class decorated with `@Entity`:
+
 ```typescript
 @Entity('courses')
 export class Course {
@@ -272,6 +274,7 @@ export class Course {
 ```
 
 **Service** (`courses/courses.service.ts`) — business logic, database queries, cache:
+
 ```typescript
 @Injectable()
 export class CoursesService {
@@ -289,6 +292,7 @@ export class CoursesService {
 ```
 
 **Controller** (`courses/courses.controller.ts`) — HTTP routing, guards, Swagger decorators:
+
 ```typescript
 @Controller('v1/courses')
 export class CoursesController {
@@ -308,6 +312,7 @@ export class CoursesController {
 ```
 
 **Module** (`courses/courses.module.ts`) — wires everything together:
+
 ```typescript
 @Module({
   imports: [TypeOrmModule.forFeature([Course, ...])],
@@ -336,6 +341,7 @@ Student completes lesson (progressPct = 100)
 ```
 
 Key files:
+
 - `progress/progress.service.ts` — triggers the flow
 - `credentials/credentials.service.ts` — orchestrates issuance + KYC check
 - `stellar/stellar.service.ts` — all Soroban contract calls and Horizon interactions
@@ -475,14 +481,14 @@ If you spot something — a missing validation, a typo in an error message, a mi
 
 ### Useful references
 
-| Resource | Link |
-|---|---|
-| Commit conventions | [docs/contributing/COMMIT_CONVENTIONS.md](./contributing/COMMIT_CONVENTIONS.md) |
-| Release process | [docs/contributing/RELEASE_PROCESS.md](./contributing/RELEASE_PROCESS.md) |
-| Database schema | [docs/database-schema.md](./database-schema.md) |
+| Resource             | Link                                                                              |
+| -------------------- | --------------------------------------------------------------------------------- |
+| Commit conventions   | [docs/contributing/COMMIT_CONVENTIONS.md](./contributing/COMMIT_CONVENTIONS.md)   |
+| Release process      | [docs/contributing/RELEASE_PROCESS.md](./contributing/RELEASE_PROCESS.md)         |
+| Database schema      | [docs/database-schema.md](./database-schema.md)                                   |
 | Smart contract guide | [docs/smart-contract-interaction-guide.md](./smart-contract-interaction-guide.md) |
-| Deployment runbook | [docs/deployment-runbook.md](./deployment-runbook.md) |
-| Migration guide | [docs/migrations.md](./migrations.md) |
-| Swagger UI (local) | http://localhost:3000/api/docs |
-| Stellar docs | https://developers.stellar.org |
-| Soroban docs | https://soroban.stellar.org |
+| Deployment runbook   | [docs/deployment-runbook.md](./deployment-runbook.md)                             |
+| Migration guide      | [docs/migrations.md](./migrations.md)                                             |
+| Swagger UI (local)   | http://localhost:3000/api/docs                                                    |
+| Stellar docs         | https://developers.stellar.org                                                    |
+| Soroban docs         | https://soroban.stellar.org                                                       |

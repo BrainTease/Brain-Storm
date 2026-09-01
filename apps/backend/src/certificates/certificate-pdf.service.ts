@@ -1,13 +1,20 @@
+/**
+ * #807 — Generates a PDF certificate for the `certificates` domain.
+ *
+ * Delegates all raw PDF generation to `PdfBuilderService` (common/services)
+ * so this class contains only domain-specific line layout, not PDF mechanics.
+ */
 import { Injectable } from '@nestjs/common';
 import { Certificate } from './certificate.entity';
+import { PdfBuilderService } from '../common/services/pdf-builder.service';
 
 @Injectable()
 export class CertificatePdfService {
+  constructor(private readonly pdfBuilder: PdfBuilderService) {}
+
   generate(certificate: Certificate): Buffer {
     const recipient =
-      (certificate.user as any)?.username ||
-      (certificate.user as any)?.email ||
-      certificate.userId;
+      (certificate.user as any)?.username || (certificate.user as any)?.email || certificate.userId;
     const courseTitle = (certificate.course as any)?.title || certificate.courseId;
     const issuedAt = certificate.issuedAt.toISOString().slice(0, 10);
 
@@ -31,7 +38,7 @@ export class CertificatePdfService {
     const stream = lines
       .map(
         ({ size, x, y, text }) =>
-          `BT /F1 ${size} Tf 1 0 0 1 ${x} ${y} Tm (${this.escape(text)}) Tj ET`,
+          `BT /F1 ${size} Tf 1 0 0 1 ${x} ${y} Tm (${this.escape(text)}) Tj ET`
       )
       .join('\n');
 

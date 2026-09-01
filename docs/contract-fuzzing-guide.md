@@ -11,24 +11,29 @@ Fuzzing tests use property-based testing with `proptest` to discover edge cases 
 ### Token Contract (`contracts/token/src/fuzz_tests.rs`)
 
 #### Amount Validation
+
 - **fuzz_transfer_amount_bounds**: Validates transfer amounts stay within valid range (0 to MAX_SUPPLY)
 - **fuzz_burn_amount_validation**: Ensures burn amount doesn't exceed total supply
 - **fuzz_mint_amount_validation**: Prevents minting beyond max supply cap
 - **fuzz_transfer_sequence**: Tests multiple sequential transfers without overflow
 
 #### Vesting Schedule Validation
+
 - **fuzz_vesting_schedule_validity**: Validates schedule constraints (cliff >= start, end > cliff)
 - **fuzz_vesting_claim_amount**: Ensures claimed amount never exceeds total vested amount
 - **fuzz_vesting_schedule_count**: Validates reasonable schedule count limits
 
 #### Allowance Operations
+
 - **fuzz_allowance_operations**: Tests allowance operations with different owners/spenders
 - **fuzz_approval_edge_cases**: Tests zero and max approvals
 
 #### Ledger Arithmetic
+
 - **fuzz_ledger_arithmetic**: Validates ledger number calculations and ordering
 
 #### Edge Cases
+
 - **test_zero_amount_transfer**: Validates zero amount handling
 - **test_max_amount_transfer**: Tests maximum amount handling
 - **test_overflow_prevention**: Ensures overflow is caught
@@ -75,13 +80,16 @@ Fuzzing tests run automatically in the GitHub Actions CI pipeline:
 ## Interpreting Results
 
 ### Successful Run
+
 ```
 test fuzz_transfer_amount_bounds ... ok
 test fuzz_vesting_schedule_validity ... ok
 ```
 
 ### Failed Run
+
 If a test fails, proptest will:
+
 1. Print the failing input
 2. Save the regression case to `proptest-regressions.txt`
 3. Re-run the same case on subsequent runs
@@ -101,6 +109,7 @@ rm proptest-regressions.txt
 ## Adding New Fuzzing Tests
 
 1. Define a strategy for generating test inputs:
+
 ```rust
 fn arb_custom_input() -> impl Strategy<Value = CustomType> {
     // Define how to generate random CustomType values
@@ -108,6 +117,7 @@ fn arb_custom_input() -> impl Strategy<Value = CustomType> {
 ```
 
 2. Create a proptest test:
+
 ```rust
 proptest! {
     #[test]
@@ -119,6 +129,7 @@ proptest! {
 ```
 
 3. Run and verify:
+
 ```bash
 cargo test --lib fuzz_my_function
 ```
@@ -126,11 +137,13 @@ cargo test --lib fuzz_my_function
 ## Known Issues and Findings
 
 ### Issue #1: Vesting Schedule Validation
+
 - **Status**: Fixed
 - **Description**: Vesting schedules with cliff > end were not rejected
 - **Fix**: Added validation to ensure cliff <= end
 
 ### Issue #2: Overflow in Transfer Sequences
+
 - **Status**: Fixed
 - **Description**: Multiple transfers could overflow without proper checks
 - **Fix**: Added checked_add with overflow prevention

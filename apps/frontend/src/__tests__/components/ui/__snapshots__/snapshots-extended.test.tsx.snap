@@ -1,0 +1,1840 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`BadgeDisplay — snapshots > renders counter variant 1`] = `
+<span
+  class="inline-block px-3 py-1 rounded-full text-sm font-medium bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-100 "
+>
+  <span
+    class="font-bold"
+  >
+    42
+  </span>
+  <span
+    class="ml-1"
+  >
+    points
+  </span>
+</span>
+`;
+
+exports[`BadgeDisplay — snapshots > renders counter variant with max 1`] = `
+<span
+  class="inline-block px-3 py-1 rounded-full text-sm font-medium bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-100 "
+>
+  <span
+    class="font-bold"
+  >
+    100+
+  </span>
+  <span
+    class="ml-1"
+  >
+    XP
+  </span>
+</span>
+`;
+
+exports[`BadgeDisplay — snapshots > renders grid variant 1`] = `
+<ul
+  aria-label="Badges"
+  class="grid grid-cols-6 sm:grid-cols-4 md:grid-cols-6 gap-4 "
+  role="list"
+>
+  <li
+    class=""
+    title="Complete first lesson"
+  >
+    <div
+      class="flex flex-col items-center gap-1 p-2 rounded-lg transition-colors cursor-default"
+    >
+      <span
+        aria-hidden="true"
+        class="text-3xl motion-safe:animate-[pop-in_0.3s_ease-out]"
+      >
+        🎯
+      </span>
+      <p
+        class="text-xs text-center text-gray-700 dark:text-gray-300 leading-tight line-clamp-2"
+      >
+        First Steps
+      </p>
+      <time
+        class="text-[10px] text-gray-400"
+        datetime="2024-01-15"
+      >
+        Jan 15, 2024
+      </time>
+    </div>
+  </li>
+  <li
+    class=""
+    title="Finish 5 lessons in a day"
+  >
+    <div
+      class="flex flex-col items-center gap-1 p-2 rounded-lg transition-colors opacity-40 grayscale cursor-not-allowed"
+    >
+      <span
+        aria-hidden="true"
+        class="text-3xl "
+      >
+        ⚡
+      </span>
+      <p
+        class="text-xs text-center text-gray-700 dark:text-gray-300 leading-tight line-clamp-2"
+      >
+        Fast Learner
+      </p>
+    </div>
+  </li>
+  <li
+    class=""
+    title="Help 10 students"
+  >
+    <div
+      class="flex flex-col items-center gap-1 p-2 rounded-lg transition-colors cursor-default"
+    >
+      <span
+        class="inline-block px-3 py-1 rounded-full text-sm font-medium bg-green-200 text-green-800 dark:bg-green-900 dark:text-green-100 "
+      >
+        Community Star
+      </span>
+      <p
+        class="text-xs text-center text-gray-700 dark:text-gray-300 leading-tight line-clamp-2"
+      >
+        Community Star
+      </p>
+      <time
+        class="text-[10px] text-gray-400"
+        datetime="2024-02-01"
+      >
+        Feb 1, 2024
+      </time>
+    </div>
+  </li>
+</ul>
+`;
+
+exports[`BadgeDisplay — snapshots > renders grid variant empty 1`] = `
+<p
+  class="text-sm text-gray-500 py-4 text-center "
+>
+  No badges yet
+</p>
+`;
+
+exports[`BadgeDisplay — snapshots > renders group variant 1`] = `
+<div
+  class=""
+>
+  <p
+    class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2"
+  >
+    Skills
+  </p>
+  <div
+    aria-label="Items"
+    class="flex flex-wrap gap-2 "
+    role="list"
+  >
+    <span
+      class="inline-block px-3 py-1 rounded-full text-sm font-medium bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-100 "
+    >
+      React
+    </span>
+    <span
+      class="inline-block px-3 py-1 rounded-full text-sm font-medium bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-100 "
+    >
+      TypeScript
+    </span>
+  </div>
+</div>
+`;
+
+exports[`BadgeDisplay — snapshots > renders inline variant 1`] = `
+<div
+  aria-label="Items"
+  class="flex flex-wrap gap-2 "
+  role="list"
+>
+  <span
+    class="inline-block px-3 py-1 rounded-full text-sm font-medium bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-100 "
+  >
+    Stellar
+  </span>
+  <span
+    class="inline-block px-3 py-1 rounded-full text-sm font-medium bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-100 "
+  >
+    Rust
+  </span>
+  <span
+    class="inline-block px-3 py-1 rounded-full text-sm font-medium bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-100 "
+  >
+    Web3
+  </span>
+</div>
+`;
+
+exports[`BadgeDisplay — snapshots > renders pill variant 1`] = `
+<div
+  class="flex flex-wrap gap-2 "
+>
+  <div
+    class="flex items-center gap-1.5 rounded-full bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 px-3 py-1"
+    title="Complete first lesson"
+  >
+    <span
+      aria-hidden="true"
+    >
+      🎯
+    </span>
+    <span
+      class="text-xs font-medium text-yellow-800 dark:text-yellow-300"
+    >
+      First Steps
+    </span>
+    <span
+      class="inline-block px-3 py-1 rounded-full text-sm font-medium bg-yellow-200 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100 text-xs py-0 px-1.5"
+    >
+      Jan 2024
+    </span>
+  </div>
+  <div
+    class="flex items-center gap-1.5 rounded-full bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 px-3 py-1"
+    title="Finish 5 lessons in a day"
+  >
+    <span
+      aria-hidden="true"
+    >
+      ⚡
+    </span>
+    <span
+      class="text-xs font-medium text-yellow-800 dark:text-yellow-300"
+    >
+      Fast Learner
+    </span>
+  </div>
+  <div
+    class="flex items-center gap-1.5 rounded-full bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 px-3 py-1"
+    title="Help 10 students"
+  >
+    <span
+      class="text-xs font-medium text-yellow-800 dark:text-yellow-300"
+    >
+      Community Star
+    </span>
+    <span
+      class="inline-block px-3 py-1 rounded-full text-sm font-medium bg-yellow-200 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100 text-xs py-0 px-1.5"
+    >
+      Feb 2024
+    </span>
+  </div>
+</div>
+`;
+
+exports[`BadgeDisplay — snapshots > renders status variant 1`] = `
+<span
+  class="inline-block px-3 py-1 rounded-full text-sm font-medium bg-green-200 text-green-800 dark:bg-green-900 dark:text-green-100 "
+>
+  Active
+</span>
+`;
+
+exports[`BadgeDisplay — snapshots > renders status variant with custom label 1`] = `
+<span
+  class="inline-block px-3 py-1 rounded-full text-sm font-medium bg-yellow-200 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100 "
+>
+  Awaiting review
+</span>
+`;
+
+exports[`Breadcrumb — snapshots > renders custom items 1`] = `
+<nav
+  aria-label="Breadcrumb"
+  class="flex items-center space-x-2 text-sm "
+  itemscope=""
+  itemtype="https://schema.org/BreadcrumbList"
+>
+  <ol
+    class="flex items-center space-x-2"
+  >
+    <li
+      class="flex items-center"
+      itemprop="itemListElement"
+      itemscope=""
+      itemtype="https://schema.org/ListItem"
+    >
+      <a
+        class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:underline transition-colors"
+        href="/"
+        itemprop="item"
+      >
+        <span
+          itemprop="name"
+        >
+          Home
+        </span>
+      </a>
+      <meta
+        content="1"
+        itemprop="position"
+      />
+    </li>
+    <li
+      class="flex items-center"
+      itemprop="itemListElement"
+      itemscope=""
+      itemtype="https://schema.org/ListItem"
+    >
+      <svg
+        aria-hidden="true"
+        class="w-4 h-4 mx-2 text-gray-400"
+        fill="currentColor"
+        viewBox="0 0 20 20"
+      >
+        <path
+          clip-rule="evenodd"
+          d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+          fill-rule="evenodd"
+        />
+      </svg>
+      <a
+        class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:underline transition-colors"
+        href="/courses"
+        itemprop="item"
+      >
+        <span
+          itemprop="name"
+        >
+          Courses
+        </span>
+      </a>
+      <meta
+        content="2"
+        itemprop="position"
+      />
+    </li>
+    <li
+      class="flex items-center"
+      itemprop="itemListElement"
+      itemscope=""
+      itemtype="https://schema.org/ListItem"
+    >
+      <svg
+        aria-hidden="true"
+        class="w-4 h-4 mx-2 text-gray-400"
+        fill="currentColor"
+        viewBox="0 0 20 20"
+      >
+        <path
+          clip-rule="evenodd"
+          d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+          fill-rule="evenodd"
+        />
+      </svg>
+      <span
+        aria-current="page"
+        class="text-gray-500 dark:text-gray-400 font-medium"
+        itemprop="name"
+      >
+        Stellar 101
+      </span>
+      <meta
+        content="3"
+        itemprop="position"
+      />
+    </li>
+  </ol>
+</nav>
+`;
+
+exports[`Breadcrumb — snapshots > renders nothing when items is empty 1`] = `null`;
+
+exports[`Breadcrumb — snapshots > renders with two items 1`] = `
+<nav
+  aria-label="Breadcrumb"
+  class="flex items-center space-x-2 text-sm "
+  itemscope=""
+  itemtype="https://schema.org/BreadcrumbList"
+>
+  <ol
+    class="flex items-center space-x-2"
+  >
+    <li
+      class="flex items-center"
+      itemprop="itemListElement"
+      itemscope=""
+      itemtype="https://schema.org/ListItem"
+    >
+      <a
+        class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:underline transition-colors"
+        href="/"
+        itemprop="item"
+      >
+        <span
+          itemprop="name"
+        >
+          Home
+        </span>
+      </a>
+      <meta
+        content="1"
+        itemprop="position"
+      />
+    </li>
+    <li
+      class="flex items-center"
+      itemprop="itemListElement"
+      itemscope=""
+      itemtype="https://schema.org/ListItem"
+    >
+      <svg
+        aria-hidden="true"
+        class="w-4 h-4 mx-2 text-gray-400"
+        fill="currentColor"
+        viewBox="0 0 20 20"
+      >
+        <path
+          clip-rule="evenodd"
+          d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+          fill-rule="evenodd"
+        />
+      </svg>
+      <span
+        aria-current="page"
+        class="text-gray-500 dark:text-gray-400 font-medium"
+        itemprop="name"
+      >
+        Profile
+      </span>
+      <meta
+        content="2"
+        itemprop="position"
+      />
+    </li>
+  </ol>
+</nav>
+`;
+
+exports[`Checkbox — snapshots > renders as disabled 1`] = `
+<div
+  class="flex flex-col gap-1"
+>
+  <div
+    class="flex items-center gap-2"
+  >
+    <input
+      aria-invalid="false"
+      class="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed "
+      disabled=""
+      id="locked"
+      type="checkbox"
+    />
+    <label
+      class="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer"
+      for="locked"
+    >
+      Locked
+    </label>
+  </div>
+</div>
+`;
+
+exports[`Checkbox — snapshots > renders checked state 1`] = `
+<div
+  class="flex flex-col gap-1"
+>
+  <div
+    class="flex items-center gap-2"
+  >
+    <input
+      aria-invalid="false"
+      checked=""
+      class="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed "
+      id="remember-me"
+      type="checkbox"
+    />
+    <label
+      class="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer"
+      for="remember-me"
+    >
+      Remember me
+    </label>
+  </div>
+</div>
+`;
+
+exports[`Checkbox — snapshots > renders inline variant 1`] = `
+<div
+  class="flex flex-col gap-1"
+>
+  <div
+    class="flex items-center gap-2"
+  >
+    <input
+      aria-invalid="false"
+      class="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed "
+      id="accept-terms"
+      type="checkbox"
+    />
+    <label
+      class="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer"
+      for="accept-terms"
+    >
+      Accept terms
+    </label>
+  </div>
+</div>
+`;
+
+exports[`Checkbox — snapshots > renders row variant 1`] = `
+<div
+  class="flex flex-col gap-1"
+>
+  <label
+    class="flex items-center justify-between px-4 py-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+    for="enable-notifications"
+  >
+    <span
+      class="text-sm font-medium text-gray-900 dark:text-gray-100"
+    >
+      Enable notifications
+    </span>
+    <input
+      aria-invalid="false"
+      class="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed "
+      id="enable-notifications"
+      type="checkbox"
+    />
+  </label>
+</div>
+`;
+
+exports[`Checkbox — snapshots > renders with error 1`] = `
+<div
+  class="flex flex-col gap-1"
+>
+  <div
+    class="flex items-center gap-2"
+  >
+    <input
+      aria-describedby="i-agree-error"
+      aria-invalid="true"
+      class="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed "
+      id="i-agree"
+      type="checkbox"
+    />
+    <label
+      class="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer"
+      for="i-agree"
+    >
+      I agree
+    </label>
+  </div>
+  <p
+    class="text-xs text-red-600"
+    id="i-agree-error"
+    role="alert"
+  >
+    You must agree
+  </p>
+</div>
+`;
+
+exports[`DataGrid — snapshots > renders empty state 1`] = `
+<div
+  class="w-full overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
+>
+  <table
+    class="min-w-full border-collapse text-sm"
+    role="grid"
+  >
+    <thead
+      class="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700"
+    >
+      <tr>
+        <th
+          class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400 select-none  "
+          role="columnheader"
+          scope="col"
+        >
+          <span
+            class="inline-flex items-center gap-1"
+          >
+            ID
+          </span>
+        </th>
+        <th
+          aria-sort="none"
+          class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400 select-none cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors "
+          role="columnheader"
+          scope="col"
+        >
+          <span
+            class="inline-flex items-center gap-1"
+          >
+            Course Title
+            <span
+              aria-hidden="true"
+              class="text-xs text-gray-400"
+            >
+              ⇅
+            </span>
+          </span>
+        </th>
+        <th
+          aria-sort="none"
+          class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400 select-none cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors "
+          role="columnheader"
+          scope="col"
+        >
+          <span
+            class="inline-flex items-center gap-1"
+          >
+            Enrolled
+            <span
+              aria-hidden="true"
+              class="text-xs text-gray-400"
+            >
+              ⇅
+            </span>
+          </span>
+        </th>
+      </tr>
+    </thead>
+    <tbody
+      class="divide-y divide-gray-100 dark:divide-gray-800"
+    >
+      <tr>
+        <td
+          class="px-4 py-10 text-center text-gray-500 dark:text-gray-400"
+          colspan="3"
+        >
+          No courses found
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+`;
+
+exports[`DataGrid — snapshots > renders loading state 1`] = `
+<div
+  class="w-full overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
+>
+  <table
+    class="min-w-full border-collapse text-sm"
+    role="grid"
+  >
+    <thead
+      class="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700"
+    >
+      <tr>
+        <th
+          class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400 select-none  "
+          role="columnheader"
+          scope="col"
+        >
+          <span
+            class="inline-flex items-center gap-1"
+          >
+            ID
+          </span>
+        </th>
+        <th
+          aria-sort="none"
+          class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400 select-none cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors "
+          role="columnheader"
+          scope="col"
+        >
+          <span
+            class="inline-flex items-center gap-1"
+          >
+            Course Title
+            <span
+              aria-hidden="true"
+              class="text-xs text-gray-400"
+            >
+              ⇅
+            </span>
+          </span>
+        </th>
+        <th
+          aria-sort="none"
+          class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400 select-none cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors "
+          role="columnheader"
+          scope="col"
+        >
+          <span
+            class="inline-flex items-center gap-1"
+          >
+            Enrolled
+            <span
+              aria-hidden="true"
+              class="text-xs text-gray-400"
+            >
+              ⇅
+            </span>
+          </span>
+        </th>
+      </tr>
+    </thead>
+    <tbody
+      class="divide-y divide-gray-100 dark:divide-gray-800"
+    >
+      <tr
+        aria-hidden="true"
+      >
+        <td
+          class="px-4 py-3"
+        >
+          <div
+            class="h-4 rounded bg-gray-200 dark:bg-gray-700 animate-pulse w-full"
+          />
+        </td>
+        <td
+          class="px-4 py-3"
+        >
+          <div
+            class="h-4 rounded bg-gray-200 dark:bg-gray-700 animate-pulse w-full"
+          />
+        </td>
+        <td
+          class="px-4 py-3"
+        >
+          <div
+            class="h-4 rounded bg-gray-200 dark:bg-gray-700 animate-pulse w-full"
+          />
+        </td>
+      </tr>
+      <tr
+        aria-hidden="true"
+      >
+        <td
+          class="px-4 py-3"
+        >
+          <div
+            class="h-4 rounded bg-gray-200 dark:bg-gray-700 animate-pulse w-full"
+          />
+        </td>
+        <td
+          class="px-4 py-3"
+        >
+          <div
+            class="h-4 rounded bg-gray-200 dark:bg-gray-700 animate-pulse w-full"
+          />
+        </td>
+        <td
+          class="px-4 py-3"
+        >
+          <div
+            class="h-4 rounded bg-gray-200 dark:bg-gray-700 animate-pulse w-full"
+          />
+        </td>
+      </tr>
+      <tr
+        aria-hidden="true"
+      >
+        <td
+          class="px-4 py-3"
+        >
+          <div
+            class="h-4 rounded bg-gray-200 dark:bg-gray-700 animate-pulse w-full"
+          />
+        </td>
+        <td
+          class="px-4 py-3"
+        >
+          <div
+            class="h-4 rounded bg-gray-200 dark:bg-gray-700 animate-pulse w-full"
+          />
+        </td>
+        <td
+          class="px-4 py-3"
+        >
+          <div
+            class="h-4 rounded bg-gray-200 dark:bg-gray-700 animate-pulse w-full"
+          />
+        </td>
+      </tr>
+      <tr
+        aria-hidden="true"
+      >
+        <td
+          class="px-4 py-3"
+        >
+          <div
+            class="h-4 rounded bg-gray-200 dark:bg-gray-700 animate-pulse w-full"
+          />
+        </td>
+        <td
+          class="px-4 py-3"
+        >
+          <div
+            class="h-4 rounded bg-gray-200 dark:bg-gray-700 animate-pulse w-full"
+          />
+        </td>
+        <td
+          class="px-4 py-3"
+        >
+          <div
+            class="h-4 rounded bg-gray-200 dark:bg-gray-700 animate-pulse w-full"
+          />
+        </td>
+      </tr>
+      <tr
+        aria-hidden="true"
+      >
+        <td
+          class="px-4 py-3"
+        >
+          <div
+            class="h-4 rounded bg-gray-200 dark:bg-gray-700 animate-pulse w-full"
+          />
+        </td>
+        <td
+          class="px-4 py-3"
+        >
+          <div
+            class="h-4 rounded bg-gray-200 dark:bg-gray-700 animate-pulse w-full"
+          />
+        </td>
+        <td
+          class="px-4 py-3"
+        >
+          <div
+            class="h-4 rounded bg-gray-200 dark:bg-gray-700 animate-pulse w-full"
+          />
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+`;
+
+exports[`DataGrid — snapshots > renders with data 1`] = `
+<div
+  class="w-full overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
+>
+  <table
+    aria-label="Courses"
+    class="min-w-full border-collapse text-sm"
+    role="grid"
+  >
+    <thead
+      class="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700"
+    >
+      <tr>
+        <th
+          class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400 select-none  "
+          role="columnheader"
+          scope="col"
+        >
+          <span
+            class="inline-flex items-center gap-1"
+          >
+            ID
+          </span>
+        </th>
+        <th
+          aria-sort="none"
+          class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400 select-none cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors "
+          role="columnheader"
+          scope="col"
+        >
+          <span
+            class="inline-flex items-center gap-1"
+          >
+            Course Title
+            <span
+              aria-hidden="true"
+              class="text-xs text-gray-400"
+            >
+              ⇅
+            </span>
+          </span>
+        </th>
+        <th
+          aria-sort="none"
+          class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400 select-none cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors "
+          role="columnheader"
+          scope="col"
+        >
+          <span
+            class="inline-flex items-center gap-1"
+          >
+            Enrolled
+            <span
+              aria-hidden="true"
+              class="text-xs text-gray-400"
+            >
+              ⇅
+            </span>
+          </span>
+        </th>
+      </tr>
+    </thead>
+    <tbody
+      class="divide-y divide-gray-100 dark:divide-gray-800"
+    >
+      <tr
+        class="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+      >
+        <td
+          class="px-4 py-3 text-gray-700 dark:text-gray-300 whitespace-nowrap"
+        >
+          1
+        </td>
+        <td
+          class="px-4 py-3 text-gray-700 dark:text-gray-300 whitespace-nowrap"
+        >
+          Intro to Stellar
+        </td>
+        <td
+          class="px-4 py-3 text-gray-700 dark:text-gray-300 whitespace-nowrap"
+        >
+          120
+        </td>
+      </tr>
+      <tr
+        class="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+      >
+        <td
+          class="px-4 py-3 text-gray-700 dark:text-gray-300 whitespace-nowrap"
+        >
+          2
+        </td>
+        <td
+          class="px-4 py-3 text-gray-700 dark:text-gray-300 whitespace-nowrap"
+        >
+          Smart Contracts 101
+        </td>
+        <td
+          class="px-4 py-3 text-gray-700 dark:text-gray-300 whitespace-nowrap"
+        >
+          85
+        </td>
+      </tr>
+      <tr
+        class="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+      >
+        <td
+          class="px-4 py-3 text-gray-700 dark:text-gray-300 whitespace-nowrap"
+        >
+          3
+        </td>
+        <td
+          class="px-4 py-3 text-gray-700 dark:text-gray-300 whitespace-nowrap"
+        >
+          DeFi Fundamentals
+        </td>
+        <td
+          class="px-4 py-3 text-gray-700 dark:text-gray-300 whitespace-nowrap"
+        >
+          200
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <div
+    class="flex items-center justify-between px-4 py-3 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
+  >
+    <p
+      class="text-xs text-gray-500 dark:text-gray-400"
+    >
+      Showing 1–3 of 3
+    </p>
+    <div
+      class="flex items-center gap-2"
+    >
+      <button
+        aria-label="Previous page"
+        class="px-3 py-1 rounded border border-gray-200 dark:border-gray-700 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        disabled=""
+      >
+        Previous
+      </button>
+      <span
+        class="text-xs text-gray-500 dark:text-gray-400"
+      >
+        Page 
+        1
+         of 
+        1
+      </span>
+      <button
+        aria-label="Next page"
+        class="px-3 py-1 rounded border border-gray-200 dark:border-gray-700 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        disabled=""
+      >
+        Next
+      </button>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`ErrorBoundary — snapshots > renders children when no error 1`] = `
+<div>
+  Safe content
+</div>
+`;
+
+exports[`ErrorBoundary — snapshots > renders custom fallback on error 1`] = `
+<div>
+  Custom fallback
+</div>
+`;
+
+exports[`ErrorBoundary — snapshots > renders default fallback on error 1`] = `
+<div
+  aria-live="assertive"
+  class="flex flex-col items-center justify-center p-8 text-center min-h-[300px]"
+  role="alert"
+>
+  <div
+    aria-hidden="true"
+    class="text-5xl mb-4"
+  >
+    ⚠️
+  </div>
+  <h2
+    class="text-xl font-bold mb-2 text-gray-900 dark:text-white"
+  >
+    Something went wrong
+  </h2>
+  <p
+    class="text-gray-500 dark:text-gray-400 mb-4 max-w-md"
+  >
+    An unexpected error occurred. Please try again or report the issue.
+  </p>
+  <p
+    class="text-xs text-gray-400 bg-gray-100 dark:bg-gray-800 rounded px-3 py-2 mb-4 max-w-md break-all font-mono"
+  >
+    Test error
+  </p>
+  <div
+    class="flex gap-3 flex-wrap justify-center"
+  >
+    <button
+      class="px-4 py-2 rounded-lg font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed rtl:px-4 bg-blue-700 text-white hover:bg-blue-800 dark:bg-blue-600 dark:hover:bg-blue-700 "
+      type="button"
+    >
+      Try Again
+    </button>
+    <button
+      class="px-4 py-2 rounded-lg font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed rtl:px-4 border-2 border-blue-700 text-blue-700 hover:bg-blue-50 dark:border-blue-400 dark:text-blue-400 dark:hover:bg-blue-950 "
+      type="button"
+    >
+      Report Issue
+    </button>
+  </div>
+</div>
+`;
+
+exports[`Input — snapshots > renders as disabled 1`] = `
+<div
+  class="flex flex-col gap-1"
+>
+  <label
+    class="text-sm font-medium text-gray-700 dark:text-gray-300"
+    for="read-only"
+  >
+    Read only
+  </label>
+  <input
+    aria-invalid="false"
+    class="w-full border rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
+          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500
+          disabled:opacity-50 disabled:cursor-not-allowed
+          px-3 py-2
+          border-gray-300 dark:border-gray-600
+          "
+    disabled=""
+    id="read-only"
+    type="text"
+  />
+</div>
+`;
+
+exports[`Input — snapshots > renders with a label 1`] = `
+<div
+  class="flex flex-col gap-1"
+>
+  <label
+    class="text-sm font-medium text-gray-700 dark:text-gray-300"
+    for="email"
+  >
+    Email
+  </label>
+  <input
+    aria-invalid="false"
+    class="w-full border rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
+          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500
+          disabled:opacity-50 disabled:cursor-not-allowed
+          px-3 py-2
+          border-gray-300 dark:border-gray-600
+          "
+    id="email"
+    type="text"
+  />
+</div>
+`;
+
+exports[`Input — snapshots > renders with custom type 1`] = `
+<div
+  class="flex flex-col gap-1"
+>
+  <label
+    class="text-sm font-medium text-gray-700 dark:text-gray-300"
+    for="password"
+  >
+    Password
+  </label>
+  <input
+    aria-invalid="false"
+    class="w-full border rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
+          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500
+          disabled:opacity-50 disabled:cursor-not-allowed
+          px-3 py-2
+          border-gray-300 dark:border-gray-600
+          "
+    id="password"
+    type="password"
+  />
+</div>
+`;
+
+exports[`Input — snapshots > renders with error state 1`] = `
+<div
+  class="flex flex-col gap-1"
+>
+  <label
+    class="text-sm font-medium text-gray-700 dark:text-gray-300"
+    for="email"
+  >
+    Email
+  </label>
+  <input
+    aria-describedby="email-error"
+    aria-invalid="true"
+    class="w-full border rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
+          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500
+          disabled:opacity-50 disabled:cursor-not-allowed
+          px-3 py-2
+          border-red-500
+          "
+    id="email"
+    type="text"
+  />
+  <p
+    class="text-xs text-red-600"
+    id="email-error"
+    role="alert"
+  >
+    Invalid email
+  </p>
+</div>
+`;
+
+exports[`Input — snapshots > renders with full width 1`] = `
+<div
+  class="flex flex-col gap-1"
+>
+  <label
+    class="text-sm font-medium text-gray-700 dark:text-gray-300"
+    for="search"
+  >
+    Search
+  </label>
+  <input
+    aria-invalid="false"
+    class="w-full border rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
+          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500
+          disabled:opacity-50 disabled:cursor-not-allowed
+          px-3 py-2
+          border-gray-300 dark:border-gray-600
+          "
+    id="search"
+    type="text"
+  />
+</div>
+`;
+
+exports[`Input — snapshots > renders with helper text 1`] = `
+<div
+  class="flex flex-col gap-1"
+>
+  <label
+    class="text-sm font-medium text-gray-700 dark:text-gray-300"
+    for="password"
+  >
+    Password
+  </label>
+  <input
+    aria-describedby="password-helper"
+    aria-invalid="false"
+    class="w-full border rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
+          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500
+          disabled:opacity-50 disabled:cursor-not-allowed
+          px-3 py-2
+          border-gray-300 dark:border-gray-600
+          "
+    id="password"
+    type="text"
+  />
+  <p
+    class="text-xs text-gray-500 dark:text-gray-400"
+    id="password-helper"
+  >
+    Must be 8+ characters
+  </p>
+</div>
+`;
+
+exports[`Input — snapshots > renders with placeholder 1`] = `
+<div
+  class="flex flex-col gap-1"
+>
+  <label
+    class="text-sm font-medium text-gray-700 dark:text-gray-300"
+    for="name"
+  >
+    Name
+  </label>
+  <input
+    aria-invalid="false"
+    class="w-full border rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
+          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500
+          disabled:opacity-50 disabled:cursor-not-allowed
+          px-3 py-2
+          border-gray-300 dark:border-gray-600
+          "
+    id="name"
+    placeholder="Enter your name"
+    type="text"
+  />
+</div>
+`;
+
+exports[`RadioGroup — snapshots > renders horizontal orientation 1`] = `
+<fieldset
+  aria-invalid="false"
+  class="flex flex-col gap-2 "
+>
+  <legend
+    class="text-sm font-medium text-gray-700 dark:text-gray-300"
+  >
+    Select plan
+  </legend>
+  <div
+    class="flex flex-wrap gap-4"
+  >
+    <label
+      class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer"
+      for="select-plan-free"
+    >
+      <input
+        class="accent-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+        id="select-plan-free"
+        name="plan"
+        type="radio"
+        value="free"
+      />
+      Free tier
+    </label>
+    <label
+      class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer"
+      for="select-plan-pro"
+    >
+      <input
+        class="accent-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+        id="select-plan-pro"
+        name="plan"
+        type="radio"
+        value="pro"
+      />
+      Pro tier
+    </label>
+    <label
+      class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer"
+      for="select-plan-enterprise"
+    >
+      <input
+        class="accent-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+        id="select-plan-enterprise"
+        name="plan"
+        type="radio"
+        value="enterprise"
+      />
+      Enterprise
+    </label>
+  </div>
+</fieldset>
+`;
+
+exports[`RadioGroup — snapshots > renders vertical orientation 1`] = `
+<fieldset
+  aria-invalid="false"
+  class="flex flex-col gap-2 "
+>
+  <legend
+    class="text-sm font-medium text-gray-700 dark:text-gray-300"
+  >
+    Select plan
+  </legend>
+  <div
+    class="flex flex-col gap-2"
+  >
+    <label
+      class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer"
+      for="select-plan-free"
+    >
+      <input
+        class="accent-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+        id="select-plan-free"
+        name="plan"
+        type="radio"
+        value="free"
+      />
+      Free tier
+    </label>
+    <label
+      class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer"
+      for="select-plan-pro"
+    >
+      <input
+        checked=""
+        class="accent-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+        id="select-plan-pro"
+        name="plan"
+        type="radio"
+        value="pro"
+      />
+      Pro tier
+    </label>
+    <label
+      class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer"
+      for="select-plan-enterprise"
+    >
+      <input
+        class="accent-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+        id="select-plan-enterprise"
+        name="plan"
+        type="radio"
+        value="enterprise"
+      />
+      Enterprise
+    </label>
+  </div>
+</fieldset>
+`;
+
+exports[`RadioGroup — snapshots > renders with disabled option 1`] = `
+<fieldset
+  aria-invalid="false"
+  class="flex flex-col gap-2 "
+>
+  <legend
+    class="text-sm font-medium text-gray-700 dark:text-gray-300"
+  >
+    Choose
+  </legend>
+  <div
+    class="flex flex-col gap-2"
+  >
+    <label
+      class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer"
+      for="choose-a"
+    >
+      <input
+        class="accent-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+        id="choose-a"
+        name="test"
+        type="radio"
+        value="a"
+      />
+      Option A
+    </label>
+    <label
+      class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer"
+      for="choose-b"
+    >
+      <input
+        class="accent-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+        disabled=""
+        id="choose-b"
+        name="test"
+        type="radio"
+        value="b"
+      />
+      Option B
+    </label>
+  </div>
+</fieldset>
+`;
+
+exports[`RadioGroup — snapshots > renders with error 1`] = `
+<fieldset
+  aria-describedby="plan-error"
+  aria-invalid="true"
+  class="flex flex-col gap-2 "
+>
+  <legend
+    class="text-sm font-medium text-gray-700 dark:text-gray-300"
+  >
+    Plan
+  </legend>
+  <div
+    class="flex flex-col gap-2"
+  >
+    <label
+      class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer"
+      for="plan-free"
+    >
+      <input
+        class="accent-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+        id="plan-free"
+        name="plan"
+        type="radio"
+        value="free"
+      />
+      Free tier
+    </label>
+    <label
+      class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer"
+      for="plan-pro"
+    >
+      <input
+        class="accent-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+        id="plan-pro"
+        name="plan"
+        type="radio"
+        value="pro"
+      />
+      Pro tier
+    </label>
+    <label
+      class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer"
+      for="plan-enterprise"
+    >
+      <input
+        class="accent-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+        id="plan-enterprise"
+        name="plan"
+        type="radio"
+        value="enterprise"
+      />
+      Enterprise
+    </label>
+  </div>
+  <p
+    class="text-xs text-red-600"
+    id="plan-error"
+    role="alert"
+  >
+    Choose a plan
+  </p>
+</fieldset>
+`;
+
+exports[`RadioGroup — snapshots > renders with hidden label 1`] = `
+<fieldset
+  aria-invalid="false"
+  class="flex flex-col gap-2 "
+>
+  <legend
+    class="sr-only"
+  >
+    Plan
+  </legend>
+  <div
+    class="flex flex-col gap-2"
+  >
+    <label
+      class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer"
+      for="plan-free"
+    >
+      <input
+        class="accent-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+        id="plan-free"
+        name="plan"
+        type="radio"
+        value="free"
+      />
+      Free tier
+    </label>
+    <label
+      class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer"
+      for="plan-pro"
+    >
+      <input
+        class="accent-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+        id="plan-pro"
+        name="plan"
+        type="radio"
+        value="pro"
+      />
+      Pro tier
+    </label>
+    <label
+      class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer"
+      for="plan-enterprise"
+    >
+      <input
+        class="accent-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+        id="plan-enterprise"
+        name="plan"
+        type="radio"
+        value="enterprise"
+      />
+      Enterprise
+    </label>
+  </div>
+</fieldset>
+`;
+
+exports[`Select — snapshots > renders as disabled 1`] = `
+<div
+  class="flex flex-col gap-1"
+>
+  <label
+    class="text-sm font-medium text-gray-700 dark:text-gray-300"
+    for="level"
+  >
+    Level
+  </label>
+  <select
+    aria-invalid="false"
+    class="w-full border rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
+          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500
+          disabled:opacity-50 disabled:cursor-not-allowed
+          px-3 py-2
+          border-gray-300 dark:border-gray-600
+          "
+    disabled=""
+    id="level"
+  >
+    <option
+      value="beginner"
+    >
+      Beginner
+    </option>
+    <option
+      value="intermediate"
+    >
+      Intermediate
+    </option>
+    <option
+      value="advanced"
+    >
+      Advanced
+    </option>
+  </select>
+</div>
+`;
+
+exports[`Select — snapshots > renders with error state 1`] = `
+<div
+  class="flex flex-col gap-1"
+>
+  <label
+    class="text-sm font-medium text-gray-700 dark:text-gray-300"
+    for="level"
+  >
+    Level
+  </label>
+  <select
+    aria-describedby="level-error"
+    aria-invalid="true"
+    class="w-full border rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
+          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500
+          disabled:opacity-50 disabled:cursor-not-allowed
+          px-3 py-2
+          border-red-500
+          "
+    id="level"
+  >
+    <option
+      value="beginner"
+    >
+      Beginner
+    </option>
+    <option
+      value="intermediate"
+    >
+      Intermediate
+    </option>
+    <option
+      value="advanced"
+    >
+      Advanced
+    </option>
+  </select>
+  <p
+    class="text-xs text-red-600"
+    id="level-error"
+    role="alert"
+  >
+    Required
+  </p>
+</div>
+`;
+
+exports[`Select — snapshots > renders with options 1`] = `
+<div
+  class="flex flex-col gap-1"
+>
+  <label
+    class="text-sm font-medium text-gray-700 dark:text-gray-300"
+    for="level"
+  >
+    Level
+  </label>
+  <select
+    aria-invalid="false"
+    class="w-full border rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
+          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500
+          disabled:opacity-50 disabled:cursor-not-allowed
+          px-3 py-2
+          border-gray-300 dark:border-gray-600
+          "
+    id="level"
+  >
+    <option
+      value="beginner"
+    >
+      Beginner
+    </option>
+    <option
+      value="intermediate"
+    >
+      Intermediate
+    </option>
+    <option
+      value="advanced"
+    >
+      Advanced
+    </option>
+  </select>
+</div>
+`;
+
+exports[`Select — snapshots > renders with placeholder option 1`] = `
+<div
+  class="flex flex-col gap-1"
+>
+  <label
+    class="text-sm font-medium text-gray-700 dark:text-gray-300"
+    for="level"
+  >
+    Level
+  </label>
+  <select
+    aria-invalid="false"
+    class="w-full border rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
+          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500
+          disabled:opacity-50 disabled:cursor-not-allowed
+          px-3 py-2
+          border-gray-300 dark:border-gray-600
+          "
+    id="level"
+  >
+    <option
+      value=""
+    >
+      Select a level
+    </option>
+    <option
+      value="beginner"
+    >
+      Beginner
+    </option>
+    <option
+      value="intermediate"
+    >
+      Intermediate
+    </option>
+    <option
+      value="advanced"
+    >
+      Advanced
+    </option>
+  </select>
+</div>
+`;
+
+exports[`Skeleton — snapshots > renders circular variant 1`] = `
+<div
+  aria-busy="true"
+  aria-live="polite"
+  class="bg-gray-200 dark:bg-gray-700 rounded-full animate-shimmer bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 bg-[length:200%_100%] "
+  role="status"
+  style="width: 48px; height: 48px;"
+>
+  <span
+    class="sr-only"
+  >
+    Loading...
+  </span>
+</div>
+`;
+
+exports[`Skeleton — snapshots > renders rectangular variant (default) 1`] = `
+<div
+  aria-busy="true"
+  aria-live="polite"
+  class="bg-gray-200 dark:bg-gray-700 rounded-md animate-shimmer bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 bg-[length:200%_100%] "
+  role="status"
+  style="width: 100%; height: 100%;"
+>
+  <span
+    class="sr-only"
+  >
+    Loading...
+  </span>
+</div>
+`;
+
+exports[`Skeleton — snapshots > renders text variant 1`] = `
+<div
+  aria-busy="true"
+  aria-live="polite"
+  class="bg-gray-200 dark:bg-gray-700 rounded animate-shimmer bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 bg-[length:200%_100%] "
+  role="status"
+  style="width: 100%; height: 1em;"
+>
+  <span
+    class="sr-only"
+  >
+    Loading...
+  </span>
+</div>
+`;
+
+exports[`Skeleton — snapshots > renders with custom dimensions 1`] = `
+<div
+  aria-busy="true"
+  aria-live="polite"
+  class="bg-gray-200 dark:bg-gray-700 rounded-md animate-shimmer bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 bg-[length:200%_100%] "
+  role="status"
+  style="width: 200px; height: 100px;"
+>
+  <span
+    class="sr-only"
+  >
+    Loading...
+  </span>
+</div>
+`;
+
+exports[`Skeleton — snapshots > renders with no animation 1`] = `
+<div
+  aria-busy="true"
+  aria-live="polite"
+  class="bg-gray-200 dark:bg-gray-700 rounded-md  "
+  role="status"
+  style="width: 100%; height: 100%;"
+>
+  <span
+    class="sr-only"
+  >
+    Loading...
+  </span>
+</div>
+`;
+
+exports[`Skeleton — snapshots > renders with pulse animation 1`] = `
+<div
+  aria-busy="true"
+  aria-live="polite"
+  class="bg-gray-200 dark:bg-gray-700 rounded-md animate-pulse "
+  role="status"
+  style="width: 100%; height: 100%;"
+>
+  <span
+    class="sr-only"
+  >
+    Loading...
+  </span>
+</div>
+`;
+
+exports[`TokenBalance — snapshots > renders custom fallback 1`] = `
+<span
+  class=""
+>
+  N/A
+   
+  XLM
+</span>
+`;
+
+exports[`TokenBalance — snapshots > renders fallback for null balance 1`] = `
+<span
+  class=""
+>
+  —
+   
+  XLM
+</span>
+`;
+
+exports[`TokenBalance — snapshots > renders fallback for undefined balance 1`] = `
+<span
+  class=""
+>
+  —
+   
+  XLM
+</span>
+`;
+
+exports[`TokenBalance — snapshots > renders with custom className 1`] = `
+<span
+  class="text-lg font-bold"
+>
+  100
+   
+  XLM
+</span>
+`;
+
+exports[`TokenBalance — snapshots > renders with custom decimals 1`] = `
+<span
+  class=""
+>
+  1.2346
+   
+  XLM
+</span>
+`;
+
+exports[`TokenBalance — snapshots > renders with numeric balance 1`] = `
+<span
+  class=""
+>
+  1,234.56
+   
+  XLM
+</span>
+`;
+
+exports[`TokenBalance — snapshots > renders with string balance 1`] = `
+<span
+  class=""
+>
+  9,876.54
+   
+  BST
+</span>
+`;
+
+exports[`TokenBalance — snapshots > renders zero balance 1`] = `
+<span
+  class=""
+>
+  0
+   
+  BST
+</span>
+`;

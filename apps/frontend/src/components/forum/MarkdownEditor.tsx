@@ -128,8 +128,7 @@ export function MarkdownEditor({
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
     const selected = value.substring(start, end);
-    const newValue =
-      value.substring(0, start) + before + selected + after + value.substring(end);
+    const newValue = value.substring(0, start) + before + selected + after + value.substring(end);
 
     onChange(newValue);
 

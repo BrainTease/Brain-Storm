@@ -47,18 +47,14 @@ export class StellarIndexerService implements OnModuleInit, OnModuleDestroy {
   constructor(
     private configService: ConfigService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
-    private credentialsService: CredentialsService,
-    private notificationsService: NotificationsService,
-    private usersService: UsersService,
+    private eventDispatcher: ContractEventDispatcher
   ) {
     this.sorobanServer = new rpc.Server(
       this.configService.get<string>('stellar.sorobanRpcUrl') ?? '',
     );
-    this.analyticsContractId =
-      this.configService.get<string>('stellar.analyticsContractId') ?? '';
+    this.analyticsContractId = this.configService.get<string>('stellar.analyticsContractId') ?? '';
     this.tokenContractId = this.configService.get<string>('stellar.tokenContractId') ?? '';
-    this.basePollInterval =
-      this.configService.get<number>('stellar.indexerPollIntervalMs') ?? 5000;
+    this.basePollInterval = this.configService.get<number>('stellar.indexerPollIntervalMs') ?? 5000;
   }
 
   onModuleInit() {
@@ -80,7 +76,10 @@ export class StellarIndexerService implements OnModuleInit, OnModuleDestroy {
     // Exponential back-off while busy (capped at 4× base interval)
     const delay =
       this.consecutiveBusyCount > 0
-        ? Math.min(this.basePollInterval * 2 ** this.consecutiveBusyCount, this.basePollInterval * 4)
+        ? Math.min(
+            this.basePollInterval * 2 ** this.consecutiveBusyCount,
+            this.basePollInterval * 4
+          )
         : this.basePollInterval;
 
     this.timer = setTimeout(async () => {
@@ -95,9 +94,7 @@ export class StellarIndexerService implements OnModuleInit, OnModuleDestroy {
     // Back-pressure: skip tick if still processing previous batch
     if (this.isBusy) {
       this.consecutiveBusyCount++;
-      this.logger.warn(
-        `Indexer busy (tick ${this.consecutiveBusyCount}) — skipping poll`,
-      );
+      this.logger.warn(`Indexer busy (tick ${this.consecutiveBusyCount}) — skipping poll`);
       return;
     }
 
@@ -122,15 +119,13 @@ export class StellarIndexerService implements OnModuleInit, OnModuleDestroy {
 
       const eventList: rpc.Api.EventResponse[] = (events ?? []).slice(
         0,
-        MAX_EVENTS_PER_POLL,
+        MAX_EVENTS_PER_POLL
       );
 
       // ── Batched processing ───────────────────────────────────────────────
       for (let i = 0; i < eventList.length; i += BATCH_CONCURRENCY) {
         const chunk = eventList.slice(i, i + BATCH_CONCURRENCY);
-        const results = await Promise.allSettled(
-          chunk.map((evt) => this.handleEvent(evt)),
-        );
+        const results = await Promise.allSettled(chunk.map((evt) => this.handleEvent(evt)));
         for (const r of results) {
           if (r.status === 'rejected') {
             this.logger.error(`Event handling error: ${r.reason?.message}`, r.reason?.stack);
@@ -152,11 +147,11 @@ export class StellarIndexerService implements OnModuleInit, OnModuleDestroy {
 
       if (lagLedgers > 50) {
         this.logger.warn(
-          `Indexer lag: ${lagLedgers} ledgers behind (poll took ${pollDurationMs}ms)`,
+          `Indexer lag: ${lagLedgers} ledgers behind (poll took ${pollDurationMs}ms)`
         );
       } else {
         this.logger.debug(
-          `Poll complete — ${eventList.length} events, lag=${lagLedgers} ledgers, ${pollDurationMs}ms`,
+          `Poll complete — ${eventList.length} events, lag=${lagLedgers} ledgers, ${pollDurationMs}ms`
         );
       }
     } catch (err) {
@@ -182,7 +177,7 @@ export class StellarIndexerService implements OnModuleInit, OnModuleDestroy {
     return (await this.cacheManager.get<number>('indexer:lag_ledgers')) ?? 0;
   }
 
-  // ─── Event handlers ───────────────────────────────────────────────────────────
+  // ─── Event handling ───────────────────────────────────────────────────────────
 
   private async handleEvent(event: rpc.Api.EventResponse) {
     const topic = (event.topic ?? []).map((t: any) => t?.value?.toString() ?? '');

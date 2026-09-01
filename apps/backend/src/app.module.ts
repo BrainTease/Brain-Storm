@@ -1,7 +1,6 @@
 import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { ShutdownMiddleware } from './health/shutdown.middleware';
-import { CacheHeadersMiddleware } from './common/middleware/cache-headers.middleware';
+import { ShutdownMiddleware, CacheHeadersMiddleware } from './middleware';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CacheModule } from '@nestjs/cache-manager';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
@@ -57,6 +56,8 @@ import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis'
 import configuration from './config/configuration';
 import { validationSchema } from './config/validation.schema';
 import { DatabaseModule } from './database/database.module';
+import { GovernanceModule } from './governance/governance.module';
+import { GrantsModule } from './grants/grants.module';
 
 @Module({
   imports: [
@@ -84,10 +85,11 @@ import { DatabaseModule } from './database/database.module';
         autoLoadEntities: true,
         synchronize: config.get<string>('nodeEnv') !== 'production',
         extra: {
-          max: parseInt(process.env.DB_POOL_MAX || '20'),
-          min: parseInt(process.env.DB_POOL_MIN || '5'),
-          connectionTimeoutMillis: parseInt(process.env.DB_ACQUIRE_TIMEOUT || '30000'),
-          idleTimeoutMillis: parseInt(process.env.DB_IDLE_TIMEOUT || '10000'),
+          // #805: pool config now flows through ConfigService (see configuration.ts + validation.schema.ts)
+          max: config.get<number>('dbPool.max') ?? 20,
+          min: config.get<number>('dbPool.min') ?? 5,
+          connectionTimeoutMillis: config.get<number>('dbPool.acquireTimeout') ?? 30000,
+          idleTimeoutMillis: config.get<number>('dbPool.idleTimeout') ?? 10000,
         },
         maxQueryExecutionTime: 5000,
       }),
@@ -157,6 +159,8 @@ import { DatabaseModule } from './database/database.module';
     AppGraphQLModule,
     PaymentsModule,
     DatabaseModule,
+    GovernanceModule,
+    GrantsModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

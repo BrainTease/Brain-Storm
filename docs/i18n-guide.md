@@ -122,8 +122,8 @@ export default async function CoursesPage() {
 **Interpolation** — pass variables as the second argument:
 
 ```typescript
-t('issued', { date: '2024-01-15' })   // "Issued: 2024-01-15"
-t('avatarAlt', { name: 'Alice' })     // "Alice's avatar"
+t('issued', { date: '2024-01-15' }); // "Issued: 2024-01-15"
+t('avatarAlt', { name: 'Alice' }); // "Alice's avatar"
 ```
 
 **Mocking in tests** — Vitest tests mock `next-intl` to return the key directly:
@@ -162,14 +162,14 @@ Keys are grouped into namespaces that map to feature areas. Each namespace is a 
 }
 ```
 
-| Namespace | Used by |
-|---|---|
-| `nav` | `Navbar`, `Footer` |
-| `home` | Home page (`/`) |
-| `courses` | Courses listing page |
-| `credentials` | Credentials page |
-| `profile` | Profile page and `WalletSection` |
-| `wallet` | `WalletSection` component |
+| Namespace     | Used by                          |
+| ------------- | -------------------------------- |
+| `nav`         | `Navbar`, `Footer`               |
+| `home`        | Home page (`/`)                  |
+| `courses`     | Courses listing page             |
+| `credentials` | Credentials page                 |
+| `profile`     | Profile page and `WalletSection` |
+| `wallet`      | `WalletSection` component        |
 
 ### Key Naming Rules
 
@@ -214,7 +214,7 @@ Translate every value in `fr.json`. Do not change key names. Do not remove keys.
 ```typescript
 // src/i18n/routing.ts
 export const routing = defineRouting({
-  locales: ['en', 'es', 'fr'],   // add 'fr'
+  locales: ['en', 'es', 'fr'], // add 'fr'
   defaultLocale: 'en',
 });
 ```
@@ -300,18 +300,18 @@ export function MyComponent() {
 
 Prefer logical CSS properties over directional ones. This ensures layouts adapt automatically to RTL:
 
-| Avoid (directional) | Prefer (logical) | Notes |
-|---|---|---|
-| `pl-4` | `ps-4` | padding-inline-start |
-| `pr-4` | `pe-4` | padding-inline-end |
-| `ml-2` | `ms-2` | margin-inline-start |
-| `mr-2` | `me-2` | margin-inline-end |
-| `text-left` | `text-start` | text alignment |
-| `text-right` | `text-end` | text alignment |
-| `float-left` | `float-start` | float direction |
-| `float-right` | `float-end` | float direction |
-| `left-0` | `inset-s-0` | positioning (if unavoidable) |
-| `right-0` | `inset-e-0` | positioning (if unavoidable) |
+| Avoid (directional) | Prefer (logical) | Notes                        |
+| ------------------- | ---------------- | ---------------------------- |
+| `pl-4`              | `ps-4`           | padding-inline-start         |
+| `pr-4`              | `pe-4`           | padding-inline-end           |
+| `ml-2`              | `ms-2`           | margin-inline-start          |
+| `mr-2`              | `me-2`           | margin-inline-end            |
+| `text-left`         | `text-start`     | text alignment               |
+| `text-right`        | `text-end`       | text alignment               |
+| `float-left`        | `float-start`    | float direction              |
+| `float-right`       | `float-end`      | float direction              |
+| `left-0`            | `inset-s-0`      | positioning (if unavoidable) |
+| `right-0`           | `inset-e-0`      | positioning (if unavoidable) |
 
 For existing components with directional classes, use Tailwind's `rtl:` variant to override:
 
@@ -325,11 +325,13 @@ For existing components with directional classes, use Tailwind's `rtl:` variant 
 Icons that imply direction (arrows, chevrons, direction indicators) must be mirrored in RTL. Use the `scale-x-[-1]` transform via the `rtl:` variant or the `useIsRTL()` hook:
 
 **Option 1: CSS-based (simpler)**
+
 ```html
 <span class="rtl:scale-x-[-1] inline-block">→</span>
 ```
 
 **Option 2: Component-based (with useIsRTL hook)**
+
 ```typescript
 'use client';
 import { useIsRTL } from '@/hooks/useIsRTL';
@@ -366,11 +368,13 @@ To test RTL implementation:
 To add a new RTL language (e.g., Hebrew `he`):
 
 1. **Add to RTL_LOCALES** in `src/i18n/routing.ts`:
+
    ```typescript
    export const RTL_LOCALES = ['ar', 'he', 'fa'] as const;
    ```
 
 2. **Add to routing locales** in the same file:
+
    ```typescript
    export const routing = defineRouting({
      locales: ['en', 'es', 'fr', 'ar', 'he'],
@@ -399,6 +403,7 @@ auditRTLImplementation();
 ```
 
 This outputs a detailed report of:
+
 - HTML dir/lang attributes
 - Hard-coded left/right styles (potential issues)
 - Flex/grid layout counts

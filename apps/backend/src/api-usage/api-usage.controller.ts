@@ -51,7 +51,7 @@ export class ApiUsageController {
   byTime(
     @Query('from') from?: string,
     @Query('to') to?: string,
-    @Query('granularity') granularity?: 'hour' | 'day',
+    @Query('granularity') granularity?: 'hour' | 'day'
   ) {
     const toDate = to ? new Date(to) : new Date();
     const fromDate = from ? new Date(from) : new Date(Date.now() - 7 * 86400_000);

@@ -8,13 +8,7 @@ import {
   Header,
   StreamableFile,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBearerAuth,
-  ApiBody,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
@@ -29,7 +23,7 @@ import { IssueCertificateDto } from './dto/issue-certificate.dto';
 export class CertificatesController {
   constructor(
     private readonly certificatesService: CertificatesService,
-    private readonly pdfService: CertificatePdfService,
+    private readonly pdfService: CertificatePdfService
   ) {}
 
   @Post()

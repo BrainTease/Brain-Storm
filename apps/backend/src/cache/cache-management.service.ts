@@ -6,7 +6,7 @@ import { CoursesService } from '../courses/courses.service';
 export class CacheManagementService {
   constructor(
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
-    private readonly coursesService: CoursesService,
+    private readonly coursesService: CoursesService
   ) {}
 
   async getStats() {

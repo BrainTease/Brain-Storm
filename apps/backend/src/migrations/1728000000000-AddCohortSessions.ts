@@ -80,7 +80,7 @@ export class AddCohortSessions1728000000000 implements MigrationInterface {
           }),
         ],
       }),
-      true,
+      true
     );
 
     // Create indexes for cohort_sessions
@@ -89,7 +89,7 @@ export class AddCohortSessions1728000000000 implements MigrationInterface {
       new TableIndex({
         columnNames: ['cohortId', 'startTime'],
         name: 'IDX_cohort_sessions_cohort_start',
-      }),
+      })
     );
 
     await queryRunner.createIndex(
@@ -97,7 +97,7 @@ export class AddCohortSessions1728000000000 implements MigrationInterface {
       new TableIndex({
         columnNames: ['status', 'startTime'],
         name: 'IDX_cohort_sessions_status_start',
-      }),
+      })
     );
 
     // Create session_attendances table
@@ -161,7 +161,7 @@ export class AddCohortSessions1728000000000 implements MigrationInterface {
           },
         ],
       }),
-      true,
+      true
     );
   }
 

@@ -15,43 +15,43 @@ import { CohortMember } from './cohort-member.entity';
 @Entity('cohorts')
 export class Cohort {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  courseId: string;
+  courseId!: string;
 
   @ManyToOne(() => Course, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'courseId' })
-  course: Course;
+  course!: Course;
 
   @Column()
-  name: string;
+  name!: string;
 
   @Column('text', { nullable: true })
-  description: string;
+  description!: string;
 
   @Column()
-  startDate: Date;
+  startDate!: Date;
 
   @Column()
-  endDate: Date;
+  endDate!: Date;
 
   @Column({ default: 0 })
-  maxMembers: number;
+  maxMembers!: number;
 
   @Column()
-  instructorId: string;
+  instructorId!: string;
 
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'instructorId' })
-  instructor: User;
+  instructor!: User;
 
   @OneToMany(() => CohortMember, (m) => m.cohort, { cascade: true })
-  members: CohortMember[];
+  members!: CohortMember[];
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt!: Date;
 }

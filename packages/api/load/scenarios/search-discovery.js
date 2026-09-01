@@ -41,14 +41,7 @@ const searchQueries = [
 ];
 
 // Categories to test
-const categories = [
-  'blockchain',
-  'smart-contracts',
-  'defi',
-  'nft',
-  'dapp-development',
-  'web3',
-];
+const categories = ['blockchain', 'smart-contracts', 'defi', 'nft', 'dapp-development', 'web3'];
 
 // Tags to test
 const tags = [
@@ -77,10 +70,10 @@ export function setup() {
   console.log(`Starting Search & Discovery Load Test`);
   console.log(`API URL: ${API_URL}`);
   console.log(`Profile: ${PROFILE}`);
-  
+
   // Warm up the server
   http.get(`${API_URL}/api/health`);
-  
+
   return {
     apiUrl: API_URL,
     startTime: Date.now(),
@@ -92,10 +85,10 @@ export function setup() {
  */
 export default function (data) {
   const { apiUrl } = data;
-  
+
   // Randomly choose a test scenario
   const scenario = Math.random();
-  
+
   if (scenario < 0.4) {
     // 40% - Search for courses
     testCourseSearch(apiUrl);
@@ -112,7 +105,7 @@ export default function (data) {
     // 5% - List all courses
     testListAllCourses(apiUrl);
   }
-  
+
   // Think time (user reading/browsing)
   sleep(Math.random() * 3 + 1); // 1-4 seconds
 }
@@ -126,12 +119,9 @@ function testCourseSearch(apiUrl) {
     tags: { endpoint: 'search_courses' },
     timeout: '10s',
   };
-  
-  const response = http.get(
-    `${apiUrl}/api/search/courses?q=${query}&limit=20`,
-    params
-  );
-  
+
+  const response = http.get(`${apiUrl}/api/search/courses?q=${query}&limit=20`, params);
+
   const success = check(response, {
     'search status is 200': (r) => r.status === 200,
     'search response time < 300ms': (r) => r.timings.duration < 300,
@@ -152,11 +142,11 @@ function testCourseSearch(apiUrl) {
       }
     },
   });
-  
+
   searchResponseTime.add(response.timings.duration);
   searchSuccessRate.add(success);
   searchRequests.add(1);
-  
+
   // Small think time
   sleep(0.5);
 }
@@ -170,12 +160,9 @@ function testCategoryBrowsing(apiUrl) {
     tags: { endpoint: 'list_courses' },
     timeout: '10s',
   };
-  
-  const response = http.get(
-    `${apiUrl}/api/courses?category=${category}&page=1&limit=20`,
-    params
-  );
-  
+
+  const response = http.get(`${apiUrl}/api/courses?category=${category}&page=1&limit=20`, params);
+
   const success = check(response, {
     'category browse status is 200': (r) => r.status === 200,
     'category browse response time < 200ms': (r) => r.timings.duration < 200,
@@ -188,11 +175,11 @@ function testCategoryBrowsing(apiUrl) {
       }
     },
   });
-  
+
   discoveryResponseTime.add(response.timings.duration);
   discoverySuccessRate.add(success);
   discoveryRequests.add(1);
-  
+
   // If successful, view a course detail
   if (success && response.status === 200) {
     try {
@@ -201,7 +188,7 @@ function testCategoryBrowsing(apiUrl) {
       if (courses.length > 0) {
         const randomCourse = courses[Math.floor(Math.random() * courses.length)];
         const courseId = randomCourse.id || randomCourse._id;
-        
+
         if (courseId) {
           sleep(0.5);
           testCourseDetails(apiUrl, courseId);
@@ -211,7 +198,7 @@ function testCategoryBrowsing(apiUrl) {
       // Ignore parsing errors
     }
   }
-  
+
   sleep(0.5);
 }
 
@@ -223,9 +210,9 @@ function testCourseDetails(apiUrl, courseId) {
     tags: { endpoint: 'course_details' },
     timeout: '10s',
   };
-  
+
   const response = http.get(`${apiUrl}/api/courses/${courseId}`, params);
-  
+
   check(response, {
     'course details status is 200': (r) => r.status === 200,
     'course details response time < 150ms': (r) => r.timings.duration < 150,
@@ -238,7 +225,7 @@ function testCourseDetails(apiUrl, courseId) {
       }
     },
   });
-  
+
   discoveryResponseTime.add(response.timings.duration);
 }
 
@@ -251,12 +238,9 @@ function testInstructorSearch(apiUrl) {
     tags: { endpoint: 'search_instructors' },
     timeout: '10s',
   };
-  
-  const response = http.get(
-    `${apiUrl}/api/search/instructors?q=${query}&limit=20`,
-    params
-  );
-  
+
+  const response = http.get(`${apiUrl}/api/search/instructors?q=${query}&limit=20`, params);
+
   const success = check(response, {
     'instructor search status is 200': (r) => r.status === 200,
     'instructor search response time < 250ms': (r) => r.timings.duration < 250,
@@ -269,11 +253,11 @@ function testInstructorSearch(apiUrl) {
       }
     },
   });
-  
+
   searchResponseTime.add(response.timings.duration);
   searchSuccessRate.add(success);
   searchRequests.add(1);
-  
+
   sleep(0.5);
 }
 
@@ -286,21 +270,18 @@ function testTagBrowsing(apiUrl) {
     tags: { endpoint: 'list_tags' },
     timeout: '10s',
   };
-  
-  const response = http.get(
-    `${apiUrl}/api/courses?tags=${tag}&limit=20`,
-    params
-  );
-  
+
+  const response = http.get(`${apiUrl}/api/courses?tags=${tag}&limit=20`, params);
+
   const success = check(response, {
     'tag browse status is 200': (r) => r.status === 200,
     'tag browse response time < 200ms': (r) => r.timings.duration < 200,
   });
-  
+
   discoveryResponseTime.add(response.timings.duration);
   discoverySuccessRate.add(success);
   discoveryRequests.add(1);
-  
+
   sleep(0.5);
 }
 
@@ -313,12 +294,9 @@ function testListAllCourses(apiUrl) {
     tags: { endpoint: 'list_courses' },
     timeout: '10s',
   };
-  
-  const response = http.get(
-    `${apiUrl}/api/courses?page=${page}&limit=20`,
-    params
-  );
-  
+
+  const response = http.get(`${apiUrl}/api/courses?page=${page}&limit=20`, params);
+
   const success = check(response, {
     'list all status is 200': (r) => r.status === 200,
     'list all response time < 200ms': (r) => r.timings.duration < 200,
@@ -331,11 +309,11 @@ function testListAllCourses(apiUrl) {
       }
     },
   });
-  
+
   discoveryResponseTime.add(response.timings.duration);
   discoverySuccessRate.add(success);
   discoveryRequests.add(1);
-  
+
   sleep(0.5);
 }
 

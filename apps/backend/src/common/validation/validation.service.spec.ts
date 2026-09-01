@@ -1,15 +1,52 @@
+/**
+ * Unit tests for ValidationService — issue #806.
+ *
+ * Tests cover only the DTO-validation helpers that remain after removing the
+ * redundant inline regex methods.  Domain-specific validation rules (email
+ * format, Stellar key format, password strength, etc.) are tested through their
+ * respective custom validators in custom.validators.ts and through DTO specs.
+ */
 import { Test, TestingModule } from '@nestjs/testing';
-import { ValidationService } from './validation.service';
 import { BadRequestException } from '@nestjs/common';
-import { IsString, MinLength } from 'class-validator';
+import { IsString, MinLength, IsEmail, IsOptional, IsInt, Min, Max } from 'class-validator';
+import { ValidationService } from './validation.service';
 
-class TestDto {
+// ── Fixture DTOs ──────────────────────────────────────────────────────────────
+
+class UserDto {
+  @IsEmail()
+  email!: string;
+
   @IsString()
   @MinLength(3)
-  name: string;
+  name!: string;
 }
 
-describe('ValidationService', () => {
+class PartialUserDto {
+  @IsOptional()
+  @IsString()
+  @MinLength(3)
+  name?: string;
+
+  @IsOptional()
+  @IsEmail()
+  email?: string;
+}
+
+class PaginationDto {
+  @IsInt()
+  @Min(1)
+  page!: number;
+
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  limit!: number;
+}
+
+// ── Tests ─────────────────────────────────────────────────────────────────────
+
+describe('ValidationService (#806)', () => {
   let service: ValidationService;
 
   beforeEach(async () => {
@@ -20,152 +57,119 @@ describe('ValidationService', () => {
     service = module.get<ValidationService>(ValidationService);
   });
 
+  // ── validateDto ────────────────────────────────────────────────────────────
+
   describe('validateDto', () => {
-    it('should validate valid DTO', async () => {
-      const result = await service.validateDto(TestDto, { name: 'John' });
-      expect(result.name).toBe('John');
+    it('returns typed instance for valid input', async () => {
+      const result = await service.validateDto(UserDto, {
+        email: 'alice@example.com',
+        name: 'Alice',
+      });
+      expect(result).toBeInstanceOf(UserDto);
+      expect(result.email).toBe('alice@example.com');
+      expect(result.name).toBe('Alice');
     });
 
-    it('should throw on invalid DTO', async () => {
-      await expect(service.validateDto(TestDto, { name: 'Jo' })).rejects.toThrow(BadRequestException);
+    it('throws BadRequestException for invalid email', async () => {
+      await expect(
+        service.validateDto(UserDto, { email: 'not-an-email', name: 'Alice' })
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('throws BadRequestException when required field is missing', async () => {
+      await expect(service.validateDto(UserDto, { email: 'alice@example.com' })).rejects.toThrow(
+        BadRequestException
+      );
+    });
+
+    it('error response includes the failing field name', async () => {
+      try {
+        await service.validateDto(UserDto, { email: 'bad', name: 'Alice' });
+        fail('should have thrown');
+      } catch (err) {
+        expect(err).toBeInstanceOf(BadRequestException);
+        const body = (err as BadRequestException).getResponse() as Record<string, unknown>;
+        expect(body).toHaveProperty('email');
+      }
     });
   });
 
+  // ── validateDtoSilent ──────────────────────────────────────────────────────
+
   describe('validateDtoSilent', () => {
-    it('should return valid true for valid DTO', async () => {
-      const result = await service.validateDtoSilent(TestDto, { name: 'John' });
+    it('returns { valid: true } for valid input', async () => {
+      const result = await service.validateDtoSilent(UserDto, {
+        email: 'bob@example.com',
+        name: 'Bob',
+      });
       expect(result.valid).toBe(true);
       expect(result.errors).toBeUndefined();
     });
 
-    it('should return valid false for invalid DTO', async () => {
-      const result = await service.validateDtoSilent(TestDto, { name: 'Jo' });
+    it('returns { valid: false, errors } for invalid input', async () => {
+      const result = await service.validateDtoSilent(UserDto, {
+        email: 'not-valid',
+        name: 'Bo',
+      });
       expect(result.valid).toBe(false);
       expect(result.errors).toBeDefined();
+      expect(result.errors!.length).toBeGreaterThan(0);
     });
   });
 
-  describe('isValidEmail', () => {
-    it('should validate valid emails', () => {
-      expect(service.isValidEmail('test@example.com')).toBe(true);
-      expect(service.isValidEmail('user+tag@domain.co.uk')).toBe(true);
+  // ── validatePartialDto ─────────────────────────────────────────────────────
+
+  describe('validatePartialDto', () => {
+    it('passes with empty object (all fields optional)', async () => {
+      const result = await service.validatePartialDto(PartialUserDto, {});
+      expect(result).toBeDefined();
     });
 
-    it('should reject invalid emails', () => {
-      expect(service.isValidEmail('invalid-email')).toBe(false);
-      expect(service.isValidEmail('test@')).toBe(false);
-      expect(service.isValidEmail('@example.com')).toBe(false);
-    });
-  });
-
-  describe('isValidStellarPublicKey', () => {
-    it('should validate valid Stellar public keys', () => {
-      expect(service.isValidStellarPublicKey('GBRPYHIL2CI3WHZDTOOQFC6EB4KJJGUJJBBQ2EIISQE2BNXQ5BNRQ5')).toBe(true);
+    it('passes with a single valid field', async () => {
+      const result = await service.validatePartialDto(PartialUserDto, { name: 'Charlie' });
+      expect(result.name).toBe('Charlie');
     });
 
-    it('should reject invalid Stellar public keys', () => {
-      expect(service.isValidStellarPublicKey('invalid-key')).toBe(false);
-      expect(service.isValidStellarPublicKey('SBRPYHIL2CI3WHZDTOOQFC6EB4KJJGUJJBBQ2EIISQE2BNXQ5BNRQ5')).toBe(false);
+    it('throws when a provided field is invalid', async () => {
+      await expect(
+        service.validatePartialDto(PartialUserDto, { email: 'not-an-email' })
+      ).rejects.toThrow(BadRequestException);
     });
   });
 
-  describe('isValidPassword', () => {
-    it('should validate strong passwords', () => {
-      expect(service.isValidPassword('SecurePass123!')).toBe(true);
-      expect(service.isValidPassword('MyP@ssw0rd')).toBe(true);
+  // ── validateDtoArray ───────────────────────────────────────────────────────
+
+  describe('validateDtoArray', () => {
+    it('validates all valid items and returns typed instances', async () => {
+      const items = [
+        { page: 1, limit: 10 },
+        { page: 2, limit: 20 },
+      ];
+      const results = await service.validateDtoArray(PaginationDto, items);
+      expect(results).toHaveLength(2);
+      expect(results[0].page).toBe(1);
     });
 
-    it('should reject weak passwords', () => {
-      expect(service.isValidPassword('weak')).toBe(false);
-      expect(service.isValidPassword('NoSpecialChar123')).toBe(false);
-      expect(service.isValidPassword('nouppercase123!')).toBe(false);
-    });
-  });
-
-  describe('isValidUrl', () => {
-    it('should validate valid URLs', () => {
-      expect(service.isValidUrl('https://example.com')).toBe(true);
-      expect(service.isValidUrl('http://localhost:3000')).toBe(true);
-    });
-
-    it('should reject invalid URLs', () => {
-      expect(service.isValidUrl('not-a-url')).toBe(false);
-      expect(service.isValidUrl('htp://invalid')).toBe(false);
-    });
-  });
-
-  describe('isValidPhoneNumber', () => {
-    it('should validate valid phone numbers', () => {
-      expect(service.isValidPhoneNumber('+12025551234')).toBe(true);
-      expect(service.isValidPhoneNumber('12025551234')).toBe(true);
+    it('throws with indexed path when one item is invalid', async () => {
+      const items = [
+        { page: 1, limit: 10 },
+        { page: 0, limit: 10 }, // page must be >= 1
+      ];
+      try {
+        await service.validateDtoArray(PaginationDto, items);
+        fail('should have thrown');
+      } catch (err) {
+        expect(err).toBeInstanceOf(BadRequestException);
+        const body = (err as BadRequestException).getResponse() as Record<string, unknown>;
+        // Should reference the second item (index 1)
+        const keys = Object.keys(body);
+        expect(keys.some((k) => k.startsWith('[1]'))).toBe(true);
+      }
     });
 
-    it('should reject invalid phone numbers', () => {
-      expect(service.isValidPhoneNumber('123')).toBe(false);
-      expect(service.isValidPhoneNumber('invalid')).toBe(false);
-    });
-  });
-
-  describe('isValidPercentage', () => {
-    it('should validate valid percentages', () => {
-      expect(service.isValidPercentage(0)).toBe(true);
-      expect(service.isValidPercentage(50)).toBe(true);
-      expect(service.isValidPercentage(100)).toBe(true);
-    });
-
-    it('should reject invalid percentages', () => {
-      expect(service.isValidPercentage(-1)).toBe(false);
-      expect(service.isValidPercentage(101)).toBe(false);
-      expect(service.isValidPercentage('50' as any)).toBe(false);
-    });
-  });
-
-  describe('isValidDateRange', () => {
-    it('should validate valid date ranges', () => {
-      const start = new Date('2026-01-01');
-      const end = new Date('2026-12-31');
-      expect(service.isValidDateRange(start, end)).toBe(true);
-    });
-
-    it('should reject invalid date ranges', () => {
-      const start = new Date('2026-12-31');
-      const end = new Date('2026-01-01');
-      expect(service.isValidDateRange(start, end)).toBe(false);
-    });
-  });
-
-  describe('isValidCouponCode', () => {
-    it('should validate valid coupon codes', () => {
-      expect(service.isValidCouponCode('SUMMER2026')).toBe(true);
-      expect(service.isValidCouponCode('SAVE-50')).toBe(true);
-    });
-
-    it('should reject invalid coupon codes', () => {
-      expect(service.isValidCouponCode('ab')).toBe(false);
-      expect(service.isValidCouponCode('lowercase')).toBe(false);
-    });
-  });
-
-  describe('isValidUUID', () => {
-    it('should validate valid UUIDs', () => {
-      expect(service.isValidUUID('550e8400-e29b-41d4-a716-446655440000')).toBe(true);
-    });
-
-    it('should reject invalid UUIDs', () => {
-      expect(service.isValidUUID('not-a-uuid')).toBe(false);
-      expect(service.isValidUUID('550e8400-e29b-41d4-a716')).toBe(false);
-    });
-  });
-
-  describe('isValidPagination', () => {
-    it('should validate valid pagination', () => {
-      expect(service.isValidPagination(1, 10)).toBe(true);
-      expect(service.isValidPagination(5, 50)).toBe(true);
-    });
-
-    it('should reject invalid pagination', () => {
-      expect(service.isValidPagination(0, 10)).toBe(false);
-      expect(service.isValidPagination(1, 101)).toBe(false);
+    it('returns empty array for empty input', async () => {
+      const results = await service.validateDtoArray(PaginationDto, []);
+      expect(results).toEqual([]);
     });
   });
 });

@@ -7,16 +7,19 @@ Automated accessibility testing ensures the platform meets WCAG 2.1 AA standards
 ## Running Tests
 
 ### Component Tests
+
 ```bash
 npm run test:a11y --workspace=apps/frontend
 ```
 
 ### E2E Accessibility Tests
+
 ```bash
 npm run test:wcag --workspace=apps/frontend
 ```
 
 ### Full Suite
+
 ```bash
 npm run test --workspace=apps/frontend
 ```
@@ -24,11 +27,13 @@ npm run test --workspace=apps/frontend
 ## Test Coverage
 
 ### WCAG Compliance
+
 - **Level A** - Basic accessibility
 - **Level AA** - Enhanced accessibility (target)
 - **Level AAA** - Advanced accessibility
 
 ### Automated Checks
+
 - Color contrast ratios
 - Heading hierarchy
 - Form labels and inputs
@@ -39,6 +44,7 @@ npm run test --workspace=apps/frontend
 - Landmark structure
 
 ### Manual Checks
+
 - Screen reader testing (NVDA, JAWS)
 - Keyboard-only navigation
 - Zoom and text scaling
@@ -68,6 +74,7 @@ Accessibility tests run on every PR and push to main/develop branches. Reports a
 ## Common Issues
 
 ### Missing Alt Text
+
 ```tsx
 // ❌ Bad
 <img src="course.jpg" />
@@ -77,6 +84,7 @@ Accessibility tests run on every PR and push to main/develop branches. Reports a
 ```
 
 ### Unlabeled Inputs
+
 ```tsx
 // ❌ Bad
 <input type="email" placeholder="Email" />
@@ -87,6 +95,7 @@ Accessibility tests run on every PR and push to main/develop branches. Reports a
 ```
 
 ### Poor Color Contrast
+
 ```tsx
 // ❌ Bad - insufficient contrast
 <p style={{ color: '#999', backgroundColor: '#f0f0f0' }}>Text</p>

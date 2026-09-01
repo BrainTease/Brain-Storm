@@ -24,7 +24,7 @@ test.describe('Course Card - Visual Regression', () => {
       await themeToggle.click();
       await page.waitForTimeout(500);
     }
-    
+
     const courseCard = page.locator('[data-testid="course-card"]').first();
     if (await courseCard.isVisible()) {
       await expect(courseCard).toHaveScreenshot('course-card-dark.png');
@@ -51,7 +51,7 @@ test.describe('Course Card - Visual Regression', () => {
     await page.setViewportSize({ width: 375, height: 667 });
     await page.reload();
     await page.waitForLoadState('networkidle');
-    
+
     const courseCard = page.locator('[data-testid="course-card"]').first();
     if (await courseCard.isVisible()) {
       await expect(courseCard).toHaveScreenshot('course-card-mobile.png');
@@ -62,7 +62,7 @@ test.describe('Course Card - Visual Regression', () => {
     const courseGrid = page.locator('[data-testid="course-grid"], .grid').first();
     if (await courseGrid.isVisible()) {
       await expect(courseGrid).toHaveScreenshot('course-grid.png', {
-        maxDiffPixels: 100 // Allow minor differences for dynamic content
+        maxDiffPixels: 100, // Allow minor differences for dynamic content
       });
     }
   });

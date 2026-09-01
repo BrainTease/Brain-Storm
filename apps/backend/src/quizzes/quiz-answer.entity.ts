@@ -1,30 +1,24 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  ManyToOne,
-  JoinColumn,
-} from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { QuizQuestion } from './quiz-question.entity';
 
 @Entity('quiz_answers')
 export class QuizAnswer {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  questionId: string;
+  questionId!: string;
 
   @ManyToOne(() => QuizQuestion, (q) => q.answers, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'questionId' })
-  question: QuizQuestion;
+  question!: QuizQuestion;
 
   @Column('text')
-  text: string;
+  text!: string;
 
   @Column({ default: false })
-  isCorrect: boolean;
+  isCorrect!: boolean;
 
   @Column({ default: 0 })
-  order: number;
+  order!: number;
 }

@@ -1,11 +1,29 @@
 import {
-  Entity, PrimaryGeneratedColumn, Column, CreateDateColumn,
-  UpdateDateColumn, ManyToOne, JoinColumn, OneToMany, Index,
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
+  OneToMany,
+  Index,
 } from 'typeorm';
 import { User } from '../users/user.entity';
 
-export enum JobStatus { OPEN = 'open', CLOSED = 'closed', EXPIRED = 'expired', FILLED = 'filled' }
-export enum ApplicationStatus { PENDING = 'pending', REVIEWED = 'reviewed', ACCEPTED = 'accepted', REJECTED = 'rejected', WITHDRAWN = 'withdrawn' }
+export enum JobStatus {
+  OPEN = 'open',
+  CLOSED = 'closed',
+  EXPIRED = 'expired',
+  FILLED = 'filled',
+}
+export enum ApplicationStatus {
+  PENDING = 'pending',
+  REVIEWED = 'reviewed',
+  ACCEPTED = 'accepted',
+  REJECTED = 'rejected',
+  WITHDRAWN = 'withdrawn',
+}
 
 @Entity('jobs')
 @Index(['status', 'expiresAt'])
@@ -24,8 +42,10 @@ export class Job {
   @Column({ default: false }) isDeleted: boolean;
   @CreateDateColumn() createdAt: Date;
   @UpdateDateColumn() updatedAt: Date;
-  @ManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' }) @JoinColumn({ name: 'instructorId' }) instructor: User;
-  @OneToMany(() => JobApplication, a => a.job) applications: JobApplication[];
+  @ManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'instructorId' })
+  instructor!: User;
+  @OneToMany(() => JobApplication, (a) => a.job) applications: JobApplication[];
 }
 
 @Entity('job_applications')
@@ -36,10 +56,15 @@ export class JobApplication {
   @Column() jobId: string;
   @Column() applicantId: string;
   @Column('text', { nullable: true }) coverLetter?: string;
-  @Column({ type: 'enum', enum: ApplicationStatus, default: ApplicationStatus.PENDING }) status: ApplicationStatus;
+  @Column({ type: 'enum', enum: ApplicationStatus, default: ApplicationStatus.PENDING })
+  status!: ApplicationStatus;
   @Column({ nullable: true, type: 'text' }) reviewNote?: string;
   @CreateDateColumn() appliedAt: Date;
   @UpdateDateColumn() updatedAt: Date;
-  @ManyToOne(() => Job, j => j.applications, { onDelete: 'CASCADE' }) @JoinColumn({ name: 'jobId' }) job: Job;
-  @ManyToOne(() => User, { onDelete: 'CASCADE' }) @JoinColumn({ name: 'applicantId' }) applicant: User;
+  @ManyToOne(() => Job, (j) => j.applications, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'jobId' })
+  job!: Job;
+  @ManyToOne(() => User, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'applicantId' })
+  applicant!: User;
 }

@@ -12,7 +12,13 @@ export function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background, padding: spacing.md, justifyContent: 'center', alignItems: 'center' },
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+    padding: spacing.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   title: { ...typography.h1, color: colors.text.primary, marginBottom: spacing.sm },
   subtitle: { ...typography.body, color: colors.text.secondary },
 });

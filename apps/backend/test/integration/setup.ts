@@ -34,7 +34,10 @@ export async function setupIntegrationTest() {
 
   const moduleFixture: TestingModule = await Test.createTestingModule({
     imports: [AppModule],
-  }).overrideProvider(DataSource).useValue(dataSource).compile();
+  })
+    .overrideProvider(DataSource)
+    .useValue(dataSource)
+    .compile();
 
   const app = moduleFixture.createNestApplication();
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
@@ -54,8 +57,14 @@ export async function clearDatabase(ds: DataSource) {
   }
 }
 
-export async function createAuthToken(server, email = `test${Date.now()}@test.com`, password = 'Test123!') {
-  await request(server).post('/v1/auth/register').send({ username: email.split('@')[0], email, password });
+export async function createAuthToken(
+  server,
+  email = `test${Date.now()}@test.com`,
+  password = 'Test123!'
+) {
+  await request(server)
+    .post('/v1/auth/register')
+    .send({ username: email.split('@')[0], email, password });
   const res = await request(server).post('/v1/auth/login').send({ email, password });
   return res.body.accessToken || res.body.access_token;
 }

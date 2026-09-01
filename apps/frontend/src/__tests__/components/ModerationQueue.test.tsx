@@ -59,7 +59,10 @@ describe('ModerationQueue', () => {
     });
 
     await waitFor(() => expect(moderationApi.getQueue).toHaveBeenCalledTimes(2));
-    expect(moderationApi.getQueue).toHaveBeenLastCalledWith({ status: 'pending', contentType: undefined });
+    expect(moderationApi.getQueue).toHaveBeenLastCalledWith({
+      status: 'pending',
+      contentType: undefined,
+    });
   });
 
   it('approve button calls reviewItem', async () => {

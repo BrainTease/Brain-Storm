@@ -15,7 +15,7 @@ import { Injectable } from '@nestjs/common';
 export class CourseService {
   constructor(
     private readonly courseRepository: CourseRepository,
-    private readonly validationService: ValidationService,
+    private readonly validationService: ValidationService
   ) {}
 
   async create(dto: CreateCourseDto) {
@@ -44,9 +44,7 @@ import { Optional } from '@nestjs/common';
 
 @Injectable()
 export class CourseService {
-  constructor(
-    @Optional() private readonly cacheService?: CacheService,
-  ) {}
+  constructor(@Optional() private readonly cacheService?: CacheService) {}
 }
 ```
 
@@ -358,7 +356,7 @@ describe('CourseModule', () => {
 export class CourseRepository {
   constructor(
     @InjectRepository(Course)
-    private repository: Repository<Course>,
+    private repository: Repository<Course>
   ) {}
 
   async create(dto: CreateCourseDto): Promise<Course> {

@@ -26,11 +26,11 @@ We deploy one Soroban contract per business domain (token economics, credentials
 
 Grepping every contract for `invoke_contract` and the `#[contractclient]` macro (the two ways a Soroban contract calls another contract) turns up exactly **three** on-chain edges across all 18 production contracts:
 
-| Caller | Callee | Mechanism | Call | Why |
-|---|---|---|---|---|
+| Caller                                | Callee                 | Mechanism                                                                                                                                    | Call                                                     | Why                                                                                                                                                 |
+| ------------------------------------- | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `credential_metadata::issue_with_nft` | `nft::mint_course_nft` | Locally-declared `#[contractclient]` stub (`contracts/credential_metadata/src/linkage.rs`) — **not** a crate dependency on `brain-storm-nft` | Mint a linked NFT atomically when a credential is issued | Issuing the credential record and minting its NFT must succeed or fail together (issue #635); a stub avoids coupling the two crates at compile time |
-| `governance` | `token::balance` | `env.invoke_contract` (dynamic, untyped) | Read a voter's BST balance to weight a vote | Voting power is derived from live token balance, not a duplicated ledger inside governance |
-| `grants` | `token::transfer` | `env.invoke_contract` (dynamic, untyped) | Disburse milestone funds to a grant applicant | Fund release must move real BST, which only the token contract can authorize |
+| `governance`                          | `token::balance`       | `env.invoke_contract` (dynamic, untyped)                                                                                                     | Read a voter's BST balance to weight a vote              | Voting power is derived from live token balance, not a duplicated ledger inside governance                                                          |
+| `grants`                              | `token::transfer`      | `env.invoke_contract` (dynamic, untyped)                                                                                                     | Disburse milestone funds to a grant applicant            | Fund release must move real BST, which only the token contract can authorize                                                                        |
 
 ```mermaid
 graph LR
@@ -81,15 +81,18 @@ Everything outside those three edges — e.g. a marketplace purchase that touche
 ## Rationale
 
 **Why not one monolithic contract?**
+
 - **WASM size and gas.** Soroban meters and caps contract code size and per-invocation CPU/memory instructions. A single contract holding token economics, marketplace escrow, governance voting, dispute resolution, and 15 other domains would be large, slow to instantiate, and would make every invocation pay the cost of code it doesn't use.
 - **Blast radius of upgrades.** Each contract upgrades independently via `shared::schedule_upgrade` / `execute_upgrade` (timelocked) or, for `governance`-gated contracts, `propose_upgrade` → `vote_upgrade` → `approve_upgrade` → `execute_upgrade`. A bug fix to the dispute-resolution logic should not require re-auditing and re-deploying the token contract.
 - **Audit surface.** Security review of a 300–600 line single-domain contract (the actual size range of `contracts/*/src/lib.rs` in this codebase) is tractable; reviewing a merged multi-thousand-line contract is not, and a vulnerability in one domain (e.g. `liquidity_pool` swap math) can't corrupt storage in an unrelated domain (e.g. `certificate` records) because they are different contract instances with separate storage.
 - **Independent admin keys.** Each contract has its own `Admin` storage entry and its own `require_auth()` gate, so compromising one contract's admin key does not automatically compromise every domain.
 
 **Why accept off-chain composition instead of building more on-chain call chains like the three that exist?**
-- Each additional on-chain cross-contract call adds gas cost and a hard compile-time or dynamic-invocation dependency between two independently-upgradable contracts (if contract A hardcodes contract B's address and interface, upgrading B's interface can break A). The three edges that exist were added because atomicity was a hard requirement (credential+NFT must not exist in a partial state; a vote must read *current* balance; a fund release must actually move tokens or not happen at all). Everywhere else, `apps/backend` already has to persist off-chain state (PostgreSQL rows for users, courses, enrollments) alongside on-chain effects, so it was already the natural place to sequence multi-contract flows and handle partial-failure/retry logic.
+
+- Each additional on-chain cross-contract call adds gas cost and a hard compile-time or dynamic-invocation dependency between two independently-upgradable contracts (if contract A hardcodes contract B's address and interface, upgrading B's interface can break A). The three edges that exist were added because atomicity was a hard requirement (credential+NFT must not exist in a partial state; a vote must read _current_ balance; a fund release must actually move tokens or not happen at all). Everywhere else, `apps/backend` already has to persist off-chain state (PostgreSQL rows for users, courses, enrollments) alongside on-chain effects, so it was already the natural place to sequence multi-contract flows and handle partial-failure/retry logic.
 
 **Alternatives considered**
+
 1. **Single monolithic "Platform" contract.** Rejected — WASM size/gas limits, audit surface, and upgrade blast radius as above.
 2. **A handful of larger contracts grouped by rough theme (e.g. one "Credentials" contract covering certificate + credential_metadata + nft + badges).** Rejected for the credential domain specifically — see [ADR-009](./ADR-009-credential-nft-decomposition.md) for why those three stayed separate.
 3. **More on-chain cross-contract calls to reduce backend orchestration.** Rejected as a default — reserved for cases (like the three above) where atomicity is a correctness requirement, not a convenience.
@@ -97,15 +100,18 @@ Everything outside those three edges — e.g. a marketplace purchase that touche
 ## Consequences
 
 ### Positive
+
 - Each contract can be independently upgraded, paused, and audited.
 - A bug or exploit in one domain's storage cannot directly corrupt another domain's storage.
 - New domains (e.g. `dispute`, added later per its own `#659` issue reference) can be added as new crates without touching existing contracts.
 
 ### Negative
+
 - Multi-contract business flows (e.g. an NFT marketplace purchase touching `market`, `nft`, and `royalty_distribution`) are **not atomic on-chain** — `apps/backend` must sequence separate transactions and handle partial failure (e.g. escrow funded but royalty distribution transaction fails) with its own retry/reconciliation logic. This is not currently documented in one place; contributors should read the worked examples in [docs/contract-interfaces.md](../contract-interfaces.md) before adding a new multi-contract flow.
 - `contracts/royalty_distribution` exists as a crate but is absent from the root `Cargo.toml` workspace `members` list, so `cargo build`/`cargo test` at the workspace root silently skips it. Anyone touching that contract must build it explicitly: `cargo build --manifest-path contracts/royalty_distribution/Cargo.toml --target wasm32-unknown-unknown`.
 
 ### Neutral
+
 - Contracts do not share compiled code. Common patterns (pause, reentrancy guard, admin check) are either copied per-contract or, for RBAC specifically, available from the separately-deployed `shared` contract — see [ADR-007](./ADR-007-shared-crate-for-common-code.md).
 
 ## Implementation Notes
@@ -128,6 +134,6 @@ Everything outside those three edges — e.g. a marketplace purchase that touche
 
 ## Revision History
 
-| Date | Author | Change |
-|------|--------|--------|
+| Date       | Author                  | Change                                                                                             |
+| ---------- | ----------------------- | -------------------------------------------------------------------------------------------------- |
 | 2026-07-25 | Brain-Storm maintainers | Initial proposal, derived from git history and static analysis of `contracts/*/src` for issue #762 |

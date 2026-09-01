@@ -73,9 +73,7 @@ import AxeBuilder from '@axe-core/playwright';
 
 test('courses page has no critical a11y violations', async ({ page }) => {
   await page.goto('/courses');
-  const results = await new AxeBuilder({ page })
-    .withTags(['wcag2a', 'wcag2aa'])
-    .analyze();
+  const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
   expect(results.violations).toEqual([]);
 });
 ```
@@ -92,7 +90,7 @@ All interactive elements must be fully operable via keyboard alone (WCAG 2.1 SC 
 
 ```typescript
 // Tailwind classes required on all focusable elements
-'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2'
+'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2';
 ```
 
 - Never use `outline: none` or `outline: 0` without providing an equivalent custom focus style.
@@ -125,15 +123,15 @@ const handleClose = () => {
 
 ### Keyboard Interaction Patterns
 
-| Component | Key | Expected behaviour |
-|---|---|---|
-| Button | `Enter` / `Space` | Activates the button |
-| Link | `Enter` | Follows the link |
-| Modal | `Escape` | Closes the modal |
-| Dropdown menu | `Arrow Up/Down` | Moves between menu items |
-| Dropdown menu | `Escape` | Closes the menu, returns focus to trigger |
-| Select | `Arrow Up/Down` | Changes selected option |
-| Navbar hamburger | `Enter` / `Space` | Toggles mobile menu open/closed |
+| Component        | Key               | Expected behaviour                        |
+| ---------------- | ----------------- | ----------------------------------------- |
+| Button           | `Enter` / `Space` | Activates the button                      |
+| Link             | `Enter`           | Follows the link                          |
+| Modal            | `Escape`          | Closes the modal                          |
+| Dropdown menu    | `Arrow Up/Down`   | Moves between menu items                  |
+| Dropdown menu    | `Escape`          | Closes the menu, returns focus to trigger |
+| Select           | `Arrow Up/Down`   | Changes selected option                   |
+| Navbar hamburger | `Enter` / `Space` | Toggles mobile menu open/closed           |
 
 ---
 
@@ -141,13 +139,13 @@ const handleClose = () => {
 
 ### Recommended Screen Readers
 
-| Platform | Screen reader | Browser |
-|---|---|---|
-| macOS | VoiceOver (built-in) | Safari |
-| Windows | NVDA (free) | Firefox or Chrome |
-| Windows | JAWS | Chrome or Edge |
-| iOS | VoiceOver (built-in) | Safari |
-| Android | TalkBack (built-in) | Chrome |
+| Platform | Screen reader        | Browser           |
+| -------- | -------------------- | ----------------- |
+| macOS    | VoiceOver (built-in) | Safari            |
+| Windows  | NVDA (free)          | Firefox or Chrome |
+| Windows  | JAWS                 | Chrome or Edge    |
+| iOS      | VoiceOver (built-in) | Safari            |
+| Android  | TalkBack (built-in)  | Chrome            |
 
 Minimum requirement: test with **VoiceOver + Safari** and **NVDA + Firefox** before merging any UI change.
 
@@ -273,13 +271,13 @@ Dropdown menus (e.g. the Navbar user menu) must use the ARIA menu pattern:
 
 ### What to Avoid
 
-| Pattern | Problem | Alternative |
-|---|---|---|
-| `<div onClick={...}>` | Not keyboard accessible, no role | Use `<button>` |
-| `aria-label` on a `<div>` with no role | Label has no semantic target | Add an appropriate `role` |
-| Positive `tabindex` | Breaks natural tab order | Use `tabindex="0"` or `tabindex="-1"` only |
-| `placeholder` as the only label | Disappears on input, not reliably announced | Always use a visible `<label>` |
-| `title` attribute as the only accessible name | Inconsistent screen reader support | Use `aria-label` |
+| Pattern                                       | Problem                                     | Alternative                                |
+| --------------------------------------------- | ------------------------------------------- | ------------------------------------------ |
+| `<div onClick={...}>`                         | Not keyboard accessible, no role            | Use `<button>`                             |
+| `aria-label` on a `<div>` with no role        | Label has no semantic target                | Add an appropriate `role`                  |
+| Positive `tabindex`                           | Breaks natural tab order                    | Use `tabindex="0"` or `tabindex="-1"` only |
+| `placeholder` as the only label               | Disappears on input, not reliably announced | Always use a visible `<label>`             |
+| `title` attribute as the only accessible name | Inconsistent screen reader support          | Use `aria-label`                           |
 
 ---
 
@@ -291,10 +289,12 @@ Copy this checklist into your PR description for any change that touches UI comp
 ## Accessibility Checklist
 
 ### Automated
+
 - [ ] `axe` scan passes with no WCAG 2.1 AA violations (unit test or dev overlay)
 - [ ] No new `eslint-plugin-jsx-a11y` errors introduced
 
 ### Keyboard
+
 - [ ] All new interactive elements are reachable and operable via keyboard alone
 - [ ] Focus indicator is visible on all focusable elements (`focus-visible:ring-2`)
 - [ ] Tab order follows the visual reading order
@@ -302,6 +302,7 @@ Copy this checklist into your PR description for any change that touches UI comp
 - [ ] Escape key closes modals, dropdowns, and overlays
 
 ### Screen Reader
+
 - [ ] Tested with VoiceOver (macOS/Safari) or NVDA (Windows/Firefox)
 - [ ] All interactive elements have a meaningful accessible name
 - [ ] Page has a single `<h1>` and logical heading hierarchy (no skipped levels)
@@ -309,6 +310,7 @@ Copy this checklist into your PR description for any change that touches UI comp
 - [ ] Dynamic updates use appropriate live regions (`role="alert"` or `role="status"`)
 
 ### ARIA
+
 - [ ] `aria-current="page"` applied to the active navigation link
 - [ ] Icon-only buttons have `aria-label`
 - [ ] `role="progressbar"` includes `aria-valuenow`, `aria-valuemin`, `aria-valuemax`
@@ -316,6 +318,7 @@ Copy this checklist into your PR description for any change that touches UI comp
 - [ ] Landmark regions are labelled where multiple of the same type exist on a page
 
 ### Images & Media
+
 - [ ] All `<img>` and `<Image>` elements have descriptive `alt` text (or `alt=""` for decorative images)
 - [ ] Videos have captions or transcripts
 ```

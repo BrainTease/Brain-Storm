@@ -1,24 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { adminApi } from '@/lib/admin-api';
-
-interface DashboardMetrics {
-  totalUsers: number;
-  totalCourses: number;
-  totalEnrollments: number;
-  totalCompletions: number;
-  completionRate: number;
-  averageRating: number;
-  totalReviews: number;
-  activeLearnersLast30Days: number;
-  newUsersLast30Days: number;
-  newEnrollmentsLast30Days: number;
-  growth: number;
-  activeWorkers: number;
-  tipVolume: number;
-  disputeRate: number;
-}
+import { fetchDashboardMetrics, type DashboardMetrics } from '@/lib/admin-api';
 
 export default function AdminDashboard() {
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
@@ -31,32 +14,30 @@ export default function AdminDashboard() {
   }, [dateRange]);
 
   const fetchMetrics = async () => {
-    try {
-      setLoading(true);
-      const params = new URLSearchParams();
-      if (dateRange.startDate) params.append('startDate', dateRange.startDate);
-      if (dateRange.endDate) params.append('endDate', dateRange.endDate);
-      
-      const response = await adminApi.get(`/admin/analytics/dashboard?${params}`);
-      setMetrics(response.data);
-    } catch (error) {
-      // Failed to fetch dashboard metrics
-    } finally {
-      setLoading(false);
+    setLoading(true);
+    const result = await fetchDashboardMetrics({
+      startDate: dateRange.startDate || undefined,
+      endDate: dateRange.endDate || undefined,
+    });
+    if (result.ok) {
+      setMetrics(result.data);
     }
+    // Silently ignore errors — the empty-state UI handles the null metrics case.
+    setLoading(false);
   };
 
   const handleExport = async () => {
+    setExporting(true);
+    const params = new URLSearchParams();
+    if (dateRange.startDate) params.append('startDate', dateRange.startDate);
+    if (dateRange.endDate) params.append('endDate', dateRange.endDate);
+
     try {
-      setExporting(true);
-      const params = new URLSearchParams();
-      if (dateRange.startDate) params.append('startDate', dateRange.startDate);
-      if (dateRange.endDate) params.append('endDate', dateRange.endDate);
-      
-      const response = await adminApi.get(`/admin/analytics/export?${params}`, {
+      // Blob download still uses raw axios for responseType:'blob' support
+      const { default: api } = await import('@/lib/api');
+      const response = await api.get(`/admin/analytics/export?${params}`, {
         responseType: 'blob',
       });
-      
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
@@ -64,8 +45,8 @@ export default function AdminDashboard() {
       document.body.appendChild(link);
       link.click();
       link.remove();
-    } catch (error) {
-      // Failed to export metrics
+    } catch {
+      // Export failure is non-critical; a toast from the axios interceptor is sufficient.
     } finally {
       setExporting(false);
     }
@@ -87,19 +68,19 @@ export default function AdminDashboard() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-        
+
         <div className="flex flex-wrap items-center gap-2">
           <input
             type="date"
             value={dateRange.startDate}
-            onChange={(e) => setDateRange(prev => ({ ...prev, startDate: e.target.value }))}
+            onChange={(e) => setDateRange((prev) => ({ ...prev, startDate: e.target.value }))}
             className="px-3 py-2 border rounded-md text-sm"
             placeholder="Start Date"
           />
           <input
             type="date"
             value={dateRange.endDate}
-            onChange={(e) => setDateRange(prev => ({ ...prev, endDate: e.target.value }))}
+            onChange={(e) => setDateRange((prev) => ({ ...prev, endDate: e.target.value }))}
             className="px-3 py-2 border rounded-md text-sm"
             placeholder="End Date"
           />
@@ -120,11 +101,7 @@ export default function AdminDashboard() {
           trend={metrics.growth}
           subtitle="Platform users"
         />
-        <MetricCard
-          title="Active Workers"
-          value={metrics.activeWorkers}
-          subtitle="Last 30 days"
-        />
+        <MetricCard title="Active Workers" value={metrics.activeWorkers} subtitle="Last 30 days" />
         <MetricCard
           title="Tip Volume"
           value={`$${metrics.tipVolume.toLocaleString()}`}
@@ -149,9 +126,14 @@ export default function AdminDashboard() {
   );
 }
 
-function MetricCard({ title, value, trend, subtitle }: { 
-  title: string; 
-  value: string | number; 
+function MetricCard({
+  title,
+  value,
+  trend,
+  subtitle,
+}: {
+  title: string;
+  value: string | number;
   trend?: number;
   subtitle: string;
 }) {

@@ -3,10 +3,10 @@ import { OrgRole } from '../organization.entity';
 
 export class CreateOrgDto {
   @IsString()
-  name: string;
+  name!: string;
 
   @IsString()
-  slug: string;
+  slug!: string;
 
   @IsOptional()
   @IsString()
@@ -19,16 +19,16 @@ export class CreateOrgDto {
 
 export class InviteMemberDto {
   @IsEmail()
-  email: string;
+  email!: string;
 
   @IsEnum(OrgRole)
-  role: OrgRole;
+  role!: OrgRole;
 }
 
 export class AssignCourseDto {
   @IsString()
-  courseId: string;
+  courseId!: string;
 
   @IsString()
-  orgId: string;
+  orgId!: string;
 }

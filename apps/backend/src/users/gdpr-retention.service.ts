@@ -10,9 +10,7 @@ const RETENTION_DAYS = 30; // soft-deleted records recoverable for 30 days
 export class GdprRetentionService {
   private readonly logger = new Logger(GdprRetentionService.name);
 
-  constructor(
-    @InjectRepository(User) private userRepo: Repository<User>,
-  ) {}
+  constructor(@InjectRepository(User) private userRepo: Repository<User>) {}
 
   /** Soft-delete: sets deletedAt, does NOT erase data yet */
   async softDeleteUser(id: string): Promise<void> {

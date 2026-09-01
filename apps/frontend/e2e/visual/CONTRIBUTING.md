@@ -51,7 +51,7 @@ test.describe('MyComponent - Visual Regression', () => {
     const themeToggle = page.locator('[data-testid="theme-toggle"]');
     await themeToggle.click();
     await page.waitForTimeout(500);
-    
+
     const component = page.locator('[data-testid="my-component"]');
     await expect(component).toHaveScreenshot('my-component-dark.png');
   });
@@ -67,7 +67,7 @@ test.describe('MyComponent - Visual Regression', () => {
     await page.setViewportSize({ width: 375, height: 667 });
     await page.reload();
     await page.waitForLoadState('networkidle');
-    
+
     const component = page.locator('[data-testid="my-component"]');
     await expect(component).toHaveScreenshot('my-component-mobile.png');
   });
@@ -109,8 +109,8 @@ await expect(page).toHaveScreenshot('page.png', {
   mask: [
     page.locator('[data-testid="timestamp"]'),
     page.locator('[data-testid="user-avatar"]'),
-    page.locator('[data-testid="email"]')
-  ]
+    page.locator('[data-testid="email"]'),
+  ],
 });
 ```
 
@@ -119,7 +119,7 @@ await expect(page).toHaveScreenshot('page.png', {
 ```typescript
 // Option 1: Disable animations
 await expect(component).toHaveScreenshot('component.png', {
-  animations: 'disabled'
+  animations: 'disabled',
 });
 
 // Option 2: Wait for completion
@@ -127,7 +127,7 @@ await page.waitForTimeout(1000);
 
 // Option 3: CSS to disable animations (in test setup)
 await page.addStyleTag({
-  content: '* { animation: none !important; transition: none !important; }'
+  content: '* { animation: none !important; transition: none !important; }',
 });
 ```
 
@@ -136,7 +136,7 @@ await page.addStyleTag({
 ```typescript
 // Allow minor rendering differences
 await expect(page).toHaveScreenshot('page.png', {
-  maxDiffPixels: 100 // Use conservatively
+  maxDiffPixels: 100, // Use conservatively
 });
 ```
 
@@ -157,13 +157,13 @@ For each component, test:
 ```typescript
 /**
  * Visual regression tests for MyComponent
- * 
+ *
  * Covers:
  * - Light/dark themes
  * - Responsive layouts (desktop, tablet, mobile)
  * - Interactive states (hover, focus, disabled)
  * - Variants (primary, secondary, danger)
- * 
+ *
  * @see https://github.com/BrainTease/Brain-Storm/issues/XXX
  */
 ```
@@ -236,7 +236,7 @@ test('full page screenshot', async ({ page }) => {
   await page.waitForLoadState('networkidle');
   await expect(page).toHaveScreenshot('my-page.png', {
     fullPage: true,
-    mask: [page.locator('[data-testid="dynamic-content"]')]
+    mask: [page.locator('[data-testid="dynamic-content"]')],
   });
 });
 ```
@@ -247,10 +247,10 @@ test('full page screenshot', async ({ page }) => {
 test('component in both themes', async ({ page }) => {
   await page.goto('/component-page');
   const component = page.locator('[data-testid="my-component"]');
-  
+
   // Light mode
   await expect(component).toHaveScreenshot('component-light.png');
-  
+
   // Dark mode
   await page.locator('[data-testid="theme-toggle"]').click();
   await page.waitForTimeout(500);
@@ -264,7 +264,7 @@ test('component in both themes', async ({ page }) => {
 const viewports = [
   { name: 'mobile', width: 375, height: 667 },
   { name: 'tablet', width: 768, height: 1024 },
-  { name: 'desktop', width: 1920, height: 1080 }
+  { name: 'desktop', width: 1920, height: 1080 },
 ];
 
 for (const viewport of viewports) {
@@ -272,7 +272,7 @@ for (const viewport of viewports) {
     await page.setViewportSize(viewport);
     await page.goto('/component-page');
     await page.waitForLoadState('networkidle');
-    
+
     const component = page.locator('[data-testid="my-component"]');
     await expect(component).toHaveScreenshot(`component-${viewport.name}.png`);
   });
@@ -288,8 +288,8 @@ for (const state of states) {
   test(`button ${state} state`, async ({ page }) => {
     await page.goto('/buttons');
     const button = page.locator('[data-testid="primary-button"]');
-    
-    switch(state) {
+
+    switch (state) {
       case 'hover':
         await button.hover();
         break;
@@ -301,7 +301,7 @@ for (const state of states) {
         await page.keyboard.press('Space');
         break;
     }
-    
+
     await page.waitForTimeout(200);
     await expect(button).toHaveScreenshot(`button-${state}.png`);
   });
@@ -337,11 +337,13 @@ npx playwright show-report apps/frontend/playwright-report-visual
 ### Understanding Diffs
 
 The Playwright report shows:
+
 - **Expected**: Baseline screenshot
 - **Actual**: New screenshot
 - **Diff**: Highlighted differences
 
 Review each to understand:
+
 - Is this intentional?
 - Is this a bug?
 - Is the test flaky?
@@ -351,7 +353,7 @@ Review each to understand:
 If you're stuck:
 
 1. **Check Examples**: Look at existing tests in `e2e/visual/`
-2. **Read Documentation**: 
+2. **Read Documentation**:
    - [Workflow Guide](../../../packages/app/visual/WORKFLOW.md)
    - [Baselines Documentation](../../../packages/app/visual/BASELINES.md)
 3. **Ask the Team**: Post in #qa-testing channel

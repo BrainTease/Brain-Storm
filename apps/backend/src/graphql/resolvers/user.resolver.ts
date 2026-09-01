@@ -6,7 +6,10 @@ import { DataLoaderProvider } from '../dataloader.provider';
 
 @Resolver('User')
 export class UserResolver {
-  constructor(private usersService: UsersService, private loaders: DataLoaderProvider) {}
+  constructor(
+    private usersService: UsersService,
+    private loaders: DataLoaderProvider
+  ) {}
 
   @Query()
   @UseGuards(GqlAuthGuard)

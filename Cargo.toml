@@ -51,3 +51,14 @@ panic = "abort"
 opt-level = 0
 debug = true
 overflow-checks = true
+
+# ── Code-quality enforcement ──────────────────────────────────────────────────
+# rustfmt is configured via rustfmt.toml at the workspace root.
+# Enforce in CI with:   cargo fmt --all -- --check
+# Format locally with:  cargo fmt --all
+#
+# clippy is configured via clippy.toml at the workspace root.
+# Enforce in CI with:   cargo clippy --workspace -- -D warnings
+[workspace.metadata.fmt]
+check_command = "cargo fmt --all -- --check"
+format_command = "cargo fmt --all"

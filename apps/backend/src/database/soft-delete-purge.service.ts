@@ -12,7 +12,7 @@ export class SoftDeletePurgeService {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     @InjectRepository(Course)
-    private readonly courseRepository: Repository<Course>,
+    private readonly courseRepository: Repository<Course>
   ) {}
 
   /**
@@ -23,7 +23,9 @@ export class SoftDeletePurgeService {
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - retentionDays);
 
-    this.logger.log(`Purging soft-deleted records older than ${retentionDays} days (cutoff: ${cutoff.toISOString()})`);
+    this.logger.log(
+      `Purging soft-deleted records older than ${retentionDays} days (cutoff: ${cutoff.toISOString()})`
+    );
 
     const result: PurgeResult = {
       usersPurged: 0,
@@ -38,7 +40,9 @@ export class SoftDeletePurgeService {
     // Purge soft-deleted courses
     result.coursesPurged = await this.purgeCourses(cutoff);
 
-    this.logger.log(`Purge completed: ${result.usersPurged} users, ${result.coursesPurged} courses removed`);
+    this.logger.log(
+      `Purge completed: ${result.usersPurged} users, ${result.coursesPurged} courses removed`
+    );
 
     return result;
   }
@@ -57,7 +61,7 @@ export class SoftDeletePurgeService {
     }
 
     this.logger.log(`Purging ${expiredUsers.length} expired users...`);
-    const result = await this.userRepository.delete(expiredUsers.map(u => u.id));
+    const result = await this.userRepository.delete(expiredUsers.map((u) => u.id));
     return result.affected || 0;
   }
 
@@ -75,7 +79,7 @@ export class SoftDeletePurgeService {
     }
 
     this.logger.log(`Purging ${expiredCourses.length} expired courses...`);
-    const result = await this.courseRepository.delete(expiredCourses.map(c => c.id));
+    const result = await this.courseRepository.delete(expiredCourses.map((c) => c.id));
     return result.affected || 0;
   }
 

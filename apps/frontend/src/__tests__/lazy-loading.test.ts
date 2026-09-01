@@ -68,13 +68,13 @@ describe('Lazy Loading Routes - Issue #784', () => {
 
   it('should have dynamic-imports utilities', () => {
     const baseDir = path.resolve(__dirname, '..');
-    const dynamicImportsPath = path.resolve(baseDir, 'src/lib/dynamic-imports.ts');
-    expect(fs.existsSync(dynamicImportsPath)).toBe(true, 'dynamic-imports.ts should exist');
+    const dynamicImportsPath = path.resolve(baseDir, 'src/lib/dynamic-imports.tsx');
+    expect(fs.existsSync(dynamicImportsPath)).toBe(true, 'dynamic-imports.tsx should exist');
   });
 
   it('dynamic-imports should export lazy-loaded components', () => {
     const baseDir = path.resolve(__dirname, '..');
-    const dynamicImportsPath = path.resolve(baseDir, 'src/lib/dynamic-imports.ts');
+    const dynamicImportsPath = path.resolve(baseDir, 'src/lib/dynamic-imports.tsx');
     const content = fs.readFileSync(dynamicImportsPath, 'utf-8');
 
     const expectedExports = [

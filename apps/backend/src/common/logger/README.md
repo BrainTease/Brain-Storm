@@ -23,7 +23,7 @@ NODE_ENV=production  # Affects log format (JSON vs colorized)
 ### Log Levels (in order of priority)
 
 1. **error** - Error conditions
-2. **warn** - Warning conditions  
+2. **warn** - Warning conditions
 3. **info** - Informational messages (default)
 4. **debug** - Debug-level messages
 5. **verbose** - Verbose debug information
@@ -46,7 +46,7 @@ export class MyService {
 
   async someMethod() {
     this.logger.info('Operation started');
-    
+
     try {
       // Your code here
       this.logger.debug('Debug information');
@@ -67,12 +67,14 @@ childLogger.info('Message with specific context');
 ## Log Formats
 
 ### Development (NODE_ENV=development)
+
 ```
 2024-01-15T10:30:45.123Z info: [MyService] Operation started
 2024-01-15T10:30:45.124Z error: [MyService] Operation failed {"stack":"Error: ..."}
 ```
 
 ### Production (NODE_ENV=production)
+
 ```json
 {"timestamp":"2024-01-15T10:30:45.123Z","level":"info","message":"Operation started","context":"MyService"}
 {"timestamp":"2024-01-15T10:30:45.124Z","level":"error","message":"Operation failed","context":"MyService","stack":"Error: ..."}
@@ -85,6 +87,7 @@ The logger is automatically configured in `app.module.ts` and set as the default
 ## Container Orchestration
 
 Logs are sent to stdout, making them compatible with:
+
 - Docker containers
 - Kubernetes
 - Docker Compose
@@ -99,7 +102,7 @@ Replace all `console.log`, `console.error`, `console.warn`, etc. with the approp
 console.log('User logged in');
 console.error('Database connection failed', error);
 
-// After  
+// After
 this.logger.info('User logged in');
 this.logger.error('Database connection failed', error.stack);
 ```

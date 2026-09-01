@@ -98,13 +98,16 @@
         }
       ],
       "fieldConfig": {
-        "defaults": { "unit": "short", "thresholds": {
-          "steps": [
-            { "color": "red", "value": null },
-            { "color": "yellow", "value": 10 },
-            { "color": "green", "value": 100 }
-          ]
-        }}
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 10 },
+              { "color": "green", "value": 100 }
+            ]
+          }
+        }
       }
     },
     {

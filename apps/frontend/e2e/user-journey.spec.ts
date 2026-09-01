@@ -13,7 +13,9 @@ function uniqueUser() {
 }
 
 test.describe('Critical user journey: register → enroll → complete lesson', () => {
-  test('register → login → browse courses → enroll → view lesson → mark complete', async ({ page }) => {
+  test('register → login → browse courses → enroll → view lesson → mark complete', async ({
+    page,
+  }) => {
     const user = uniqueUser();
 
     // ── 1. Register ──────────────────────────────────────────────────────────
@@ -40,7 +42,9 @@ test.describe('Critical user journey: register → enroll → complete lesson', 
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
 
     // Pick the first course
-    const firstCourseLink = page.getByRole('link', { name: /view course|intro to stellar/i }).first();
+    const firstCourseLink = page
+      .getByRole('link', { name: /view course|intro to stellar/i })
+      .first();
     await expect(firstCourseLink).toBeVisible();
     await firstCourseLink.click();
 
@@ -51,9 +55,9 @@ test.describe('Critical user journey: register → enroll → complete lesson', 
     await enrollBtn.click();
 
     // Confirm enrollment feedback
-    await expect(
-      page.getByText(/enrolled|you are enrolled|enrollment confirmed/i),
-    ).toBeVisible({ timeout: 8_000 });
+    await expect(page.getByText(/enrolled|you are enrolled|enrollment confirmed/i)).toBeVisible({
+      timeout: 8_000,
+    });
 
     // ── 5. View first lesson ─────────────────────────────────────────────────
     const lessonLink = page.getByRole('link', { name: /lesson|start|begin/i }).first();
@@ -66,8 +70,8 @@ test.describe('Critical user journey: register → enroll → complete lesson', 
     await expect(completeBtn).toBeVisible();
     await completeBtn.click();
 
-    await expect(
-      page.getByText(/completed|lesson complete|well done|progress saved/i),
-    ).toBeVisible({ timeout: 8_000 });
+    await expect(page.getByText(/completed|lesson complete|well done|progress saved/i)).toBeVisible(
+      { timeout: 8_000 }
+    );
   });
 });

@@ -30,15 +30,26 @@ describe('WsGatewayGateway', () => {
   });
 
   it('disconnects client when invalid token', () => {
-    jest.spyOn(jwtService, 'verify').mockImplementation(() => { throw new Error('invalid'); });
-    const client = { handshake: { auth: { token: 'bad' } }, disconnect: jest.fn(), join: jest.fn() } as any;
+    jest.spyOn(jwtService, 'verify').mockImplementation(() => {
+      throw new Error('invalid');
+    });
+    const client = {
+      handshake: { auth: { token: 'bad' } },
+      disconnect: jest.fn(),
+      join: jest.fn(),
+    } as any;
     gateway.handleConnection(client);
     expect(client.disconnect).toHaveBeenCalled();
   });
 
   it('joins room user:{sub} on valid token', () => {
     jest.spyOn(jwtService, 'verify').mockReturnValue({ sub: '42' } as any);
-    const client = { id: 'c1', handshake: { auth: { token: 'good' } }, disconnect: jest.fn(), join: jest.fn() } as any;
+    const client = {
+      id: 'c1',
+      handshake: { auth: { token: 'good' } },
+      disconnect: jest.fn(),
+      join: jest.fn(),
+    } as any;
     gateway.handleConnection(client);
     expect(client.join).toHaveBeenCalledWith('user:42');
   });

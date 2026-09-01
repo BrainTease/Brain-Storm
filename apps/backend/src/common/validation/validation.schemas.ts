@@ -1,4 +1,21 @@
-import { IsString, IsEmail, IsOptional, MinLength, MaxLength, Matches, IsInt, Min, Max, IsBoolean, IsIn, IsUUID, IsISO8601, IsArray, ValidateNested, IsNumber } from 'class-validator';
+import {
+  IsString,
+  IsEmail,
+  IsOptional,
+  MinLength,
+  MaxLength,
+  Matches,
+  IsInt,
+  Min,
+  Max,
+  IsBoolean,
+  IsIn,
+  IsUUID,
+  IsISO8601,
+  IsArray,
+  ValidateNested,
+  IsNumber,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 /**
@@ -7,7 +24,7 @@ import { Type } from 'class-transformer';
 
 export class EmailSchema {
   @IsEmail()
-  email: string;
+  email!: string;
 }
 
 export class PasswordSchema {
@@ -17,12 +34,12 @@ export class PasswordSchema {
   @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/, {
     message: 'Password must contain uppercase, lowercase, number, and special character',
   })
-  password: string;
+  password!: string;
 }
 
 export class UUIDSchema {
   @IsUUID()
-  id: string;
+  id!: string;
 }
 
 export class PaginationSchema {
@@ -48,22 +65,22 @@ export class PaginationSchema {
 
 export class DateRangeSchema {
   @IsISO8601()
-  startDate: string;
+  startDate!: string;
 
   @IsISO8601()
-  endDate: string;
+  endDate!: string;
 }
 
 export class CourseSchema {
   @IsString()
   @MinLength(3)
   @MaxLength(255)
-  title: string;
+  title!: string;
 
   @IsString()
   @MinLength(10)
   @MaxLength(5000)
-  description: string;
+  description!: string;
 
   @IsOptional()
   @IsIn(['beginner', 'intermediate', 'advanced'])
@@ -84,15 +101,15 @@ export class UserSchema {
   @IsString()
   @MinLength(2)
   @MaxLength(100)
-  firstName: string;
+  firstName!: string;
 
   @IsString()
   @MinLength(2)
   @MaxLength(100)
-  lastName: string;
+  lastName!: string;
 
   @IsEmail()
-  email: string;
+  email!: string;
 
   @IsOptional()
   @IsString()
@@ -102,14 +119,14 @@ export class UserSchema {
 
 export class RoleSchema {
   @IsIn(['admin', 'instructor', 'student', 'moderator'])
-  role: string;
+  role!: string;
 }
 
 export class SearchSchema {
   @IsString()
   @MinLength(1)
   @MaxLength(255)
-  query: string;
+  query!: string;
 
   @IsOptional()
   @IsString()
@@ -126,7 +143,7 @@ export class RatingSchema {
   @IsInt()
   @Min(1)
   @Max(5)
-  rating: number;
+  rating!: number;
 
   @IsOptional()
   @IsString()
@@ -136,7 +153,7 @@ export class RatingSchema {
 
 export class EnrollmentSchema {
   @IsUUID()
-  courseId: string;
+  courseId!: string;
 
   @IsOptional()
   @IsBoolean()
@@ -145,12 +162,12 @@ export class EnrollmentSchema {
 
 export class ProgressSchema {
   @IsUUID()
-  courseId: string;
+  courseId!: string;
 
   @IsInt()
   @Min(0)
   @Max(100)
-  percentage: number;
+  percentage!: number;
 
   @IsOptional()
   @IsString()
@@ -160,13 +177,13 @@ export class ProgressSchema {
 
 export class NotificationPreferenceSchema {
   @IsBoolean()
-  emailNotifications: boolean;
+  emailNotifications!: boolean;
 
   @IsBoolean()
-  pushNotifications: boolean;
+  pushNotifications!: boolean;
 
   @IsBoolean()
-  smsNotifications: boolean;
+  smsNotifications!: boolean;
 
   @IsOptional()
   @IsArray()
@@ -177,11 +194,11 @@ export class NotificationPreferenceSchema {
 export class WebhookSchema {
   @IsString()
   @Matches(/^https?:\/\/.+/, { message: 'Must be a valid URL' })
-  url: string;
+  url!: string;
 
   @IsArray()
   @IsString({ each: true })
-  events: string[];
+  events!: string[];
 
   @IsOptional()
   @IsBoolean()
@@ -191,11 +208,11 @@ export class WebhookSchema {
 export class BatchOperationSchema {
   @IsArray()
   @IsUUID('all', { each: true })
-  ids: string[];
+  ids!: string[];
 
   @IsString()
   @MaxLength(50)
-  action: string;
+  action!: string;
 
   @IsOptional()
   @IsString()
@@ -206,11 +223,11 @@ export class BatchOperationSchema {
 export class AuditLogSchema {
   @IsString()
   @MaxLength(100)
-  action: string;
+  action!: string;
 
   @IsString()
   @MaxLength(500)
-  description: string;
+  description!: string;
 
   @IsOptional()
   @IsString()
@@ -221,11 +238,11 @@ export class AuditLogSchema {
 export class StellarTransactionSchema {
   @IsString()
   @Matches(/^G[A-Z2-7]{55}$/, { message: 'Invalid Stellar public key' })
-  publicKey: string;
+  publicKey!: string;
 
   @IsNumber()
   @Min(0)
-  amount: number;
+  amount!: number;
 
   @IsOptional()
   @IsString()
@@ -237,24 +254,24 @@ export class KycSchema {
   @IsString()
   @MinLength(2)
   @MaxLength(100)
-  firstName: string;
+  firstName!: string;
 
   @IsString()
   @MinLength(2)
   @MaxLength(100)
-  lastName: string;
+  lastName!: string;
 
   @IsString()
   @Matches(/^\d{4}-\d{2}-\d{2}$/, { message: 'Date must be in YYYY-MM-DD format' })
-  dateOfBirth: string;
+  dateOfBirth!: string;
 
   @IsString()
   @MaxLength(50)
-  documentType: string;
+  documentType!: string;
 
   @IsString()
   @MaxLength(100)
-  documentNumber: string;
+  documentNumber!: string;
 }
 
 export class CouponSchema {
@@ -262,12 +279,12 @@ export class CouponSchema {
   @MinLength(3)
   @MaxLength(50)
   @Matches(/^[A-Z0-9-]+$/, { message: 'Coupon code must be uppercase alphanumeric with hyphens' })
-  code: string;
+  code!: string;
 
   @IsInt()
   @Min(0)
   @Max(100)
-  discountPercentage: number;
+  discountPercentage!: number;
 
   @IsOptional()
   @IsInt()
@@ -275,5 +292,5 @@ export class CouponSchema {
   maxUses?: number;
 
   @IsISO8601()
-  expiryDate: string;
+  expiryDate!: string;
 }

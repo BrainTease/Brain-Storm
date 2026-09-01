@@ -14,7 +14,7 @@ module.exports = {
   coverageReporters: ['text', 'lcov', 'html', 'json-summary'],
   coverageThreshold: {
     // certificates module should meet the 85 % target
-    'global': {
+    global: {
       lines: 70,
       functions: 70,
       branches: 60,

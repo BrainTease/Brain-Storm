@@ -14,7 +14,14 @@ import {
   Request,
 } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
-import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import { Response } from 'express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -33,11 +40,16 @@ export class ImportExportController {
 
   @Get(':id/export')
   @ApiOperation({ summary: 'Export a course as JSON or CSV' })
-  @ApiQuery({ name: 'format', required: false, enum: ['json', 'csv'], description: 'Output format for export' })
+  @ApiQuery({
+    name: 'format',
+    required: false,
+    enum: ['json', 'csv'],
+    description: 'Output format for export',
+  })
   async exportCourse(
     @Param('id') id: string,
     @Query('format') format: string = 'json',
-    @Res() res: Response,
+    @Res() res: Response
   ) {
     const normalized = (format || 'json').toLowerCase();
 
@@ -60,12 +72,11 @@ export class ImportExportController {
   @Post('import/json')
   @ApiOperation({ summary: 'Import a course from JSON file' })
   @ApiConsumes('multipart/form-data')
-  @ApiBody({ schema: { type: 'object', properties: { file: { type: 'string', format: 'binary' } } } })
+  @ApiBody({
+    schema: { type: 'object', properties: { file: { type: 'string', format: 'binary' } } },
+  })
   @UseInterceptors(FileInterceptor('file', { limits: { fileSize: MAX_FILE_SIZE } }))
-  importJson(
-    @UploadedFile() file: Express.Multer.File,
-    @Request() req: { user: { id: string } }
-  ) {
+  importJson(@UploadedFile() file: Express.Multer.File, @Request() req: { user: { id: string } }) {
     if (!file) throw new BadRequestException('No file uploaded');
     return this.service.importJson(file.buffer, req.user.id);
   }
@@ -73,20 +84,27 @@ export class ImportExportController {
   @Post('import/scorm')
   @ApiOperation({ summary: 'Import a course from SCORM 1.2 or 2004 ZIP package' })
   @ApiConsumes('multipart/form-data')
-  @ApiBody({ schema: { type: 'object', properties: { file: { type: 'string', format: 'binary' } } } })
+  @ApiBody({
+    schema: { type: 'object', properties: { file: { type: 'string', format: 'binary' } } },
+  })
   @UseInterceptors(FileInterceptor('file', { limits: { fileSize: MAX_FILE_SIZE } }))
-  importScorm(
-    @UploadedFile() file: Express.Multer.File,
-    @Request() req: { user: { id: string } }
-  ) {
+  importScorm(@UploadedFile() file: Express.Multer.File, @Request() req: { user: { id: string } }) {
     if (!file) throw new BadRequestException('No file uploaded');
     return this.service.importScorm(file.buffer, req.user.id);
   }
 
   @Post('import/bulk')
-  @ApiOperation({ summary: 'Bulk import multiple courses (JSON or SCORM ZIP). Returns a job ID for progress tracking.' })
+  @ApiOperation({
+    summary:
+      'Bulk import multiple courses (JSON or SCORM ZIP). Returns a job ID for progress tracking.',
+  })
   @ApiConsumes('multipart/form-data')
-  @ApiBody({ schema: { type: 'object', properties: { files: { type: 'array', items: { type: 'string', format: 'binary' } } } } })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: { files: { type: 'array', items: { type: 'string', format: 'binary' } } },
+    },
+  })
   @UseInterceptors(FilesInterceptor('files', 20, { limits: { fileSize: MAX_FILE_SIZE } }))
   bulkImport(
     @UploadedFiles() files: Express.Multer.File[],

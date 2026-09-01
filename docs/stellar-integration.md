@@ -69,9 +69,7 @@ GET /v1/stellar/balance/GABC...XYZ
 ```
 
 ```json
-[
-  { "balance": "9999.9999700", "asset_type": "native" }
-]
+[{ "balance": "9999.9999700", "asset_type": "native" }]
 ```
 
 ### Funding a Testnet Account (Friendbot)
@@ -134,7 +132,7 @@ async function stellarLogin(): Promise<string> {
   // 1. Request challenge from server
   const { transaction, network_passphrase } = await fetch(
     `/v1/auth/stellar?account=${publicKey}`
-  ).then(r => r.json());
+  ).then((r) => r.json());
 
   // 2. Sign with Freighter
   const { signedTxXdr } = await signTransaction(transaction, {
@@ -146,7 +144,7 @@ async function stellarLogin(): Promise<string> {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ transaction: signedTxXdr }),
-  }).then(r => r.json());
+  }).then((r) => r.json());
 
   return access_token;
 }
@@ -183,8 +181,12 @@ The Analytics contract's `record_progress` function stores a completion percenta
 
 ```typescript
 import {
-  TransactionBuilder, Operation, BASE_FEE,
-  SorobanRpc, Address, nativeToScVal,
+  TransactionBuilder,
+  Operation,
+  BASE_FEE,
+  SorobanRpc,
+  Address,
+  nativeToScVal,
 } from '@stellar/stellar-sdk';
 
 const tx = new TransactionBuilder(sourceAccount, {
@@ -261,24 +263,25 @@ Each entry's key encodes the course ID and the base64-decoded value is the stude
 
 ### Environment Variables
 
-| Variable | Testnet | Mainnet |
-|---|---|---|
-| `STELLAR_NETWORK` | `testnet` | `mainnet` |
-| `STELLAR_HORIZON_URL` | `https://horizon-testnet.stellar.org` | `https://horizon.stellar.org` |
-| `SOROBAN_RPC_URL` | `https://soroban-testnet.stellar.org` | `https://soroban.stellar.org` |
-| `STELLAR_SECRET_KEY` | Testnet keypair | Mainnet keypair (fund with real XLM) |
-| `ANALYTICS_CONTRACT_ID` | Testnet contract ID | Mainnet contract ID |
-| `TOKEN_CONTRACT_ID` | Testnet contract ID | Mainnet contract ID |
-| `STELLAR_WEB_AUTH_DOMAIN` | `localhost` | `api.brainstorm.app` |
+| Variable                  | Testnet                               | Mainnet                              |
+| ------------------------- | ------------------------------------- | ------------------------------------ |
+| `STELLAR_NETWORK`         | `testnet`                             | `mainnet`                            |
+| `STELLAR_HORIZON_URL`     | `https://horizon-testnet.stellar.org` | `https://horizon.stellar.org`        |
+| `SOROBAN_RPC_URL`         | `https://soroban-testnet.stellar.org` | `https://soroban.stellar.org`        |
+| `STELLAR_SECRET_KEY`      | Testnet keypair                       | Mainnet keypair (fund with real XLM) |
+| `ANALYTICS_CONTRACT_ID`   | Testnet contract ID                   | Mainnet contract ID                  |
+| `TOKEN_CONTRACT_ID`       | Testnet contract ID                   | Mainnet contract ID                  |
+| `STELLAR_WEB_AUTH_DOMAIN` | `localhost`                           | `api.brainstorm.app`                 |
 
 ### Network Passphrases
 
 ```typescript
 import { Networks } from '@stellar/stellar-sdk';
 
-const passphrase = STELLAR_NETWORK === 'mainnet'
-  ? Networks.PUBLIC          // 'Public Global Stellar Network ; September 2015'
-  : Networks.TESTNET;        // 'Test SDF Network ; September 2015'
+const passphrase =
+  STELLAR_NETWORK === 'mainnet'
+    ? Networks.PUBLIC // 'Public Global Stellar Network ; September 2015'
+    : Networks.TESTNET; // 'Test SDF Network ; September 2015'
 ```
 
 The backend selects the passphrase automatically based on `STELLAR_NETWORK`.
@@ -303,9 +306,7 @@ The frontend reads `NEXT_PUBLIC_STELLAR_NETWORK` to configure Freighter:
 
 ```typescript
 const networkPassphrase =
-  process.env.NEXT_PUBLIC_STELLAR_NETWORK === 'mainnet'
-    ? Networks.PUBLIC
-    : Networks.TESTNET;
+  process.env.NEXT_PUBLIC_STELLAR_NETWORK === 'mainnet' ? Networks.PUBLIC : Networks.TESTNET;
 ```
 
 ---
@@ -343,7 +344,8 @@ console.log(result.hash); // transaction hash — use as on-chain proof
 The `stellar-indexer.service.ts` polls for new transactions. You can also stream in real time:
 
 ```typescript
-server.transactions()
+server
+  .transactions()
   .forAccount(issuerPublicKey)
   .cursor('now')
   .stream({
@@ -373,11 +375,11 @@ GET /v1/stellar/network-status
 
 All Soroban contract calls use exponential backoff (up to 3 attempts):
 
-| Attempt | Delay |
-|---|---|
-| 1 | immediate |
-| 2 | 1 000 ms |
-| 3 | 2 000 ms |
+| Attempt | Delay     |
+| ------- | --------- |
+| 1       | immediate |
+| 2       | 1 000 ms  |
+| 3       | 2 000 ms  |
 
 If all attempts fail, the credential flow falls back to the Horizon `ManageData` path.
 

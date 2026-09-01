@@ -36,14 +36,14 @@ export class LeaderboardService {
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
     private readonly stellarService: StellarService,
-    private readonly cacheService: CacheService,
+    private readonly cacheService: CacheService
   ) {}
 
   async getTopUsers(): Promise<LeaderboardEntry[]> {
     return this.cacheService.getOrSet<LeaderboardEntry[]>(
       LEADERBOARD_TOP50_KEY,
       () => this.computeTopUsers(),
-      LEADERBOARD_CACHE_TTL,
+      LEADERBOARD_CACHE_TTL
     );
   }
 
@@ -53,16 +53,12 @@ export class LeaderboardService {
       order: { createdAt: 'DESC' },
     });
 
-    const walletUsers = users.filter(
-      (user) => Boolean(user.stellarPublicKey) && !user.deletedAt,
-    );
+    const walletUsers = users.filter((user) => Boolean(user.stellarPublicKey) && !user.deletedAt);
 
     const balances = await Promise.all(
       walletUsers.map(async (user) => {
         try {
-          const balance = await this.stellarService.getTokenBalance(
-            user.stellarPublicKey,
-          );
+          const balance = await this.stellarService.getTokenBalance(user.stellarPublicKey);
           return {
             userId: user.id,
             username: user.username ?? null,
@@ -79,7 +75,7 @@ export class LeaderboardService {
             balance: '0',
           };
         }
-      }),
+      })
     );
 
     return balances

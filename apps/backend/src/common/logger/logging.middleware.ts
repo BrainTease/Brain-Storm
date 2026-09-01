@@ -14,7 +14,7 @@ export class LoggingMiddleware implements NestMiddleware {
 
   use(req: Request, res: Response, next: NextFunction): void {
     // Generate request ID if not present
-    const requestId = req.headers['x-request-id'] as string || uuidv4();
+    const requestId = (req.headers['x-request-id'] as string) || uuidv4();
     req['requestId'] = requestId;
 
     // Capture start time
@@ -30,18 +30,11 @@ export class LoggingMiddleware implements NestMiddleware {
       const userId = req['user']?.id;
 
       // Log the request
-      this.logger.logRequest(
-        req.method,
-        req.path,
-        statusCode,
-        duration,
-        userId,
-        {
-          requestId,
-          query: req.query,
-          params: req.params,
-        },
-      );
+      this.logger.logRequest(req.method, req.path, statusCode, duration, userId, {
+        requestId,
+        query: req.query,
+        params: req.params,
+      });
 
       // Call original send
       return originalSend.call(this, data);
@@ -61,7 +54,7 @@ export class ErrorLoggingMiddleware implements NestMiddleware {
   constructor(private readonly loggerFactory: LoggerFactory) {}
 
   use(req: Request, res: Response, next: NextFunction): void {
-    const requestId = req['requestId'] || req.headers['x-request-id'] as string || '';
+    const requestId = req['requestId'] || (req.headers['x-request-id'] as string) || '';
     const startTime = Date.now();
 
     // Capture errors
@@ -69,14 +62,7 @@ export class ErrorLoggingMiddleware implements NestMiddleware {
       const duration = Date.now() - startTime;
       const userId = req['user']?.id;
 
-      this.logger.logRequestError(
-        req.method,
-        req.path,
-        error,
-        res.statusCode,
-        duration,
-        userId,
-      );
+      this.logger.logRequestError(req.method, req.path, error, res.statusCode, duration, userId);
     });
 
     next();

@@ -19,7 +19,10 @@ async function bootstrap() {
     const options = {
       includeReviews: process.argv.includes('--with-reviews'),
       includeTips: process.argv.includes('--with-tips'),
-      count: parseInt(process.argv.find(a => a.startsWith('--count='))?.split('=')[1] || '10', 10),
+      count: parseInt(
+        process.argv.find((a) => a.startsWith('--count='))?.split('=')[1] || '10',
+        10
+      ),
     };
 
     logger.log('🌱 Starting database seed...');

@@ -3,7 +3,12 @@ import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { ProtocolMetricsService } from './protocol-metrics.service';
 import { MetricInterval } from './protocol-metrics.entity';
 
-const VALID_METRICS = ['registrations', 'tip_volume', 'escrow_throughput', 'dispute_outcomes'] as const;
+const VALID_METRICS = [
+  'registrations',
+  'tip_volume',
+  'escrow_throughput',
+  'dispute_outcomes',
+] as const;
 type ValidMetric = (typeof VALID_METRICS)[number];
 
 @ApiTags('Protocol Metrics')
@@ -26,11 +31,15 @@ export class ProtocolMetricsController {
   @ApiQuery({ name: 'dimension', required: false, description: 'Asset code or outcome label' })
   async timeSeries(
     @Query('metric') metric: ValidMetric,
-    @Query('interval', new DefaultValuePipe('day'), new ParseEnumPipe(Object.fromEntries(['hour', 'day', 'week'].map((v) => [v, v]))))
+    @Query(
+      'interval',
+      new DefaultValuePipe('day'),
+      new ParseEnumPipe(Object.fromEntries(['hour', 'day', 'week'].map((v) => [v, v])))
+    )
     interval: MetricInterval,
     @Query('from') from?: string,
     @Query('to') to?: string,
-    @Query('dimension') dimension?: string,
+    @Query('dimension') dimension?: string
   ) {
     return this.svc.getTimeSeries({
       metric,

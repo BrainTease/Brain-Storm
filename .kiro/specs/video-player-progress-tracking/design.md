@@ -47,9 +47,9 @@ graph TD
 interface VideoPlayerProps {
   courseId: string;
   lessonId: string;
-  src: string;           // MP4 URL or HLS .m3u8 URL
+  src: string; // MP4 URL or HLS .m3u8 URL
   type?: 'video/mp4' | 'application/x-mpegURL';
-  poster?: string;       // Optional thumbnail
+  poster?: string; // Optional thumbnail
   captions?: CaptionTrack[];
   initialProgressPct?: number; // Restored from store on mount
   onComplete?: () => void;
@@ -64,6 +64,7 @@ interface CaptionTrack {
 ```
 
 **Responsibilities:**
+
 - Mount/destroy Plyr instance via `useRef` + `useEffect`
 - Render error state when `src` is absent
 - Render loading indicator while Plyr initialises
@@ -91,6 +92,7 @@ interface UseVideoProgressReturn {
 ```
 
 **Responsibilities:**
+
 - Compute `progressPct` from `currentTime / duration`
 - Debounce API calls to at most once per 10 seconds
 - Flush immediately on pause/unmount
@@ -104,7 +106,7 @@ interface UseVideoProgressReturn {
 
 ```typescript
 const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 2] as const;
-type PlaybackSpeed = typeof SPEED_OPTIONS[number];
+type PlaybackSpeed = (typeof SPEED_OPTIONS)[number];
 
 interface UsePlaybackSpeedReturn {
   speed: PlaybackSpeed;
@@ -124,8 +126,8 @@ Reads/writes `localStorage` key `videoPlayer.playbackSpeed`. Defaults to `1`.
 ```typescript
 // POST /progress
 interface RecordProgressDto {
-  courseId: string;   // UUID
-  lessonId?: string;  // UUID (optional per backend DTO)
+  courseId: string; // UUID
+  lessonId?: string; // UUID (optional per backend DTO)
   progressPct: number; // integer 0–100
 }
 ```
@@ -162,13 +164,13 @@ Value: "0.5" | "0.75" | "1" | "1.25" | "1.5" | "2"
 
 ## Correctness Properties
 
-*A property is a characteristic or behavior that should hold true across all valid executions of a system — essentially, a formal statement about what the system should do. Properties serve as the bridge between human-readable specifications and machine-verifiable correctness guarantees.*
+_A property is a characteristic or behavior that should hold true across all valid executions of a system — essentially, a formal statement about what the system should do. Properties serve as the bridge between human-readable specifications and machine-verifiable correctness guarantees._
 
 ---
 
 **Property 1: progressPct computation is correct for all valid inputs**
 
-*For any* `currentTime` in `[0, duration]` and `duration > 0`, `computeProgressPct(currentTime, duration)` must equal `Math.round(currentTime / duration * 100)` and be clamped to `[0, 100]`.
+_For any_ `currentTime` in `[0, duration]` and `duration > 0`, `computeProgressPct(currentTime, duration)` must equal `Math.round(currentTime / duration * 100)` and be clamped to `[0, 100]`.
 
 **Validates: Requirements 2.1**
 
@@ -176,7 +178,7 @@ Value: "0.5" | "0.75" | "1" | "1.25" | "1.5" | "2"
 
 **Property 2: Retry count is exactly 3 total attempts on persistent failure**
 
-*For any* progress update where the backend consistently returns a non-2xx response, the `ProgressTracker` SHALL make exactly 3 total API calls (1 initial + 2 retries) before giving up.
+_For any_ progress update where the backend consistently returns a non-2xx response, the `ProgressTracker` SHALL make exactly 3 total API calls (1 initial + 2 retries) before giving up.
 
 **Validates: Requirements 2.4**
 
@@ -184,7 +186,7 @@ Value: "0.5" | "0.75" | "1" | "1.25" | "1.5" | "2"
 
 **Property 3: Store is updated with latest progressPct after successful response**
 
-*For any* `progressPct` value in `[0, 100]`, after a successful `POST /progress` response, `useProgressStore.getState().progress[courseId]` SHALL contain an entry for `lessonId` with the matching `progressPct`.
+_For any_ `progressPct` value in `[0, 100]`, after a successful `POST /progress` response, `useProgressStore.getState().progress[courseId]` SHALL contain an entry for `lessonId` with the matching `progressPct`.
 
 **Validates: Requirements 2.5**
 
@@ -192,7 +194,7 @@ Value: "0.5" | "0.75" | "1" | "1.25" | "1.5" | "2"
 
 **Property 4: Initial seek position matches stored progressPct**
 
-*For any* stored `progressPct` in `[0, 100]` and video `duration > 0`, the VideoPlayer SHALL set `currentTime` to `(progressPct / 100) * duration` on mount.
+_For any_ stored `progressPct` in `[0, 100]` and video `duration > 0`, the VideoPlayer SHALL set `currentTime` to `(progressPct / 100) * duration` on mount.
 
 **Validates: Requirements 2.6**
 
@@ -200,7 +202,7 @@ Value: "0.5" | "0.75" | "1" | "1.25" | "1.5" | "2"
 
 **Property 5: Seek keyboard shortcuts clamp to valid range**
 
-*For any* `currentTime` in `[0, duration]`, pressing ArrowRight SHALL result in `min(duration, currentTime + 10)` and pressing ArrowLeft SHALL result in `max(0, currentTime - 10)`.
+_For any_ `currentTime` in `[0, duration]`, pressing ArrowRight SHALL result in `min(duration, currentTime + 10)` and pressing ArrowLeft SHALL result in `max(0, currentTime - 10)`.
 
 **Validates: Requirements 5.2, 5.3**
 
@@ -208,7 +210,7 @@ Value: "0.5" | "0.75" | "1" | "1.25" | "1.5" | "2"
 
 **Property 6: Volume keyboard shortcuts clamp to [0, 1]**
 
-*For any* `volume` in `[0, 1]`, pressing ArrowUp SHALL result in `min(1, volume + 0.1)` (rounded to 1 decimal) and pressing ArrowDown SHALL result in `max(0, volume - 0.1)`.
+_For any_ `volume` in `[0, 1]`, pressing ArrowUp SHALL result in `min(1, volume + 0.1)` (rounded to 1 decimal) and pressing ArrowDown SHALL result in `max(0, volume - 0.1)`.
 
 **Validates: Requirements 5.4, 5.5**
 
@@ -216,7 +218,7 @@ Value: "0.5" | "0.75" | "1" | "1.25" | "1.5" | "2"
 
 **Property 7: Playback speed localStorage round-trip**
 
-*For any* speed in `{0.5, 0.75, 1, 1.25, 1.5, 2}`, setting the speed SHALL persist it to `localStorage["videoPlayer.playbackSpeed"]`, and a subsequent mount SHALL restore that exact speed.
+_For any_ speed in `{0.5, 0.75, 1, 1.25, 1.5, 2}`, setting the speed SHALL persist it to `localStorage["videoPlayer.playbackSpeed"]`, and a subsequent mount SHALL restore that exact speed.
 
 **Validates: Requirements 3.4, 3.5**
 
@@ -224,7 +226,7 @@ Value: "0.5" | "0.75" | "1" | "1.25" | "1.5" | "2"
 
 **Property 8: All interactive controls have ARIA labels**
 
-*For any* rendered `VideoPlayer`, every interactive element (buttons, sliders) SHALL have a non-empty `aria-label` or `aria-labelledby` attribute.
+_For any_ rendered `VideoPlayer`, every interactive element (buttons, sliders) SHALL have a non-empty `aria-label` or `aria-labelledby` attribute.
 
 **Validates: Requirements 6.1**
 
@@ -232,7 +234,7 @@ Value: "0.5" | "0.75" | "1" | "1.25" | "1.5" | "2"
 
 **Property 9: Invalid video URL always shows error state**
 
-*For any* string that is not a valid HTTP/HTTPS URL (empty string, null-ish, malformed), the VideoPlayer SHALL render an element with `role="alert"` containing a non-empty error message.
+_For any_ string that is not a valid HTTP/HTTPS URL (empty string, null-ish, malformed), the VideoPlayer SHALL render an element with `role="alert"` containing a non-empty error message.
 
 **Validates: Requirements 1.2**
 
@@ -240,14 +242,14 @@ Value: "0.5" | "0.75" | "1" | "1.25" | "1.5" | "2"
 
 ## Error Handling
 
-| Scenario | Behaviour |
-|---|---|
-| `src` is empty or missing | Render error message; do not mount Plyr |
-| Plyr fails to load source | Plyr's native `error` event triggers error state |
-| `POST /progress` returns non-2xx | Retry up to 2 times; silently fail after 3rd attempt |
-| `requestPictureInPicture()` throws | Catch and log; do not crash the player |
-| `localStorage` read/write throws | Catch and fall back to default speed (1×) |
-| `duration` is 0 or NaN | Skip progress computation; do not send API call |
+| Scenario                           | Behaviour                                            |
+| ---------------------------------- | ---------------------------------------------------- |
+| `src` is empty or missing          | Render error message; do not mount Plyr              |
+| Plyr fails to load source          | Plyr's native `error` event triggers error state     |
+| `POST /progress` returns non-2xx   | Retry up to 2 times; silently fail after 3rd attempt |
+| `requestPictureInPicture()` throws | Catch and log; do not crash the player               |
+| `localStorage` read/write throws   | Catch and fall back to default speed (1×)            |
+| `duration` is 0 or NaN             | Skip progress computation; do not send API call      |
 
 ---
 
@@ -277,14 +279,14 @@ Focus on specific examples, edge cases, and integration points:
 
 Each property test is tagged with the format: **Feature: video-player-progress-tracking, Property N: {property_text}**
 
-| Property | Test description |
-|---|---|
-| Property 1 | `fc.float` for currentTime/duration → verify formula |
-| Property 2 | Mock API to always fail → assert call count === 3 |
-| Property 3 | `fc.integer({min:0, max:100})` for progressPct → assert store updated |
+| Property   | Test description                                                                                |
+| ---------- | ----------------------------------------------------------------------------------------------- |
+| Property 1 | `fc.float` for currentTime/duration → verify formula                                            |
+| Property 2 | Mock API to always fail → assert call count === 3                                               |
+| Property 3 | `fc.integer({min:0, max:100})` for progressPct → assert store updated                           |
 | Property 4 | `fc.integer({min:0, max:100})` for progressPct + `fc.float` for duration → assert seek position |
-| Property 5 | `fc.float` for currentTime/duration → assert clamped seek result |
-| Property 6 | `fc.float({min:0, max:1})` for volume → assert clamped volume result |
-| Property 7 | `fc.constantFrom(...SPEED_OPTIONS)` → assert localStorage round-trip |
-| Property 8 | Render VideoPlayer → assert all interactive elements have aria-label |
-| Property 9 | `fc.string()` filtered to invalid URLs → assert error state rendered |
+| Property 5 | `fc.float` for currentTime/duration → assert clamped seek result                                |
+| Property 6 | `fc.float({min:0, max:1})` for volume → assert clamped volume result                            |
+| Property 7 | `fc.constantFrom(...SPEED_OPTIONS)` → assert localStorage round-trip                            |
+| Property 8 | Render VideoPlayer → assert all interactive elements have aria-label                            |
+| Property 9 | `fc.string()` filtered to invalid URLs → assert error state rendered                            |

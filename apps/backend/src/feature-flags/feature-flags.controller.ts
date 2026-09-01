@@ -10,7 +10,7 @@ import { FeatureFlag } from './feature-flag.entity';
 export class FeatureFlagsController {
   constructor(
     private readonly service: FeatureFlagsService,
-    private readonly exposure: FlagExposureLogger,
+    private readonly exposure: FlagExposureLogger
   ) {}
 
   /** Evaluate a single flag (for frontend/backend consumption) */

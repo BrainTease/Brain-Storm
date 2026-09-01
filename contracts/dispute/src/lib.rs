@@ -12,7 +12,7 @@ use soroban_sdk::{
     contract, contractimpl, contracttype, symbol_short, Address, BytesN, Env, Symbol,
 };
 
-use brain_storm_shared::access;
+use brain_storm_shared::{access, events::emit_contract_event};
 
 // ── Storage keys ──────────────────────────────────────────────────────────────
 
@@ -58,10 +58,11 @@ pub struct Dispute {
 }
 
 // ── Events ────────────────────────────────────────────────────────────────────
-const EVT_OPENED: Symbol = symbol_short!("d_open");
-const EVT_EVIDENCE: Symbol = symbol_short!("d_evid");
-const EVT_DECISION: Symbol = symbol_short!("d_dec");
-const EVT_SETTLED: Symbol = symbol_short!("d_settl");
+const EVT_DOMAIN: Symbol = symbol_short!("dispute");
+const EVT_OPENED: Symbol = symbol_short!("opened");
+const EVT_EVIDENCE: Symbol = symbol_short!("evidence");
+const EVT_DECISION: Symbol = symbol_short!("decision");
+const EVT_SETTLED: Symbol = symbol_short!("settled");
 
 #[contract]
 pub struct DisputeContract;
@@ -114,7 +115,7 @@ impl DisputeContract {
 
         env.storage().persistent().set(&DataKey::Dispute(id), &dispute);
         env.storage().instance().set(&DataKey::NextId, &(id + 1));
-        env.events().publish((EVT_OPENED,), (id, claimant, amount));
+        emit_contract_event(&env, EVT_DOMAIN, EVT_OPENED, (claimant.clone(), id, amount));
         id
     }
 
@@ -137,10 +138,10 @@ impl DisputeContract {
             "Only parties may submit evidence"
         );
 
-        dispute.evidence_hash = hash;
+        dispute.evidence_hash = hash.clone();
         dispute.status = DisputeStatus::Evidence;
         env.storage().persistent().set(&DataKey::Dispute(dispute_id), &dispute);
-        env.events().publish((EVT_EVIDENCE,), (dispute_id, caller));
+        emit_contract_event(&env, EVT_DOMAIN, EVT_EVIDENCE, (caller.clone(), dispute_id, hash));
     }
 
     /// Arbiter records their decision (moves to Decision phase).
@@ -166,7 +167,7 @@ impl DisputeContract {
         dispute.outcome = outcome.clone();
         dispute.status = DisputeStatus::Decision;
         env.storage().persistent().set(&DataKey::Dispute(dispute_id), &dispute);
-        env.events().publish((EVT_DECISION,), (dispute_id, arbiter));
+        emit_contract_event(&env, EVT_DOMAIN, EVT_DECISION, (arbiter.clone(), dispute_id, outcome));
     }
 
     /// Enforce settlement: compute payouts based on outcome, mark as Settled.
@@ -194,8 +195,12 @@ impl DisputeContract {
 
         dispute.status = DisputeStatus::Settled;
         env.storage().persistent().set(&DataKey::Dispute(dispute_id), &dispute);
-        env.events()
-            .publish((EVT_SETTLED,), (dispute_id, claimant_amt, respondent_amt));
+        emit_contract_event(
+            &env,
+            EVT_DOMAIN,
+            EVT_SETTLED,
+            (arbiter.clone(), dispute_id, (claimant_amt, respondent_amt)),
+        );
         (claimant_amt, respondent_amt)
     }
 
@@ -203,28 +208,7 @@ impl DisputeContract {
         env.storage().persistent().get(&DataKey::Dispute(dispute_id))
     }
 
-    // ── Internal helpers ──────────────────────────────────────────────────────
-
-    /// Verifies admin authorization (used for admin-only operations).
-    /// Extracted helper to ensure consistent authorization checks across the contract.
-    fn require_admin(env: &Env, caller: &Address) {
-        caller.require_auth();
-        let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        assert!(caller == &stored_admin, "Only admin can perform this action");
-    }
-
-    /// Verifies arbiter authorization (used for arbiter-only operations).
-    /// Extracted helper to ensure consistent authorization checks and prevent unauthorized state transitions.
-    fn require_arbiter(env: &Env, caller: &Address) {
-        caller.require_auth();
-        let stored_arbiter: Address = env.storage().instance().get(&DataKey::Arbiter).unwrap();
-        assert!(
-            caller == &stored_arbiter,
-            "Only arbiter can perform this action"
-        );
-    }
-
-    /// Validates that a dispute has not already been settled.
+    // ── Internal helpers ──────────────────────────────────────────────
     /// Prevents unauthorized state transitions on settled disputes.
     fn assert_not_settled(dispute: &Dispute) {
         assert!(
@@ -235,6 +219,9 @@ impl DisputeContract {
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
+
+#[cfg(test)]
+mod tests_extra;
 
 #[cfg(test)]
 mod tests {
@@ -250,6 +237,24 @@ mod tests {
         let arbiter = Address::generate(&env);
         client.initialize(&admin, &arbiter);
         (env, client, admin, arbiter)
+    }
+
+    #[test]
+    fn test_dispute_events_follow_shared_contract_convention() {
+        let (env, client, _, arbiter) = setup();
+        let claimant = Address::generate(&env);
+        let respondent = Address::generate(&env);
+        let id = client.open_dispute(&claimant, &respondent, &1000);
+        let hash = BytesN::from_array(&env, &[7u8; 32]);
+        client.submit_evidence(&claimant, &id, &hash);
+        client.record_decision(&arbiter, &id, &Outcome::FavourClaimant);
+
+        let events = env.events().all();
+        assert!(events.len() >= 3);
+        let last_event = events.get(events.len() - 1).unwrap();
+        let topics = last_event.1;
+        assert_eq!(soroban_sdk::Symbol::from_val(&env, &topics.get(0).unwrap()), symbol_short!("dispute"));
+        assert_eq!(soroban_sdk::Symbol::from_val(&env, &topics.get(1).unwrap()), symbol_short!("decision"));
     }
 
     #[test]

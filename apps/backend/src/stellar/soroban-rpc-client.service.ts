@@ -13,6 +13,7 @@
  *    simulateContract).
  *  • Own the retry-with-backoff logic for RPC calls.
  *  • Hold all Soroban-specific configuration (RPC URL, contract IDs).
+ *  • Wrap RPC calls with circuit breakers to prevent cascading failures.
  *
  * What it does NOT do
  * ───────────────────
@@ -21,7 +22,7 @@
  *  • It does NOT perform cache management.
  */
 
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   Keypair,
@@ -33,12 +34,15 @@ import {
   nativeToScVal,
   Address,
 } from '@stellar/stellar-sdk';
+import { decodeBigIntValue } from './soroban-xdr.utils';
+import { CircuitBreaker, CircuitBreakerFactory } from './circuit-breaker';
+import { StellarClientFactory } from './stellar-client.factory';
 
 const MAX_RETRIES = 3;
 const BASE_DELAY_MS = 1_000;
 
 @Injectable()
-export class SorobanRpcClientService {
+export class SorobanRpcClientService implements OnModuleInit {
   private readonly logger = new Logger(SorobanRpcClientService.name);
 
   readonly server: rpc.Server;
@@ -47,22 +51,26 @@ export class SorobanRpcClientService {
   readonly tokenContractId: string;
   readonly contractId: string;
 
-  constructor(private readonly configService: ConfigService) {
-    const isTestnet =
-      this.configService.get<string>('stellar.network') !== 'mainnet';
+  private circuitBreakerFactory = new CircuitBreakerFactory();
+  private circuitBreakers = new Map<string, CircuitBreaker<any>>();
 
-    this.networkPassphrase = isTestnet ? Networks.TESTNET : Networks.PUBLIC;
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly clientFactory: StellarClientFactory
+  ) {
+    // Use centralized client factory instead of creating new instance
+    this.server = this.clientFactory.getSorobanClient();
+    this.networkPassphrase = this.clientFactory.getNetworkPassphrase();
 
     const rpcUrl =
       this.configService.get<string>('stellar.sorobanRpcUrl') ?? '';
     this.server = new rpc.Server(rpcUrl);
 
-    this.contractId =
-      this.configService.get<string>('stellar.contractId') ?? '';
-    this.analyticsContractId =
-      this.configService.get<string>('stellar.analyticsContractId') ?? '';
-    this.tokenContractId =
-      this.configService.get<string>('stellar.tokenContractId') ?? '';
+    this.logger.log('SorobanRpcClientService initialized using StellarClientFactory');
+  }
+
+  onModuleInit() {
+    this.logger.log('Initializing circuit breakers for Soroban RPC');
   }
 
   // ── Account ───────────────────────────────────────────────────────────────
@@ -72,7 +80,9 @@ export class SorobanRpcClientService {
    * Wraps `rpc.Server.getAccount`.
    */
   async getAccount(publicKey: string): Promise<any> {
-    return this.server.getAccount(publicKey);
+    return this.withCircuitBreaker('soroban-getAccount', () =>
+      this.retryWithBackoff(() => this.server.getAccount(publicKey))
+    );
   }
 
   // ── Contract invocation ───────────────────────────────────────────────────
@@ -81,21 +91,18 @@ export class SorobanRpcClientService {
    * Build, prepare, sign, and submit a contract-invocation transaction.
    * Returns the submitted transaction hash.
    *
-   * Uses retryWithBackoff so transient RPC errors are handled transparently.
+   * Uses circuit breaker and retryWithBackoff so transient RPC errors are handled transparently.
    */
-  async invokeContract(
-    contractId: string,
-    method: string,
-    args: any[],
-  ): Promise<string> {
-    return this.retryWithBackoff(() =>
-      this.invokeContractOnce(contractId, method, args),
+  async invokeContract(contractId: string, method: string, args: any[]): Promise<string> {
+    return this.withCircuitBreaker('soroban-sendTransaction', () =>
+      this.retryWithBackoff(() => this.invokeContractOnce(contractId, method, args))
     );
   }
 
   /**
    * Simulate a read-only contract call without submitting a transaction.
    * Throws if the simulation returns an error.
+   * Wraps the call with circuit breaker and retry logic.
    */
   async simulateContract(
     contractId: string,
@@ -114,7 +121,7 @@ export class SorobanRpcClientService {
           contract: contractId,
           function: method,
           args,
-        }),
+        })
       )
       .setTimeout(30)
       .build();
@@ -138,17 +145,13 @@ export class SorobanRpcClientService {
   async recordProgress(
     studentPublicKey: string,
     courseId: string,
-    progressPct: number,
+    progressPct: number
   ): Promise<string> {
-    return this.invokeContract(
-      this.analyticsContractId || this.contractId,
-      'record_progress',
-      [
-        new Address(studentPublicKey).toScVal(),
-        nativeToScVal(courseId, { type: 'symbol' }),
-        nativeToScVal(progressPct, { type: 'i32' }),
-      ],
-    );
+    return this.invokeContract(this.analyticsContractId || this.contractId, 'record_progress', [
+      new Address(studentPublicKey).toScVal(),
+      nativeToScVal(courseId, { type: 'symbol' }),
+      nativeToScVal(progressPct, { type: 'i32' }),
+    ]);
   }
 
   /**
@@ -163,19 +166,13 @@ export class SorobanRpcClientService {
       new Address(stellarPublicKey).toScVal(),
     ]);
 
-    const retVal = simResult.result?.retval;
-    return retVal
-      ? BigInt(retVal.value() as unknown as bigint).toString()
-      : '0';
+    return decodeBigIntValue(simResult);
   }
 
   /**
    * Mint reward tokens to a recipient via the Token contract.
    */
-  async mintReward(
-    recipientPublicKey: string,
-    amount: number,
-  ): Promise<string> {
+  async mintReward(recipientPublicKey: string, amount: number): Promise<string> {
     if (!this.tokenContractId) {
       throw new Error('TOKEN_CONTRACT_ID not configured');
     }
@@ -190,7 +187,7 @@ export class SorobanRpcClientService {
   private async invokeContractOnce(
     contractId: string,
     method: string,
-    args: any[],
+    args: any[]
   ): Promise<string> {
     const issuerKeypair = this.getIssuerKeypair();
     const source = await this.server.getAccount(issuerKeypair.publicKey());
@@ -204,7 +201,7 @@ export class SorobanRpcClientService {
           contract: contractId,
           function: method,
           args,
-        }),
+        })
       )
       .setTimeout(30)
       .build();
@@ -216,18 +213,14 @@ export class SorobanRpcClientService {
     return result.hash;
   }
 
-  private async retryWithBackoff<T>(
-    fn: () => Promise<T>,
-    attempt = 1,
-  ): Promise<T> {
+  private async retryWithBackoff<T>(fn: () => Promise<T>, attempt = 1): Promise<T> {
     try {
       return await fn();
-    } catch (error) {
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : String(error);
       if (attempt >= MAX_RETRIES) throw error;
       const delay = BASE_DELAY_MS * Math.pow(2, attempt - 1);
-      this.logger.warn(
-        `Soroban RPC attempt ${attempt} failed (${error.message}), retrying in ${delay}ms`,
-      );
+      this.logger.warn(`Soroban RPC attempt ${attempt} failed (${errMsg}), retrying in ${delay}ms`);
       await new Promise((r) => setTimeout(r, delay));
       return this.retryWithBackoff(fn, attempt + 1);
     }
@@ -236,5 +229,26 @@ export class SorobanRpcClientService {
   private getIssuerKeypair(): Keypair {
     const secret = this.configService.get<string>('stellar.secretKey') ?? '';
     return Keypair.fromSecret(secret);
+  }
+
+  private async withCircuitBreaker<T>(
+    name: string,
+    fn: () => Promise<T>
+  ): Promise<T> {
+    let breaker = this.circuitBreakers.get(name);
+    if (!breaker) {
+      breaker = this.circuitBreakerFactory.create(
+        name,
+        fn,
+        () => {
+          throw new Error(
+            `Circuit breaker open: Soroban RPC ${name} unavailable. Service may be recovering.`
+          );
+        },
+        { failureThreshold: 5, successThreshold: 2, resetTimeout: 60000 }
+      );
+      this.circuitBreakers.set(name, breaker);
+    }
+    return breaker.call();
   }
 }

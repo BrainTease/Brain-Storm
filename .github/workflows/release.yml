@@ -126,7 +126,7 @@ jobs:
         run: |
           VERSION="${{ needs.release-please.outputs.version }}"
           DATE=$(date -u +'%Y-%m-%d')
-          
+
           # Create changelog entry
           {
             echo "## [$VERSION] - $DATE"
@@ -135,7 +135,7 @@ jobs:
             echo ""
             cat CHANGELOG.md 2>/dev/null || true
           } > CHANGELOG.md.tmp
-          
+
           mv CHANGELOG.md.tmp CHANGELOG.md
 
       - name: Commit changelog
@@ -157,19 +157,18 @@ jobs:
           script: |
             const version = '${{ needs.release-please.outputs.version }}';
             const tagName = '${{ needs.release-please.outputs.tag_name }}';
-            
+
             const message = `🚀 **Release $${version} Published**
-            
+
             **Docker Images:**
             - Backend: \`ghcr.io/${{ github.repository }}/backend:$${version}\`
             - Frontend: \`ghcr.io/${{ github.repository }}/frontend:$${version}\`
-            
+
             **Release Notes:**
             https://github.com/${{ github.repository }}/releases/tag/$${tagName}
-            
+
             **Changelog:**
             https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md`;
-            
+
             // Create discussion or comment
             console.log(message);
-

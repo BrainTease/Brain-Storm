@@ -18,8 +18,8 @@ test.describe('Profile Page - Visual Regression', () => {
       mask: [
         page.locator('[data-testid="user-avatar"]'),
         page.locator('[data-testid="email"]'),
-        page.locator('[data-testid="username"]')
-      ]
+        page.locator('[data-testid="username"]'),
+      ],
     });
   });
 
@@ -29,14 +29,14 @@ test.describe('Profile Page - Visual Regression', () => {
       await themeToggle.click();
       await page.waitForTimeout(500);
     }
-    
+
     await expect(page).toHaveScreenshot('profile-dark.png', {
       fullPage: true,
       mask: [
         page.locator('[data-testid="user-avatar"]'),
         page.locator('[data-testid="email"]'),
-        page.locator('[data-testid="username"]')
-      ]
+        page.locator('[data-testid="username"]'),
+      ],
     });
   });
 
@@ -44,22 +44,24 @@ test.describe('Profile Page - Visual Regression', () => {
     await page.setViewportSize({ width: 375, height: 667 });
     await page.reload();
     await page.waitForLoadState('networkidle');
-    
+
     await expect(page).toHaveScreenshot('profile-mobile.png', {
       fullPage: true,
-      mask: [page.locator('[data-testid="user-avatar"]')]
+      mask: [page.locator('[data-testid="user-avatar"]')],
     });
   });
 
   test('profile edit mode', async ({ page }) => {
-    const editButton = page.locator('[data-testid="edit-profile"], button:has-text("Edit")').first();
+    const editButton = page
+      .locator('[data-testid="edit-profile"], button:has-text("Edit")')
+      .first();
     if (await editButton.isVisible()) {
       await editButton.click();
       await page.waitForTimeout(300);
-      
+
       await expect(page).toHaveScreenshot('profile-edit-mode.png', {
         fullPage: true,
-        mask: [page.locator('[data-testid="user-avatar"]')]
+        mask: [page.locator('[data-testid="user-avatar"]')],
       });
     }
   });

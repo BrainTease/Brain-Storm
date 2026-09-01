@@ -33,15 +33,19 @@
     }
   },
   "credentials": {
-    "title": "My Credentials",
-    "subtitle": "Verifiable on-chain certificates earned by completing courses.",
+    "title": "My Credentials & NFTs",
+    "subtitle": "Verifiable on-chain certificates and NFT credentials earned by completing courses.",
     "loading": "Loading credentials…",
     "empty": "No credentials yet. Complete a course to earn your first certificate!",
+    "emptyNft": "Complete a course to earn your first verifiable on-chain NFT certificate!",
+    "emptyNftTitle": "No credentials yet",
     "issued": "Issued: {date}",
     "tx": "Tx: {hash}",
     "verify": "Verify on Stellar ↗",
     "share": "Share 🔗",
-    "completed": "Completed"
+    "completed": "Completed",
+    "defaultDescription": "Official on-chain verified course certificate.",
+    "defaultStudentName": "Student"
   },
   "profile": {
     "loading": "Loading…",
@@ -176,6 +180,41 @@
       "completionRate": "Completion rate",
       "totalPoints": "Total points earned"
     }
+  },
+  "dashboard": {
+    "enrolledCourses": "Enrolled Courses",
+    "recentCredentials": "Recent Credentials",
+    "noCoursesYet": "You have not enrolled in any courses yet.",
+    "noCredentialsYet": "You have not earned any credentials yet.",
+    "loadError": "Unable to load dashboard information. Please refresh.",
+    "completed": "🏆 Completed",
+    "percentComplete": "{value}% complete"
+  },
+  "admin": {
+    "title": "Admin Dashboard",
+    "export": "Export CSV",
+    "exporting": "Exporting...",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "metrics": {
+      "totalUsers": "Total Users",
+      "activeWorkers": "Active Workers",
+      "tipVolume": "Tip Volume",
+      "disputeRate": "Dispute Rate",
+      "totalCourses": "Total Courses",
+      "totalEnrollments": "Total Enrollments",
+      "completions": "Completions",
+      "completionRate": "Completion Rate",
+      "avgRating": "Avg Rating",
+      "newUsers30d": "New Users (30d)"
+    },
+    "subtitles": {
+      "platformUsers": "Platform users",
+      "last30Days": "Last 30 days",
+      "inPeriod": "In period",
+      "ofTransactions": "Of transactions"
+    },
+    "loadFailed": "Failed to load dashboard metrics"
   },
   "forms": {
     "required": "This field is required",

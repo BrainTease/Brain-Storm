@@ -4,7 +4,7 @@ import { Repository, Between } from 'typeorm';
 import { Payout } from './payout.entity';
 import { Enrollment } from '../enrollments/enrollment.entity';
 import { Course } from '../courses/course.entity';
-import { ConfigService } from '@nestjs/config';
+import { RoyaltyCalculationService } from './royalty-calculation.service';
 
 @Injectable()
 export class PayoutsService {
@@ -12,17 +12,15 @@ export class PayoutsService {
 
   constructor(
     @InjectRepository(Payout)
-    private payoutsRepository: Repository<Payout>,
+    private readonly payoutsRepository: Repository<Payout>,
     @InjectRepository(Enrollment)
-    private enrollmentsRepository: Repository<Enrollment>,
+    private readonly enrollmentsRepository: Repository<Enrollment>,
     @InjectRepository(Course)
-    private coursesRepository: Repository<Course>,
-    private configService: ConfigService,
+    private readonly coursesRepository: Repository<Course>,
+    private readonly royaltyCalculationService: RoyaltyCalculationService
   ) {}
 
   async calculatePayouts(startDate: Date, endDate: Date): Promise<Payout[]> {
-    const platformFeePercent = this.configService.get<number>('PLATFORM_FEE_PERCENT', 20);
-
     const courses = await this.coursesRepository.find({
       where: { instructorId: null },
       relations: ['instructor'],
@@ -42,17 +40,20 @@ export class PayoutsService {
 
       if (completions === 0) continue;
 
-      const coursePrice = this.configService.get<number>(`COURSE_PRICE_${course.id}`, 0);
-      const totalRevenue = completions * coursePrice;
-      const platformFee = (totalRevenue * platformFeePercent) / 100;
-      const instructorShare = totalRevenue - platformFee;
+      const coursePrice = this.royaltyCalculationService.getCoursePrice(course.id);
+      const result = this.royaltyCalculationService.calculate({
+        completions,
+        coursePrice,
+        courseId: course.id,
+        instructorId: course.instructor.id,
+      });
 
       const payout = this.payoutsRepository.create({
-        instructorId: course.instructor.id,
-        courseId: course.id,
-        totalRevenue,
-        platformFee,
-        instructorShare,
+        instructorId: result.instructorId,
+        courseId: result.courseId,
+        totalRevenue: result.totalRevenue,
+        platformFee: result.platformFee,
+        instructorShare: result.instructorShare,
         status: 'pending',
         payoutDate: new Date(),
       });
@@ -76,10 +77,12 @@ export class PayoutsService {
     try {
       payout.status = 'processed';
       payout.transactionId = `TXN-${Date.now()}`;
-      this.logger.log(`Payout processed for instructor ${payout.instructor.email}: $${payout.instructorShare}`);
-    } catch (error) {
+      this.logger.log(
+        `Payout processed for instructor ${payout.instructor.email}: $${payout.instructorShare}`
+      );
+    } catch (error: unknown) {
       payout.status = 'failed';
-      this.logger.error(`Payout failed: ${error.message}`);
+      this.logger.error(`Payout failed: ${error instanceof Error ? error.message : String(error)}`);
     }
 
     return this.payoutsRepository.save(payout);
@@ -98,9 +101,7 @@ export class PayoutsService {
     pendingPayouts: number;
     processedPayouts: number;
   }> {
-    const payouts = await this.payoutsRepository.find({
-      where: { instructorId },
-    });
+    const payouts = await this.payoutsRepository.find({ where: { instructorId } });
 
     const totalEarnings = payouts.reduce((sum, p) => sum + Number(p.instructorShare), 0);
     const pendingPayouts = payouts.filter((p) => p.status === 'pending').length;

@@ -45,7 +45,6 @@ export * from './api.types';
 export * from './auth.types';
 export * from './common.types';
 export * from './course.types';
-export * from './dto.types';
 export * from './enrollment.types';
 export * from './error.types';
 export * from './exercise.types';

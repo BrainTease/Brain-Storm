@@ -26,13 +26,21 @@ export function VerificationCodeInput({
   className = '',
 }: VerificationCodeInputProps) {
   const [digits, setDigits] = useState<string[]>(() =>
-    (value ?? '').padEnd(length, ' ').slice(0, length).split('').map((c) => (c === ' ' ? '' : c)),
+    (value ?? '')
+      .padEnd(length, ' ')
+      .slice(0, length)
+      .split('')
+      .map((c) => (c === ' ' ? '' : c))
   );
   const inputRefs = useRef<Array<HTMLInputElement | null>>([]);
 
   useEffect(() => {
     if (value !== undefined) {
-      const next = value.padEnd(length, ' ').slice(0, length).split('').map((c) => (c === ' ' ? '' : c));
+      const next = value
+        .padEnd(length, ' ')
+        .slice(0, length)
+        .split('')
+        .map((c) => (c === ' ' ? '' : c));
       setDigits(next);
     }
   }, [value, length]);
@@ -49,7 +57,7 @@ export function VerificationCodeInput({
         onComplete?.(code);
       }
     },
-    [length, onChange, onComplete],
+    [length, onChange, onComplete]
   );
 
   const handleChange = (i: number, raw: string) => {

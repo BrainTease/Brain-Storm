@@ -4,8 +4,7 @@ import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { HttpExceptionFilter } from './common/filters/http-exception.filter';
-import { ValidationExceptionFilter } from './common/filters/validation-exception.filter';
+import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import { SanitizationPipe } from './common/pipes/sanitization.pipe';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
@@ -32,7 +31,11 @@ async function bootstrap() {
   // This alone cuts JSON list-endpoint payloads by ~65–75 %.
   app.use(compression({ threshold: 1024 }));
 
-  app.use('/v0', (req, res) => {
+  import { Request, Response } from 'express';
+
+  // ... (later in the file)
+
+  app.use('/v0', (req: Request, res: Response) => {
     res.status(410).json({
       message: 'The /v0 API is deprecated. Please migrate to /v1.',
       migrationGuide: '/api/docs#versioning',
@@ -42,12 +45,14 @@ async function bootstrap() {
 
   app.setGlobalPrefix('v1');
   app.useGlobalPipes(new ValidationPipe({ whitelist: true }), new SanitizationPipe());
-  app.useGlobalFilters(new HttpExceptionFilter(), new ValidationExceptionFilter());
+  // #799: Single unified exception filter — replaces HttpExceptionFilter +
+  // ValidationExceptionFilter + ErrorHandlingMiddleware (all had inconsistent shapes).
+  app.useGlobalFilters(new GlobalExceptionFilter());
   app.useGlobalInterceptors(
     new TransformInterceptor(),
     new MetricsInterceptor(app.get(MetricsService)),
     // #709: trim response to ?fields= requested keys (reduces payload by up to 85 %)
-    new SparseFieldsInterceptor(),
+    new SparseFieldsInterceptor()
   );
 
   const corsOrigins = configService.get<string[]>('cors.origins') || ['http://localhost:3001'];
@@ -114,7 +119,7 @@ async function bootstrap() {
   SwaggerModule.setup('api/docs', app, document);
 
   // Export OpenAPI spec for static hosting
-  if (process.env.EXPORT_OPENAPI === 'true' || process.argv.includes('--export-openapi')) {
+  if (configService.get<boolean>('exportOpenapi') || process.argv.includes('--export-openapi')) {
     const outputPath = join(__dirname, '..', 'openapi.json');
     writeFileSync(outputPath, JSON.stringify(document, null, 2));
     logger.log(`OpenAPI spec exported to ${outputPath}`);

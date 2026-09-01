@@ -6,7 +6,10 @@ import { DataLoaderProvider } from '../dataloader.provider';
 
 @Resolver('Course')
 export class CourseResolver {
-  constructor(private coursesService: CoursesService, private loaders: DataLoaderProvider) {}
+  constructor(
+    private coursesService: CoursesService,
+    private loaders: DataLoaderProvider
+  ) {}
 
   @Query()
   @UseGuards(GqlAuthGuard)
@@ -18,7 +21,9 @@ export class CourseResolver {
   @UseGuards(GqlAuthGuard)
   async courses(@Args('page') page = 1, @Args('limit') limit = 20) {
     // reuse service listing
-    return this.coursesService.findAll ? this.coursesService.findAll({ page, limit }) : { data: [], meta: {} };
+    return this.coursesService.findAll
+      ? this.coursesService.findAll({ page, limit })
+      : { data: [], meta: {} };
   }
 
   @ResolveField()

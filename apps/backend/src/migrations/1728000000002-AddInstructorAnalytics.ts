@@ -33,7 +33,7 @@ export class AddInstructorAnalytics1728000000002 implements MigrationInterface {
           }),
         ],
       }),
-      true,
+      true
     );
 
     await queryRunner.createIndex(
@@ -41,7 +41,7 @@ export class AddInstructorAnalytics1728000000002 implements MigrationInterface {
       new TableIndex({
         columnNames: ['instructorId', 'courseId', 'month'],
         name: 'IDX_instructor_analytics_lookup',
-      }),
+      })
     );
   }
 

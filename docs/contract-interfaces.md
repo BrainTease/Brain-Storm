@@ -29,7 +29,7 @@ Complete interface documentation for all Soroban smart contracts on the Stellar 
 23. [Security Considerations](#security-considerations)
 24. [Upgrade Guide](#upgrade-guide)
 
-> This reference covers all 19 crates under `contracts/`. For *why* the platform is split into this many contracts instead of fewer, see [docs/adr/ADR-006](./adr/ADR-006-contract-per-domain-architecture.md) through [ADR-009](./adr/ADR-009-credential-nft-decomposition.md).
+> This reference covers all 19 crates under `contracts/`. For _why_ the platform is split into this many contracts instead of fewer, see [docs/adr/ADR-006](./adr/ADR-006-contract-per-domain-architecture.md) through [ADR-009](./adr/ADR-009-credential-nft-decomposition.md).
 
 ---
 
@@ -57,6 +57,7 @@ Complete interface documentation for all Soroban smart contracts on the Stellar 
 ```
 
 All contracts follow the same initialization pattern:
+
 - `initialize(admin)` — one-time setup, panics if called again
 - `get_admin()` / `set_admin(new_admin)` — admin key rotation
 
@@ -68,38 +69,38 @@ Tracks per-student course progress and emits Soroban events for off-chain indexe
 
 ### Functions
 
-| Function | Auth | Description |
-|---|---|---|
-| `initialize(admin)` | none | One-time setup |
-| `set_admin(new_admin)` | admin | Transfer admin role |
-| `get_admin()` | — | Read current admin |
-| `record_progress(caller, student, course_id, progress_pct)` | caller | Record/update progress (0–100) |
-| `reset_progress(admin, student, course_id)` | admin | Reset a student's progress |
-| `get_progress(student, course_id)` | — | Read a progress record |
-| `get_all_progress(student)` | — | All progress records for a student |
-| `get_completed_courses(student)` | — | Completed courses list |
-| `get_in_progress_courses(student)` | — | In-progress courses list |
-| `get_progress_paginated(student, start, limit)` | — | Paginated progress records |
-| `get_progress_above_threshold(student, threshold)` | — | Records above a progress % |
-| `count_completed_courses(student)` | — | Count of completions |
-| `get_average_progress(student)` | — | Average progress across all courses |
-| `get_milestone(student, course_id, milestone_pct)` | — | Read a milestone record |
-| `get_achieved_milestones(student, course_id)` | — | All achieved milestones |
-| `get_total_students()` | — | Total students tracked |
-| `get_total_courses()` | — | Total courses tracked |
-| `get_completion_stats()` | — | Aggregate completion statistics |
-| `get_daily_stats(day)` | — | Stats for a specific day |
-| `get_weekly_stats(week)` | — | Stats for a specific week |
-| `get_monthly_stats(month)` | — | Stats for a specific month |
-| `get_top_performers(limit)` | — | Top students by completion count |
-| `update_aggregates(admin)` | admin | Recalculate aggregate stats |
+| Function                                                    | Auth   | Description                         |
+| ----------------------------------------------------------- | ------ | ----------------------------------- |
+| `initialize(admin)`                                         | none   | One-time setup                      |
+| `set_admin(new_admin)`                                      | admin  | Transfer admin role                 |
+| `get_admin()`                                               | —      | Read current admin                  |
+| `record_progress(caller, student, course_id, progress_pct)` | caller | Record/update progress (0–100)      |
+| `reset_progress(admin, student, course_id)`                 | admin  | Reset a student's progress          |
+| `get_progress(student, course_id)`                          | —      | Read a progress record              |
+| `get_all_progress(student)`                                 | —      | All progress records for a student  |
+| `get_completed_courses(student)`                            | —      | Completed courses list              |
+| `get_in_progress_courses(student)`                          | —      | In-progress courses list            |
+| `get_progress_paginated(student, start, limit)`             | —      | Paginated progress records          |
+| `get_progress_above_threshold(student, threshold)`          | —      | Records above a progress %          |
+| `count_completed_courses(student)`                          | —      | Count of completions                |
+| `get_average_progress(student)`                             | —      | Average progress across all courses |
+| `get_milestone(student, course_id, milestone_pct)`          | —      | Read a milestone record             |
+| `get_achieved_milestones(student, course_id)`               | —      | All achieved milestones             |
+| `get_total_students()`                                      | —      | Total students tracked              |
+| `get_total_courses()`                                       | —      | Total courses tracked               |
+| `get_completion_stats()`                                    | —      | Aggregate completion statistics     |
+| `get_daily_stats(day)`                                      | —      | Stats for a specific day            |
+| `get_weekly_stats(week)`                                    | —      | Stats for a specific week           |
+| `get_monthly_stats(month)`                                  | —      | Stats for a specific month          |
+| `get_top_performers(limit)`                                 | —      | Top students by completion count    |
+| `update_aggregates(admin)`                                  | admin  | Recalculate aggregate stats         |
 
 ### Events
 
-| Topics | Data | Condition |
-|--------|------|-----------|
-| `("analytics", "prog_upd")` | `(student, course_id, progress_pct)` | every `record_progress` call |
-| `("analytics", "completed")` | `(student, course_id)` | when `progress_pct == 100` |
+| Topics                       | Data                                  | Condition                          |
+| ---------------------------- | ------------------------------------- | ---------------------------------- |
+| `("analytics", "prog_upd")`  | `(student, course_id, progress_pct)`  | every `record_progress` call       |
+| `("analytics", "completed")` | `(student, course_id)`                | when `progress_pct == 100`         |
 | `("analytics", "milestone")` | `(student, course_id, milestone_pct)` | when a milestone is first achieved |
 
 ### Usage Example
@@ -124,37 +125,37 @@ ERC-20-compatible fungible token with vesting, staking, airdrop, and burn mechan
 
 ### Functions
 
-| Function | Auth | Description |
-|---|---|---|
-| `initialize(admin, name, symbol, decimals, initial_supply)` | none | Deploy and mint initial supply to admin |
-| `mint(admin, to, amount)` | admin | Mint new tokens |
-| `burn(from, amount)` | from | Burn tokens (updates burn stats) |
-| `transfer(from, to, amount)` | from | Transfer tokens |
-| `approve(owner, spender, amount, expiry)` | owner | Set allowance |
-| `transfer_from(spender, from, to, amount)` | spender | Transfer using allowance |
-| `balance(account)` | — | Read balance |
-| `allowance(owner, spender)` | — | Read allowance |
-| `total_supply()` | — | Read total supply |
-| `get_burn_stats()` | — | Cumulative burn data |
-| `create_vesting(admin, beneficiary, amount, start, cliff, end)` | admin | Create vesting schedule |
-| `claim_vesting(beneficiary, schedule_id)` | beneficiary | Claim vested tokens |
-| `get_vesting(beneficiary, schedule_id)` | — | Read vesting schedule |
+| Function                                                        | Auth        | Description                             |
+| --------------------------------------------------------------- | ----------- | --------------------------------------- |
+| `initialize(admin, name, symbol, decimals, initial_supply)`     | none        | Deploy and mint initial supply to admin |
+| `mint(admin, to, amount)`                                       | admin       | Mint new tokens                         |
+| `burn(from, amount)`                                            | from        | Burn tokens (updates burn stats)        |
+| `transfer(from, to, amount)`                                    | from        | Transfer tokens                         |
+| `approve(owner, spender, amount, expiry)`                       | owner       | Set allowance                           |
+| `transfer_from(spender, from, to, amount)`                      | spender     | Transfer using allowance                |
+| `balance(account)`                                              | —           | Read balance                            |
+| `allowance(owner, spender)`                                     | —           | Read allowance                          |
+| `total_supply()`                                                | —           | Read total supply                       |
+| `get_burn_stats()`                                              | —           | Cumulative burn data                    |
+| `create_vesting(admin, beneficiary, amount, start, cliff, end)` | admin       | Create vesting schedule                 |
+| `claim_vesting(beneficiary, schedule_id)`                       | beneficiary | Claim vested tokens                     |
+| `get_vesting(beneficiary, schedule_id)`                         | —           | Read vesting schedule                   |
 
 ### Staking (via `staking` module)
 
-| Function | Auth | Description |
-|---|---|---|
-| `stake(user, amount, lock_period)` | user | Stake BST tokens |
-| `unstake(user)` | user | Unstake after lock period |
-| `claim_staking_rewards(user)` | user | Claim accrued rewards |
-| `get_stake(user)` | — | Read stake record |
+| Function                           | Auth | Description               |
+| ---------------------------------- | ---- | ------------------------- |
+| `stake(user, amount, lock_period)` | user | Stake BST tokens          |
+| `unstake(user)`                    | user | Unstake after lock period |
+| `claim_staking_rewards(user)`      | user | Claim accrued rewards     |
+| `get_stake(user)`                  | —    | Read stake record         |
 
 ### Airdrop (via `airdrop` module)
 
-| Function | Auth | Description |
-|---|---|---|
-| `create_airdrop(admin, total, per_claim, merkle_root, expiry)` | admin | Set up airdrop |
-| `claim_airdrop(claimer, proof)` | claimer | Claim from airdrop with Merkle proof |
+| Function                                                       | Auth    | Description                          |
+| -------------------------------------------------------------- | ------- | ------------------------------------ |
+| `create_airdrop(admin, total, per_claim, merkle_root, expiry)` | admin   | Set up airdrop                       |
+| `claim_airdrop(claimer, proof)`                                | claimer | Claim from airdrop with Merkle proof |
 
 ---
 
@@ -164,25 +165,25 @@ Issues soulbound (non-transferable) NFT certificates upon course completion.
 
 ### Functions
 
-| Function | Auth | Description |
-|---|---|---|
-| `initialize(admin)` | none | One-time setup |
-| `set_admin(new_admin)` | admin | Transfer admin role |
-| `get_admin()` | — | Read admin |
-| `mint_certificate(admin, recipient, course_id, metadata_url)` | admin | Issue certificate; returns `cert_id` |
-| `get_certificate(id)` | — | Read a certificate by ID |
-| `get_certificates_by_owner(owner)` | — | All certificates for an address |
-| `revoke_certificate(admin, cert_id, reason)` | admin | Revoke a certificate |
-| `is_revoked(cert_id)` | — | Check revocation status |
-| `get_revocation(cert_id)` | — | Read revocation details |
-| `transfer(...)` | — | Always panics — certificates are soulbound |
+| Function                                                      | Auth  | Description                                |
+| ------------------------------------------------------------- | ----- | ------------------------------------------ |
+| `initialize(admin)`                                           | none  | One-time setup                             |
+| `set_admin(new_admin)`                                        | admin | Transfer admin role                        |
+| `get_admin()`                                                 | —     | Read admin                                 |
+| `mint_certificate(admin, recipient, course_id, metadata_url)` | admin | Issue certificate; returns `cert_id`       |
+| `get_certificate(id)`                                         | —     | Read a certificate by ID                   |
+| `get_certificates_by_owner(owner)`                            | —     | All certificates for an address            |
+| `revoke_certificate(admin, cert_id, reason)`                  | admin | Revoke a certificate                       |
+| `is_revoked(cert_id)`                                         | —     | Check revocation status                    |
+| `get_revocation(cert_id)`                                     | —     | Read revocation details                    |
+| `transfer(...)`                                               | —     | Always panics — certificates are soulbound |
 
 ### Events
 
-| Topics | Data | Condition |
-|--------|------|-----------|
-| `("cert", "mint")` | `(id, recipient, course_id)` | on mint |
-| `("cert", "revoke")` | `(id, reason)` | on revocation |
+| Topics               | Data                         | Condition     |
+| -------------------- | ---------------------------- | ------------- |
+| `("cert", "mint")`   | `(id, recipient, course_id)` | on mint       |
+| `("cert", "revoke")` | `(id, reason)`               | on revocation |
 
 ### Usage Example
 
@@ -207,17 +208,17 @@ Issues achievement badges (non-transferable) tied to badge type definitions.
 
 ### Functions
 
-| Function | Auth | Description |
-|---|---|---|
-| `initialize(admin)` | none | One-time setup |
-| `get_admin()` | — | Read admin |
-| `create_badge_type(admin, badge_type, name, description, criteria)` | admin | Define a new badge type |
-| `get_badge_type(badge_type)` | — | Read badge type definition |
-| `mint_badge(admin, recipient, badge_type)` | admin | Issue badge; returns `badge_id` |
-| `get_badge(id)` | — | Read badge by ID |
-| `get_badges_by_owner(owner)` | — | All badges for an address |
-| `verify_badge(owner, badge_type)` | — | Check if owner holds a badge type |
-| `transfer(...)` | — | Always panics — badges are soulbound |
+| Function                                                            | Auth  | Description                          |
+| ------------------------------------------------------------------- | ----- | ------------------------------------ |
+| `initialize(admin)`                                                 | none  | One-time setup                       |
+| `get_admin()`                                                       | —     | Read admin                           |
+| `create_badge_type(admin, badge_type, name, description, criteria)` | admin | Define a new badge type              |
+| `get_badge_type(badge_type)`                                        | —     | Read badge type definition           |
+| `mint_badge(admin, recipient, badge_type)`                          | admin | Issue badge; returns `badge_id`      |
+| `get_badge(id)`                                                     | —     | Read badge by ID                     |
+| `get_badges_by_owner(owner)`                                        | —     | All badges for an address            |
+| `verify_badge(owner, badge_type)`                                   | —     | Check if owner holds a badge type    |
+| `transfer(...)`                                                     | —     | Always panics — badges are soulbound |
 
 ---
 
@@ -227,20 +228,20 @@ On-chain proposal voting and contract upgrade governance.
 
 ### Functions
 
-| Function | Auth | Description |
-|---|---|---|
-| `initialize(admin, token_contract)` | none | One-time setup; links BST token for voting weight |
-| `get_admin()` | — | Read admin |
-| `create_proposal(proposer, title, description, voting_end)` | proposer | Submit a proposal |
-| `vote(voter, proposal_id, support)` | voter | Cast vote (true = for, false = against) |
-| `execute_proposal(proposal_id)` | — | Execute a passed proposal after voting ends |
-| `get_proposal(proposal_id)` | — | Read proposal details |
-| `has_voted(proposal_id, voter)` | — | Check if address voted |
-| `propose_upgrade(proposer, new_wasm_hash, description)` | proposer | Propose contract upgrade |
-| `vote_upgrade(voter, upgrade_id, support)` | voter | Vote on upgrade proposal |
-| `approve_upgrade(upgrade_id)` | admin | Admin approval gate |
-| `execute_upgrade(upgrade_id)` | — | Execute approved upgrade |
-| `get_upgrade_proposal(upgrade_id)` | — | Read upgrade proposal |
+| Function                                                    | Auth     | Description                                       |
+| ----------------------------------------------------------- | -------- | ------------------------------------------------- |
+| `initialize(admin, token_contract)`                         | none     | One-time setup; links BST token for voting weight |
+| `get_admin()`                                               | —        | Read admin                                        |
+| `create_proposal(proposer, title, description, voting_end)` | proposer | Submit a proposal                                 |
+| `vote(voter, proposal_id, support)`                         | voter    | Cast vote (true = for, false = against)           |
+| `execute_proposal(proposal_id)`                             | —        | Execute a passed proposal after voting ends       |
+| `get_proposal(proposal_id)`                                 | —        | Read proposal details                             |
+| `has_voted(proposal_id, voter)`                             | —        | Check if address voted                            |
+| `propose_upgrade(proposer, new_wasm_hash, description)`     | proposer | Propose contract upgrade                          |
+| `vote_upgrade(voter, upgrade_id, support)`                  | voter    | Vote on upgrade proposal                          |
+| `approve_upgrade(upgrade_id)`                               | admin    | Admin approval gate                               |
+| `execute_upgrade(upgrade_id)`                               | —        | Execute approved upgrade                          |
+| `get_upgrade_proposal(upgrade_id)`                          | —        | Read upgrade proposal                             |
 
 ---
 
@@ -250,22 +251,22 @@ Tracks on-chain reputation scores with decay mechanics and threshold gating.
 
 ### Functions
 
-| Function | Auth | Description |
-|---|---|---|
-| `initialize(admin)` | none | One-time setup |
-| `get_admin()` | — | Read admin |
-| `update_reputation(admin, user, delta, reason)` | admin | Add or subtract reputation points |
-| `get_reputation(user)` | — | Read current score |
-| `get_reputation_record(user)` | — | Full record with metadata |
-| `get_reputation_level(user)` | — | Level (0–5) derived from score |
-| `apply_decay(admin, user)` | admin | Apply time-based decay to a user |
-| `set_decay_config(admin, rate, period)` | admin | Configure decay parameters |
-| `get_decay_config()` | — | Read current decay config |
-| `claim_reputation_reward(user)` | user | Claim token reward for reputation milestone |
-| `verify_reputation_threshold(user, min_score)` | — | Boolean gate check |
-| `verify_reputation_level(user, min_level)` | — | Boolean gate check |
-| `get_reputation_history(user, start, limit)` | — | Paginated update history |
-| `get_total_reputation()` | — | Sum of all reputation scores |
+| Function                                        | Auth  | Description                                 |
+| ----------------------------------------------- | ----- | ------------------------------------------- |
+| `initialize(admin)`                             | none  | One-time setup                              |
+| `get_admin()`                                   | —     | Read admin                                  |
+| `update_reputation(admin, user, delta, reason)` | admin | Add or subtract reputation points           |
+| `get_reputation(user)`                          | —     | Read current score                          |
+| `get_reputation_record(user)`                   | —     | Full record with metadata                   |
+| `get_reputation_level(user)`                    | —     | Level (0–5) derived from score              |
+| `apply_decay(admin, user)`                      | admin | Apply time-based decay to a user            |
+| `set_decay_config(admin, rate, period)`         | admin | Configure decay parameters                  |
+| `get_decay_config()`                            | —     | Read current decay config                   |
+| `claim_reputation_reward(user)`                 | user  | Claim token reward for reputation milestone |
+| `verify_reputation_threshold(user, min_score)`  | —     | Boolean gate check                          |
+| `verify_reputation_level(user, min_level)`      | —     | Boolean gate check                          |
+| `get_reputation_history(user, start, limit)`    | —     | Paginated update history                    |
+| `get_total_reputation()`                        | —     | Sum of all reputation scores                |
 
 ---
 
@@ -275,13 +276,13 @@ Community-funded scholarships with application and approval workflow.
 
 ### Functions
 
-| Function | Auth | Description |
-|---|---|---|
-| `initialize(admin)` | none | One-time setup |
-| `donate(donor, amount)` | donor | Donate BST tokens to the fund |
-| `apply_for_scholarship(applicant, course_id, amount, reason)` | applicant | Submit application |
-| `approve_application(admin, app_id)` | admin | Approve and disburse tokens |
-| `reject_application(admin, app_id)` | admin | Reject application |
+| Function                                                      | Auth      | Description                   |
+| ------------------------------------------------------------- | --------- | ----------------------------- |
+| `initialize(admin)`                                           | none      | One-time setup                |
+| `donate(donor, amount)`                                       | donor     | Donate BST tokens to the fund |
+| `apply_for_scholarship(applicant, course_id, amount, reason)` | applicant | Submit application            |
+| `approve_application(admin, app_id)`                          | admin     | Approve and disburse tokens   |
+| `reject_application(admin, app_id)`                           | admin     | Reject application            |
 
 ---
 
@@ -291,16 +292,16 @@ AMM-style BST/XLM liquidity pool with LP mining rewards.
 
 ### Functions
 
-| Function | Auth | Description |
-|---|---|---|
-| `initialize(admin, token_a, token_b, fee_bps)` | none | One-time setup |
-| `add_liquidity(user, amount_a, amount_b, min_lp)` | user | Provide liquidity; receive LP tokens |
-| `remove_liquidity(user, lp_amount, min_a, min_b)` | user | Redeem LP tokens for underlying |
+| Function                                          | Auth | Description                              |
+| ------------------------------------------------- | ---- | ---------------------------------------- |
+| `initialize(admin, token_a, token_b, fee_bps)`    | none | One-time setup                           |
+| `add_liquidity(user, amount_a, amount_b, min_lp)` | user | Provide liquidity; receive LP tokens     |
+| `remove_liquidity(user, lp_amount, min_a, min_b)` | user | Redeem LP tokens for underlying          |
 | `swap(user, token_in, amount_in, min_amount_out)` | user | Swap tokens via constant-product formula |
-| `claim_mining_rewards(user)` | user | Claim accrued LP mining rewards |
-| `get_pool_stats()` | — | Reserves, fee rate, total LP |
-| `get_user_liquidity(user)` | — | User's LP token balance |
-| `get_swap_history(start_index, limit)` | — | Paginated swap records |
+| `claim_mining_rewards(user)`                      | user | Claim accrued LP mining rewards          |
+| `get_pool_stats()`                                | —    | Reserves, fee rate, total LP             |
+| `get_user_liquidity(user)`                        | —    | User's LP token balance                  |
+| `get_swap_history(start_index, limit)`            | —    | Paginated swap records                   |
 
 ---
 
@@ -310,24 +311,24 @@ Generic, tradeable course NFT with marketplace listing and per-holder access gra
 
 ### Functions
 
-| Function | Auth | Description |
-|---|---|---|
-| `initialize(admin)` | none | One-time setup |
-| `get_admin()` | — | Read admin |
-| `mint_course_nft(admin, owner, course_id, course_name, instructor, purchase_price, royalty_basis)` | admin | Mint an NFT; returns `nft_id`. Called directly, or cross-contract by `credential_metadata::issue_with_nft` |
-| `transfer_nft(from, to, nft_id)` | from | Transfer ownership |
-| `grant_access(nft_owner, nft_id, holder)` | nft_owner | Grant a non-owner address access to gated content tied to the NFT |
-| `revoke_access(nft_owner, nft_id, holder)` | nft_owner | Revoke a previously-granted access |
-| `has_access(nft_id, holder)` | — | Check access |
-| `get_nft_metadata(nft_id)` | — | Read metadata |
-| `get_nft_owner(nft_id)` | — | Read current owner |
-| `get_owner_nfts(owner)` | — | All NFT IDs owned by an address |
-| `get_royalty_info(nft_id)` | — | `(instructor, royalty_basis)` for a given NFT |
-| `burn_nft(owner, nft_id)` | owner | Destroy an NFT |
-| `list_nft(seller, nft_id, price)` | seller | List an owned NFT for sale |
-| `delist_nft(seller, nft_id)` | seller | Cancel a listing |
-| `buy_nft(buyer, nft_id)` | buyer | Purchase a listed NFT; transfers ownership and payment |
-| `get_listing(nft_id)` | — | Read listing details |
+| Function                                                                                           | Auth      | Description                                                                                                |
+| -------------------------------------------------------------------------------------------------- | --------- | ---------------------------------------------------------------------------------------------------------- |
+| `initialize(admin)`                                                                                | none      | One-time setup                                                                                             |
+| `get_admin()`                                                                                      | —         | Read admin                                                                                                 |
+| `mint_course_nft(admin, owner, course_id, course_name, instructor, purchase_price, royalty_basis)` | admin     | Mint an NFT; returns `nft_id`. Called directly, or cross-contract by `credential_metadata::issue_with_nft` |
+| `transfer_nft(from, to, nft_id)`                                                                   | from      | Transfer ownership                                                                                         |
+| `grant_access(nft_owner, nft_id, holder)`                                                          | nft_owner | Grant a non-owner address access to gated content tied to the NFT                                          |
+| `revoke_access(nft_owner, nft_id, holder)`                                                         | nft_owner | Revoke a previously-granted access                                                                         |
+| `has_access(nft_id, holder)`                                                                       | —         | Check access                                                                                               |
+| `get_nft_metadata(nft_id)`                                                                         | —         | Read metadata                                                                                              |
+| `get_nft_owner(nft_id)`                                                                            | —         | Read current owner                                                                                         |
+| `get_owner_nfts(owner)`                                                                            | —         | All NFT IDs owned by an address                                                                            |
+| `get_royalty_info(nft_id)`                                                                         | —         | `(instructor, royalty_basis)` for a given NFT                                                              |
+| `burn_nft(owner, nft_id)`                                                                          | owner     | Destroy an NFT                                                                                             |
+| `list_nft(seller, nft_id, price)`                                                                  | seller    | List an owned NFT for sale                                                                                 |
+| `delist_nft(seller, nft_id)`                                                                       | seller    | Cancel a listing                                                                                           |
+| `buy_nft(buyer, nft_id)`                                                                           | buyer     | Purchase a listed NFT; transfers ownership and payment                                                     |
+| `get_listing(nft_id)`                                                                              | —         | Read listing details                                                                                       |
 
 ### Events
 
@@ -335,7 +336,7 @@ Topic symbols emitted (grep-verified against `contracts/nft/src/lib.rs`): `minte
 
 ### Notes
 
-`nft` performs no on-chain cross-contract calls of its own — it is called *into* by `credential_metadata` (see [Cross-Contract Call Conventions](#cross-contract-call-conventions)) and separately, as an independent contract, by `apps/backend` for plain marketplace flows. See [ADR-009](./adr/ADR-009-credential-nft-decomposition.md) for why this is a separate contract from `certificate` and `credential_metadata`.
+`nft` performs no on-chain cross-contract calls of its own — it is called _into_ by `credential_metadata` (see [Cross-Contract Call Conventions](#cross-contract-call-conventions)) and separately, as an independent contract, by `apps/backend` for plain marketplace flows. See [ADR-009](./adr/ADR-009-credential-nft-decomposition.md) for why this is a separate contract from `certificate` and `credential_metadata`.
 
 ---
 
@@ -345,24 +346,24 @@ Escrow, tips, protocol fees, and multi-sig escrow for marketplace-style payments
 
 ### Functions
 
-| Function | Auth | Description |
-|---|---|---|
-| `initialize(admin)` | none | One-time setup |
-| `get_admin()` | — | Read admin |
-| `pause(admin)` / `unpause(admin)` / `is_paused()` | admin | Emergency stop for all mutating operations (#663) |
-| `set_fee_bps(admin, fee_bps)` / `get_fee_bps()` | admin | Configure protocol fee, in basis points |
-| `set_treasury(admin, treasury)` / `get_treasury_balance()` | admin | Configure the fee-collection treasury address |
-| `fund_escrow(payer, payee, amount)` | payer | Fund a simple escrow; returns `escrow_id`. Blocked when paused |
-| `settle_escrow(caller, escrow_id)` | payer or admin | Apply fee to treasury, pay net to payee. Blocked when paused |
-| `refund_escrow(admin, escrow_id)` | admin | Refund escrow to payer. Blocked when paused |
-| `get_escrow(escrow_id)` | — | Read escrow state |
-| `tip(tipper, amount)` | tipper | Send a tip; fee → treasury, net amount returned to caller. Blocked when paused |
-| `batch_settle_escrows(caller, escrow_ids)` | admin or payer of each | Settle multiple escrows in one transaction (#662). Blocked when paused |
-| `batch_refund_escrows(admin, escrow_ids)` | admin | Refund multiple escrows in one transaction (#662). Blocked when paused |
-| `ms_fund_escrow(payer, payee, amount, signers, threshold, timeout_ledgers)` | payer | Fund a multi-signature escrow (#658) requiring `threshold`-of-`signers` approval |
-| `ms_approve_escrow(escrow_id, signer)` | signer | Approve a multi-sig escrow |
-| `ms_timeout_escrow(escrow_id)` | — | Mark expired if the approval threshold wasn't met in time; caller/backend then triggers the refund fallback |
-| `ms_get_escrow(escrow_id)` | — | Read multi-sig escrow state |
+| Function                                                                    | Auth                   | Description                                                                                                 |
+| --------------------------------------------------------------------------- | ---------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `initialize(admin)`                                                         | none                   | One-time setup                                                                                              |
+| `get_admin()`                                                               | —                      | Read admin                                                                                                  |
+| `pause(admin)` / `unpause(admin)` / `is_paused()`                           | admin                  | Emergency stop for all mutating operations (#663)                                                           |
+| `set_fee_bps(admin, fee_bps)` / `get_fee_bps()`                             | admin                  | Configure protocol fee, in basis points                                                                     |
+| `set_treasury(admin, treasury)` / `get_treasury_balance()`                  | admin                  | Configure the fee-collection treasury address                                                               |
+| `fund_escrow(payer, payee, amount)`                                         | payer                  | Fund a simple escrow; returns `escrow_id`. Blocked when paused                                              |
+| `settle_escrow(caller, escrow_id)`                                          | payer or admin         | Apply fee to treasury, pay net to payee. Blocked when paused                                                |
+| `refund_escrow(admin, escrow_id)`                                           | admin                  | Refund escrow to payer. Blocked when paused                                                                 |
+| `get_escrow(escrow_id)`                                                     | —                      | Read escrow state                                                                                           |
+| `tip(tipper, amount)`                                                       | tipper                 | Send a tip; fee → treasury, net amount returned to caller. Blocked when paused                              |
+| `batch_settle_escrows(caller, escrow_ids)`                                  | admin or payer of each | Settle multiple escrows in one transaction (#662). Blocked when paused                                      |
+| `batch_refund_escrows(admin, escrow_ids)`                                   | admin                  | Refund multiple escrows in one transaction (#662). Blocked when paused                                      |
+| `ms_fund_escrow(payer, payee, amount, signers, threshold, timeout_ledgers)` | payer                  | Fund a multi-signature escrow (#658) requiring `threshold`-of-`signers` approval                            |
+| `ms_approve_escrow(escrow_id, signer)`                                      | signer                 | Approve a multi-sig escrow                                                                                  |
+| `ms_timeout_escrow(escrow_id)`                                              | —                      | Mark expired if the approval threshold wasn't met in time; caller/backend then triggers the refund fallback |
+| `ms_get_escrow(escrow_id)`                                                  | —                      | Read multi-sig escrow state                                                                                 |
 
 ### Events
 
@@ -380,23 +381,23 @@ Off-chain-content metadata and lifecycle (expiry/renewal/content-hash verificati
 
 ### Functions
 
-| Function | Auth | Description |
-|---|---|---|
-| `initialize(admin)` | none | One-time setup, no NFT linkage support |
-| `initialize_with_nft(admin, nft_contract)` | admin | One-time setup, registers the `nft` contract address for linkage (#635) |
+| Function                                                                                                                                              | Auth  | Description                                                                                                                             |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `initialize(admin)`                                                                                                                                   | none  | One-time setup, no NFT linkage support                                                                                                  |
+| `initialize_with_nft(admin, nft_contract)`                                                                                                            | admin | One-time setup, registers the `nft` contract address for linkage (#635)                                                                 |
 | `issue_with_nft(admin, credential_id, course_name, completion_date, expiry_timestamp, grade, ipfs_hash, owner, course_id, instructor, royalty_basis)` | admin | Store metadata **and** atomically cross-call `nft::mint_course_nft`; rolls back entirely on either failure. Returns the minted `nft_id` |
-| `get_credential_link(credential_id)` | — | Read the `CredentialNftLink` for a credential, if any |
-| `get_nft_credential_id(nft_id)` | — | Reverse lookup: NFT → credential |
-| `credential_is_linked(credential_id)` | — | Check whether a credential has a linked NFT |
-| `store_metadata(admin, credential_id, course_name, completion_date, expiry_timestamp, grade, ipfs_hash)` | admin | Store metadata **without** minting an NFT |
-| `update_metadata(admin, credential_id, course_name, grade)` | admin | Update mutable fields of an existing record |
-| `get_metadata(credential_id)` | — | Read the full metadata record |
-| `is_expired(credential_id)` / `is_valid(credential_id)` / `can_renew(credential_id)` | — | Lifecycle state checks |
-| `renew_credential(admin, credential_id, new_expiry_timestamp)` | admin | Extend expiry |
-| `emit_expiry_event(credential_id)` | — | Emit an expiry event for off-chain indexers |
-| `store_metadata_hash(admin, credential_id, hash)` | admin | Store a content hash (e.g. of the full credential document) for later verification |
-| `verify_metadata_hash(credential_id, hash)` | — | Compare a supplied hash against the stored one |
-| `get_metadata_history(credential_id, index)` / `get_history_count(credential_id)` | — | Paginated update history |
+| `get_credential_link(credential_id)`                                                                                                                  | —     | Read the `CredentialNftLink` for a credential, if any                                                                                   |
+| `get_nft_credential_id(nft_id)`                                                                                                                       | —     | Reverse lookup: NFT → credential                                                                                                        |
+| `credential_is_linked(credential_id)`                                                                                                                 | —     | Check whether a credential has a linked NFT                                                                                             |
+| `store_metadata(admin, credential_id, course_name, completion_date, expiry_timestamp, grade, ipfs_hash)`                                              | admin | Store metadata **without** minting an NFT                                                                                               |
+| `update_metadata(admin, credential_id, course_name, grade)`                                                                                           | admin | Update mutable fields of an existing record                                                                                             |
+| `get_metadata(credential_id)`                                                                                                                         | —     | Read the full metadata record                                                                                                           |
+| `is_expired(credential_id)` / `is_valid(credential_id)` / `can_renew(credential_id)`                                                                  | —     | Lifecycle state checks                                                                                                                  |
+| `renew_credential(admin, credential_id, new_expiry_timestamp)`                                                                                        | admin | Extend expiry                                                                                                                           |
+| `emit_expiry_event(credential_id)`                                                                                                                    | —     | Emit an expiry event for off-chain indexers                                                                                             |
+| `store_metadata_hash(admin, credential_id, hash)`                                                                                                     | admin | Store a content hash (e.g. of the full credential document) for later verification                                                      |
+| `verify_metadata_hash(credential_id, hash)`                                                                                                           | —     | Compare a supplied hash against the stored one                                                                                          |
+| `get_metadata_history(credential_id, index)` / `get_history_count(credential_id)`                                                                     | —     | Paginated update history                                                                                                                |
 
 ### Events
 
@@ -414,21 +415,21 @@ Verification levels, certified skills (with expiry), specialisations, curator pe
 
 ### Functions
 
-| Function | Auth | Description |
-|---|---|---|
-| `initialize(admin)` | none | One-time setup |
-| `get_admin()` | — | Read admin |
-| `pause(admin)` / `unpause(admin)` / `is_paused()` | admin | Emergency stop |
-| `add_curator(admin, curator)` / `remove_curator(admin, curator)` / `is_curator(addr)` | admin | Manage the curator set — curators can set verification levels/skills/specialisations alongside admin |
-| `set_verification_level(setter, user, level)` / `get_verification_level(user)` | admin or curator | Set/read a user's verification level. Blocked when paused |
-| `add_certified_skill(setter, user, skill, expiry_ts)` / `remove_certified_skill(setter, user, skill)` | admin or curator | Manage certified skills. Blocked when paused |
-| `get_certified_skills(user)` | — | Returns only non-expired skills |
-| `has_certified_skill(user, skill)` | — | Boolean check |
-| `set_specialisations(setter, user, specs)` / `get_specialisations(user)` | admin or curator | Manage specialisations. Blocked when paused |
-| `batch_register_users(users)` | each user | Register multiple users in one transaction. Blocked when paused |
-| `batch_set_verification_levels(setter, users, level)` | admin or curator | Bulk-set verification levels. Blocked when paused |
-| `register_user(user)` | user | Idempotently register a user in the global directory |
-| `list_users(offset, limit)` / `list_users_by_level(min_level, offset, limit)` / `total_users()` | — | Paginated directory reads |
+| Function                                                                                              | Auth             | Description                                                                                          |
+| ----------------------------------------------------------------------------------------------------- | ---------------- | ---------------------------------------------------------------------------------------------------- |
+| `initialize(admin)`                                                                                   | none             | One-time setup                                                                                       |
+| `get_admin()`                                                                                         | —                | Read admin                                                                                           |
+| `pause(admin)` / `unpause(admin)` / `is_paused()`                                                     | admin            | Emergency stop                                                                                       |
+| `add_curator(admin, curator)` / `remove_curator(admin, curator)` / `is_curator(addr)`                 | admin            | Manage the curator set — curators can set verification levels/skills/specialisations alongside admin |
+| `set_verification_level(setter, user, level)` / `get_verification_level(user)`                        | admin or curator | Set/read a user's verification level. Blocked when paused                                            |
+| `add_certified_skill(setter, user, skill, expiry_ts)` / `remove_certified_skill(setter, user, skill)` | admin or curator | Manage certified skills. Blocked when paused                                                         |
+| `get_certified_skills(user)`                                                                          | —                | Returns only non-expired skills                                                                      |
+| `has_certified_skill(user, skill)`                                                                    | —                | Boolean check                                                                                        |
+| `set_specialisations(setter, user, specs)` / `get_specialisations(user)`                              | admin or curator | Manage specialisations. Blocked when paused                                                          |
+| `batch_register_users(users)`                                                                         | each user        | Register multiple users in one transaction. Blocked when paused                                      |
+| `batch_set_verification_levels(setter, users, level)`                                                 | admin or curator | Bulk-set verification levels. Blocked when paused                                                    |
+| `register_user(user)`                                                                                 | user             | Idempotently register a user in the global directory                                                 |
+| `list_users(offset, limit)` / `list_users_by_level(min_level, offset, limit)` / `total_users()`       | —                | Paginated directory reads                                                                            |
 
 ### Notes
 
@@ -442,15 +443,15 @@ Escrow dispute resolution with an Open → Evidence → Decision → Settled lif
 
 ### Functions
 
-| Function | Auth | Description |
-|---|---|---|
-| `initialize(admin, arbiter)` | admin | One-time setup, sets the arbiter address |
-| `get_arbiter()` / `set_arbiter(admin, arbiter)` | admin (set) | Read/rotate the arbiter |
-| `open_dispute(claimant, respondent, amount)` | claimant | Open a dispute over a given amount; returns `dispute_id` |
-| `submit_evidence(caller, dispute_id, hash)` | claimant or respondent | Submit an evidence hash, moves the dispute to the Evidence phase |
-| `record_decision(arbiter, dispute_id, outcome)` | arbiter | Record the arbiter's ruling, moves to Decision phase |
-| `settle(arbiter, dispute_id)` | arbiter | Enforce the ruling; computes and returns `(claimant_amount, respondent_amount)`, moves to Settled |
-| `get_dispute(dispute_id)` | — | Read dispute state |
+| Function                                        | Auth                   | Description                                                                                       |
+| ----------------------------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------- |
+| `initialize(admin, arbiter)`                    | admin                  | One-time setup, sets the arbiter address                                                          |
+| `get_arbiter()` / `set_arbiter(admin, arbiter)` | admin (set)            | Read/rotate the arbiter                                                                           |
+| `open_dispute(claimant, respondent, amount)`    | claimant               | Open a dispute over a given amount; returns `dispute_id`                                          |
+| `submit_evidence(caller, dispute_id, hash)`     | claimant or respondent | Submit an evidence hash, moves the dispute to the Evidence phase                                  |
+| `record_decision(arbiter, dispute_id, outcome)` | arbiter                | Record the arbiter's ruling, moves to Decision phase                                              |
+| `settle(arbiter, dispute_id)`                   | arbiter                | Enforce the ruling; computes and returns `(claimant_amount, respondent_amount)`, moves to Settled |
+| `get_dispute(dispute_id)`                       | —                      | Read dispute state                                                                                |
 
 ### Notes
 
@@ -464,16 +465,16 @@ Milestone-based grant applications with admin approval and BST fund release.
 
 ### Functions
 
-| Function | Auth | Description |
-|---|---|---|
-| `initialize(admin, token_contract)` | admin | One-time setup; records the `token` contract address used for fund release |
-| `get_admin()` | — | Read admin |
-| `apply_for_grant(applicant, title, description, total_amount, milestone_count)` | applicant | Submit an application; returns `grant_id` |
-| `approve_grant(admin, grant_id)` / `reject_grant(admin, grant_id)` | admin | Approve or reject an application |
-| `set_milestone(admin, grant_id, milestone_idx, description, amount)` | admin | Define a milestone's payout amount |
-| `release_milestone_funds(admin, grant_id, milestone_idx)` | admin | Cross-calls `token::transfer` to pay the applicant the milestone amount |
-| `submit_report(applicant, grant_id, content)` | applicant | Submit a progress report |
-| `get_grant(grant_id)` / `get_milestone(grant_id, milestone_idx)` / `get_grant_reports(grant_id)` / `get_applicant_grants(applicant)` | — | Reads |
+| Function                                                                                                                             | Auth      | Description                                                                |
+| ------------------------------------------------------------------------------------------------------------------------------------ | --------- | -------------------------------------------------------------------------- |
+| `initialize(admin, token_contract)`                                                                                                  | admin     | One-time setup; records the `token` contract address used for fund release |
+| `get_admin()`                                                                                                                        | —         | Read admin                                                                 |
+| `apply_for_grant(applicant, title, description, total_amount, milestone_count)`                                                      | applicant | Submit an application; returns `grant_id`                                  |
+| `approve_grant(admin, grant_id)` / `reject_grant(admin, grant_id)`                                                                   | admin     | Approve or reject an application                                           |
+| `set_milestone(admin, grant_id, milestone_idx, description, amount)`                                                                 | admin     | Define a milestone's payout amount                                         |
+| `release_milestone_funds(admin, grant_id, milestone_idx)`                                                                            | admin     | Cross-calls `token::transfer` to pay the applicant the milestone amount    |
+| `submit_report(applicant, grant_id, content)`                                                                                        | applicant | Submit a progress report                                                   |
+| `get_grant(grant_id)` / `get_milestone(grant_id, milestone_idx)` / `get_grant_reports(grant_id)` / `get_applicant_grants(applicant)` | —         | Reads                                                                      |
 
 ### Notes
 
@@ -487,20 +488,21 @@ Configurable creator/contributor/platform royalty splits per course, with a pull
 
 ### Functions
 
-| Function | Auth | Description |
-|---|---|---|
-| `initialize(admin)` | admin | One-time setup |
-| `set_royalty_split(admin, course_id, creator_pct, contributor_pct, platform_pct)` | admin | Define the percentage split for a course (must sum to 100) |
-| `add_royalty_recipient(admin, course_id, recipient)` | admin | Register a recipient address for a course's contributor share |
-| `distribute_royalties(admin, course_id, total_amount)` | admin | Record a distribution event, crediting each recipient's pull-balance according to the split |
-| `withdraw_royalties(recipient)` | recipient | Pull the caller's accrued balance |
-| `get_royalty_balance(recipient)` | — | Read a recipient's withdrawable balance |
-| `get_royalty_split(course_id)` | — | Read a course's configured split |
-| `get_payment_record(payment_id)` / `get_payment_count()` / `get_total_distributed(course_id)` | — | Payment history reads |
+| Function                                                                                      | Auth      | Description                                                                                 |
+| --------------------------------------------------------------------------------------------- | --------- | ------------------------------------------------------------------------------------------- |
+| `initialize(admin)`                                                                           | admin     | One-time setup                                                                              |
+| `set_royalty_split(admin, course_id, creator_pct, contributor_pct, platform_pct)`             | admin     | Define the percentage split for a course (must sum to 100)                                  |
+| `add_royalty_recipient(admin, course_id, recipient)`                                          | admin     | Register a recipient address for a course's contributor share                               |
+| `distribute_royalties(admin, course_id, total_amount)`                                        | admin     | Record a distribution event, crediting each recipient's pull-balance according to the split |
+| `withdraw_royalties(recipient)`                                                               | recipient | Pull the caller's accrued balance                                                           |
+| `get_royalty_balance(recipient)`                                                              | —         | Read a recipient's withdrawable balance                                                     |
+| `get_royalty_split(course_id)`                                                                | —         | Read a course's configured split                                                            |
+| `get_payment_record(payment_id)` / `get_payment_count()` / `get_total_distributed(course_id)` | —         | Payment history reads                                                                       |
 
 ### Notes
 
 `royalty_distribution` performs no on-chain cross-contract calls; `distribute_royalties` records amounts in its own storage rather than moving tokens directly — `apps/backend` (or an admin) is responsible for funding the contract's notion of "distributed" amounts and for the actual token movement backing a withdrawal. **Build note:** this crate's `Cargo.toml` exists under `contracts/royalty_distribution/` but, unlike the other 18 contracts, is not currently listed in the root `Cargo.toml` workspace `members` — see [ADR-006](./adr/ADR-006-contract-per-domain-architecture.md#context). Build it explicitly:
+
 ```bash
 cargo build --manifest-path contracts/royalty_distribution/Cargo.toml --target wasm32-unknown-unknown
 ```
@@ -513,15 +515,15 @@ Automated BST buyback-and-burn mechanism, triggered by a configurable price thre
 
 ### Functions
 
-| Function | Auth | Description |
-|---|---|---|
-| `initialize(admin, token_contract, oracle_contract, dex_contract, dex_pool_id)` | admin | One-time setup; records the token, oracle, and DEX contract addresses used for buyback decisions |
-| `update_config(admin, enabled, price_threshold, max_buyback_amount, min_reserve_balance, buyback_interval)` | admin | Update any subset of buyback parameters |
-| `get_config()` | — | Read current configuration |
-| `check_and_execute_buyback()` | — | Callable by anyone (e.g. a scheduled off-chain job); executes a buyback only if configured conditions are met |
-| `manual_buyback(admin, max_xlm_amount)` | admin | Force a buyback outside the automated schedule |
-| `add_to_reserve(from, amount)` | from | Fund the reserve used for buybacks |
-| `get_reserve_balance()` / `get_buyback_analytics()` / `get_buyback_history(start_index, limit)` | — | Reads |
+| Function                                                                                                    | Auth  | Description                                                                                                   |
+| ----------------------------------------------------------------------------------------------------------- | ----- | ------------------------------------------------------------------------------------------------------------- |
+| `initialize(admin, token_contract, oracle_contract, dex_contract, dex_pool_id)`                             | admin | One-time setup; records the token, oracle, and DEX contract addresses used for buyback decisions              |
+| `update_config(admin, enabled, price_threshold, max_buyback_amount, min_reserve_balance, buyback_interval)` | admin | Update any subset of buyback parameters                                                                       |
+| `get_config()`                                                                                              | —     | Read current configuration                                                                                    |
+| `check_and_execute_buyback()`                                                                               | —     | Callable by anyone (e.g. a scheduled off-chain job); executes a buyback only if configured conditions are met |
+| `manual_buyback(admin, max_xlm_amount)`                                                                     | admin | Force a buyback outside the automated schedule                                                                |
+| `add_to_reserve(from, amount)`                                                                              | from  | Fund the reserve used for buybacks                                                                            |
+| `get_reserve_balance()` / `get_buyback_analytics()` / `get_buyback_history(start_index, limit)`             | —     | Reads                                                                                                         |
 
 ### Notes
 
@@ -535,17 +537,17 @@ Whitelist/blacklist, per-account transfer limits, and an emergency-override swit
 
 ### Functions
 
-| Function | Auth | Description |
-|---|---|---|
-| `initialize(admin)` | admin | One-time setup |
-| `add_to_whitelist(admin, account)` / `remove_from_whitelist(admin, account)` / `is_whitelisted(account)` | admin | Manage whitelist |
-| `add_to_blacklist(admin, account)` / `remove_from_blacklist(admin, account)` / `is_blacklisted(account)` | admin | Manage blacklist |
-| `set_transfer_limit(admin, account, limit)` / `get_transfer_limit(account)` | admin | Per-account transfer cap |
-| `request_transfer_approval(from, to, amount)` | from | Request approval for a transfer that would otherwise be restricted |
-| `approve_transfer(admin, from, to)` / `is_transfer_approved(from, to)` | admin | Approve/check a pending transfer request |
-| `activate_emergency_override(admin)` / `deactivate_emergency_override(admin)` / `is_emergency_override_active()` | admin | Bypass all restriction checks in an emergency |
-| `can_transfer(from, to)` | — | Composite check: not blacklisted, within limits or approved, or override active |
-| `get_restriction_log(log_id)` / `get_log_count()` | — | Audit log of restriction decisions |
+| Function                                                                                                         | Auth  | Description                                                                     |
+| ---------------------------------------------------------------------------------------------------------------- | ----- | ------------------------------------------------------------------------------- |
+| `initialize(admin)`                                                                                              | admin | One-time setup                                                                  |
+| `add_to_whitelist(admin, account)` / `remove_from_whitelist(admin, account)` / `is_whitelisted(account)`         | admin | Manage whitelist                                                                |
+| `add_to_blacklist(admin, account)` / `remove_from_blacklist(admin, account)` / `is_blacklisted(account)`         | admin | Manage blacklist                                                                |
+| `set_transfer_limit(admin, account, limit)` / `get_transfer_limit(account)`                                      | admin | Per-account transfer cap                                                        |
+| `request_transfer_approval(from, to, amount)`                                                                    | from  | Request approval for a transfer that would otherwise be restricted              |
+| `approve_transfer(admin, from, to)` / `is_transfer_approved(from, to)`                                           | admin | Approve/check a pending transfer request                                        |
+| `activate_emergency_override(admin)` / `deactivate_emergency_override(admin)` / `is_emergency_override_active()` | admin | Bypass all restriction checks in an emergency                                   |
+| `can_transfer(from, to)`                                                                                         | —     | Composite check: not blacklisted, within limits or approved, or override active |
+| `get_restriction_log(log_id)` / `get_log_count()`                                                                | —     | Audit log of restriction decisions                                              |
 
 ### Notes
 
@@ -559,16 +561,16 @@ Role-based access control library used by other contracts for cross-contract aut
 
 The crate serves two roles. `SharedContract` (behind the default-on `contract` Cargo feature) is the deployable RBAC contract. The rest of the crate is a plain library that other contracts link against with `default-features = false`:
 
-| Module | Provides |
-|---|---|
-| `access` | Admin/authority/owner checks — see [Auth conventions](#auth-conventions) |
-| `math` | Overflow-checked `i128`/`u32` arithmetic, including `checked_mul_div_i128` for proportional-share formulas |
-| `validation` | Positive-amount, percentage-bound, and future-timestamp guards |
-| `pausable` | Pause flag with auto-unpause |
-| `reentrancy` | Reentrancy lock |
-| `multisig` | N-of-M proposal flow |
-| `upgrade` | Timelocked WASM upgrade flow |
-| `errors` | `SharedError` — defined, not yet consumed (see issue #822) |
+| Module       | Provides                                                                                                   |
+| ------------ | ---------------------------------------------------------------------------------------------------------- |
+| `access`     | Admin/authority/owner checks — see [Auth conventions](#auth-conventions)                                   |
+| `math`       | Overflow-checked `i128`/`u32` arithmetic, including `checked_mul_div_i128` for proportional-share formulas |
+| `validation` | Positive-amount, percentage-bound, and future-timestamp guards                                             |
+| `pausable`   | Pause flag with auto-unpause                                                                               |
+| `reentrancy` | Reentrancy lock                                                                                            |
+| `multisig`   | N-of-M proposal flow                                                                                       |
+| `upgrade`    | Timelocked WASM upgrade flow                                                                               |
+| `errors`     | `SharedError` — defined, not yet consumed (see issue #822)                                                 |
 
 ---
 
@@ -586,8 +588,8 @@ Verified by grepping every `contracts/*/src/*.rs` for `invoke_contract` and `#[c
 
 - Every state-mutating function takes the acting party's `Address` as an explicit parameter and calls `<address>.require_auth()` as its first statement (e.g. `admin.require_auth()`, `payer.require_auth()`, `nft_owner.require_auth()`). There is no implicit `msg.sender`-style caller identity — the caller is always passed explicitly and Soroban verifies the corresponding signature was authorized for this invocation.
 - Read-only query functions (`get_*`, `is_*`, `has_*`, `list_*`) take no auth and require no `require_auth()` call.
-- Admin-gated functions additionally compare the passed address against a stored `Admin` (or, in `registry`, `Admin`-or-curator-set) value **after** calling `require_auth()`: `require_auth()` proves the caller controls that address; the storage comparison proves that address is *allowed* to perform the action. Both checks are required — `require_auth()` alone does not enforce authorization.
-- Since issue #825 both halves live in [`contracts/shared/src/access.rs`](../contracts/shared/src/access.rs) rather than being copied inline. Use `access::require_admin(&env, &caller, &DataKey::Admin)` in new code; it takes the storage key as a generic parameter so each contract keeps its own `DataKey` enum. The other helpers are `require_authority` (a non-admin authority slot such as `dispute`'s arbiter), `require_admin_or` (admin *or* a named party, e.g. an escrow payer), `require_owner` (per-resource ownership), `is_admin` (predicate, no auth and no panic — for building compound checks), and `read_authority` (the raw read, with a `"Not initialized"` message instead of a bare `.unwrap()`).
+- Admin-gated functions additionally compare the passed address against a stored `Admin` (or, in `registry`, `Admin`-or-curator-set) value **after** calling `require_auth()`: `require_auth()` proves the caller controls that address; the storage comparison proves that address is _allowed_ to perform the action. Both checks are required — `require_auth()` alone does not enforce authorization.
+- Since issue #825 both halves live in [`contracts/shared/src/access.rs`](../contracts/shared/src/access.rs) rather than being copied inline. Use `access::require_admin(&env, &caller, &DataKey::Admin)` in new code; it takes the storage key as a generic parameter so each contract keeps its own `DataKey` enum. The other helpers are `require_authority` (a non-admin authority slot such as `dispute`'s arbiter), `require_admin_or` (admin _or_ a named party, e.g. an escrow payer), `require_owner` (per-resource ownership), `is_admin` (predicate, no auth and no panic — for building compound checks), and `read_authority` (the raw read, with a `"Not initialized"` message instead of a bare `.unwrap()`).
 - Admin-check failures panic with `"Unauthorized: admin required"`, authority-slot failures with `"Unauthorized: authority required"`, and ownership failures with `"Unauthorized: owner required"`. `registry` and `reputation` keep their own compound messages.
 - Depend on `brain-storm-shared` with `default-features = false`. Its `contract` feature compiles `SharedContract`'s `#[contractimpl]` block, which — if linked into another contract's wasm — would export `assign_role`, `upgrade`, and `pause_contract` from that contract, acting on its storage.
 - `market`, `registry`, and `shared` each implement their own local `pause`/`unpause`/`is_paused` — there is no shared on-chain pause registry. See [ADR-007](./adr/ADR-007-shared-crate-for-common-code.md) for why this pattern is currently copied per-contract rather than centralized.

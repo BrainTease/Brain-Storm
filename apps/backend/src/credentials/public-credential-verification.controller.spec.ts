@@ -1,10 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
-import { getRepositoryToken } from '@nestjs/typeorm';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { PublicCredentialVerificationController } from './public-credential-verification.controller';
-import { Credential } from './credential.entity';
 import { StellarService } from '../stellar/stellar.service';
+import { CREDENTIALS_REPOSITORY_TOKEN } from '../repositories';
 
 const mockCredential = {
   id: 'cred-uuid',
@@ -17,8 +16,9 @@ const mockCredential = {
   user: { id: 'user-uuid', email: 'alice@example.com' },
 };
 
-const mockCredentialRepo = {
-  findOne: jest.fn().mockResolvedValue(mockCredential),
+const mockCredentialsRepository = {
+  findByIdWithRelations: jest.fn().mockResolvedValue(mockCredential),
+  findByTxHashWithRelations: jest.fn().mockResolvedValue(mockCredential),
 };
 
 const mockStellarService = {
@@ -50,14 +50,14 @@ describe('PublicCredentialVerificationController', () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [PublicCredentialVerificationController],
       providers: [
-        { provide: getRepositoryToken(Credential), useValue: mockCredentialRepo },
+        { provide: CREDENTIALS_REPOSITORY_TOKEN, useValue: mockCredentialsRepository },
         { provide: StellarService, useValue: mockStellarService },
         { provide: CACHE_MANAGER, useValue: mockCache },
       ],
     }).compile();
 
     controller = module.get<PublicCredentialVerificationController>(
-      PublicCredentialVerificationController,
+      PublicCredentialVerificationController
     );
   });
 
@@ -74,12 +74,15 @@ describe('PublicCredentialVerificationController', () => {
     });
 
     it('throws NotFoundException for unknown credential', async () => {
-      mockCredentialRepo.findOne.mockResolvedValueOnce(null);
+      mockCredentialsRepository.findByIdWithRelations.mockResolvedValueOnce(null);
       await expect(controller.verifyById('unknown')).rejects.toThrow(NotFoundException);
     });
 
     it('returns unverified status when stellar tx not found', async () => {
-      mockStellarService.verifyTransaction.mockResolvedValueOnce({ verified: false, hash: 'tx-hash-123' });
+      mockStellarService.verifyTransaction.mockResolvedValueOnce({
+        verified: false,
+        hash: 'tx-hash-123',
+      });
       const result = await controller.verifyById('cred-uuid');
       expect(result.status).toBe('unverified');
     });
@@ -89,7 +92,7 @@ describe('PublicCredentialVerificationController', () => {
       mockCache.get.mockResolvedValueOnce(cachedResult);
       const result = await controller.verifyById('cred-uuid');
       expect(result).toEqual(cachedResult);
-      expect(mockCredentialRepo.findOne).not.toHaveBeenCalled();
+      expect(mockCredentialsRepository.findByIdWithRelations).not.toHaveBeenCalled();
     });
   });
 
@@ -112,7 +115,7 @@ describe('PublicCredentialVerificationController', () => {
     });
 
     it('returns red badge for not-found credential', async () => {
-      mockCredentialRepo.findOne.mockResolvedValueOnce(null);
+      mockCredentialsRepository.findByIdWithRelations.mockResolvedValueOnce(null);
       const res = mockResponse();
       await controller.getWidget('bad-id', res);
       const js: string = res.send.mock.calls[0][0];
@@ -130,7 +133,7 @@ describe('PublicCredentialVerificationController', () => {
     });
 
     it('returns HTML with red badge for invalid credential', async () => {
-      mockCredentialRepo.findOne.mockResolvedValueOnce(null);
+      mockCredentialsRepository.findByIdWithRelations.mockResolvedValueOnce(null);
       const res = mockResponse();
       await controller.getBadge('bad-id', res);
       const html: string = res.send.mock.calls[0][0];

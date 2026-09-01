@@ -20,31 +20,31 @@ export enum AttendanceStatus {
 @Index(['sessionId', 'userId'], { unique: true })
 export class SessionAttendance {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  sessionId: string;
+  sessionId!: string;
 
   @ManyToOne(() => CohortSession, (s) => s.attendances, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'sessionId' })
-  session: CohortSession;
+  session!: CohortSession;
 
   @Column()
-  userId: string;
+  userId!: string;
 
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
-  user: User;
+  user!: User;
 
   @Column({ enum: AttendanceStatus, default: AttendanceStatus.ABSENT })
-  status: AttendanceStatus;
+  status!: AttendanceStatus;
 
   @Column({ type: 'timestamp', nullable: true })
-  joinedAt: Date;
+  joinedAt!: Date;
 
   @Column({ type: 'timestamp', nullable: true })
-  leftAt: Date;
+  leftAt!: Date;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 }

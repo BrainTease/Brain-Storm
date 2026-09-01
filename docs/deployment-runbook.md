@@ -51,22 +51,22 @@ Complete every item before touching production. Check off as you go.
 
 **Required production env vars:**
 
-| Variable | Notes |
-|---|---|
-| `DATABASE_HOST` / `PORT` / `USER` / `PASSWORD` / `NAME` | PostgreSQL connection |
-| `REDIS_URL` | `redis://host:6379` |
-| `JWT_SECRET` | Min 64 chars, random |
-| `STELLAR_NETWORK` | Must be `mainnet` |
-| `STELLAR_SECRET_KEY` | Mainnet issuer keypair |
-| `SOROBAN_RPC_URL` | `https://soroban.stellar.org` |
-| `ANALYTICS_CONTRACT_ID` | From `deployed-contracts.json` |
-| `TOKEN_CONTRACT_ID` | From `deployed-contracts.json` |
-| `CERTIFICATE_CONTRACT_ID` | From `deployed-contracts.json` |
-| `GOVERNANCE_CONTRACT_ID` | From `deployed-contracts.json` |
-| `NEXT_PUBLIC_API_URL` | Public backend URL |
-| `SENTRY_DSN` / `NEXT_PUBLIC_SENTRY_DSN` | Error tracking |
-| `EMAIL_HOST` / `EMAIL_USER` / `EMAIL_PASS` | Transactional email |
-| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | OAuth |
+| Variable                                                | Notes                          |
+| ------------------------------------------------------- | ------------------------------ |
+| `DATABASE_HOST` / `PORT` / `USER` / `PASSWORD` / `NAME` | PostgreSQL connection          |
+| `REDIS_URL`                                             | `redis://host:6379`            |
+| `JWT_SECRET`                                            | Min 64 chars, random           |
+| `STELLAR_NETWORK`                                       | Must be `mainnet`              |
+| `STELLAR_SECRET_KEY`                                    | Mainnet issuer keypair         |
+| `SOROBAN_RPC_URL`                                       | `https://soroban.stellar.org`  |
+| `ANALYTICS_CONTRACT_ID`                                 | From `deployed-contracts.json` |
+| `TOKEN_CONTRACT_ID`                                     | From `deployed-contracts.json` |
+| `CERTIFICATE_CONTRACT_ID`                               | From `deployed-contracts.json` |
+| `GOVERNANCE_CONTRACT_ID`                                | From `deployed-contracts.json` |
+| `NEXT_PUBLIC_API_URL`                                   | Public backend URL             |
+| `SENTRY_DSN` / `NEXT_PUBLIC_SENTRY_DSN`                 | Error tracking                 |
+| `EMAIL_HOST` / `EMAIL_USER` / `EMAIL_PASS`              | Transactional email            |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`             | OAuth                          |
 
 ### Capacity & Dependencies
 
@@ -256,8 +256,8 @@ Expected response (`HTTP 200`):
   "status": "ok",
   "info": {
     "database": { "status": "up" },
-    "redis":    { "status": "up" },
-    "stellar":  { "status": "up" }
+    "redis": { "status": "up" },
+    "stellar": { "status": "up" }
   }
 }
 ```
@@ -368,13 +368,13 @@ stellar contract install --wasm target/wasm32-unknown-unknown/release/brain_stor
 
 ### Rollback Decision Matrix
 
-| Symptom | Action |
-|---|---|
-| Health check fails, no DB migration | Redeploy previous backend image |
-| Health check fails after migration | Redeploy previous image + revert migration |
-| Frontend 500s | Redeploy previous frontend image |
-| Contract calls failing | Repoint env vars to previous contract IDs + redeploy backend |
-| DB corruption | Restore from pre-deployment backup |
+| Symptom                             | Action                                                       |
+| ----------------------------------- | ------------------------------------------------------------ |
+| Health check fails, no DB migration | Redeploy previous backend image                              |
+| Health check fails after migration  | Redeploy previous image + revert migration                   |
+| Frontend 500s                       | Redeploy previous frontend image                             |
+| Contract calls failing              | Repoint env vars to previous contract IDs + redeploy backend |
+| DB corruption                       | Restore from pre-deployment backup                           |
 
 ---
 
@@ -385,12 +385,14 @@ stellar contract install --wasm target/wasm32-unknown-unknown/release/brain_stor
 Watch these in real time after every deployment:
 
 **Error rate** — should stay below 1% of requests:
+
 ```bash
 # Prometheus query
 rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m])
 ```
 
 **Application logs:**
+
 ```bash
 docker compose -f docker-compose.prod.yml logs -f backend | grep -E "ERROR|WARN"
 ```
@@ -405,20 +407,20 @@ Start the monitoring stack if not already running:
 docker compose -f docker-compose.monitoring.yml up -d
 ```
 
-| Dashboard | URL | What to watch |
-|---|---|---|
-| Grafana | http://localhost:3002 (admin/admin) | HTTP rates, credential issuance, BST minting, Stellar RPC latency |
-| Prometheus | http://localhost:9090 | Raw metrics, alert rules |
+| Dashboard  | URL                                 | What to watch                                                     |
+| ---------- | ----------------------------------- | ----------------------------------------------------------------- |
+| Grafana    | http://localhost:3002 (admin/admin) | HTTP rates, credential issuance, BST minting, Stellar RPC latency |
+| Prometheus | http://localhost:9090               | Raw metrics, alert rules                                          |
 
 Key metrics to verify are healthy post-deploy:
 
-| Metric | Healthy threshold |
-|---|---|
-| `http_requests_total` (5xx rate) | < 1% |
-| `stellar_rpc_latency_seconds` p95 | < 2s |
-| `nodejs_eventloop_lag_seconds` | < 100ms |
-| `process_resident_memory_bytes` | Stable (not growing) |
-| `credential_issued_total` | Incrementing normally |
+| Metric                            | Healthy threshold     |
+| --------------------------------- | --------------------- |
+| `http_requests_total` (5xx rate)  | < 1%                  |
+| `stellar_rpc_latency_seconds` p95 | < 2s                  |
+| `nodejs_eventloop_lag_seconds`    | < 100ms               |
+| `process_resident_memory_bytes`   | Stable (not growing)  |
+| `credential_issued_total`         | Incrementing normally |
 
 ### Alerting Thresholds
 
@@ -432,19 +434,19 @@ groups:
         expr: rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) > 0.01
         for: 2m
         annotations:
-          summary: "Error rate above 1%"
+          summary: 'Error rate above 1%'
 
       - alert: StellarRpcSlow
         expr: histogram_quantile(0.95, stellar_rpc_latency_seconds_bucket) > 2
         for: 5m
         annotations:
-          summary: "Stellar RPC p95 latency above 2s"
+          summary: 'Stellar RPC p95 latency above 2s'
 
       - alert: BackendDown
         expr: up{job="brain-storm-backend"} == 0
         for: 1m
         annotations:
-          summary: "Backend is unreachable"
+          summary: 'Backend is unreachable'
 ```
 
 ### 24-Hour Follow-Up
@@ -456,9 +458,9 @@ groups:
 
 ### Escalation
 
-| Severity | Condition | Action |
-|---|---|---|
-| P0 | Backend down / health check failing | Page on-call engineer immediately, begin rollback |
-| P1 | Error rate > 5% sustained > 5 min | Notify team, assess rollback |
-| P2 | Stellar RPC degraded, non-fatal | Monitor, open incident ticket |
-| P3 | Elevated latency, no errors | Monitor for 30 min, escalate if worsening |
+| Severity | Condition                           | Action                                            |
+| -------- | ----------------------------------- | ------------------------------------------------- |
+| P0       | Backend down / health check failing | Page on-call engineer immediately, begin rollback |
+| P1       | Error rate > 5% sustained > 5 min   | Notify team, assess rollback                      |
+| P2       | Stellar RPC degraded, non-fatal     | Monitor, open incident ticket                     |
+| P3       | Elevated latency, no errors         | Monitor for 30 min, escalate if worsening         |

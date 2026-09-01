@@ -27,7 +27,7 @@ export class AuditService {
   constructor(
     @InjectRepository(AuditLog) private auditRepo: Repository<AuditLog>,
     private logger: CustomLoggerService,
-    private encryption: EncryptionService,
+    private encryption: EncryptionService
   ) {
     this.logger.setContext('AuditService');
   }
@@ -38,7 +38,7 @@ export class AuditService {
     success: boolean,
     metadata?: Record<string, any>,
     ipAddress?: string,
-    userAgent?: string,
+    userAgent?: string
   ): Promise<void> {
     try {
       // Get hash of most recent entry for chain

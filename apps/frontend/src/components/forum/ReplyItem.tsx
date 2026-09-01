@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Reply } from '@/lib/forumApi';
+import { formatDateTime } from '@/lib/date-utils';
 import { useAuthStore } from '@/store/auth.store';
 import { useFlagContent, useMarkAsAnswer, useDeleteReply } from '@/hooks/useForum';
 
@@ -66,9 +67,7 @@ export function ReplyItem({
 
   return (
     <div
-      className={`border rounded-lg p-4 ${
-        isAnswer ? 'bg-green-50 border-green-200' : 'bg-white'
-      }`}
+      className={`border rounded-lg p-4 ${isAnswer ? 'bg-green-50 border-green-200' : 'bg-white'}`}
     >
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
@@ -89,10 +88,7 @@ export function ReplyItem({
                 </span>
               )}
             </div>
-            <p className="text-xs text-gray-500">
-              {new Date(reply.createdAt).toLocaleDateString()} at{' '}
-              {new Date(reply.createdAt).toLocaleTimeString()}
-            </p>
+            <p className="text-xs text-gray-500">{formatDateTime(reply.createdAt)}</p>
           </div>
         </div>
 

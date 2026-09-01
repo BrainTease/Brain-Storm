@@ -42,7 +42,13 @@ describe('StreakIndicator', () => {
 
 describe('BadgeGrid', () => {
   const badges: Badge[] = [
-    { id: '1', name: 'First Steps', description: 'Complete lesson', icon: '⭐', unlockedAt: '2026-01-01T00:00:00Z' },
+    {
+      id: '1',
+      name: 'First Steps',
+      description: 'Complete lesson',
+      icon: '⭐',
+      unlockedAt: '2026-01-01T00:00:00Z',
+    },
     { id: '2', name: 'Scholar', description: 'Complete 10 courses', icon: '🎓', unlockedAt: null },
   ];
 

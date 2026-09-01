@@ -16,18 +16,21 @@ WCAG 2.1 is organized around four principles (POUR):
 ### 1. Perceivable
 
 #### 1.1 Text Alternatives (Level A)
+
 - **1.1.1**: Provide text alternatives for non-text content
   - All images must have `alt` attributes
   - Decorative images should have empty `alt=""`
   - Complex images need detailed descriptions
 
 #### 1.2 Time-based Media (Level A/AA)
+
 - **1.2.1**: Captions for prerecorded audio
 - **1.2.2**: Captions for prerecorded video
 - **1.2.4**: Captions for live audio content
 - **1.2.5**: Audio descriptions for prerecorded video
 
 #### 1.3 Adaptable (Level A)
+
 - **1.3.1**: Info and relationships conveyed through presentation can be programmatically determined
   - Use semantic HTML
   - Proper heading hierarchy
@@ -36,6 +39,7 @@ WCAG 2.1 is organized around four principles (POUR):
 - **1.3.3**: Instructions don't rely solely on sensory characteristics
 
 #### 1.4 Distinguishable (Level AA)
+
 - **1.4.1**: Color is not the only visual means of conveying information
 - **1.4.2**: Audio control for auto-playing audio
 - **1.4.3**: **Color contrast ratio of at least 4.5:1** for normal text
@@ -49,18 +53,22 @@ WCAG 2.1 is organized around four principles (POUR):
 ### 2. Operable
 
 #### 2.1 Keyboard Accessible (Level A)
+
 - **2.1.1**: All functionality available via keyboard
 - **2.1.2**: No keyboard trap - users can navigate away
 - **2.1.4**: Single character shortcuts can be turned off or remapped
 
 #### 2.2 Enough Time (Level A)
+
 - **2.2.1**: Timing adjustable for time limits
 - **2.2.2**: Content can be paused, stopped, or hidden if it moves, blinks, or scrolls
 
 #### 2.3 Seizures (Level A/AA)
+
 - **2.3.1**: No content flashes more than 3 times per second
 
 #### 2.4 Navigable (Level A/AA)
+
 - **2.4.1**: Bypass blocks (skip links) to navigate repeated content
 - **2.4.2**: Pages have descriptive titles
 - **2.4.3**: Focus order is logical and meaningful
@@ -70,6 +78,7 @@ WCAG 2.1 is organized around four principles (POUR):
 - **2.4.7**: **Focus indicator is visible**
 
 #### 2.5 Input Modalities (Level A/AA)
+
 - **2.5.1**: Complex pointer gestures have single-pointer alternatives
 - **2.5.2**: Pointer cancellation (up-event not down-event)
 - **2.5.3**: Labels match accessible names
@@ -78,16 +87,19 @@ WCAG 2.1 is organized around four principles (POUR):
 ### 3. Understandable
 
 #### 3.1 Readable (Level A/AA)
+
 - **3.1.1**: Language of page specified (`<html lang="en">`)
 - **3.1.2**: Language of parts specified when it changes
 
 #### 3.2 Predictable (Level A/AA)
+
 - **3.2.1**: Focus doesn't cause unexpected context changes
 - **3.2.2**: Input doesn't cause unexpected context changes
 - **3.2.3**: **Navigation mechanisms consistent across pages**
 - **3.2.4**: **Components identified consistently**
 
 #### 3.3 Input Assistance (Level A/AA)
+
 - **3.3.1**: Error messages identify errors clearly
 - **3.3.2**: **Labels or instructions for user input**
 - **3.3.3**: **Error suggestions provided when possible**
@@ -96,6 +108,7 @@ WCAG 2.1 is organized around four principles (POUR):
 ### 4. Robust
 
 #### 4.1 Compatible (Level A/AA)
+
 - **4.1.1**: Markup is valid (proper nesting, unique IDs)
 - **4.1.2**: Name, role, value available for UI components
 - **4.1.3**: **Status messages can be programmatically determined**
@@ -133,12 +146,14 @@ Use this for quick verification:
 ## Testing Tools
 
 ### Automated Testing
+
 - **axe-core**: Catches ~40% of issues
 - **Lighthouse**: Overall accessibility score
 - **WAVE**: Visual feedback tool
 - **Pa11y**: Command-line testing
 
 ### Manual Testing
+
 - **Keyboard Navigation**: Tab, Shift+Tab, Enter, Space, Esc, Arrows
 - **Screen Readers**:
   - NVDA (Windows, free)
@@ -163,7 +178,7 @@ Use this for quick verification:
     required
     aria-required="true"
     aria-invalid={hasError}
-    aria-describedby={hasError ? "email-error" : undefined}
+    aria-describedby={hasError ? 'email-error' : undefined}
   />
   {hasError && (
     <span id="email-error" role="alert">
@@ -195,9 +210,17 @@ Use this for quick verification:
 ```tsx
 <nav aria-label="Main navigation">
   <ul>
-    <li><a href="/" aria-current={isHome ? "page" : undefined}>Home</a></li>
-    <li><a href="/courses">Courses</a></li>
-    <li><a href="/about">About</a></li>
+    <li>
+      <a href="/" aria-current={isHome ? 'page' : undefined}>
+        Home
+      </a>
+    </li>
+    <li>
+      <a href="/courses">Courses</a>
+    </li>
+    <li>
+      <a href="/about">About</a>
+    </li>
   </ul>
 </nav>
 ```
@@ -226,20 +249,10 @@ Use this for quick verification:
       Content
     </button>
   </div>
-  <div
-    id="panel-0"
-    role="tabpanel"
-    aria-labelledby="tab-0"
-    hidden={activeTab !== 0}
-  >
+  <div id="panel-0" role="tabpanel" aria-labelledby="tab-0" hidden={activeTab !== 0}>
     Overview content...
   </div>
-  <div
-    id="panel-1"
-    role="tabpanel"
-    aria-labelledby="tab-1"
-    hidden={activeTab !== 1}
-  >
+  <div id="panel-1" role="tabpanel" aria-labelledby="tab-1" hidden={activeTab !== 1}>
     Course content...
   </div>
 </div>
@@ -248,35 +261,42 @@ Use this for quick verification:
 ## Severity Guidelines
 
 ### Critical (Must Fix)
+
 - Blocks users from accessing content
 - Examples: No keyboard access, poor contrast, missing form labels
 
 ### Serious (Should Fix Soon)
+
 - Significant barrier for many users
 - Examples: Missing alt text, improper ARIA, no focus indicators
 
 ### Moderate (Fix When Possible)
+
 - Barrier for some users
 - Examples: Missing skip links, non-descriptive links
 
 ### Minor (Best Practice)
+
 - Could be better but not blocking
 - Examples: Missing lang attribute, suboptimal heading structure
 
 ## Resources
 
 ### Official Documentation
+
 - [WCAG 2.1 Quick Reference](https://www.w3.org/WAI/WCAG21/quickref/)
 - [Understanding WCAG 2.1](https://www.w3.org/WAI/WCAG21/Understanding/)
 - [How to Meet WCAG](https://www.w3.org/WAI/WCAG21/quickref/)
 
 ### Tools & Extensions
+
 - [axe DevTools](https://www.deque.com/axe/devtools/)
 - [WAVE](https://wave.webaim.org/extension/)
 - [Lighthouse](https://developers.google.com/web/tools/lighthouse)
 - [Color Contrast Checker](https://webaim.org/resources/contrastchecker/)
 
 ### Learning Resources
+
 - [WebAIM](https://webaim.org/)
 - [A11y Project](https://www.a11yproject.com/)
 - [Inclusive Components](https://inclusive-components.design/)
@@ -285,19 +305,23 @@ Use this for quick verification:
 ## Legal Requirements
 
 ### United States
+
 - **Section 508**: Federal agencies must make digital content accessible
 - **ADA**: Applies to places of public accommodation (including websites)
 
 ### European Union
+
 - **EN 301 549**: European accessibility standard
 - **Web Accessibility Directive**: Public sector websites must meet WCAG 2.1 AA
 
 ### International
+
 - Many countries have adopted WCAG 2.1 AA as their standard
 
 ## Exceptions
 
 Some content may be exempt:
+
 - Third-party content you don't control
 - Archive content (if declared as such)
 - Content only for employees (but still recommended)

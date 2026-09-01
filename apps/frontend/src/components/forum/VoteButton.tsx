@@ -10,7 +10,13 @@ interface VoteButtonProps {
   initialUserVote?: 'up' | 'down' | null;
 }
 
-export function VoteButton({ type, id, initialUpvotes, initialDownvotes, initialUserVote = null }: VoteButtonProps) {
+export function VoteButton({
+  type,
+  id,
+  initialUpvotes,
+  initialDownvotes,
+  initialUserVote = null,
+}: VoteButtonProps) {
   const [upvotes, setUpvotes] = useState(initialUpvotes);
   const [downvotes, setDownvotes] = useState(initialDownvotes);
   const [userVote, setUserVote] = useState<'up' | 'down' | null>(initialUserVote);

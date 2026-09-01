@@ -40,8 +40,11 @@ describe('StellarService - Soroban Testnet (Integration)', () => {
         }
       );
       sandboxRunning = true;
-    } catch (error) {
-      console.warn('Could not start Soroban sandbox:', error.message);
+    } catch (error: unknown) {
+      console.warn(
+        'Could not start Soroban sandbox:',
+        error instanceof Error ? error.message : String(error)
+      );
       // Continue anyway - tests will be skipped if sandbox unavailable
     }
 
@@ -102,8 +105,11 @@ describe('StellarService - Soroban Testnet (Integration)', () => {
 
         expect(contractId).toBeTruthy();
         expect(contractId).toMatch(/^C[A-Z0-9]{55}$/);
-      } catch (error) {
-        console.warn('Contract deployment failed:', error.message);
+      } catch (error: unknown) {
+        console.warn(
+          'Contract deployment failed:',
+          error instanceof Error ? error.message : String(error)
+        );
         // Skip remaining tests if deployment fails
         return;
       }
@@ -134,8 +140,11 @@ describe('StellarService - Soroban Testnet (Integration)', () => {
         );
 
         expect(output).toBeTruthy();
-      } catch (error) {
-        console.warn('record_progress invocation failed:', error.message);
+      } catch (error: unknown) {
+        console.warn(
+          'record_progress invocation failed:',
+          error instanceof Error ? error.message : String(error)
+        );
       }
     });
 
@@ -154,8 +163,11 @@ describe('StellarService - Soroban Testnet (Integration)', () => {
         // Verify it's a valid transaction hash format
         expect(txHash).toBeTruthy();
         expect(txHash).toMatch(/^[a-f0-9]{64}$/);
-      } catch (error) {
-        console.warn('issueCredential failed:', error.message);
+      } catch (error: unknown) {
+        console.warn(
+          'issueCredential failed:',
+          error instanceof Error ? error.message : String(error)
+        );
       }
     });
   });
@@ -173,7 +185,7 @@ describe('StellarService - Soroban Testnet (Integration)', () => {
           `stellar contract invoke --id ${invalidContractId} --source-account test --network local -- record_progress test test 0`,
           { encoding: 'utf-8', stdio: 'pipe' }
         );
-      } catch (error) {
+      } catch (error: unknown) {
         // Expected to fail
         expect(error).toBeTruthy();
       }

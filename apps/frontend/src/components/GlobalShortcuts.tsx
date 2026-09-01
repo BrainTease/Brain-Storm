@@ -13,7 +13,10 @@ export function GlobalShortcuts() {
 
   const focusSearch = useCallback(() => {
     const input = document.querySelector<HTMLInputElement>('input[placeholder*="earch"]');
-    if (input) { input.focus(); input.select(); }
+    if (input) {
+      input.focus();
+      input.select();
+    }
   }, []);
 
   // Listen for custom event from CommandPalette to open help
@@ -23,34 +26,46 @@ export function GlobalShortcuts() {
     return () => document.removeEventListener('open-shortcuts-help', handler);
   }, []);
 
-  const shortcuts = useMemo(() => [
-    {
-      key: '/',
-      skipOnInput: true,
-      handler: (e: KeyboardEvent) => { e.preventDefault(); focusSearch(); },
-    },
-    {
-      key: 'k',
-      ctrl: true,
-      skipOnInput: false,
-      handler: (e: KeyboardEvent) => { e.preventDefault(); setPaletteOpen(true); },
-    },
-    {
-      key: '?',
-      skipOnInput: true,
-      handler: (e: KeyboardEvent) => { e.preventDefault(); setHelpOpen((o) => !o); },
-    },
-    {
-      key: 'Escape',
-      skipOnInput: false,
-      handler: () => {
-        // Modals listen for Escape themselves; this is a fallback to navigate back
-        // if no modal is open. We close modals here.
-        setHelpOpen(false);
-        setPaletteOpen(false);
+  const shortcuts = useMemo(
+    () => [
+      {
+        key: '/',
+        skipOnInput: true,
+        handler: (e: KeyboardEvent) => {
+          e.preventDefault();
+          focusSearch();
+        },
       },
-    },
-  ], [focusSearch]);
+      {
+        key: 'k',
+        ctrl: true,
+        skipOnInput: false,
+        handler: (e: KeyboardEvent) => {
+          e.preventDefault();
+          setPaletteOpen(true);
+        },
+      },
+      {
+        key: '?',
+        skipOnInput: true,
+        handler: (e: KeyboardEvent) => {
+          e.preventDefault();
+          setHelpOpen((o) => !o);
+        },
+      },
+      {
+        key: 'Escape',
+        skipOnInput: false,
+        handler: () => {
+          // Modals listen for Escape themselves; this is a fallback to navigate back
+          // if no modal is open. We close modals here.
+          setHelpOpen(false);
+          setPaletteOpen(false);
+        },
+      },
+    ],
+    [focusSearch]
+  );
 
   useKeyboardShortcuts(shortcuts);
 

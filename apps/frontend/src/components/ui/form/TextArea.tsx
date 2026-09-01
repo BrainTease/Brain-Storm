@@ -3,8 +3,7 @@ import { Field, useFieldA11y, type FieldMeta } from './Field';
 import { controlClass, type ControlSize } from './fieldStyles';
 
 export interface TextAreaProps
-  extends FieldMeta,
-    Omit<React.TextareaHTMLAttributes<HTMLTextAreaElement>, 'aria-invalid'> {
+  extends FieldMeta, Omit<React.TextareaHTMLAttributes<HTMLTextAreaElement>, 'aria-invalid'> {
   size?: ControlSize;
   fullWidth?: boolean;
 }

@@ -1,4 +1,16 @@
-import { Controller, Get, Patch, Post, Delete, Param, Body, Request, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Patch,
+  Post,
+  Delete,
+  Param,
+  Body,
+  Request,
+  UseGuards,
+  Req,
+} from '@nestjs/common';
+import { Request as ExpressRequest } from 'express';
 import { NotificationsService } from './notifications.service';
 import { PushNotificationService } from './push-notification.service';
 import { ApiBearerAuth, ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
@@ -6,19 +18,20 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { NotificationType } from './notification.entity';
 import { IsEnum, IsString, IsDateString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { PaginationDto } from '../common/dto/pagination.dto';
 
 class ScheduleNotificationDto {
   @ApiProperty({ enum: NotificationType })
   @IsEnum(NotificationType)
-  type: NotificationType;
+  type!: NotificationType;
 
   @ApiProperty()
   @IsString()
-  message: string;
+  message!: string;
 
   @ApiProperty({ description: 'ISO 8601 datetime' })
   @IsDateString()
-  scheduledAt: string;
+  scheduledAt!: string;
 }
 
 @ApiTags('notifications')
@@ -28,14 +41,14 @@ class ScheduleNotificationDto {
 export class NotificationsController {
   constructor(
     private notificationsService: NotificationsService,
-    private pushService: PushNotificationService,
+    private pushService: PushNotificationService
   ) {}
 
   @Get()
   @ApiOperation({ summary: 'Get all notifications for the current user' })
   @ApiResponse({ status: 200, description: 'Returns user notifications' })
-  findAll(@Request() req) {
-    return this.notificationsService.findByUser(req.user.id);
+  findAll(@Req() req: ExpressRequest) {
+    return this.notificationsService.findByUser(req.user!.id);
   }
 
   @Patch(':id/read')
@@ -49,8 +62,8 @@ export class NotificationsController {
   @Patch('read-all')
   @ApiOperation({ summary: 'Mark all notifications as read' })
   @ApiResponse({ status: 200, description: 'All notifications marked as read' })
-  markAllAsRead(@Request() req) {
-    return this.notificationsService.markAllAsRead(req.user.id);
+  markAllAsRead(@Req() req: ExpressRequest) {
+    return this.notificationsService.markAllAsRead(req.user!.id);
   }
 
   // ── Preferences ──────────────────────────────────────────────────────────
@@ -58,16 +71,20 @@ export class NotificationsController {
   @Get('preferences')
   @ApiOperation({ summary: 'Get notification preferences for the current user' })
   @ApiResponse({ status: 200, description: 'Notification preferences' })
-  getPreferences(@Request() req) {
-    return this.notificationsService.getPreferences(req.user.id);
+  getPreferences(@Req() req: ExpressRequest) {
+    return this.notificationsService.getPreferences(req.user!.id);
   }
 
   @Patch('preferences')
   @ApiOperation({ summary: 'Update notification preferences' })
-  @ApiBody({ schema: { example: { inApp: true, email: true, push: false, enrollment: true, completion: true } } })
+  @ApiBody({
+    schema: {
+      example: { inApp: true, email: true, push: false, enrollment: true, completion: true },
+    },
+  })
   @ApiResponse({ status: 200, description: 'Preferences updated' })
-  updatePreferences(@Request() req, @Body() body: Record<string, boolean>) {
-    return this.notificationsService.updatePreferences(req.user.id, body as any);
+  updatePreferences(@Req() req: ExpressRequest, @Body() body: Record<string, boolean>) {
+    return this.notificationsService.updatePreferences(req.user!.id, body as any);
   }
 
   // ── Scheduling ───────────────────────────────────────────────────────────
@@ -75,8 +92,13 @@ export class NotificationsController {
   @Post('schedule')
   @ApiOperation({ summary: 'Schedule a notification for future delivery' })
   @ApiResponse({ status: 201, description: 'Notification scheduled' })
-  scheduleNotification(@Request() req, @Body() dto: ScheduleNotificationDto) {
-    return this.notificationsService.schedule(req.user.id, dto.type, dto.message, new Date(dto.scheduledAt));
+  scheduleNotification(@Req() req: ExpressRequest, @Body() dto: ScheduleNotificationDto) {
+    return this.notificationsService.schedule(
+      req.user!.id,
+      dto.type,
+      dto.message,
+      new Date(dto.scheduledAt)
+    );
   }
 
   @Delete('schedule/:id')

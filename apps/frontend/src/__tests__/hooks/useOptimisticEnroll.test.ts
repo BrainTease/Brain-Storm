@@ -25,7 +25,9 @@ describe('useOptimisticEnroll', () => {
 
     expect(result.current.enrolled).toBe(false);
 
-    act(() => { result.current.enroll(); });
+    act(() => {
+      result.current.enroll();
+    });
 
     expect(result.current.enrolled).toBe(true);
     expect(result.current.enrolledAt).toBeTruthy();
@@ -64,8 +66,12 @@ describe('useOptimisticEnroll', () => {
 
     const { result } = renderHook(() => useOptimisticEnroll('course-1'));
 
-    act(() => { result.current.enroll(); });
-    act(() => { result.current.enroll(); });
+    act(() => {
+      result.current.enroll();
+    });
+    act(() => {
+      result.current.enroll();
+    });
 
     expect(api.post).toHaveBeenCalledTimes(1);
   });

@@ -38,6 +38,13 @@
       "p95_ms": 600,
       "p99_ms": 1200,
       "error_rate_max": 0.01
+    },
+    "marketplace_purchase": {
+      "p95_ms": 500,
+      "p99_ms": 1000,
+      "error_rate_max": 0.02,
+      "checkout_success_rate_min": 0.95,
+      "enrollment_success_rate_min": 0.95
     }
   }
 }

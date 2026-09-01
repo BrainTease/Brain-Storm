@@ -5,14 +5,18 @@ This directory contains OPA (Open Policy Agent) policies for validating Terrafor
 ## Policies
 
 ### security.rego
+
 Security-focused policies that enforce:
+
 - No unrestricted security group access (0.0.0.0/0)
 - RDS encryption requirements
 - S3 encryption and public access blocking
 - Backup retention policies
 
 ### compliance.rego
+
 Compliance policies that enforce:
+
 - Resource tagging standards
 - Environment tag requirements
 - Cost center tracking
@@ -36,6 +40,7 @@ terraform show -json tfplan > tfplan.json
 ## CI/CD Integration
 
 Policies are automatically evaluated in the GitHub Actions workflow on:
+
 - Pull requests to `infra/terraform/**`
 - Pushes to main branch affecting `infra/terraform/**`
 

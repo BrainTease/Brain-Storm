@@ -49,11 +49,11 @@ return data;
 
 ### TTL Reference
 
-| Data | Cache Key | TTL |
-|---|---|---|
-| All courses list | `courses:all` | 60 s (global default) |
-| Leaderboard top 50 | `leaderboard:top50` | 300 s (5 min) |
-| BST token balance | `token_balance:<publicKey>` | 30 s |
+| Data               | Cache Key                   | TTL                   |
+| ------------------ | --------------------------- | --------------------- |
+| All courses list   | `courses:all`               | 60 s (global default) |
+| Leaderboard top 50 | `leaderboard:top50`         | 300 s (5 min)         |
+| BST token balance  | `token_balance:<publicKey>` | 30 s                  |
 
 ### Cache Invalidation
 
@@ -108,12 +108,12 @@ The frontend uses Next.js 14 App Router with `output: 'standalone'` for lean Doc
 
 ### Rendering Strategy
 
-| Page type | Strategy | When to use |
-|---|---|---|
-| Course catalogue | SSG + ISR | Content changes infrequently |
-| Course detail | SSG + ISR | Per-course, low mutation rate |
-| User dashboard | SSR | Personalized, auth-gated |
-| Leaderboard | SSR or client fetch | Near-real-time data |
+| Page type        | Strategy            | When to use                   |
+| ---------------- | ------------------- | ----------------------------- |
+| Course catalogue | SSG + ISR           | Content changes infrequently  |
+| Course detail    | SSG + ISR           | Per-course, low mutation rate |
+| User dashboard   | SSR                 | Personalized, auth-gated      |
+| Leaderboard      | SSR or client fetch | Near-real-time data           |
 
 **Static Generation with revalidation (ISR):**
 
@@ -212,7 +212,7 @@ const { raw, entities } = await qb
 
 // Bad — N+1: one query per course to fetch reviews
 const courses = await this.repo.find({ relations: ['reviews'] });
-courses.map(c => average(c.reviews));
+courses.map((c) => average(c.reviews));
 ```
 
 ### Indexes
@@ -229,18 +229,19 @@ export class Course {
   @Column() isDeleted: boolean;
 
   @Index()
-  @Column() createdAt: Date;
+  @Column()
+  createdAt: Date;
 }
 ```
 
 Key columns to index in Brain-Storm:
 
-| Table | Column(s) | Reason |
-|---|---|---|
-| `course` | `is_published`, `is_deleted` | Every list query filters on both |
-| `course` | `created_at` | Default sort column |
-| `user` | `stellar_public_key` | Leaderboard + balance lookups |
-| `progress` | `user_id`, `course_id` | Progress lookups by student + course |
+| Table      | Column(s)                    | Reason                               |
+| ---------- | ---------------------------- | ------------------------------------ |
+| `course`   | `is_published`, `is_deleted` | Every list query filters on both     |
+| `course`   | `created_at`                 | Default sort column                  |
+| `user`     | `stellar_public_key`         | Leaderboard + balance lookups        |
+| `progress` | `user_id`, `course_id`       | Progress lookups by student + course |
 
 ### Select Only What You Need
 
@@ -259,7 +260,7 @@ TypeOrmModule.forRootAsync({
   useFactory: (config) => ({
     // ...
     extra: {
-      max: 20,  // max pool size (default 10)
+      max: 20, // max pool size (default 10)
       idleTimeoutMillis: 30_000,
     },
   }),
@@ -361,12 +362,12 @@ Next.js serves files in `apps/frontend/public/` at the root path. For production
 
 Recommended CloudFront cache behaviors:
 
-| Path pattern | Cache TTL | Notes |
-|---|---|---|
-| `/_next/static/*` | 1 year | Content-hashed filenames — safe to cache forever |
-| `/images/*` | 7 days | Versioned via query string if needed |
-| `/api/*` | No cache | Dynamic — bypass CDN |
-| `/*` (default) | 60 s | HTML pages — short TTL for ISR compatibility |
+| Path pattern      | Cache TTL | Notes                                            |
+| ----------------- | --------- | ------------------------------------------------ |
+| `/_next/static/*` | 1 year    | Content-hashed filenames — safe to cache forever |
+| `/images/*`       | 7 days    | Versioned via query string if needed             |
+| `/api/*`          | No cache  | Dynamic — bypass CDN                             |
+| `/*` (default)    | 60 s      | HTML pages — short TTL for ISR compatibility     |
 
 ### Cache-Control Headers
 
@@ -415,13 +416,13 @@ gzip_min_length 1024;
 
 ### Key Metrics to Track
 
-| Metric | Target | Tool |
-|---|---|---|
-| API p95 latency | < 500 ms | Prometheus + Grafana |
-| Database query p95 | < 100 ms | PostgreSQL slow query log |
-| Cache hit rate | > 80% | Redis `INFO stats` |
-| Error rate | < 1% | Application logs |
-| Stellar RPC latency | < 2 s | Health check endpoint |
+| Metric              | Target   | Tool                      |
+| ------------------- | -------- | ------------------------- |
+| API p95 latency     | < 500 ms | Prometheus + Grafana      |
+| Database query p95  | < 100 ms | PostgreSQL slow query log |
+| Cache hit rate      | > 80%    | Redis `INFO stats`        |
+| Error rate          | < 1%     | Application logs          |
+| Stellar RPC latency | < 2 s    | Health check endpoint     |
 
 ### Prometheus Metrics
 
@@ -509,6 +510,7 @@ SELECT count(*) FROM pg_stat_activity;
 ```
 
 If approaching max pool size:
+
 - Increase pool size in TypeORM config.
 - Check for long-running queries blocking connections.
 - Enable connection pooling via PgBouncer.
@@ -533,14 +535,14 @@ If `"down"`, check [status.stellar.org](https://status.stellar.org) or switch to
 
 The following optimizations were applied to reduce JS payload and improve Core Web Vitals:
 
-| Optimization | Impact |
-|---|---|
-| **Dynamic import of CourseCreationWizard** (uses `@dnd-kit`) | Reduces main bundle by ~25 KB gzip; loads only on `/instructor/courses/new` |
-| **Lazy-loaded socket.io** in Student Dashboard | Defers ~30 KB WebSocket client until socket is needed |
-| **Dynamic import of `@stellar/freighter-api`** | Already lazy-loaded in WalletSection; kept pattern |
-| **`optimizePackageImports`** in `next.config.js` | Enables barrel-export tree-shaking for `zustand`, `next-intl`, `react-hook-form`, `zod` |
-| **`removeConsole` in production** | Strips `console.*` calls from production bundle |
-| **Removed catch-all `hostname: '**'` image pattern** | Replaced with explicit domains (`lh3.googleusercontent.com`, `gravatar.com`, `images.unsplash.com`) |
+| Optimization                                                 | Impact                                                                                              |
+| ------------------------------------------------------------ | --------------------------------------------------------------------------------------------------- |
+| **Dynamic import of CourseCreationWizard** (uses `@dnd-kit`) | Reduces main bundle by ~25 KB gzip; loads only on `/instructor/courses/new`                         |
+| **Lazy-loaded socket.io** in Student Dashboard               | Defers ~30 KB WebSocket client until socket is needed                                               |
+| **Dynamic import of `@stellar/freighter-api`**               | Already lazy-loaded in WalletSection; kept pattern                                                  |
+| **`optimizePackageImports`** in `next.config.js`             | Enables barrel-export tree-shaking for `zustand`, `next-intl`, `react-hook-form`, `zod`             |
+| **`removeConsole` in production**                            | Strips `console.*` calls from production bundle                                                     |
+| **Removed catch-all `hostname: '**'` image pattern\*\*       | Replaced with explicit domains (`lh3.googleusercontent.com`, `gravatar.com`, `images.unsplash.com`) |
 
 ### Image Optimization
 
@@ -559,16 +561,16 @@ The following optimizations were applied to reduce JS payload and improve Core W
 
 A Lighthouse CI config (`lighthouserc.js`) enforces the following budgets:
 
-| Metric | Budget |
-|---|---|
-| Largest Contentful Paint (LCP) | < 2500 ms |
-| Cumulative Layout Shift (CLS) | < 0.1 |
-| Total Blocking Time (TBT) | < 200 ms |
-| Interaction to Next Paint (INP) | < 200 ms |
-| First Contentful Paint (FCP) | < 1800 ms |
-| Speed Index | < 3000 ms |
-| Total Bundle Size | < 500 KB |
-| Unused JavaScript | < 100 KB |
+| Metric                          | Budget    |
+| ------------------------------- | --------- |
+| Largest Contentful Paint (LCP)  | < 2500 ms |
+| Cumulative Layout Shift (CLS)   | < 0.1     |
+| Total Blocking Time (TBT)       | < 200 ms  |
+| Interaction to Next Paint (INP) | < 200 ms  |
+| First Contentful Paint (FCP)    | < 1800 ms |
+| Speed Index                     | < 3000 ms |
+| Total Bundle Size               | < 500 KB  |
+| Unused JavaScript               | < 100 KB  |
 
 ### How to Verify
 

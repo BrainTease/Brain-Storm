@@ -7,11 +7,20 @@ describe('UserResolver & DataLoaderProvider', () => {
   let resolver: UserResolver;
 
   beforeAll(async () => {
-    const fakeUsers = [{ id: 'u1', email: 'a@x.com' }, { id: 'u2', email: 'b@x.com' }];
-    const fakeProgress = [{ id: 'p1', userId: 'u1' }, { id: 'p2', userId: 'u1' }];
+    const fakeUsers = [
+      { id: 'u1', email: 'a@x.com' },
+      { id: 'u2', email: 'b@x.com' },
+    ];
+    const fakeProgress = [
+      { id: 'p1', userId: 'u1' },
+      { id: 'p2', userId: 'u1' },
+    ];
 
     const usersRepo = { findBy: async ({ id }: any) => fakeUsers.filter((u) => id.includes(u.id)) };
-    const progressRepo = { find: async ({ where }: any) => fakeProgress.filter((p) => where.userId && where.userId.includes(p.userId)) };
+    const progressRepo = {
+      find: async ({ where }: any) =>
+        fakeProgress.filter((p) => where.userId && where.userId.includes(p.userId)),
+    };
     const coursesRepo = { findBy: async () => [] };
 
     const module = await Test.createTestingModule({
@@ -21,14 +30,14 @@ describe('UserResolver & DataLoaderProvider', () => {
         { provide: 'ProgressRepository', useValue: progressRepo },
         { provide: 'CourseRepository', useValue: coursesRepo },
         {
-          { provide: DataLoaderProvider,
+          provide: DataLoaderProvider,
           useFactory: () => {
             // @ts-ignore
             const p = new DataLoaderProvider(usersRepo, progressRepo, coursesRepo);
             return p;
           },
         },
-          { provide: UsersService, useValue: { findAll: () => ({ data: [], meta: {} }) } },
+        { provide: UsersService, useValue: { findAll: () => ({ data: [], meta: {} }) } },
       ],
     }).compile();
 

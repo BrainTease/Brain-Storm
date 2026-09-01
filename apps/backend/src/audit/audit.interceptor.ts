@@ -15,7 +15,14 @@ export class AuditInterceptor implements NestInterceptor {
     if (user?.apiKey) {
       const ip = req.ip || req.connection.remoteAddress;
       const ua = req.headers['user-agent'];
-      this.auditService.log(AuditAction.API_KEY_USED, user.userId, true, { apiKeyId: user.apiKeyId }, ip, ua);
+      this.auditService.log(
+        AuditAction.API_KEY_USED,
+        user.userId,
+        true,
+        { apiKeyId: user.apiKeyId },
+        ip,
+        ua
+      );
     }
 
     return next.handle();

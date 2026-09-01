@@ -18,15 +18,14 @@ describe('useDebounce', () => {
 
   it('should return initial value immediately', () => {
     const { result } = renderHook(() => useDebounce('initial', 500));
-    
+
     expect(result.current).toBe('initial');
   });
 
   it('should debounce value updates', async () => {
-    const { result, rerender } = renderHook(
-      ({ value, delay }) => useDebounce(value, delay),
-      { initialProps: { value: 'initial', delay: 500 } }
-    );
+    const { result, rerender } = renderHook(({ value, delay }) => useDebounce(value, delay), {
+      initialProps: { value: 'initial', delay: 500 },
+    });
 
     expect(result.current).toBe('initial');
 
@@ -48,10 +47,9 @@ describe('useDebounce', () => {
   });
 
   it('should cancel previous debounce on rapid updates', async () => {
-    const { result, rerender } = renderHook(
-      ({ value, delay }) => useDebounce(value, delay),
-      { initialProps: { value: 'value1', delay: 500 } }
-    );
+    const { result, rerender } = renderHook(({ value, delay }) => useDebounce(value, delay), {
+      initialProps: { value: 'value1', delay: 500 },
+    });
 
     // Rapid updates
     rerender({ value: 'value2', delay: 500 });
@@ -103,10 +101,9 @@ describe('useDebounce', () => {
   });
 
   it('should handle zero delay', async () => {
-    const { result, rerender } = renderHook(
-      ({ value, delay }) => useDebounce(value, delay),
-      { initialProps: { value: 'initial', delay: 0 } }
-    );
+    const { result, rerender } = renderHook(({ value, delay }) => useDebounce(value, delay), {
+      initialProps: { value: 'initial', delay: 0 },
+    });
 
     rerender({ value: 'updated', delay: 0 });
 
@@ -120,10 +117,9 @@ describe('useDebounce', () => {
   });
 
   it('should cleanup on unmount', () => {
-    const { unmount, rerender } = renderHook(
-      ({ value, delay }) => useDebounce(value, delay),
-      { initialProps: { value: 'initial', delay: 500 } }
-    );
+    const { unmount, rerender } = renderHook(({ value, delay }) => useDebounce(value, delay), {
+      initialProps: { value: 'initial', delay: 500 },
+    });
 
     rerender({ value: 'updated', delay: 500 });
     unmount();
@@ -149,10 +145,9 @@ describe('useDebounce', () => {
     const delays = [100, 250, 500, 1000];
 
     for (const delay of delays) {
-      const { result, rerender } = renderHook(
-        ({ value, d }) => useDebounce(value, d),
-        { initialProps: { value: 'initial', d: delay } }
-      );
+      const { result, rerender } = renderHook(({ value, d }) => useDebounce(value, d), {
+        initialProps: { value: 'initial', d: delay },
+      });
 
       rerender({ value: 'updated', d: delay });
 
@@ -184,20 +179,30 @@ describe('useDebounce - Real-world scenarios', () => {
   });
 
   it('should work for search input scenario', async () => {
-    const { result, rerender } = renderHook(
-      ({ query }) => useDebounce(query, 300),
-      { initialProps: { query: '' } }
-    );
+    const { result, rerender } = renderHook(({ query }) => useDebounce(query, 300), {
+      initialProps: { query: '' },
+    });
 
     // User types "blockchain" quickly
-    const letters = ['b', 'bl', 'blo', 'bloc', 'block', 'blockc', 'blockch', 'blockcha', 'blockchai', 'blockchain'];
+    const letters = [
+      'b',
+      'bl',
+      'blo',
+      'bloc',
+      'block',
+      'blockc',
+      'blockch',
+      'blockcha',
+      'blockchai',
+      'blockchain',
+    ];
 
     letters.forEach((query, index) => {
       rerender({ query });
       act(() => {
         vi.advanceTimersByTime(50); // User types quickly
       });
-      
+
       // Should still be empty during typing
       expect(result.current).toBe('');
     });
@@ -213,10 +218,9 @@ describe('useDebounce - Real-world scenarios', () => {
   });
 
   it('should work for window resize scenario', async () => {
-    const { result, rerender } = renderHook(
-      ({ width }) => useDebounce(width, 250),
-      { initialProps: { width: 1920 } }
-    );
+    const { result, rerender } = renderHook(({ width }) => useDebounce(width, 250), {
+      initialProps: { width: 1920 },
+    });
 
     // Simulate rapid resize events
     const widths = [1900, 1850, 1800, 1750, 1700];
@@ -242,10 +246,9 @@ describe('useDebounce - Real-world scenarios', () => {
   });
 
   it('should work for form validation scenario', async () => {
-    const { result, rerender } = renderHook(
-      ({ email }) => useDebounce(email, 400),
-      { initialProps: { email: '' } }
-    );
+    const { result, rerender } = renderHook(({ email }) => useDebounce(email, 400), {
+      initialProps: { email: '' },
+    });
 
     // User types email
     rerender({ email: 't' });

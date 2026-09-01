@@ -14,7 +14,7 @@ export class SecretRotationService {
   constructor(
     @InjectRepository(SecretRotation) private rotationRepo: Repository<SecretRotation>,
     @InjectRepository(ApiKey) private apiKeyRepo: Repository<ApiKey>,
-    private configService: ConfigService,
+    private configService: ConfigService
   ) {}
 
   @Cron(CronExpression.EVERY_DAY_AT_2AM)
@@ -56,7 +56,7 @@ export class SecretRotationService {
     secretType: SecretType,
     identifier: string | null,
     rotatedBy: string | null,
-    automated: boolean,
+    automated: boolean
   ) {
     await this.rotationRepo.save({
       secretType,

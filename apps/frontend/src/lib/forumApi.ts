@@ -1,4 +1,11 @@
-import api from './api';
+/**
+ * Forum API helpers — migrated to typed apiClient (#969)
+ *
+ * All functions return `ApiResult<T>` for consistent, try/catch-free
+ * error handling at the call site.
+ */
+
+import apiClient, { type ApiResult } from './apiClient';
 
 export interface Post {
   id: string;
@@ -47,48 +54,65 @@ export interface PaginatedPosts {
 
 export const forumApi = {
   // Posts
-  getPosts: (courseId: string, page = 1, limit = 10) =>
-    api
-      .get<PaginatedPosts>(`/courses/${courseId}/posts`, {
-        params: { page, limit },
-      })
-      .then((r) => r.data),
+  getPosts(courseId: string, page = 1, limit = 10): Promise<ApiResult<PaginatedPosts>> {
+    return apiClient.get<PaginatedPosts>(`/courses/${courseId}/posts`, {
+      params: { page, limit },
+    });
+  },
 
-  getPost: (postId: string) =>
-    api.get<PostWithReplies>(`/posts/${postId}`).then((r) => r.data),
+  getPost(postId: string): Promise<ApiResult<PostWithReplies>> {
+    return apiClient.get<PostWithReplies>(`/posts/${postId}`);
+  },
 
-  createPost: (courseId: string, data: { title: string; content: string; isPinned?: boolean }) =>
-    api.post<Post>(`/courses/${courseId}/posts`, data).then((r) => r.data),
+  createPost(
+    courseId: string,
+    data: { title: string; content: string; isPinned?: boolean }
+  ): Promise<ApiResult<Post>> {
+    return apiClient.post<Post>(`/courses/${courseId}/posts`, data);
+  },
 
-  updatePost: (postId: string, data: { title?: string; content?: string }) =>
-    api.patch<Post>(`/posts/${postId}`, data).then((r) => r.data),
+  updatePost(postId: string, data: { title?: string; content?: string }): Promise<ApiResult<Post>> {
+    return apiClient.patch<Post>(`/posts/${postId}`, data);
+  },
 
-  deletePost: (postId: string) =>
-    api.delete(`/posts/${postId}`).then((r) => r.data),
+  deletePost(postId: string): Promise<ApiResult<void>> {
+    return apiClient.delete(`/posts/${postId}`);
+  },
 
   // Replies
-  createReply: (postId: string, data: { content: string; isAnswer?: boolean }) =>
-    api.post<Reply>(`/posts/${postId}/replies`, data).then((r) => r.data),
+  createReply(
+    postId: string,
+    data: { content: string; isAnswer?: boolean }
+  ): Promise<ApiResult<Reply>> {
+    return apiClient.post<Reply>(`/posts/${postId}/replies`, data);
+  },
 
-  updateReply: (replyId: string, data: { content?: string }) =>
-    api.patch<Reply>(`/replies/${replyId}`, data).then((r) => r.data),
+  updateReply(replyId: string, data: { content?: string }): Promise<ApiResult<Reply>> {
+    return apiClient.patch<Reply>(`/replies/${replyId}`, data);
+  },
 
-  deleteReply: (replyId: string) =>
-    api.delete(`/replies/${replyId}`).then((r) => r.data),
+  deleteReply(replyId: string): Promise<ApiResult<void>> {
+    return apiClient.delete(`/replies/${replyId}`);
+  },
 
-  markAsAnswer: (replyId: string) =>
-    api.post<Reply>(`/replies/${replyId}/mark-answer`, {}).then((r) => r.data),
+  markAsAnswer(replyId: string): Promise<ApiResult<Reply>> {
+    return apiClient.post<Reply>(`/replies/${replyId}/mark-answer`, {});
+  },
 
-  unmarkAsAnswer: (replyId: string) =>
-    api.post<Reply>(`/replies/${replyId}/unmark-answer`, {}).then((r) => r.data),
+  unmarkAsAnswer(replyId: string): Promise<ApiResult<Reply>> {
+    return apiClient.post<Reply>(`/replies/${replyId}/unmark-answer`, {});
+  },
 
   // Moderation
-  flagContent: (contentType: 'post' | 'reply', contentId: string, reason?: string) =>
-    api
-      .post(`/moderation/flag`, {
-        contentType: contentType.toUpperCase(),
-        contentId,
-        reason,
-      })
-      .then((r) => r.data),
+  flagContent(
+    contentType: 'post' | 'reply',
+    contentId: string,
+    reason?: string
+  ): Promise<ApiResult<void>> {
+    return apiClient.post(`/moderation/flag`, {
+      contentType: contentType.toUpperCase(),
+      contentId,
+      reason,
+    });
+  },
 };

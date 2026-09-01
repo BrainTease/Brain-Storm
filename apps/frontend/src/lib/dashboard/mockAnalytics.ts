@@ -1,4 +1,5 @@
 import type { ProgressDataPoint, QuizScoreDataPoint, StreakData } from '@/components/analytics';
+import { formatMonthDay } from '@/lib/date-utils';
 
 /**
  * Placeholder analytics series used until the `/users/:id/analytics` endpoint
@@ -19,7 +20,7 @@ const QUIZ_NAMES = [
 function shortDate(daysAgo: number, from: Date): string {
   const date = new Date(from);
   date.setDate(date.getDate() - daysAgo);
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return formatMonthDay(date);
 }
 
 export function generateMockProgressData(from = new Date()): ProgressDataPoint[] {

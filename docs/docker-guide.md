@@ -55,11 +55,11 @@ docker compose --profile contracts run --rm contracts-builder
 
 ## Services
 
-| Service | Port | Health Check |
-|---------|------|-------------|
-| postgres | 5432 | `pg_isready` |
-| redis | 6379 | `redis-cli ping` |
-| backend | 3000 | `GET /health` |
+| Service  | Port | Health Check      |
+| -------- | ---- | ----------------- |
+| postgres | 5432 | `pg_isready`      |
+| redis    | 6379 | `redis-cli ping`  |
+| backend  | 3000 | `GET /health`     |
 | frontend | 3001 | `GET /api/health` |
 
 ## Dockerfiles
@@ -67,6 +67,7 @@ docker compose --profile contracts run --rm contracts-builder
 ### Backend (`apps/backend/Dockerfile`)
 
 Multi-stage build:
+
 1. **deps** — installs production dependencies
 2. **build** — compiles TypeScript
 3. **runner** — minimal production image
@@ -74,12 +75,14 @@ Multi-stage build:
 ### Frontend (`apps/frontend/Dockerfile`)
 
 Multi-stage build:
+
 1. **builder** — runs `next build` with standalone output
 2. **runner** — copies only the standalone bundle; no Node modules needed
 
 ### Contracts (`contracts/Dockerfile`)
 
 Multi-stage build:
+
 1. **builder** — Rust stable + `wasm32-unknown-unknown` target + Stellar CLI; runs `scripts/build.sh`
 2. **artifacts** — `scratch` image containing only the compiled `.wasm` files
 

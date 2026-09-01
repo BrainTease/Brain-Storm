@@ -22,6 +22,7 @@ export function BadgeGrid({ badges }: BadgeGridProps) {
 
   return (
     <BadgeDisplay
+      variant="grid"
       badges={badgeItems}
       emptyMessage="No badges yet — keep learning to earn your first one!"
       columns={6}

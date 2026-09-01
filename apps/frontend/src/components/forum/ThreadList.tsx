@@ -3,6 +3,7 @@
 import React, { useState, useCallback } from 'react';
 import Link from 'next/link';
 import { Post } from '@/lib/forumApi';
+import { formatDateShort } from '@/lib/date-utils';
 import { useForumPosts } from '@/hooks/useForum';
 
 interface ThreadListProps {
@@ -124,7 +125,7 @@ function ThreadListItem({ post, courseId }: ThreadListItemProps) {
             <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
               <span>{post.user?.username || 'Unknown'}</span>
               <span>•</span>
-              <span>{new Date(post.createdAt).toLocaleDateString()}</span>
+              <span>{formatDateShort(post.createdAt)}</span>
               {post.replyCount !== undefined && (
                 <>
                   <span>•</span>

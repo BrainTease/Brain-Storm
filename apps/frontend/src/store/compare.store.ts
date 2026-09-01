@@ -35,8 +35,7 @@ export const useCompareStore = create<CompareState>((set, get) => ({
     set((s) => ({ selected: [...s.selected, course] }));
   },
 
-  remove: (courseId) =>
-    set((s) => ({ selected: s.selected.filter((c) => c.id !== courseId) })),
+  remove: (courseId) => set((s) => ({ selected: s.selected.filter((c) => c.id !== courseId) })),
 
   toggle: (course) => {
     if (get().isSelected(course.id)) get().remove(course.id);

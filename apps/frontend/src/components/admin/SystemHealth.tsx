@@ -22,7 +22,10 @@ export function SystemHealth() {
   const [health, setHealth] = useState<HealthStatus | null>(null);
 
   function load() {
-    adminApi.getHealth().then(setHealth).catch(() => {});
+    adminApi
+      .getHealth()
+      .then(setHealth)
+      .catch(() => {});
   }
 
   useEffect(() => {

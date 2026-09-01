@@ -36,7 +36,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: "pages"
+  group: 'pages'
   cancel-in-progress: false
 
 jobs:
@@ -45,7 +45,7 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -105,12 +105,14 @@ cp ../api/swagger-ui.html ../../docs/api/dist/index.html
 ## Accessing Documentation
 
 Once deployed, the API documentation will be available at:
+
 - **Production**: https://nonso-eze.github.io/Brain-Storm/
 - **Local**: http://localhost:3000/api/docs
 
 ## Updating Documentation
 
 Documentation updates automatically when:
+
 - Backend source code changes are pushed to main
 - Swagger decorators are updated in controllers
 - DTOs are modified

@@ -39,6 +39,7 @@ aws iam create-open-id-connect-provider \
 ```
 
 Or via AWS Console:
+
 1. Go to IAM → Identity providers → Add provider
 2. Provider type: OpenID Connect
 3. Provider URL: `https://token.actions.githubusercontent.com`
@@ -100,12 +101,7 @@ Attach this policy to the role (adjust based on your deployment needs):
     {
       "Sid": "ECSDeployment",
       "Effect": "Allow",
-      "Action": [
-        "ecs:UpdateService",
-        "ecs:DescribeServices",
-        "ecs:DescribeTasks",
-        "ecs:ListTasks"
-      ],
+      "Action": ["ecs:UpdateService", "ecs:DescribeServices", "ecs:DescribeTasks", "ecs:ListTasks"],
       "Resource": [
         "arn:aws:ecs:*:YOUR_AWS_ACCOUNT_ID:service/production/brain-storm-backend",
         "arn:aws:ecs:*:YOUR_AWS_ACCOUNT_ID:task/production/*"
@@ -125,11 +121,7 @@ Attach this policy to the role (adjust based on your deployment needs):
     {
       "Sid": "CloudWatchLogs",
       "Effect": "Allow",
-      "Action": [
-        "logs:CreateLogGroup",
-        "logs:CreateLogStream",
-        "logs:PutLogEvents"
-      ],
+      "Action": ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"],
       "Resource": "arn:aws:logs:*:YOUR_AWS_ACCOUNT_ID:log-group:/aws/ecs/brain-storm-*"
     }
   ]
@@ -139,10 +131,12 @@ Attach this policy to the role (adjust based on your deployment needs):
 ### 4. Update GitHub Secrets
 
 Remove old secrets:
+
 - ~~`AWS_ACCESS_KEY_ID`~~ (delete)
 - ~~`AWS_SECRET_ACCESS_KEY`~~ (delete)
 
 Add new secrets (Settings → Secrets and variables → Actions):
+
 - `AWS_ROLE_ARN`: The ARN of the IAM role created in step 2
   - Example: `arn:aws:iam::123456789012:role/GitHubActionsDeploymentRole`
 - `AWS_REGION`: Your AWS region (e.g., `us-east-1`)

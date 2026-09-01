@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { Reply, forumApi } from '@/lib/forumApi';
+import { formatDateShort } from '@/lib/date-utils';
 import { VoteButton } from './VoteButton';
 import { RichTextEditor } from './RichTextEditor';
 import { Button } from '@/components/ui/Button';
@@ -13,7 +14,13 @@ interface ReplyListProps {
   canModerate: boolean;
 }
 
-export function ReplyList({ courseId, threadId, initialReplies, isLocked, canModerate }: ReplyListProps) {
+export function ReplyList({
+  courseId,
+  threadId,
+  initialReplies,
+  isLocked,
+  canModerate,
+}: ReplyListProps) {
   const [replies, setReplies] = useState<Reply[]>(initialReplies);
   const [replyBody, setReplyBody] = useState('');
   const [loading, setLoading] = useState(false);
@@ -48,14 +55,16 @@ export function ReplyList({ courseId, threadId, initialReplies, isLocked, canMod
 
   return (
     <div className="space-y-4">
-      <h2 className="font-semibold text-lg">{replies.length} {replies.length === 1 ? 'Reply' : 'Replies'}</h2>
+      <h2 className="font-semibold text-lg">
+        {replies.length} {replies.length === 1 ? 'Reply' : 'Replies'}
+      </h2>
 
       {replies.map((reply) => (
         <div key={reply.id} className="border rounded-lg p-4">
           <div className="flex items-center justify-between mb-2">
             <span className="font-medium text-sm">{reply.authorName}</span>
             <div className="flex items-center gap-3">
-              <span className="text-xs text-gray-400">{new Date(reply.createdAt).toLocaleDateString()}</span>
+              <span className="text-xs text-gray-400">{formatDateShort(reply.createdAt)}</span>
               {canModerate && (
                 <button
                   className="text-xs text-red-500 hover:underline"
@@ -69,7 +78,12 @@ export function ReplyList({ courseId, threadId, initialReplies, isLocked, canMod
           {/* Render HTML body safely — in production use DOMPurify */}
           <div className="text-sm text-gray-700 whitespace-pre-wrap">{reply.body}</div>
           <div className="mt-2">
-            <VoteButton type="reply" id={reply.id} initialUpvotes={reply.upvotes} initialDownvotes={reply.downvotes} />
+            <VoteButton
+              type="reply"
+              id={reply.id}
+              initialUpvotes={reply.upvotes}
+              initialDownvotes={reply.downvotes}
+            />
           </div>
         </div>
       ))}
@@ -85,17 +99,25 @@ export function ReplyList({ courseId, threadId, initialReplies, isLocked, canMod
       )}
 
       {isLocked && (
-        <p className="text-sm text-gray-500 border-t pt-4">This thread is locked. No new replies allowed.</p>
+        <p className="text-sm text-gray-500 border-t pt-4">
+          This thread is locked. No new replies allowed.
+        </p>
       )}
 
       {confirmDelete && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" role="dialog" aria-modal="true">
+        <div
+          className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
+          role="dialog"
+          aria-modal="true"
+        >
           <div className="bg-white rounded-xl p-6 max-w-sm w-full shadow-xl space-y-4">
             <h2 className="font-semibold">Delete this reply?</h2>
             <p className="text-sm text-gray-600">This action cannot be undone.</p>
             <div className="flex gap-3">
               <Button onClick={() => handleDeleteReply(confirmDelete)}>Delete</Button>
-              <Button variant="outline" onClick={() => setConfirmDelete(null)}>Cancel</Button>
+              <Button variant="outline" onClick={() => setConfirmDelete(null)}>
+                Cancel
+              </Button>
             </div>
           </div>
         </div>

@@ -22,49 +22,49 @@ export enum InvoiceStatus {
 @Entity('invoices')
 export class Invoice {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Index()
   @Column()
-  userId: string;
+  userId!: string;
 
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
-  user: User;
+  user!: User;
 
   @Column({ nullable: true })
-  subscriptionId: string;
+  subscriptionId!: string;
 
   @ManyToOne(() => Subscription, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'subscriptionId' })
-  subscription: Subscription;
+  subscription!: Subscription;
 
   /** Stripe Invoice ID */
   @Index({ unique: true })
   @Column({ nullable: true })
-  stripeInvoiceId: string;
+  stripeInvoiceId!: string;
 
   @Column({ type: 'varchar', default: InvoiceStatus.DRAFT })
-  status: InvoiceStatus;
+  status!: InvoiceStatus;
 
   @Column({ default: 0 })
-  amountDueCents: number;
+  amountDueCents!: number;
 
   @Column({ default: 0 })
-  amountPaidCents: number;
+  amountPaidCents!: number;
 
   @Column({ default: 'usd' })
-  currency: string;
+  currency!: string;
 
   @Column({ nullable: true, type: 'timestamp' })
-  dueDate: Date;
+  dueDate!: Date;
 
   @Column({ nullable: true, type: 'timestamp' })
-  paidAt: Date;
+  paidAt!: Date;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt!: Date;
 }

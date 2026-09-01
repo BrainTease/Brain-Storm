@@ -58,29 +58,18 @@ describe('validateTransaction', () => {
 
 describe('detectTamperedTransaction', () => {
   it('detects no changes between identical transactions', () => {
-    const result = detectTamperedTransaction(
-      VALID_PAYMENT_XDR,
-      VALID_PAYMENT_XDR
-    );
+    const result = detectTamperedTransaction(VALID_PAYMENT_XDR, VALID_PAYMENT_XDR);
     expect(result.valid).toBe(true);
   });
 
   it('detects changes in amount', () => {
-    const result = detectTamperedTransaction(
-      VALID_PAYMENT_XDR,
-      TAMPERED_PAYMENT_XDR
-    );
+    const result = detectTamperedTransaction(VALID_PAYMENT_XDR, TAMPERED_PAYMENT_XDR);
     expect(result.valid).toBe(false);
-    expect(result.errors.some((e) => e.toLowerCase().includes('amount'))).toBe(
-      true
-    );
+    expect(result.errors.some((e) => e.toLowerCase().includes('amount'))).toBe(true);
   });
 
   it('detects completely different transactions', () => {
-    const result = detectTamperedTransaction(
-      VALID_PAYMENT_XDR,
-      VALID_PAYMENT_XDR_2
-    );
+    const result = detectTamperedTransaction(VALID_PAYMENT_XDR, VALID_PAYMENT_XDR_2);
     expect(result.valid).toBe(false);
   });
 
@@ -90,33 +79,22 @@ describe('detectTamperedTransaction', () => {
   });
 
   it('detects destination changes', () => {
-    const result = detectTamperedTransaction(
-      VALID_PAYMENT_XDR,
-      TAMPERED_PAYMENT_XDR
-    );
+    const result = detectTamperedTransaction(VALID_PAYMENT_XDR, TAMPERED_PAYMENT_XDR);
     expect(result.valid).toBe(false);
   });
 });
 
 describe('detectTamperedTransaction - Operation level', () => {
   it('rejects when operations count changes', () => {
-    const result = detectTamperedTransaction(
-      VALID_PAYMENT_XDR,
-      TAMPERED_PAYMENT_XDR
-    );
+    const result = detectTamperedTransaction(VALID_PAYMENT_XDR, TAMPERED_PAYMENT_XDR);
     expect(result.valid).toBe(false);
   });
 
   it('rejects when a payment amount is modified', () => {
-    const result = detectTamperedTransaction(
-      VALID_PAYMENT_XDR,
-      TAMPERED_PAYMENT_XDR
-    );
+    const result = detectTamperedTransaction(VALID_PAYMENT_XDR, TAMPERED_PAYMENT_XDR);
     expect(result.valid).toBe(false);
     const amountError = result.errors.find(
-      (e) =>
-        e.includes('Amount') &&
-        (e.includes('changed') || e.includes('modified'))
+      (e) => e.includes('Amount') && (e.includes('changed') || e.includes('modified'))
     );
     expect(amountError).toBeTruthy();
   });
@@ -163,9 +141,7 @@ describe('validateTransaction - Network and address checks', () => {
   it('warns on very large amounts', () => {
     const result = validateTransaction(VALID_PAYMENT_XDR);
     if (result.warnings.length > 0) {
-      expect(
-        result.warnings.some((w) => w.toLowerCase().includes('large'))
-      ).toBe(true);
+      expect(result.warnings.some((w) => w.toLowerCase().includes('large'))).toBe(true);
     }
   });
 });

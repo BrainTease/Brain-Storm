@@ -3,6 +3,7 @@ import { WinstonModule } from 'nest-winston';
 import { ConfigService } from '@nestjs/config';
 import * as winston from 'winston';
 import { CustomLoggerService } from './logger.service';
+import { StructuredLoggerService } from './structured-logger.service';
 import { LoggerFactory } from './logger-factory';
 import { LoggingMiddleware, ErrorLoggingMiddleware } from './logging.middleware';
 import { LoggingInterceptor } from './logging.interceptor';
@@ -12,7 +13,7 @@ import { LoggingInterceptor } from './logging.interceptor';
     WinstonModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
-        const logLevel = configService.get<string>('LOG_LEVEL', 'info');
+        const logLevel = configService.get<string>('logging.level', 'info');
         const nodeEnv = configService.get<string>('NODE_ENV', 'development');
 
         // Define log format based on environment
@@ -51,6 +52,7 @@ import { LoggingInterceptor } from './logging.interceptor';
   ],
   providers: [
     CustomLoggerService,
+    StructuredLoggerService,
     LoggerFactory,
     LoggingMiddleware,
     ErrorLoggingMiddleware,
@@ -59,6 +61,7 @@ import { LoggingInterceptor } from './logging.interceptor';
   exports: [
     WinstonModule,
     CustomLoggerService,
+    StructuredLoggerService,
     LoggerFactory,
     LoggingMiddleware,
     ErrorLoggingMiddleware,

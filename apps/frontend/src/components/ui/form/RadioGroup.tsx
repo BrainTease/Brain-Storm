@@ -48,7 +48,9 @@ export function RadioGroup({
       aria-describedby={a11yProps['aria-describedby']}
     >
       {label && <legend className={labelHidden ? 'sr-only' : LABEL_CLASS}>{label}</legend>}
-      <div className={orientation === 'horizontal' ? 'flex flex-wrap gap-4' : 'flex flex-col gap-2'}>
+      <div
+        className={orientation === 'horizontal' ? 'flex flex-wrap gap-4' : 'flex flex-col gap-2'}
+      >
         {options.map((option) => {
           const optionId = `${fieldId}-${option.value}`;
           return (
