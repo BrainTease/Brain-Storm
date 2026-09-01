@@ -242,7 +242,7 @@ Create webhook at: https://api.slack.com/messaging/webhooks
 name: Backup Verification
 on:
   schedule:
-    - cron: '0 2 * * *'  # Daily at 2 AM UTC
+    - cron: '0 2 * * *' # Daily at 2 AM UTC
 
 jobs:
   verify:

@@ -43,9 +43,7 @@ function extractMessage(err: unknown): string {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const axiosErr = err as any;
     const serverMessage: unknown =
-      axiosErr?.response?.data?.message ??
-      axiosErr?.response?.data?.error ??
-      axiosErr?.message;
+      axiosErr?.response?.data?.message ?? axiosErr?.response?.data?.error ?? axiosErr?.message;
     if (typeof serverMessage === 'string' && serverMessage.length > 0) {
       return serverMessage;
     }

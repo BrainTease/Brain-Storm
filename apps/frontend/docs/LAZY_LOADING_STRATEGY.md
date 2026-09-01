@@ -25,7 +25,9 @@ export const AdminDashboard = dynamic(
 ## Route Classification
 
 ### Core Routes (No Lazy Loading)
+
 These routes should load with the main bundle for fast initial page load:
+
 - `/` - Home page
 - `/courses` - Course listing
 - `/dashboard` - Main dashboard
@@ -34,19 +36,25 @@ These routes should load with the main bundle for fast initial page load:
 - `/auth/register` - Registration
 
 ### High-Priority Lazy Routes
+
 These routes have the largest bundles and should be lazy-loaded:
+
 - `/admin` - Admin Dashboard (~150-200 KB)
 - `/instructor/dashboard` - Instructor Dashboard (~100-150 KB)
 
 ### Medium-Priority Lazy Routes
+
 Moderately sized routes that benefit from lazy loading:
+
 - `/instructor/courses/new` - Course Creation (~80-120 KB)
 - `/governance` - Governance Panel (~80-100 KB)
 - `/forum` - Forum Discussion (~70-100 KB)
 - `/credentials` - Credentials Management (~50-70 KB)
 
 ### Low-Priority Lazy Routes
+
 Smaller routes, but still lazy-loaded to minimize main bundle:
+
 - `/settings` - Settings Page (~50-80 KB)
 - `/notifications` - Notifications (~40-60 KB)
 - `/leaderboard` - Leaderboard (~60-80 KB)
@@ -55,11 +63,13 @@ Smaller routes, but still lazy-loaded to minimize main bundle:
 ## Expected Performance Impact
 
 ### Bundle Size Reduction
+
 - **Initial JS**: 400-600 KB reduction
 - **Routes affected**: 10+ lazy-loaded routes
 - **High-priority reduction**: 250-350 KB
 
 ### Metrics
+
 - **First Contentful Paint (FCP)**: ~15-20% improvement
 - **Time to Interactive (TTI)**: ~20-30% improvement
 - **Largest Contentful Paint (LCP)**: ~10-15% improvement
@@ -93,12 +103,9 @@ export const AdminDashboard = dynamic(
 ### Prefetching Strategy
 
 Core routes are prefetched to ensure smooth navigation:
+
 ```typescript
-export const PREFETCH_ROUTES = [
-  '/dashboard',
-  '/courses',
-  '/profile',
-];
+export const PREFETCH_ROUTES = ['/dashboard', '/courses', '/profile'];
 ```
 
 ## Usage
@@ -116,6 +123,7 @@ export default function AdminPage() {
 ### Manual Dynamic Imports
 
 For custom lazy-loading requirements:
+
 ```typescript
 import dynamic from 'next/dynamic';
 
@@ -168,6 +176,7 @@ npm run build
 ## Monitoring
 
 Track performance improvements:
+
 - Use Web Vitals to monitor FCP, LCP, TTI
 - Monitor bundle sizes in CI/CD pipeline
 - Track lazy-load errors in error tracking service

@@ -16,9 +16,11 @@ This document describes the PWA implementation for Brain-Storm, enabling offline
 ### Configuration Changes
 
 #### next.config.js
+
 - Added security header for service worker
 
 #### src/app/layout.tsx
+
 - Added PWA meta tags (theme color, mobile app capable)
 - Added manifest link
 - Integrated PWA components (install prompt, update toast, offline indicator)
@@ -26,12 +28,14 @@ This document describes the PWA implementation for Brain-Storm, enabling offline
 ### Features
 
 #### 1. Installation
+
 - Users see an install prompt on supported platforms
 - Prompt appears after interaction threshold
 - Can be dismissed and dismissed state is remembered
 - Installable as a standalone app
 
 #### 2. Offline Support
+
 - Service worker caches static assets and API responses
 - Enrolled lesson content cached for offline viewing
 - Font files cached for better offline UX
@@ -39,12 +43,14 @@ This document describes the PWA implementation for Brain-Storm, enabling offline
 - Network-first strategy for API calls with fallback to cache
 
 #### 3. Updates
+
 - Service worker checks for updates every 5 minutes or on focus
 - Users notified when updates are available
 - Can apply updates immediately or defer
 - Automatic page reload after update applied
 
 #### 4. Offline Indicator
+
 - Visual indicator when network is offline
 - Shows warning banner at top of page
 - Automatically disappears when connection restored
@@ -53,15 +59,16 @@ This document describes the PWA implementation for Brain-Storm, enabling offline
 
 ### Service Worker Cache Strategy
 
-| Asset Type | Strategy | Cache |
-|-----------|----------|-------|
-| API calls | Network-first | runtime |
-| Fonts | Cache-first | fonts |
-| Images | Cache-first | images |
-| HTML/JS/CSS | Cache-first | static |
-| Lessons | Runtime | runtime |
+| Asset Type  | Strategy      | Cache   |
+| ----------- | ------------- | ------- |
+| API calls   | Network-first | runtime |
+| Fonts       | Cache-first   | fonts   |
+| Images      | Cache-first   | images  |
+| HTML/JS/CSS | Cache-first   | static  |
+| Lessons     | Runtime       | runtime |
 
 ### Cache Names
+
 - `brain-storm-v1` - Static assets (HTML, JS, CSS)
 - `brain-storm-runtime-v1` - API responses and dynamic content
 - `brain-storm-fonts-v1` - Font files
@@ -70,6 +77,7 @@ This document describes the PWA implementation for Brain-Storm, enabling offline
 ## Required Assets
 
 ### Icons
+
 Place the following icon files in `public/icons/`:
 
 ```
@@ -86,6 +94,7 @@ icon-maskable-512x512.png (for adaptive icons)
 ```
 
 ### Screenshots
+
 Place the following screenshots in `public/screenshots/`:
 
 ```
@@ -96,7 +105,9 @@ screenshot-1280x720.png (desktop view)
 ## Development
 
 ### Disable PWA in Development
+
 PWA is disabled in development mode for faster iteration. Enable it by setting:
+
 ```bash
 NODE_ENV=production npm run build
 ```
@@ -104,6 +115,7 @@ NODE_ENV=production npm run build
 ### Service Worker Management
 
 Access service worker in DevTools:
+
 - Chrome: DevTools → Application → Service Workers
 - Firefox: about:debugging#/runtime/this-firefox
 
@@ -125,6 +137,7 @@ npm run start
 ```
 
 Required checks:
+
 - ✅ Web app manifest is installable
 - ✅ Has a service worker that controls page and `start_url`
 - ✅ Service worker startup time
@@ -142,12 +155,14 @@ Required checks:
 ## Environment Variables
 
 No additional environment variables required. Uses existing:
+
 - `NODE_ENV` - Controls PWA enable/disable
 - `NEXT_PUBLIC_SITE_URL` - Used in manifest
 
 ## Offline Lesson Access
 
 ### Data Caching
+
 To cache enrolled lessons for offline access:
 
 1. Lessons are cached via runtime cache when fetched
@@ -155,6 +170,7 @@ To cache enrolled lessons for offline access:
 3. Consider IndexedDB for larger content (future enhancement)
 
 ### Hydration
+
 Service worker serves cached responses when offline, maintaining app functionality.
 
 ## Browser Support
@@ -166,16 +182,19 @@ Service worker serves cached responses when offline, maintaining app functionali
 ## Troubleshooting
 
 ### Service Worker Not Registering
+
 1. Check browser console for errors
 2. Verify HTTPS (or localhost for dev)
 3. Check service worker script is accessible at `/sw.js`
 
 ### Updates Not Appearing
+
 1. Ensure new build deployed with updated cache version
 2. Check service worker update check interval
 3. Manually force update in DevTools → Network → Hard Refresh
 
 ### Cache Issues
+
 1. Clear site data: DevTools → Application → Clear site data
 2. Update cache version strings in `sw.js`
 3. Restart browser

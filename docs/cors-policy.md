@@ -8,13 +8,14 @@ Brain-Storm uses environment-aware CORS configuration. In **production**, only e
 
 Set these environment variables:
 
-| Variable | Description | Default |
-|---|---|---|
-| `CORS_ORIGINS` | Comma-separated list of allowed origins | `http://localhost:3001` |
-| `CORS_CREDENTIALS` | Allow cookies/auth headers cross-origin | `false` |
-| `CORS_MAX_AGE` | Preflight cache duration in seconds | `86400` (24h) |
+| Variable           | Description                             | Default                 |
+| ------------------ | --------------------------------------- | ----------------------- |
+| `CORS_ORIGINS`     | Comma-separated list of allowed origins | `http://localhost:3001` |
+| `CORS_CREDENTIALS` | Allow cookies/auth headers cross-origin | `false`                 |
+| `CORS_MAX_AGE`     | Preflight cache duration in seconds     | `86400` (24h)           |
 
 ### Example (production)
+
 ```env
 CORS_ORIGINS=https://app.brainstorm.io,https://www.brainstorm.io
 CORS_CREDENTIALS=true
@@ -38,7 +39,7 @@ Preflight (`OPTIONS`) responses are cached for `CORS_MAX_AGE` seconds (default 2
 
 ## Behavior by Environment
 
-| Environment | Origin Policy |
-|---|---|
-| `production` | Only `CORS_ORIGINS` list |
-| `development` / `test` | All origins (`*`) |
+| Environment            | Origin Policy            |
+| ---------------------- | ------------------------ |
+| `production`           | Only `CORS_ORIGINS` list |
+| `development` / `test` | All origins (`*`)        |

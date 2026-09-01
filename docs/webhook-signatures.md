@@ -8,9 +8,9 @@ Every webhook delivery is signed using HMAC-SHA256. Consumers must verify the si
 
 Each webhook request includes:
 
-| Header | Description |
-|---|---|
-| `X-Webhook-Signature` | `sha256=<hmac-hex>` |
+| Header                | Description                                        |
+| --------------------- | -------------------------------------------------- |
+| `X-Webhook-Signature` | `sha256=<hmac-hex>`                                |
 | `X-Webhook-Timestamp` | Unix timestamp (seconds) when the request was sent |
 
 ## Signature Algorithm
@@ -41,15 +41,9 @@ function verifyWebhook(secret, rawBody, signature, timestamp) {
     throw new Error('Timestamp too old');
   }
 
-  const expected = 'sha256=' + crypto
-    .createHmac('sha256', secret)
-    .update(rawBody)
-    .digest('hex');
+  const expected = 'sha256=' + crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
 
-  return crypto.timingSafeEqual(
-    Buffer.from(signature),
-    Buffer.from(expected)
-  );
+  return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
 }
 ```
 

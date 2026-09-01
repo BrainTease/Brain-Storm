@@ -5,6 +5,7 @@ This document describes the learner-facing forum UI implementation for Brain-Sto
 ## Overview
 
 The forum system allows learners and instructors to:
+
 - Create discussion threads with markdown support
 - Reply to threads with nested discussions
 - Mark answers (instructor/admin only)
@@ -65,6 +66,7 @@ app/courses/[id]/forum/
 ```
 
 **Props**:
+
 - `courseId` (string): The course ID
 - `onThreadClick?` (function): Callback when thread is clicked
 
@@ -89,6 +91,7 @@ app/courses/[id]/forum/
 ```
 
 **Props**:
+
 - `post` (Post): The forum post/thread
 - `replies` (Reply[]): List of replies
 - `courseId` (string): Course ID
@@ -100,6 +103,7 @@ app/courses/[id]/forum/
 **File**: `components/forum/MarkdownEditor.tsx`
 
 Features:
+
 - Live markdown preview toggle
 - Quick formatting buttons (bold, italic, code, lists, quotes, links)
 - Character count
@@ -115,6 +119,7 @@ Features:
 ```
 
 **Toolbar Actions**:
+
 - **B**: Bold (**text**)
 - **I**: Italic (_text_)
 - **<>**: Code (`text`)
@@ -156,6 +161,7 @@ Features:
 ## Data Models
 
 ### Post
+
 ```typescript
 interface Post {
   id: string;
@@ -176,6 +182,7 @@ interface Post {
 ```
 
 ### Reply
+
 ```typescript
 interface Reply {
   id: string;
@@ -195,54 +202,70 @@ interface Reply {
 ## Hooks
 
 ### useForumPosts
+
 Fetches paginated list of posts for a course
+
 ```typescript
 const { posts, total, hasMore, isLoading, error, mutate } = useForumPosts(courseId, page);
 ```
 
 ### useForumPost
+
 Fetches single post with replies
+
 ```typescript
 const { post, isLoading, error, mutate } = useForumPost(postId);
 ```
 
 ### useCreatePost
+
 Creates new forum post
+
 ```typescript
 const { createPost, isLoading, error } = useCreatePost(courseId);
 await createPost(title, content, isPinned);
 ```
 
 ### useCreateReply
+
 Creates reply to post
+
 ```typescript
 const { createReply, isLoading, error } = useCreateReply(postId);
 await createReply(content, isAnswer);
 ```
 
 ### useMarkAsAnswer
+
 Marks reply as accepted answer (instructor/admin only)
+
 ```typescript
 const { markAsAnswer, isLoading, error } = useMarkAsAnswer();
 await markAsAnswer(replyId);
 ```
 
 ### useDeletePost
+
 Deletes forum post (author/admin only)
+
 ```typescript
 const { deletePost, isLoading, error } = useDeletePost();
 await deletePost(postId);
 ```
 
 ### useDeleteReply
+
 Deletes reply (author/admin only)
+
 ```typescript
 const { deleteReply, isLoading, error } = useDeleteReply();
 await deleteReply(replyId);
 ```
 
 ### useFlagContent
+
 Flags content for moderation review
+
 ```typescript
 const { flagContent, isLoading, error } = useFlagContent();
 await flagContent('post' | 'reply', contentId, reason);
@@ -251,52 +274,61 @@ await flagContent('post' | 'reply', contentId, reason);
 ## API Endpoints
 
 **GET /courses/:id/posts** - Get paginated posts
+
 - Query params: `page`, `limit`
 - Returns: `{ data: Post[], total, page, limit, hasMore }`
 
 **GET /posts/:id** - Get single post with replies
+
 - Returns: `PostWithReplies`
 
 **POST /courses/:id/posts** - Create new post
+
 - Body: `{ title, content, isPinned? }`
 - Returns: `Post`
 
 **POST /posts/:id/replies** - Create reply
+
 - Body: `{ content, isAnswer? }`
 - Returns: `Reply`
 
 **POST /replies/:id/mark-answer** - Mark as accepted answer
+
 - Returns: `Reply`
 
 **POST /moderation/flag** - Flag content
+
 - Body: `{ contentType, contentId, reason? }`
 - Returns: Moderation item
 
 **DELETE /posts/:id** - Delete post (author/admin)
+
 - Returns: 204 No Content
 
 **DELETE /replies/:id** - Delete reply (author/admin)
+
 - Returns: 204 No Content
 
 ## Permission System
 
 ### Role-Based Actions
 
-| Action | Student | Instructor | Admin |
-|--------|---------|-----------|-------|
-| Create Post | ✓ | ✓ | ✓ |
-| Create Reply | ✓ | ✓ | ✓ |
-| Mark as Answer | ✗ | ✓ | ✓ |
-| Pin Post | ✗ | ✓ | ✓ |
-| Delete Own Post | ✓ | ✓ | ✓ |
-| Delete Own Reply | ✓ | ✓ | ✓ |
-| Delete Any Post | ✗ | ✗ | ✓ |
-| Delete Any Reply | ✗ | ✗ | ✓ |
-| Flag Content | ✓ | ✓ | ✓ |
+| Action           | Student | Instructor | Admin |
+| ---------------- | ------- | ---------- | ----- |
+| Create Post      | ✓       | ✓          | ✓     |
+| Create Reply     | ✓       | ✓          | ✓     |
+| Mark as Answer   | ✗       | ✓          | ✓     |
+| Pin Post         | ✗       | ✓          | ✓     |
+| Delete Own Post  | ✓       | ✓          | ✓     |
+| Delete Own Reply | ✓       | ✓          | ✓     |
+| Delete Any Post  | ✗       | ✗          | ✓     |
+| Delete Any Reply | ✗       | ✗          | ✓     |
+| Flag Content     | ✓       | ✓          | ✓     |
 
 ### Checking Permissions in Components
+
 ```typescript
-const user = useAuthStore(s => s.user);
+const user = useAuthStore((s) => s.user);
 const canMarkAsAnswer = user?.role === 'instructor' || user?.role === 'admin';
 const isAuthor = user?.id === post.userId;
 ```
@@ -322,16 +354,19 @@ const { notifications } = useNotifications();
 ## Content Moderation
 
 ### Auto-Moderation (Backend)
+
 - AWS Comprehend analyzes all posts and replies
 - Flags content as pending, approved, or rejected
 - Toxicity score tracked
 
 ### User Flagging
+
 - Users can flag inappropriate content
 - Flag reason collected
 - Admin review queue processes flags
 
 ### Admin Actions
+
 - Approve/reject flagged content
 - Handle appeals
 - Delete violating content
@@ -339,12 +374,14 @@ const { notifications } = useNotifications();
 ## Testing
 
 ### Component Tests
+
 ```bash
 npm test -- ThreadList.test.tsx
 npm test -- ReplyItem.test.tsx
 ```
 
 **Coverage**:
+
 - Thread list rendering and pagination
 - Reply display and formatting
 - Moderation actions
@@ -352,11 +389,13 @@ npm test -- ReplyItem.test.tsx
 - Error states and loading states
 
 ### E2E Tests
+
 ```bash
 npm run test:e2e
 ```
 
 **Scenarios**:
+
 - Create discussion thread
 - Reply to thread
 - Mark as answer
@@ -368,12 +407,14 @@ npm run test:e2e
 ## Styling
 
 The forum UI uses Tailwind CSS with:
+
 - Responsive design (mobile-first)
 - Dark mode support via next-themes
 - Accessibility compliance (WCAG 2.1 AA)
 - Consistent component patterns
 
 ### Color Scheme
+
 - Primary: Blue-600 (interactive elements)
 - Success: Green-100/700 (answers)
 - Warning: Orange-600 (flags)
@@ -414,22 +455,26 @@ The forum UI uses Tailwind CSS with:
 ## Troubleshooting
 
 ### Posts not loading
+
 - Check API connectivity
 - Verify course ID is correct
 - Check browser console for errors
 - Verify authentication token
 
 ### Markdown not rendering
+
 - Ensure content is valid markdown
 - Check for HTML injection attempts
 - Verify react-markdown is installed
 
 ### Permissions not working
+
 - Verify user role from auth store
 - Check role values match backend enum
 - Clear browser cache if recently changed
 
 ### Notifications not arriving
+
 - Verify socket.io connection
 - Check notification preferences
 - Verify user is subscribed to channel

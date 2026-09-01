@@ -19,7 +19,7 @@ export interface ValidatedEnrollment {
 export class CertificateValidationService {
   constructor(
     @InjectRepository(Enrollment)
-    private readonly enrollmentsRepo: Repository<Enrollment>,
+    private readonly enrollmentsRepo: Repository<Enrollment>
   ) {}
 
   /**

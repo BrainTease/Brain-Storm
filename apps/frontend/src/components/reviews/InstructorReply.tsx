@@ -33,9 +33,7 @@ export function InstructorReply({
       <div className="mt-3 pl-4 border-l-2 border-blue-300 bg-blue-50 rounded p-3">
         <p className="text-xs font-semibold text-blue-700 mb-1">Instructor Response</p>
         <p className="text-sm text-gray-700">{submitted.text}</p>
-        <p className="text-xs text-gray-400 mt-1">
-          {formatDateShort(submitted.createdAt)}
-        </p>
+        <p className="text-xs text-gray-400 mt-1">{formatDateShort(submitted.createdAt)}</p>
       </div>
     );
   }

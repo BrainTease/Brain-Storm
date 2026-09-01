@@ -25,52 +25,52 @@ export enum ProposalType {
 @Entity('governance_proposals')
 export class GovernanceProposal {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  title: string;
+  title!: string;
 
   @Column('text')
-  description: string;
+  description!: string;
 
   @Column({ type: 'enum', enum: ProposalType, default: ProposalType.TEXT })
-  type: ProposalType;
+  type!: ProposalType;
 
   @Column({ type: 'enum', enum: ProposalStatus, default: ProposalStatus.DRAFT })
-  status: ProposalStatus;
+  status!: ProposalStatus;
 
   /** Stellar account address of the proposer */
   @Column()
-  proposerAddress: string;
+  proposerAddress!: string;
 
   /** On-chain proposal ID (set after contract creation) */
   @Column({ nullable: true })
-  onChainId: string;
+  onChainId!: string;
 
   @Column({ type: 'int', default: 0 })
-  votesFor: number;
+  votesFor!: number;
 
   @Column({ type: 'int', default: 0 })
-  votesAgainst: number;
+  votesAgainst!: number;
 
   @Column({ type: 'int', default: 0 })
-  quorumRequired: number;
+  quorumRequired!: number;
 
   @Column({ type: 'jsonb', nullable: true })
-  metadata: Record<string, unknown>;
+  metadata!: Record<string, unknown>;
 
   @Column({ type: 'timestamptz', nullable: true })
-  votingStartsAt: Date;
+  votingStartsAt!: Date;
 
   @Column({ type: 'timestamptz', nullable: true })
-  votingEndsAt: Date;
+  votingEndsAt!: Date;
 
   @Column({ type: 'timestamptz', nullable: true })
-  executedAt: Date;
+  executedAt!: Date;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt!: Date;
 }

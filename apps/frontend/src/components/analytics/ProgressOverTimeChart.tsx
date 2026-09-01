@@ -48,12 +48,6 @@ function ProgressOverTimeChartBase({
   isDarkMode = false,
   title = 'Learning Progress Over Time',
 }: ProgressOverTimeChartProps) {
-  data,
-  isLoading = false,
-  error = null,
-  isDarkMode = false,
-  title = 'Learning Progress Over Time',
-}: ProgressOverTimeChartProps) {
   const chartData = useMemo(() => {
     if (!data || data.length === 0) return [];
 

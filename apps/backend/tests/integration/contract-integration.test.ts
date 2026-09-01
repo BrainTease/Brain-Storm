@@ -127,7 +127,7 @@ describe('Contract Integration Tests', () => {
             studentId,
             courseId,
             progressPercentage: 75,
-          }),
+          })
       );
 
       const responses = await Promise.all(promises);

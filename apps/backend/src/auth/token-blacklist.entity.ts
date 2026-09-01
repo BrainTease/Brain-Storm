@@ -5,17 +5,17 @@ import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, Index } from 
 @Index(['expiresAt'])
 export class TokenBlacklist {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  tokenHash: string;
+  tokenHash!: string;
 
   @Column()
-  userId: string;
+  userId!: string;
 
   @Column({ type: 'timestamptz' })
-  expiresAt: Date;
+  expiresAt!: Date;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 }

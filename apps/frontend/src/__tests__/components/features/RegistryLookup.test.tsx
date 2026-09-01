@@ -131,7 +131,9 @@ describe('RegistryLookup — cancel in-flight requests', () => {
       signals.push(signal);
       return new Promise<typeof MOCK_RESULTS>((resolve) => {
         // Resolve after a short time (simulating slow network)
-        signal.addEventListener('abort', () => {/* absorbed */});
+        signal.addEventListener('abort', () => {
+          /* absorbed */
+        });
         setTimeout(() => resolve(MOCK_RESULTS), 500);
       });
     });

@@ -10,11 +10,6 @@ interface LogContext {
 export function logError(error: unknown, context: LogContext = {}): void {
   const err = error instanceof Error ? error : new Error(String(error));
 
-  // Removed console logging
-// Removed console logging
-    // console.error('[errorLogger]', context.source ?? 'app', err, context.extra);
-  }
-
   Sentry.captureException(err, {
     tags: { source: context.source ?? 'app', ...context.tags },
     user: context.userId ? { id: context.userId } : undefined,
@@ -25,7 +20,7 @@ export function logError(error: unknown, context: LogContext = {}): void {
 export function logMessage(
   message: string,
   level: 'info' | 'warning' | 'error' = 'info',
-  context: LogContext = {},
+  context: LogContext = {}
 ): void {
   Sentry.captureMessage(message, {
     level,

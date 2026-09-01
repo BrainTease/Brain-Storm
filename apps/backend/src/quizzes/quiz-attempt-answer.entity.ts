@@ -5,25 +5,25 @@ import { QuizQuestion } from './quiz-question.entity';
 @Entity('quiz_attempt_answers')
 export class QuizAttemptAnswer {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  attemptId: string;
+  attemptId!: string;
 
   @ManyToOne(() => QuizAttempt, (a) => a.answers, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'attemptId' })
-  attempt: QuizAttempt;
+  attempt!: QuizAttempt;
 
   @Column()
-  questionId: string;
+  questionId!: string;
 
   @ManyToOne(() => QuizQuestion, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'questionId' })
-  question: QuizQuestion;
+  question!: QuizQuestion;
 
   @Column('text')
-  answer: string;
+  answer!: string;
 
   @Column({ type: 'float', nullable: true })
-  points: number;
+  points!: number;
 }

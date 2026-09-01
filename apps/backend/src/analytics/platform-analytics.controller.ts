@@ -6,14 +6,14 @@ import { EventsService } from './events.service';
 import { CORE_EVENTS } from './event-taxonomy';
 
 class TrackEventDto {
-  eventId: string;
-  eventType: string;
-  timestamp: string;
+  eventId!: string;
+  eventType!: string;
+  timestamp!: string;
   userId?: string;
-  sessionId: string;
-  source: 'web' | 'mobile' | 'api';
+  sessionId!: string;
+  source!: 'web' | 'mobile' | 'api';
   locale?: string;
-  payload: Record<string, unknown>;
+  payload!: Record<string, unknown>;
 }
 
 @ApiTags('analytics')

@@ -46,18 +46,18 @@ Internet
 
 ## Modules
 
-| Module | Purpose |
-|--------|---------|
-| `vpc` | VPC, subnets, NAT gateways, route tables, flow logs |
-| `rds` | PostgreSQL 16 with enhanced monitoring, encrypted storage |
-| `elasticache` | Redis 7.1 replication group with encryption |
-| `ecs` | Fargate cluster, backend & frontend services, IAM roles |
-| `alb` | Internet-facing ALB, path routing, optional HTTPS |
-| `ecr` | Container registries with lifecycle policies |
-| `autoscaling` | CPU/memory-based auto-scaling for ECS services |
-| `api-gateway` | HTTP API Gateway with VPC Link and throttling |
-| `oidc` | GitHub Actions keyless authentication |
-| `secrets` | Secrets Manager for DB password, JWT, Stellar key |
+| Module        | Purpose                                                   |
+| ------------- | --------------------------------------------------------- |
+| `vpc`         | VPC, subnets, NAT gateways, route tables, flow logs       |
+| `rds`         | PostgreSQL 16 with enhanced monitoring, encrypted storage |
+| `elasticache` | Redis 7.1 replication group with encryption               |
+| `ecs`         | Fargate cluster, backend & frontend services, IAM roles   |
+| `alb`         | Internet-facing ALB, path routing, optional HTTPS         |
+| `ecr`         | Container registries with lifecycle policies              |
+| `autoscaling` | CPU/memory-based auto-scaling for ECS services            |
+| `api-gateway` | HTTP API Gateway with VPC Link and throttling             |
+| `oidc`        | GitHub Actions keyless authentication                     |
+| `secrets`     | Secrets Manager for DB password, JWT, Stellar key         |
 
 ## Prerequisites
 
@@ -118,15 +118,15 @@ terraform apply tfplan
 
 ## Outputs
 
-| Output | Description |
-|--------|-------------|
-| `alb_dns_name` | ALB DNS name — point your domain here |
-| `api_gateway_endpoint` | API Gateway URL — use as `api_base_url` in tfvars |
-| `backend_repository_url` | ECR URL for backend images |
-| `frontend_repository_url` | ECR URL for frontend images |
-| `github_actions_role_arn` | Set as `AWS_ROLE_ARN` GitHub secret |
-| `db_endpoint` | RDS endpoint (sensitive) |
-| `redis_endpoint` | ElastiCache endpoint (sensitive) |
+| Output                    | Description                                       |
+| ------------------------- | ------------------------------------------------- |
+| `alb_dns_name`            | ALB DNS name — point your domain here             |
+| `api_gateway_endpoint`    | API Gateway URL — use as `api_base_url` in tfvars |
+| `backend_repository_url`  | ECR URL for backend images                        |
+| `frontend_repository_url` | ECR URL for frontend images                       |
+| `github_actions_role_arn` | Set as `AWS_ROLE_ARN` GitHub secret               |
+| `db_endpoint`             | RDS endpoint (sensitive)                          |
+| `redis_endpoint`          | ElastiCache endpoint (sensitive)                  |
 
 ## Two-step bootstrap
 

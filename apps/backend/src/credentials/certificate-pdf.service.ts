@@ -13,8 +13,7 @@ export class CertificatePdfService {
   constructor(private readonly pdfBuilder: PdfBuilderService) {}
 
   generateCertificatePdf(credential: Credential): Buffer {
-    const recipient =
-      credential.user?.username || credential.user?.email || credential.userId;
+    const recipient = credential.user?.username || credential.user?.email || credential.userId;
     const courseTitle = credential.course?.title || credential.courseId;
     const issuedAt = credential.issuedAt.toISOString().slice(0, 10);
     const verificationRef = credential.txHash || credential.id;

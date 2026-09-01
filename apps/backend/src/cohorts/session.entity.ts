@@ -25,49 +25,49 @@ export enum SessionStatus {
 @Index(['status', 'startTime'])
 export class CohortSession {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  cohortId: string;
+  cohortId!: string;
 
   @ManyToOne(() => Cohort, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'cohortId' })
-  cohort: Cohort;
+  cohort!: Cohort;
 
   @Column()
-  title: string;
+  title!: string;
 
   @Column('text', { nullable: true })
-  description: string;
+  description!: string;
 
   @Column('timestamp')
-  startTime: Date;
+  startTime!: Date;
 
   @Column('timestamp')
-  endTime: Date;
+  endTime!: Date;
 
   @Column({ nullable: true })
-  videoProviderId: string; // e.g., LiveKit room ID
+  videoProviderId!: string;
 
   @Column({ nullable: true })
-  recordingUrl: string;
+  recordingUrl!: string;
 
   @Column({ enum: SessionStatus, default: SessionStatus.SCHEDULED })
-  status: SessionStatus;
+  status!: SessionStatus;
 
   @Column({ type: 'uuid', nullable: true })
-  instructorId: string;
+  instructorId!: string;
 
   @ManyToOne(() => User, { onDelete: 'SET NULL' })
   @JoinColumn({ name: 'instructorId' })
-  instructor: User;
+  instructor!: User;
 
   @OneToMany(() => SessionAttendance, (a) => a.session, { cascade: true })
-  attendances: SessionAttendance[];
+  attendances!: SessionAttendance[];
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt!: Date;
 }

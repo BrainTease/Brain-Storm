@@ -17,9 +17,9 @@ test.describe('Dashboard - Visual Regression', () => {
       fullPage: true,
       mask: [
         page.locator('[data-testid="timestamp"]'),
-        page.locator('[data-testid="user-avatar"]')
+        page.locator('[data-testid="user-avatar"]'),
       ],
-      maxDiffPixels: 150
+      maxDiffPixels: 150,
     });
   });
 
@@ -29,14 +29,14 @@ test.describe('Dashboard - Visual Regression', () => {
       await themeToggle.click();
       await page.waitForTimeout(500);
     }
-    
+
     await expect(page).toHaveScreenshot('dashboard-dark-desktop.png', {
       fullPage: true,
       mask: [
         page.locator('[data-testid="timestamp"]'),
-        page.locator('[data-testid="user-avatar"]')
+        page.locator('[data-testid="user-avatar"]'),
       ],
-      maxDiffPixels: 150
+      maxDiffPixels: 150,
     });
   });
 
@@ -44,11 +44,11 @@ test.describe('Dashboard - Visual Regression', () => {
     await page.setViewportSize({ width: 375, height: 667 });
     await page.reload();
     await page.waitForLoadState('networkidle');
-    
+
     await expect(page).toHaveScreenshot('dashboard-mobile.png', {
       fullPage: true,
       mask: [page.locator('[data-testid="timestamp"]')],
-      maxDiffPixels: 150
+      maxDiffPixels: 150,
     });
   });
 
@@ -56,7 +56,7 @@ test.describe('Dashboard - Visual Regression', () => {
     const statsSection = page.locator('[data-testid="dashboard-stats"], .stats-grid').first();
     if (await statsSection.isVisible()) {
       await expect(statsSection).toHaveScreenshot('dashboard-stats.png', {
-        maxDiffPixels: 100
+        maxDiffPixels: 100,
       });
     }
   });
@@ -68,7 +68,7 @@ test.describe('Dashboard - Visual Regression', () => {
       await page.waitForTimeout(300);
       await expect(progressSection).toHaveScreenshot('dashboard-progress.png', {
         animations: 'disabled', // Disable progress bar animations
-        maxDiffPixels: 100
+        maxDiffPixels: 100,
       });
     }
   });
@@ -79,7 +79,7 @@ test.describe('Dashboard - Visual Regression', () => {
       await coursesSection.scrollIntoViewIfNeeded();
       await page.waitForTimeout(300);
       await expect(coursesSection).toHaveScreenshot('dashboard-enrolled-courses.png', {
-        maxDiffPixels: 100
+        maxDiffPixels: 100,
       });
     }
   });

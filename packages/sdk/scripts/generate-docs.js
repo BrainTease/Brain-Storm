@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 /**
  * packages/sdk/scripts/generate-docs.js
- * 
+ *
  * Generates comprehensive API reference documentation for @brain-storm/sdk
  * public surface from packages/sdk/src/index.ts.
- * 
+ *
  * Output is written to docs/api/sdk/
- * 
+ *
  * Usage: node packages/sdk/scripts/generate-docs.js
  */
 
@@ -510,8 +510,16 @@ function main() {
   ensureDirectoryExists(path.join(DOCS_OUT_DIR, 'interfaces'));
 
   fs.writeFileSync(path.join(DOCS_OUT_DIR, 'README.md'), generateIndexMarkdown(), 'utf8');
-  fs.writeFileSync(path.join(DOCS_OUT_DIR, 'classes', 'BrainStormClient.md'), generateClassesMarkdown(), 'utf8');
-  fs.writeFileSync(path.join(DOCS_OUT_DIR, 'interfaces', 'types-and-dtos.md'), generateTypesMarkdown(), 'utf8');
+  fs.writeFileSync(
+    path.join(DOCS_OUT_DIR, 'classes', 'BrainStormClient.md'),
+    generateClassesMarkdown(),
+    'utf8'
+  );
+  fs.writeFileSync(
+    path.join(DOCS_OUT_DIR, 'interfaces', 'types-and-dtos.md'),
+    generateTypesMarkdown(),
+    'utf8'
+  );
 
   console.log(`SDK API reference generated in ${DOCS_OUT_DIR}`);
 }

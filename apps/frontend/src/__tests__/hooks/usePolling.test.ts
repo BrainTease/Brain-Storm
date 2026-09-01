@@ -86,10 +86,9 @@ describe('usePolling', () => {
 
   it('clears the previous interval when dependencies change', async () => {
     const fetchFn = vi.fn().mockResolvedValue(MOCK_DATA);
-    const { rerender, unmount } = renderHook(
-      ({ interval }) => usePolling(fetchFn, { interval }),
-      { initialProps: { interval: 1000 } },
-    );
+    const { rerender, unmount } = renderHook(({ interval }) => usePolling(fetchFn, { interval }), {
+      initialProps: { interval: 1000 },
+    });
 
     await waitFor(() => expect(fetchFn).toHaveBeenCalledTimes(1));
 

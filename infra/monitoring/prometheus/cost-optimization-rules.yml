@@ -43,7 +43,7 @@ groups:
 
       - record: brain_storm:rds:cpu_utilization:avg5m
         expr: |
-          aws_rds_cpu_utilization{job="aws"} 
+          aws_rds_cpu_utilization{job="aws"}
 
       - record: brain_storm:rds:database_connections:avg5m
         expr: |
@@ -100,8 +100,8 @@ groups:
           severity: warning
           team: devops
         annotations:
-          summary: "Container {{ $labels.pod_name }} has low resource utilization"
-          description: "Pod {{ $labels.pod_name }} is using less than 10% of allocated CPU and memory. Consider right-sizing resource requests."
+          summary: 'Container {{ $labels.pod_name }} has low resource utilization'
+          description: 'Pod {{ $labels.pod_name }} is using less than 10% of allocated CPU and memory. Consider right-sizing resource requests.'
 
       - alert: DatabaseHighUtilization
         expr: brain_storm:rds:cpu_utilization:avg5m > 80
@@ -110,8 +110,8 @@ groups:
           severity: warning
           team: devops
         annotations:
-          summary: "RDS instance {{ $labels.db_instance_identifier }} CPU above 80%"
-          description: "Consider upgrading instance or optimizing queries."
+          summary: 'RDS instance {{ $labels.db_instance_identifier }} CPU above 80%'
+          description: 'Consider upgrading instance or optimizing queries.'
 
       - alert: CacheHighUtilization
         expr: brain_storm:elasticache:cpu_utilization:avg5m > 75
@@ -120,8 +120,8 @@ groups:
           severity: warning
           team: devops
         annotations:
-          summary: "ElastiCache node {{ $labels.cache_node_id }} CPU above 75%"
-          description: "Consider scaling up or reducing cache misses."
+          summary: 'ElastiCache node {{ $labels.cache_node_id }} CPU above 75%'
+          description: 'Consider scaling up or reducing cache misses.'
 
       - alert: UnderutilizedInfrastructure
         expr: brain_storm:resource:underutilized_pods > 5
@@ -130,5 +130,5 @@ groups:
           severity: info
           team: devops
         annotations:
-          summary: "{{ $value | humanize }} underutilized pods detected"
-          description: "Multiple pods are allocated more resources than they need. Review and right-size requests."
+          summary: '{{ $value | humanize }} underutilized pods detected'
+          description: 'Multiple pods are allocated more resources than they need. Review and right-size requests.'

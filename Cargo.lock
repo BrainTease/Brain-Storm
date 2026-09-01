@@ -288,7 +288,6 @@ dependencies = [
 name = "credential_metadata"
 version = "0.1.0"
 dependencies = [
- "brain-storm-shared",
  "soroban-sdk",
 ]
 

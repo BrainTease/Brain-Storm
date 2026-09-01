@@ -95,7 +95,7 @@ export function RegistryLookup({
         }
       }
     },
-    [search],
+    [search]
   );
 
   useEffect(() => {
@@ -162,10 +162,7 @@ export function RegistryLookup({
       )}
 
       {!loading && !error && debouncedQuery && results.length === 0 && (
-        <p
-          className="text-sm text-gray-500 dark:text-gray-400"
-          data-testid="registry-search-empty"
-        >
+        <p className="text-sm text-gray-500 dark:text-gray-400" data-testid="registry-search-empty">
           No results found for &ldquo;{debouncedQuery}&rdquo;.
         </p>
       )}

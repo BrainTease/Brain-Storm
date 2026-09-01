@@ -47,10 +47,7 @@ Mask elements that change between runs:
 
 ```typescript
 await expect(page).toHaveScreenshot('page.png', {
-  mask: [
-    page.locator('[data-testid="timestamp"]'),
-    page.locator('[data-testid="user-avatar"]'),
-  ],
+  mask: [page.locator('[data-testid="timestamp"]'), page.locator('[data-testid="user-avatar"]')],
 });
 ```
 
@@ -94,6 +91,7 @@ npm run test:visual -- visual-regression.spec.ts
 ## CI/CD Integration
 
 Visual regression tests run automatically on:
+
 - Pull requests affecting frontend code
 - Pushes to main branch
 

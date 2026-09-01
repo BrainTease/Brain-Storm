@@ -33,15 +33,16 @@ What we do **not** currently do is make every other production contract take a c
 ## Rationale
 
 **Why not duplicate the code with no shared crate at all?**
-Soroban contracts are independently compiled WASM binaries with no shared runtime — there's no way for two deployed contracts to literally share code the way two services can share a library at runtime. Without a shared *source* crate, the reentrancy guard, the pause auto-unpause math, the multisig threshold/expiry logic, and the timelocked upgrade flow would each be re-derived per contract, multiplying the number of places a subtle bug (e.g. an off-by-one in `expires_ledger` comparison) could hide. Keeping one audited implementation in `contracts/shared/src/*.rs` — even if contract authors copy rather than import it — means code review and security audits (see `docs/CONTRACT_SECURITY.md`) have one canonical implementation to check each contract's inline copy against.
+Soroban contracts are independently compiled WASM binaries with no shared runtime — there's no way for two deployed contracts to literally share code the way two services can share a library at runtime. Without a shared _source_ crate, the reentrancy guard, the pause auto-unpause math, the multisig threshold/expiry logic, and the timelocked upgrade flow would each be re-derived per contract, multiplying the number of places a subtle bug (e.g. an off-by-one in `expires_ledger` comparison) could hide. Keeping one audited implementation in `contracts/shared/src/*.rs` — even if contract authors copy rather than import it — means code review and security audits (see `docs/CONTRACT_SECURITY.md`) have one canonical implementation to check each contract's inline copy against.
 
 **Why is it also a deployed contract, not just a library?**
-RBAC (`Role`/`Permission`) and the authorized-caller registry are naturally *shared state* — "is address X an Instructor" is a fact that should have one on-chain answer, not 18 separate copies that could drift. Deploying `SharedContract` gives a single, queryable source of truth for roles, independent of which other contract is asking. The pause/reentrancy/upgrade *logic*, by contrast, is inherently per-contract state (each contract has its own `Paused` flag for its own storage), so those parts are consumed as copied source rather than through a deployed call.
+RBAC (`Role`/`Permission`) and the authorized-caller registry are naturally _shared state_ — "is address X an Instructor" is a fact that should have one on-chain answer, not 18 separate copies that could drift. Deploying `SharedContract` gives a single, queryable source of truth for roles, independent of which other contract is asking. The pause/reentrancy/upgrade _logic_, by contrast, is inherently per-contract state (each contract has its own `Paused` flag for its own storage), so those parts are consumed as copied source rather than through a deployed call.
 
 **Why hasn't compile-time reuse (a real `brain-storm-shared` dependency) happened yet?**
 Adding `brain-storm-shared` as a path dependency to, say, `market`'s `Cargo.toml` is straightforward in principle, but doing so was evidently deprioritized in favor of shipping each domain contract's own feature set (`market`'s pause support landed under issue `#663`, `registry`'s under the same batch per its git history — both implemented inline rather than by adding the dependency). This is a real gap, not a deliberate design choice, and is called out as a **negative consequence** below rather than as intended architecture.
 
 **Alternatives considered**
+
 1. **No shared crate; every contract reimplements everything from scratch with no shared reference.** Rejected — no canonical pattern to audit against; higher risk of divergent, subtly-inconsistent pause/reentrancy semantics across 18 contracts.
 2. **Make `brain-storm-shared` a real compile-time dependency of every contract, calling `SharedContract::has_permission` etc. instead of local checks.** Not adopted (yet) — every check would become a cross-contract call (gas cost, and a hard runtime dependency on `shared`'s address and interface staying stable across upgrades). This remains a reasonable future direction; see Implementation Notes.
 3. **Fold `shared`'s RBAC into `governance`**, since governance already gates upgrades. Rejected — RBAC (who is a Student/Instructor) is a much higher-frequency, lower-stakes read than governance proposals, and coupling the two would mean every role check goes through the governance contract's storage.
@@ -49,15 +50,18 @@ Adding `brain-storm-shared` as a path dependency to, say, `market`'s `Cargo.toml
 ## Consequences
 
 ### Positive
+
 - One audited reference implementation exists for pause, reentrancy, multisig, and timelocked-upgrade patterns.
 - RBAC has a single on-chain source of truth via the deployed `SharedContract`, usable by off-chain systems (`apps/backend`) without querying 18 separate contracts.
 - New contracts can bootstrap pause/upgrade support by copying a known-good pattern instead of writing one from scratch.
 
 ### Negative
+
 - **No production contract currently depends on `brain-storm-shared` at compile time or calls the deployed `SharedContract` on-chain.** Each contract's pause/admin logic is an independent copy, so a fix to `contracts/shared/src/pausable.rs` does **not** automatically propagate to `market`'s or `registry`'s inline copies — each must be patched separately. Contributors fixing a bug in one contract's pause logic should check whether the same bug exists in every other contract's local copy.
 - The deployed `SharedContract`'s `authorize_caller`/`call_contract`/`relay_event` cross-contract-call registry is unused by any of the 18 production contracts today (only exercised in `contracts/integration` tests) — it is speculative infrastructure, not a wired-up convention.
 
 ### Neutral
+
 - Adding a real compile-time dependency on `brain-storm-shared` to a production contract is safe to do incrementally, contract by contract — it does not require a workspace-wide migration.
 
 ## Implementation Notes
@@ -80,7 +84,7 @@ Adding `brain-storm-shared` as a path dependency to, say, `market`'s `Cargo.toml
 ## Update: compile-time reuse landed (2026-07-27, issue #825)
 
 Alternative 2 above — "make `brain-storm-shared` a real compile-time dependency"
-— has now been adopted for access-control checks, in the *library* form rather
+— has now been adopted for access-control checks, in the _library_ form rather
 than the cross-contract-call form. The gas objection raised against it does not
 apply: the helpers are ordinary Rust functions linked into each contract's own
 wasm, so an admin check is still a single local storage read, not an
@@ -106,7 +110,7 @@ What changed:
   `default-features = false` everywhere. Without this, linking a crate that
   contains a `#[contractimpl]` block into another contract's wasm would export
   `SharedContract`'s entry points — `assign_role`, `upgrade`, `pause_contract` —
-  from *that* contract, operating on its storage. Since `SharedContract`'s
+  from _that_ contract, operating on its storage. Since `SharedContract`'s
   `DataKey::Admin` serialises identically to every other contract's
   `DataKey::Admin`, that would have been directly exploitable. The
   `contract` feature is on by default so the crate still builds as a standalone
@@ -125,10 +129,9 @@ The deployed `SharedContract`'s `authorize_caller` / `call_contract` /
 contracts compare against their own stored `Admin` address, not against
 `SharedContract`'s role table. Consolidating those is a separate decision.
 
-
 ## Revision History
 
-| Date | Author | Change |
-|------|--------|--------|
-| 2026-07-25 | Brain-Storm maintainers | Initial proposal, derived from dependency analysis of `contracts/*/Cargo.toml` for issue #762 |
+| Date       | Author                  | Change                                                                                                     |
+| ---------- | ----------------------- | ---------------------------------------------------------------------------------------------------------- |
+| 2026-07-25 | Brain-Storm maintainers | Initial proposal, derived from dependency analysis of `contracts/*/Cargo.toml` for issue #762              |
 | 2026-07-27 | Brain-Storm maintainers | Added § Update: compile-time reuse landed — `access.rs` extracted and adopted by 16 contracts (issue #825) |

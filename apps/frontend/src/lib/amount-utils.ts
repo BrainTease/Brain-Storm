@@ -31,7 +31,10 @@ export function stroopsToXlm(stroops: number | string): number {
  */
 export function formatAmount(
   amount: number | string | null | undefined,
-  { maxFractionDigits = 2, placeholder = '—' }: { maxFractionDigits?: number; placeholder?: string } = {}
+  {
+    maxFractionDigits = 2,
+    placeholder = '—',
+  }: { maxFractionDigits?: number; placeholder?: string } = {}
 ): string {
   if (amount === null || amount === undefined || amount === '') return placeholder;
   const n = typeof amount === 'string' ? Number(amount) : amount;

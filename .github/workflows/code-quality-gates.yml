@@ -32,7 +32,7 @@ jobs:
         id: eslint
         run: |
           npm run lint --workspace=apps/frontend -- --format json --output-file eslint-report.json || true
-          
+
           # Parse and display results
           node -e "
             const fs = require('fs');
@@ -81,7 +81,7 @@ jobs:
         id: eslint
         run: |
           npm run lint --workspace=apps/backend -- --format json --output-file eslint-report.json || true
-          
+
           # Parse and display results
           node -e "
             const fs = require('fs');
@@ -130,8 +130,7 @@ jobs:
             contracts
 
       - name: Run Clippy
-        run: cargo clippy --all-targets --all-features -- -D warnings
-        working-directory: contracts
+        run: cargo clippy --workspace --all-targets -- -D warnings
 
   code-coverage:
     name: Code Coverage Analysis
@@ -215,7 +214,7 @@ jobs:
       - name: Analyze backend complexity
         run: |
           complexity-report --format json --output backend-complexity.json apps/backend/src || true
-          
+
           node -e "
             const fs = require('fs');
             const threshold = ${{ env.COMPLEXITY_THRESHOLD }};
@@ -304,7 +303,7 @@ jobs:
 
             [View detailed reports](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
             `;
-            
+
             await github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,

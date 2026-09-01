@@ -3,26 +3,26 @@ import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn } from 'typeor
 @Entity('kyc_documents')
 export class KycDocument {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  stellarPublicKey: string;
+  stellarPublicKey!: string;
 
   @Column()
-  filename: string;
+  filename!: string;
 
   @Column()
-  mimetype: string;
+  mimetype!: string;
 
   @Column({ nullable: true })
-  providerReference: string | null;
+  providerReference!: string | null;
 
   @Column({ type: 'jsonb', nullable: true })
-  metadata: Record<string, unknown> | null;
+  metadata!: Record<string, unknown> | null;
 
   @Column({ default: 0 })
-  size: number;
+  size!: number;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 }

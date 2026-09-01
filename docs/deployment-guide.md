@@ -325,6 +325,7 @@ curl https://api.brainstorm.dev/v1/stellar/balance/GXXXXXX
 **Symptom:** Deployment hangs or times out
 
 **Solution:**
+
 ```bash
 # Check pod status
 kubectl get pods -n production
@@ -344,6 +345,7 @@ kubectl rollout undo deployment/backend -n production
 **Symptom:** Migration error during deployment
 
 **Solution:**
+
 ```bash
 # Check migration status
 npm run db:migration:status
@@ -366,6 +368,7 @@ psql -h $DATABASE_HOST -U $DATABASE_USER -d brain_storm -c "SELECT COUNT(*) FROM
 **Symptom:** Contract deployment error
 
 **Solution:**
+
 ```bash
 # Check contract build
 cd contracts/analytics
@@ -386,6 +389,7 @@ cat scripts/deployed-contracts.json
 **Symptom:** Errors spike after deployment
 
 **Solution:**
+
 ```bash
 # 1. Check error logs
 kubectl logs deployment/backend -n production --tail=200 | grep ERROR
@@ -417,6 +421,7 @@ kubectl rollout undo deployment/backend -n production
 **Environment:** Production
 
 ### Pre-Deployment
+
 - [ ] CI checks passing
 - [ ] Code reviewed
 - [ ] Database backup taken
@@ -424,6 +429,7 @@ kubectl rollout undo deployment/backend -n production
 - [ ] Secrets verified
 
 ### Deployment
+
 - [ ] Smart contracts deployed
 - [ ] Backend deployed
 - [ ] Database migrations run
@@ -431,6 +437,7 @@ kubectl rollout undo deployment/backend -n production
 - [ ] Health checks passing
 
 ### Post-Deployment
+
 - [ ] API responding
 - [ ] Database connected
 - [ ] No error spikes
@@ -438,6 +445,7 @@ kubectl rollout undo deployment/backend -n production
 - [ ] Monitoring normal
 
 ### Sign-off
+
 - Deployed by: Alice
 - Verified by: Bob
 - Time: 14:30 UTC
@@ -453,25 +461,31 @@ kubectl rollout undo deployment/backend -n production
 **Severity:** P1 | P2 | P3
 
 ### Impact
+
 - Affected users: [number]
 - Services down: [list]
 - Data loss: [yes/no]
 
 ### Root Cause
+
 [Description of what went wrong]
 
 ### Timeline
+
 - 14:30 - Issue detected
 - 14:35 - Rollback initiated
 - 14:45 - Service restored
 
 ### Resolution
+
 [What was done to fix it]
 
 ### Prevention
+
 [What we'll do to prevent this]
 
 ### Follow-up
+
 - [ ] Post-mortem scheduled
 - [ ] Monitoring improved
 - [ ] Documentation updated
@@ -481,11 +495,11 @@ kubectl rollout undo deployment/backend -n production
 
 ## Deployment Contacts
 
-| Role | Name | Contact |
-|------|------|---------|
-| DevOps Lead | Alice | alice@brainstorm.dev |
-| Backend Lead | Bob | bob@brainstorm.dev |
-| On-Call | [Rotation] | oncall@brainstorm.dev |
+| Role         | Name       | Contact               |
+| ------------ | ---------- | --------------------- |
+| DevOps Lead  | Alice      | alice@brainstorm.dev  |
+| Backend Lead | Bob        | bob@brainstorm.dev    |
+| On-Call      | [Rotation] | oncall@brainstorm.dev |
 
 ---
 

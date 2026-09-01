@@ -31,7 +31,11 @@ async function bootstrap() {
   // This alone cuts JSON list-endpoint payloads by ~65–75 %.
   app.use(compression({ threshold: 1024 }));
 
-  app.use('/v0', (req, res) => {
+  import { Request, Response } from 'express';
+
+  // ... (later in the file)
+
+  app.use('/v0', (req: Request, res: Response) => {
     res.status(410).json({
       message: 'The /v0 API is deprecated. Please migrate to /v1.',
       migrationGuide: '/api/docs#versioning',
@@ -115,7 +119,7 @@ async function bootstrap() {
   SwaggerModule.setup('api/docs', app, document);
 
   // Export OpenAPI spec for static hosting
-  if (process.env.EXPORT_OPENAPI === 'true' || process.argv.includes('--export-openapi')) {
+  if (configService.get<boolean>('exportOpenapi') || process.argv.includes('--export-openapi')) {
     const outputPath = join(__dirname, '..', 'openapi.json');
     writeFileSync(outputPath, JSON.stringify(document, null, 2));
     logger.log(`OpenAPI spec exported to ${outputPath}`);

@@ -4,6 +4,7 @@ use soroban_sdk::{
 };
 
 use brain_storm_shared::access;
+use brain_storm_shared::pagination::paginate;
 
 // TTL thresholds (in ledgers)
 const TTL_THRESHOLD: u32 = 100;
@@ -549,17 +550,7 @@ impl AnalyticsContract {
         limit: u32,
     ) -> Vec<ProgressRecord> {
         let all_progress = Self::get_all_progress(env.clone(), student);
-        let mut result = vec![&env];
-
-        let start = offset as usize;
-        let end = (offset as usize + limit as usize).min(all_progress.len() as usize);
-
-        if start < all_progress.len() as usize {
-            for i in start..end {
-                result.push_back(all_progress.get(i as u32).unwrap().clone());
-            }
-        }
-        result
+        paginate(&env, &all_progress, offset, limit)
     }
 
     /// Get progress records for a student filtered by minimum progress percentage.

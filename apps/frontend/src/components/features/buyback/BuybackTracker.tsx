@@ -76,10 +76,7 @@ export function BuybackTracker({
       )}
 
       {data && (
-        <dl
-          className="grid grid-cols-2 gap-3 text-sm"
-          data-testid="buyback-tracker-data"
-        >
+        <dl className="grid grid-cols-2 gap-3 text-sm" data-testid="buyback-tracker-data">
           <div>
             <dt className="text-gray-500 dark:text-gray-400">Total Buyback</dt>
             <dd className="font-semibold text-gray-900 dark:text-gray-100">
@@ -95,9 +92,7 @@ export function BuybackTracker({
           <div className="col-span-2">
             <dt className="text-gray-500 dark:text-gray-400">Last Buyback</dt>
             <dd className="font-semibold text-gray-900 dark:text-gray-100">
-              {data.lastBuybackAt
-                ? new Date(data.lastBuybackAt).toLocaleString()
-                : 'Never'}
+              {data.lastBuybackAt ? new Date(data.lastBuybackAt).toLocaleString() : 'Never'}
             </dd>
           </div>
         </dl>

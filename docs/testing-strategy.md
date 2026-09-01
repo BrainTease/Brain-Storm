@@ -19,12 +19,12 @@ Comprehensive guide to the testing approach across the Brain-Storm platform.
 
 Brain-Storm uses a layered testing strategy across three application layers:
 
-| Layer | Framework | Test Types |
-|---|---|---|
-| Backend (NestJS) | Jest | Unit, Integration, E2E, Pact provider |
-| Frontend (Next.js) | Vitest + Playwright | Unit, Pact consumer, E2E |
-| Contracts (Soroban/Rust) | `cargo test` + `proptest` | Unit, Fuzz |
-| API performance | k6 | Load / SLO validation |
+| Layer                    | Framework                 | Test Types                            |
+| ------------------------ | ------------------------- | ------------------------------------- |
+| Backend (NestJS)         | Jest                      | Unit, Integration, E2E, Pact provider |
+| Frontend (Next.js)       | Vitest + Playwright       | Unit, Pact consumer, E2E              |
+| Contracts (Soroban/Rust) | `cargo test` + `proptest` | Unit, Fuzz                            |
+| API performance          | k6                        | Load / SLO validation                 |
 
 All tests run automatically in CI on every push and pull request.
 
@@ -100,10 +100,10 @@ npx playwright test --ui
 
 Coverage is enforced via SonarCloud quality gates on every PR.
 
-| Layer | Minimum Coverage |
-|---|---|
-| Backend | ≥ 70% (lines) |
-| Frontend | ≥ 70% (lines) |
+| Layer     | Minimum Coverage                                              |
+| --------- | ------------------------------------------------------------- |
+| Backend   | ≥ 70% (lines)                                                 |
+| Frontend  | ≥ 70% (lines)                                                 |
 | Contracts | Best-effort; all public functions must have at least one test |
 
 Generate coverage reports locally:
@@ -137,15 +137,14 @@ describe('AuthService', () => {
   it('should throw BadRequestException if email already in use', async () => {
     mockUsersService.findByEmail.mockResolvedValue({ email: 'user@example.com' });
 
-    await expect(service.register('user@example.com', 'pass')).rejects.toThrow(
-      BadRequestException,
-    );
+    await expect(service.register('user@example.com', 'pass')).rejects.toThrow(BadRequestException);
     expect(mockUsersService.create).not.toHaveBeenCalled();
   });
 });
 ```
 
 Key patterns:
+
 - Use `@nestjs/testing` `Test.createTestingModule` to build an isolated module.
 - Replace real providers with `jest.fn()` mocks via `useValue`.
 - Call `jest.clearAllMocks()` in `afterEach` to prevent state leakage.
@@ -165,6 +164,7 @@ it('sets user on successful login', async () => {
 ```
 
 Key patterns:
+
 - Use `renderHook` + `act` for React hooks.
 - Mock `axios` or API modules with `vi.mock(...)`.
 
@@ -182,6 +182,7 @@ test('register → enroll → complete lesson', async ({ page }) => {
 ```
 
 Key patterns:
+
 - Use role-based locators (`getByRole`, `getByLabel`) — they are resilient to markup changes.
 - Generate unique users per test run (`Date.now()`) to avoid collisions.
 - Set `baseURL` in `playwright.config.ts` so tests are environment-agnostic.
@@ -212,6 +213,7 @@ proptest! {
 ```
 
 Key patterns:
+
 - Use `Env::default()` with `mock_all_auths()` for a sandboxed Soroban environment.
 - Use `proptest` for fuzz/property-based testing of numeric invariants.
 - Use `#[should_panic(expected = "...")]` to assert contract panics on invalid input.
@@ -276,8 +278,12 @@ const verifier = new Verifier({
   providerBaseUrl: 'http://localhost:3000',
   pactFiles: [path.resolve(__dirname, '../../pacts')],
   stateHandlers: {
-    'user is authenticated': async () => { /* seed auth state */ },
-    'course exists': async () => { /* seed course data */ },
+    'user is authenticated': async () => {
+      /* seed auth state */
+    },
+    'course exists': async () => {
+      /* seed course data */
+    },
   },
 });
 
@@ -298,6 +304,7 @@ Frontend pact tests  →  pacts/*.json  →  Backend provider verification
 ```
 
 **Rules:**
+
 - Consumer tests must pass and generate pact files before provider verification runs.
 - In CI, consumer tests run first; the generated pact files are passed to the backend job.
 - Never manually edit pact JSON files — they are generated artefacts.
@@ -311,21 +318,21 @@ Load tests validate that the API meets its SLOs under realistic concurrent traff
 
 ### SLOs
 
-| Metric | Target |
-|---|---|
-| p95 response time | < 500 ms |
+| Metric            | Target    |
+| ----------------- | --------- |
+| p95 response time | < 500 ms  |
 | p99 response time | < 1000 ms |
-| Error rate | < 1% |
+| Error rate        | < 1%      |
 
 ### Test Scripts
 
 Located in `scripts/load-tests/`:
 
-| Script | Endpoint | Virtual Users | Duration |
-|---|---|---|---|
-| `courses.js` | `GET /courses` | 500 | 30s |
-| `auth-login.js` | `POST /auth/login` | 100 | 30s |
-| `stellar-balance.js` | `GET /stellar/balance/:key` | 50 | 30s |
+| Script               | Endpoint                    | Virtual Users | Duration |
+| -------------------- | --------------------------- | ------------- | -------- |
+| `courses.js`         | `GET /courses`              | 500           | 30s      |
+| `auth-login.js`      | `POST /auth/login`          | 100           | 30s      |
+| `stellar-balance.js` | `GET /stellar/balance/:key` | 50            | 30s      |
 
 ### Running Load Tests
 
@@ -460,12 +467,12 @@ node --inspect-brk node_modules/.bin/jest --runInBand
 
 ## 8. Test Coverage Targets
 
-| Layer | Target | Current |
-|---|---|---|
-| Backend services | ≥ 80% | Enforced via SonarCloud |
-| Backend controllers | ≥ 70% | Enforced via SonarCloud |
-| Frontend components | ≥ 70% | Enforced via SonarCloud |
-| Contracts | Best-effort | All public functions must have ≥ 1 test |
+| Layer               | Target      | Current                                 |
+| ------------------- | ----------- | --------------------------------------- |
+| Backend services    | ≥ 80%       | Enforced via SonarCloud                 |
+| Backend controllers | ≥ 70%       | Enforced via SonarCloud                 |
+| Frontend components | ≥ 70%       | Enforced via SonarCloud                 |
+| Contracts           | Best-effort | All public functions must have ≥ 1 test |
 
 **Coverage reports:**
 

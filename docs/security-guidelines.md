@@ -20,6 +20,7 @@ Comprehensive security guidelines for developers working on Brain-Storm.
 ### 1. Defense in Depth
 
 Implement multiple layers of security:
+
 - Frontend validation (UX)
 - API validation (security)
 - Database constraints (data integrity)
@@ -28,6 +29,7 @@ Implement multiple layers of security:
 ### 2. Principle of Least Privilege
 
 Grant minimum necessary permissions:
+
 - Users get only required roles
 - Services get only required API keys
 - Databases get only required access
@@ -35,6 +37,7 @@ Grant minimum necessary permissions:
 ### 3. Fail Securely
 
 When security checks fail:
+
 - Deny access by default
 - Log security events
 - Alert on suspicious activity
@@ -43,6 +46,7 @@ When security checks fail:
 ### 4. Input Validation
 
 Treat all external input as untrusted:
+
 - Validate type, length, format
 - Reject invalid input
 - Sanitize before storage
@@ -102,15 +106,10 @@ export class CreateCourseDto {
 
 ```typescript
 // ❌ Bad: SQL injection vulnerability
-const user = await db.query(
-  `SELECT * FROM users WHERE email = '${email}'`
-);
+const user = await db.query(`SELECT * FROM users WHERE email = '${email}'`);
 
 // ✅ Good: Parameterized query
-const user = await db.query(
-  'SELECT * FROM users WHERE email = $1',
-  [email]
-);
+const user = await db.query('SELECT * FROM users WHERE email = $1', [email]);
 
 // ✅ Good: TypeORM (ORM handles parameterization)
 const user = await this.userRepository.findOne({
@@ -288,8 +287,7 @@ const transaction = new TransactionBuilder(account, {
 const signed = await wallet.signTransaction(transaction);
 
 // Backend: Verify signature
-const verified = StrKey.isValidEd25519PublicKey(publicKey) &&
-  transaction.verify(publicKey);
+const verified = StrKey.isValidEd25519PublicKey(publicKey) && transaction.verify(publicKey);
 
 if (!verified) throw new UnauthorizedException();
 ```
@@ -349,12 +347,12 @@ updateCourse(
   @Body() dto: UpdateCourseDto,
 ) {
   const course = await this.courseService.findById(courseId);
-  
+
   // Verify ownership
   if (course.instructorId !== req.user.id) {
     throw new ForbiddenException('Not authorized');
   }
-  
+
   return this.courseService.update(courseId, dto);
 }
 ```
@@ -365,14 +363,10 @@ updateCourse(
 
 ```typescript
 // Verify instructor role on Soroban
-const isInstructor = await this.sorobanService.call(
-  'shared',
-  'has_role',
-  {
-    user: req.user.stellarPublicKey,
-    role: 'instructor',
-  }
-);
+const isInstructor = await this.sorobanService.call('shared', 'has_role', {
+  user: req.user.stellarPublicKey,
+  role: 'instructor',
+});
 
 if (!isInstructor) {
   throw new ForbiddenException('Not an instructor');
@@ -441,16 +435,17 @@ if (!isInstructor) {
 
 ### Incident Classification
 
-| Severity | Impact | Response Time |
-|----------|--------|----------------|
-| P0 | Data breach, service down | Immediate |
-| P1 | Partial outage, data at risk | 1 hour |
-| P2 | Minor issue, no data impact | 4 hours |
-| P3 | Low priority, informational | 24 hours |
+| Severity | Impact                       | Response Time |
+| -------- | ---------------------------- | ------------- |
+| P0       | Data breach, service down    | Immediate     |
+| P1       | Partial outage, data at risk | 1 hour        |
+| P2       | Minor issue, no data impact  | 4 hours       |
+| P3       | Low priority, informational  | 24 hours      |
 
 ### Incident Response Steps
 
 **1. Detect & Alert**
+
 ```bash
 # Automated alerts trigger on:
 # - Unusual error rates
@@ -460,6 +455,7 @@ if (!isInstructor) {
 ```
 
 **2. Assess & Classify**
+
 ```
 - Determine severity level
 - Identify affected systems
@@ -468,6 +464,7 @@ if (!isInstructor) {
 ```
 
 **3. Contain & Mitigate**
+
 ```bash
 # Immediate actions:
 # - Isolate affected systems
@@ -477,6 +474,7 @@ if (!isInstructor) {
 ```
 
 **4. Investigate & Remediate**
+
 ```bash
 # Investigation:
 # - Review logs and audit trails
@@ -492,6 +490,7 @@ if (!isInstructor) {
 ```
 
 **5. Communicate & Document**
+
 ```
 - Notify affected users
 - Update status page
@@ -500,6 +499,7 @@ if (!isInstructor) {
 ```
 
 **6. Post-Incident Review**
+
 ```
 - Root cause analysis
 - Preventive measures
@@ -517,9 +517,11 @@ if (!isInstructor) {
 **Status:** Resolved
 
 ### Summary
+
 [Brief description of incident]
 
 ### Timeline
+
 - 14:30 - Incident detected
 - 14:35 - Investigation started
 - 14:45 - Root cause identified
@@ -527,20 +529,25 @@ if (!isInstructor) {
 - 15:15 - Verified resolved
 
 ### Impact
+
 - Users affected: [number]
 - Data exposed: [yes/no]
 - Systems down: [list]
 
 ### Root Cause
+
 [Technical explanation]
 
 ### Resolution
+
 [What was done]
 
 ### Prevention
+
 [How we'll prevent this]
 
 ### Follow-up
+
 - [ ] Security audit scheduled
 - [ ] Monitoring improved
 - [ ] Documentation updated
@@ -549,11 +556,11 @@ if (!isInstructor) {
 
 ### Security Contacts
 
-| Role | Name | Contact |
-|------|------|---------|
-| Security Lead | Alice | alice@brainstorm.dev |
-| DevOps Lead | Bob | bob@brainstorm.dev |
-| On-Call | [Rotation] | oncall@brainstorm.dev |
+| Role          | Name       | Contact               |
+| ------------- | ---------- | --------------------- |
+| Security Lead | Alice      | alice@brainstorm.dev  |
+| DevOps Lead   | Bob        | bob@brainstorm.dev    |
+| On-Call       | [Rotation] | oncall@brainstorm.dev |
 
 ---
 

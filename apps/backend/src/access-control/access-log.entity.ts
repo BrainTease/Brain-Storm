@@ -12,34 +12,34 @@ import { User } from '../users/user.entity';
 @Entity('access_logs')
 export class AccessLog {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  courseId: string;
+  courseId!: string;
 
   @ManyToOne(() => Course, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'courseId' })
-  course: Course;
+  course!: Course;
 
   @Column()
-  userId: string;
+  userId!: string;
 
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
-  user: User;
+  user!: User;
 
   @Column()
-  action: string;
+  action!: string;
 
   @Column({ nullable: true })
-  ipAddress: string;
+  ipAddress!: string;
 
   @Column({ default: true })
-  isAllowed: boolean;
+  isAllowed!: boolean;
 
   @Column({ nullable: true })
-  denialReason: string;
+  denialReason!: string;
 
   @CreateDateColumn()
-  timestamp: Date;
+  timestamp!: Date;
 }

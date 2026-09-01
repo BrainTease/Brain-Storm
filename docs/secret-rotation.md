@@ -7,14 +7,18 @@ Brain-Storm implements automated and manual secret rotation to minimize exposure
 ## API Key Rotation
 
 ### Automated Rotation
+
 API keys older than **90 days** are automatically deactivated daily at 2 AM UTC via a scheduled cron job.
 
 ### Manual Rotation
+
 Users can rotate their own API keys via:
+
 ```
 POST /v1/secrets/api-keys/:id/rotate
 Authorization: Bearer <jwt>
 ```
+
 Returns a new raw API key. The old key is immediately invalidated.
 
 ## JWT Signing Keys
@@ -64,6 +68,7 @@ Stellar keys (`STELLAR_SECRET_KEY`) should be rotated by:
 ## Rotation History
 
 Admins can view rotation history:
+
 ```
 GET /v1/secrets/rotation-history?secretType=api_key&limit=50
 Authorization: Bearer <admin-jwt>
@@ -72,6 +77,7 @@ Authorization: Bearer <admin-jwt>
 ## Rotation Log
 
 All rotations are recorded in the `secret_rotations` table with:
+
 - `secretType`: type of secret rotated
 - `identifier`: specific key/resource ID
 - `rotatedBy`: user who triggered rotation (null for automated)

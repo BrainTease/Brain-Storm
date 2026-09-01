@@ -24,7 +24,7 @@ export class HealthController {
     private http: HttpHealthIndicator,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
-    private readonly configService: ConfigService,
+    private readonly configService: ConfigService
   ) {}
 
   /**
@@ -99,26 +99,27 @@ export class HealthController {
       await this.cacheManager.del(key);
       if (retrieved !== testValue) throw new Error('Redis value mismatch');
       return { redis: { status: 'up' } };
-    } catch (error) {
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : String(error);
       this.logger.warn('Redis health check failed', {
         context: 'HealthController',
-        error: error.message,
+        error: errMsg,
       });
-      throw new Error(`Redis health check failed: ${error.message}`);
+      throw new Error(`Redis health check failed: ${errMsg}`);
     }
   }
 
   private async checkStellarHorizon(): Promise<HealthIndicatorResult> {
     // #805: use central config instead of raw process.env
     const horizonUrl =
-      this.configService.get<string>('stellar.horizonUrl') ||
-      'https://horizon-testnet.stellar.org';
+      this.configService.get<string>('stellar.horizonUrl') || 'https://horizon-testnet.stellar.org';
     try {
       return await this.http.pingCheck('stellar_horizon', `${horizonUrl}/health`);
-    } catch (error) {
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : String(error);
       this.logger.warn('Stellar Horizon health check failed', {
         context: 'HealthController',
-        error: error.message,
+        error: errMsg,
       });
       throw error;
     }

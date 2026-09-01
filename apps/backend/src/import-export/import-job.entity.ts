@@ -21,32 +21,32 @@ export enum ImportJobType {
 @Entity('import_jobs')
 export class ImportJob {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  instructorId: string;
+  instructorId!: string;
 
   @Column({ type: 'enum', enum: ImportJobType, default: ImportJobType.COURSE })
-  type: ImportJobType;
+  type!: ImportJobType;
 
   @Column({ type: 'enum', enum: ImportJobStatus, default: ImportJobStatus.PENDING })
-  status: ImportJobStatus;
+  status!: ImportJobStatus;
 
   @Column({ default: 0 })
-  total: number;
+  total!: number;
 
   @Column({ default: 0 })
-  processed: number;
+  processed!: number;
 
   @Column({ type: 'text', nullable: true })
-  error: string | null;
+  error!: string | null;
 
   @Column({ type: 'jsonb', nullable: true })
   result: Record<string, unknown> | null;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt!: Date;
 }

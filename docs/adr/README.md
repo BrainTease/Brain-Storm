@@ -19,18 +19,18 @@ We use the [MADR (Markdown Any Decision Records)](https://adr.github.io/madr/) t
 
 ## Index
 
-| ADR | Title | Status |
-|-----|-------|--------|
-| [ADR-001](./ADR-001-stellar-soroban-over-ethereum.md) | Use Stellar/Soroban over Ethereum | Accepted |
-| [ADR-002](./ADR-002-nestjs-over-express.md) | Use NestJS over Express | Accepted |
-| [ADR-003](./ADR-003-nextjs-app-router.md) | Use Next.js App Router | Accepted |
-| [ADR-004](./ADR-004-soroban-persistent-storage-credentials.md) | Use Soroban Persistent Storage for Credentials | Accepted |
-| [ADR-005](./ADR-005-token-economics.md) | Brain-Storm Token (BST) Economics | Accepted |
-| [ADR-006](./ADR-006-contract-per-domain-architecture.md) | Contract-Per-Domain Architecture (vs. a Monolithic Contract) | Accepted |
-| [ADR-007](./ADR-007-shared-crate-for-common-code.md) | `contracts/shared` for Common Contract Code | Accepted |
-| [ADR-008](./ADR-008-registry-integration-separation.md) | `registry` and `integration` Are Different Kinds of Crates | Accepted |
-| [ADR-009](./ADR-009-credential-nft-decomposition.md) | Separate `certificate`, `credential_metadata`, and `nft` Contracts | Accepted |
-| [ADR-0001](./0001-contract-module-boundaries.md) | Soroban Contract Module Boundaries and Cross-Contract Call Conventions | Accepted |
+| ADR                                                            | Title                                                                  | Status   |
+| -------------------------------------------------------------- | ---------------------------------------------------------------------- | -------- |
+| [ADR-001](./ADR-001-stellar-soroban-over-ethereum.md)          | Use Stellar/Soroban over Ethereum                                      | Accepted |
+| [ADR-002](./ADR-002-nestjs-over-express.md)                    | Use NestJS over Express                                                | Accepted |
+| [ADR-003](./ADR-003-nextjs-app-router.md)                      | Use Next.js App Router                                                 | Accepted |
+| [ADR-004](./ADR-004-soroban-persistent-storage-credentials.md) | Use Soroban Persistent Storage for Credentials                         | Accepted |
+| [ADR-005](./ADR-005-token-economics.md)                        | Brain-Storm Token (BST) Economics                                      | Accepted |
+| [ADR-006](./ADR-006-contract-per-domain-architecture.md)       | Contract-Per-Domain Architecture (vs. a Monolithic Contract)           | Accepted |
+| [ADR-007](./ADR-007-shared-crate-for-common-code.md)           | `contracts/shared` for Common Contract Code                            | Accepted |
+| [ADR-008](./ADR-008-registry-integration-separation.md)        | `registry` and `integration` Are Different Kinds of Crates             | Accepted |
+| [ADR-009](./ADR-009-credential-nft-decomposition.md)           | Separate `certificate`, `credential_metadata`, and `nft` Contracts     | Accepted |
+| [ADR-0001](./0001-contract-module-boundaries.md)               | Soroban Contract Module Boundaries and Cross-Contract Call Conventions | Accepted |
 
 ## Contract Module Boundaries
 

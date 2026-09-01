@@ -24,7 +24,7 @@
 - [ ] 8. git add/commit/push/gh pr create (--title "Add complete Docker setup for backend+DBs" --body "Implements multi-stage Dockerfile, compose for prod/dev")
 
 ## Notes
+
 - Backend port 3000, Postgres 5432, Redis 6379
 - DB creds: brain-storm/brain-storm (override .env)
 - Dev: volume mount src/, nest start --watch
-

@@ -30,7 +30,7 @@ prevent this by default — contracts must guard it explicitly.
 1. **Investigate current implementation and gaps**
    - Enumerate every function that performs an external call (token
      transfers, cross-contract invocations) interleaved with storage reads/writes.
-   - Flag any function where storage is written *after* an external call
+   - Flag any function where storage is written _after_ an external call
      (check-effects-interactions violation).
 2. **Implement guards following existing project conventions**
    - Reentrancy guard flag in instance storage (set before external call,
@@ -54,6 +54,7 @@ prevent this by default — contracts must guard it explicitly.
 ## Recommended next step
 
 Confirm with the issue author whether the market contract:
+
 - hasn't been written yet (this is groundwork for a future contract), or
 - lives in a different repo/branch not currently checked out here.
 

@@ -8,7 +8,7 @@ export class CreateReviewDto {
   @IsInt()
   @Min(1)
   @Max(5)
-  rating: number;
+  rating!: number;
 
   @ApiPropertyOptional({
     example: 'Excellent course! Very well structured.',

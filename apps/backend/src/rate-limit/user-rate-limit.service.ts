@@ -1,5 +1,6 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { ConfigService } from '@nestjs/config';
 import { Cache } from 'cache-manager';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -30,22 +31,6 @@ export interface RateLimitStatus {
 // ─── Configuration tables ─────────────────────────────────────────────────────
 
 /** Per-role default limits (configurable without redeploy via env). */
-export const ROLE_RATE_LIMITS: Record<string, RateLimitConfig> = {
-  admin: { limit: Number(process.env.RATE_LIMIT_ADMIN) || 10_000, windowMs: 60_000, dailyQuota: 0 },
-  instructor: {
-    limit: Number(process.env.RATE_LIMIT_INSTRUCTOR) || 5_000,
-    windowMs: 60_000,
-    dailyQuota: 0,
-  },
-  student: {
-    limit: Number(process.env.RATE_LIMIT_STUDENT) || 1_000,
-    windowMs: 60_000,
-    dailyQuota: 0,
-  },
-  guest: { limit: Number(process.env.RATE_LIMIT_GUEST) || 100, windowMs: 60_000, dailyQuota: 200 },
-};
-
-/** Per-plan limits — take precedence over role limits when set. */
 export const PLAN_RATE_LIMITS: Record<string, RateLimitConfig> = {
   free: { limit: 200, windowMs: 60_000, dailyQuota: 1_000 },
   pro: { limit: 2_000, windowMs: 60_000, dailyQuota: 10_000 },
@@ -60,16 +45,34 @@ export const ENDPOINT_RATE_LIMITS: Record<string, RateLimitConfig> = {
   'GET:/v1/courses': { limit: 200, windowMs: 60_000, dailyQuota: 0 },
 };
 
-/** Admin allowlist: these user IDs bypass all rate limiting. */
-const ADMIN_ALLOWLIST = new Set<string>(
-  (process.env.RATE_LIMIT_ALLOWLIST || '').split(',').filter(Boolean)
-);
-
 // ─── Service ──────────────────────────────────────────────────────────────────
 
 @Injectable()
 export class UserRateLimitService {
-  constructor(@Inject(CACHE_MANAGER) private readonly cacheManager: Cache) {}
+  private roleRateLimits: Record<string, RateLimitConfig>;
+  private adminAllowlist: Set<string>;
+
+  constructor(
+    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+    private readonly configService: ConfigService
+  ) {
+    const rateLimitCfg = this.configService.get('rateLimit');
+    this.roleRateLimits = {
+      admin: { limit: rateLimitCfg?.admin || 10_000, windowMs: 60_000, dailyQuota: 0 },
+      instructor: {
+        limit: rateLimitCfg?.instructor || 5_000,
+        windowMs: 60_000,
+        dailyQuota: 0,
+      },
+      student: {
+        limit: rateLimitCfg?.student || 1_000,
+        windowMs: 60_000,
+        dailyQuota: 0,
+      },
+      guest: { limit: rateLimitCfg?.guest || 100, windowMs: 60_000, dailyQuota: 200 },
+    };
+    this.adminAllowlist = new Set<string>(rateLimitCfg?.allowlist ?? []);
+  }
 
   /**
    * Sliding-window rate-limit check with optional daily quota tracking.
@@ -81,7 +84,7 @@ export class UserRateLimitService {
     endpoint?: string,
     plan?: string
   ): Promise<boolean> {
-    if (role === 'admin' || ADMIN_ALLOWLIST.has(userId)) return true;
+    if (role === 'admin' || this.adminAllowlist.has(userId)) return true;
 
     const config = this.resolveConfig(role, endpoint, plan);
     const windowKey = this.windowKey(userId, endpoint);
@@ -148,11 +151,11 @@ export class UserRateLimitService {
   }
 
   addToAllowlist(userId: string): void {
-    ADMIN_ALLOWLIST.add(userId);
+    this.adminAllowlist.add(userId);
   }
 
   removeFromAllowlist(userId: string): void {
-    ADMIN_ALLOWLIST.delete(userId);
+    this.adminAllowlist.delete(userId);
   }
 
   /**
@@ -166,7 +169,7 @@ export class UserRateLimitService {
     if (plan && PLAN_RATE_LIMITS[plan]) {
       return PLAN_RATE_LIMITS[plan];
     }
-    return ROLE_RATE_LIMITS[role] ?? ROLE_RATE_LIMITS['guest'];
+    return this.roleRateLimits[role] ?? this.roleRateLimits['guest'];
   }
 
   // ── Private helpers ─────────────────────────────────────────────────────────

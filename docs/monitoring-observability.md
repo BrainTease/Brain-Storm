@@ -30,12 +30,12 @@ docker compose -f docker-compose.monitoring.yml up -d
 docker compose up -d backend postgres redis
 ```
 
-| Service | URL | Credentials |
-|---|---|---|
-| Grafana | http://localhost:3002 | admin / admin |
-| Prometheus | http://localhost:9090 | — |
-| Metrics endpoint | http://localhost:3000/metrics | — |
-| Health endpoint | http://localhost:3000/v1/health | — |
+| Service          | URL                             | Credentials   |
+| ---------------- | ------------------------------- | ------------- |
+| Grafana          | http://localhost:3002           | admin / admin |
+| Prometheus       | http://localhost:9090           | —             |
+| Metrics endpoint | http://localhost:3000/metrics   | —             |
+| Health endpoint  | http://localhost:3000/v1/health | —             |
 
 ---
 
@@ -49,24 +49,24 @@ docker compose up -d backend postgres redis
 
 #### Application metrics
 
-| Metric | Type | Labels | Description |
-|---|---|---|---|
-| `http_requests_total` | Counter | `method`, `route`, `status_code` | Total HTTP requests handled. Incremented automatically by `MetricsInterceptor` on every response. |
-| `credential_issued_total` | Counter | `credential_type` | On-chain credentials issued via Stellar. Call `MetricsService.incrementCredentialIssued(type)` when issuing. |
-| `bst_minted_total` | Counter | `user_id` | BST reward tokens minted. Call `MetricsService.incrementBstMinted(userId)` when minting. |
-| `stellar_rpc_latency_seconds` | Histogram | `method`, `status` | Stellar RPC call duration. Buckets: 0.1s, 0.5s, 1s, 2s, 5s. Call `MetricsService.observeStellarRpcLatency(method, status, seconds)`. |
+| Metric                        | Type      | Labels                           | Description                                                                                                                          |
+| ----------------------------- | --------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `http_requests_total`         | Counter   | `method`, `route`, `status_code` | Total HTTP requests handled. Incremented automatically by `MetricsInterceptor` on every response.                                    |
+| `credential_issued_total`     | Counter   | `credential_type`                | On-chain credentials issued via Stellar. Call `MetricsService.incrementCredentialIssued(type)` when issuing.                         |
+| `bst_minted_total`            | Counter   | `user_id`                        | BST reward tokens minted. Call `MetricsService.incrementBstMinted(userId)` when minting.                                             |
+| `stellar_rpc_latency_seconds` | Histogram | `method`, `status`               | Stellar RPC call duration. Buckets: 0.1s, 0.5s, 1s, 2s, 5s. Call `MetricsService.observeStellarRpcLatency(method, status, seconds)`. |
 
 #### Default Node.js / process metrics (auto-collected by prom-client)
 
-| Metric | Description |
-|---|---|
-| `process_cpu_user_seconds_total` | CPU time in user mode |
-| `process_resident_memory_bytes` | RSS memory usage |
-| `nodejs_heap_size_total_bytes` | V8 heap total size |
-| `nodejs_heap_size_used_bytes` | V8 heap used size |
-| `nodejs_eventloop_lag_seconds` | Event loop lag (latency indicator) |
-| `nodejs_active_handles_total` | Active libuv handles |
-| `http_request_duration_seconds` | Request duration histogram (built-in) |
+| Metric                           | Description                           |
+| -------------------------------- | ------------------------------------- |
+| `process_cpu_user_seconds_total` | CPU time in user mode                 |
+| `process_resident_memory_bytes`  | RSS memory usage                      |
+| `nodejs_heap_size_total_bytes`   | V8 heap total size                    |
+| `nodejs_heap_size_used_bytes`    | V8 heap used size                     |
+| `nodejs_eventloop_lag_seconds`   | Event loop lag (latency indicator)    |
+| `nodejs_active_handles_total`    | Active libuv handles                  |
+| `http_request_duration_seconds`  | Request duration histogram (built-in) |
 
 #### Useful PromQL queries
 
@@ -110,13 +110,13 @@ export class CredentialsService {
       this.metrics.observeStellarRpcLatency(
         'issueCredential',
         'success',
-        (Date.now() - start) / 1000,
+        (Date.now() - start) / 1000
       );
     } catch (err) {
       this.metrics.observeStellarRpcLatency(
         'issueCredential',
         'error',
-        (Date.now() - start) / 1000,
+        (Date.now() - start) / 1000
       );
       throw err;
     }
@@ -174,15 +174,15 @@ If running Grafana outside Docker:
 
 The pre-built dashboard (`nestjs-metrics.json`) includes:
 
-| Panel | Query | Description |
-|---|---|---|
-| Request Rate | `rate(http_requests_total[1m])` | Requests per second |
-| Error Rate | `rate(http_requests_total{status_code=~"5.."}[5m])` | 5xx errors per second |
-| Credential Issuance | `rate(credential_issued_total[5m])` | Credentials issued per second |
-| BST Minted | `rate(bst_minted_total[5m])` | Tokens minted per second |
-| Stellar RPC p95 | `histogram_quantile(0.95, rate(stellar_rpc_latency_seconds_bucket[5m]))` | 95th percentile RPC latency |
-| Heap Memory | `nodejs_heap_size_used_bytes / 1024 / 1024` | Heap usage in MB |
-| Event Loop Lag | `nodejs_eventloop_lag_seconds` | Event loop latency |
+| Panel               | Query                                                                    | Description                   |
+| ------------------- | ------------------------------------------------------------------------ | ----------------------------- |
+| Request Rate        | `rate(http_requests_total[1m])`                                          | Requests per second           |
+| Error Rate          | `rate(http_requests_total{status_code=~"5.."}[5m])`                      | 5xx errors per second         |
+| Credential Issuance | `rate(credential_issued_total[5m])`                                      | Credentials issued per second |
+| BST Minted          | `rate(bst_minted_total[5m])`                                             | Tokens minted per second      |
+| Stellar RPC p95     | `histogram_quantile(0.95, rate(stellar_rpc_latency_seconds_bucket[5m]))` | 95th percentile RPC latency   |
+| Heap Memory         | `nodejs_heap_size_used_bytes / 1024 / 1024`                              | Heap usage in MB              |
+| Event Loop Lag      | `nodejs_eventloop_lag_seconds`                                           | Event loop latency            |
 
 ### Production Prometheus scrape config
 
@@ -192,7 +192,7 @@ For production deployments where the backend is not on `host.docker.internal`, u
 scrape_configs:
   - job_name: 'brain-storm-backend'
     static_configs:
-      - targets: ['backend:3000']   # Docker service name
+      - targets: ['backend:3000'] # Docker service name
     metrics_path: '/metrics'
     scrape_interval: 10s
 ```
@@ -205,20 +205,22 @@ scrape_configs:
 
 Winston is configured in `apps/backend/src/common/logger/logger.module.ts`. The format and verbosity are controlled by two environment variables:
 
-| Variable | Default | Effect |
-|---|---|---|
-| `LOG_LEVEL` | `info` | Minimum log level. Options: `error`, `warn`, `info`, `debug`, `verbose` |
-| `NODE_ENV` | `development` | `production` → JSON format; anything else → colorized text |
+| Variable    | Default       | Effect                                                                  |
+| ----------- | ------------- | ----------------------------------------------------------------------- |
+| `LOG_LEVEL` | `info`        | Minimum log level. Options: `error`, `warn`, `info`, `debug`, `verbose` |
+| `NODE_ENV`  | `development` | `production` → JSON format; anything else → colorized text              |
 
 ### Log formats
 
 **Development** (`NODE_ENV=development`):
+
 ```
 2024-01-15T10:30:45.123Z info: [AuthService] User logged in
 2024-01-15T10:30:45.124Z error: [StellarService] RPC call failed {"trace":"Error: ..."}
 ```
 
 **Production** (`NODE_ENV=production`):
+
 ```json
 {"timestamp":"2024-01-15T10:30:45.123Z","level":"info","message":"User logged in","context":"AuthService"}
 {"timestamp":"2024-01-15T10:30:45.124Z","level":"error","message":"RPC call failed","context":"StellarService","trace":"Error: ..."}
@@ -255,6 +257,7 @@ export class MyService {
 All logs go to **stdout** — the standard for containerised workloads. Plug in your preferred aggregator:
 
 **AWS CloudWatch (ECS):**
+
 ```json
 {
   "logDriver": "awslogs",
@@ -267,11 +270,12 @@ All logs go to **stdout** — the standard for containerised workloads. Plug in 
 ```
 
 **Grafana Loki (Docker):**
+
 ```yaml
 # docker-compose.monitoring.yml addition
 loki:
   image: grafana/loki:latest
-  ports: ["3100:3100"]
+  ports: ['3100:3100']
 
 promtail:
   image: grafana/promtail:latest
@@ -281,6 +285,7 @@ promtail:
 ```
 
 Then add Loki as a datasource in Grafana and use LogQL to query:
+
 ```logql
 {container="brain-storm-backend"} | json | level="error"
 ```
@@ -294,15 +299,16 @@ Logs are automatically collected by your cluster's logging agent (Fluentd, Fluen
 
 `GET /v1/health` runs five checks and returns `200 OK` when all pass, or `503 Service Unavailable` when any fail.
 
-| Check | Threshold | What it tests |
-|---|---|---|
-| `database` | — | PostgreSQL ping via TypeORM |
-| `memory_heap` | 150 MB | V8 heap usage |
-| `memory_rss` | 300 MB | Process RSS memory |
-| `redis` | — | Set + get a test key in Redis |
-| `stellar_horizon` | — | HTTP ping to `$STELLAR_HORIZON_URL/health` |
+| Check             | Threshold | What it tests                              |
+| ----------------- | --------- | ------------------------------------------ |
+| `database`        | —         | PostgreSQL ping via TypeORM                |
+| `memory_heap`     | 150 MB    | V8 heap usage                              |
+| `memory_rss`      | 300 MB    | Process RSS memory                         |
+| `redis`           | —         | Set + get a test key in Redis              |
+| `stellar_horizon` | —         | HTTP ping to `$STELLAR_HORIZON_URL/health` |
 
 **Example healthy response:**
+
 ```json
 {
   "status": "ok",
@@ -319,6 +325,7 @@ Logs are automatically collected by your cluster's logging agent (Fluentd, Fluen
 ```
 
 Use this endpoint for:
+
 - Docker / Kubernetes liveness and readiness probes
 - Load balancer health checks
 - Uptime monitoring (e.g. UptimeRobot, Pingdom)
@@ -346,6 +353,7 @@ Sentry.init({
 Set `SENTRY_DSN` in your `.env` to activate. Leave it empty to disable Sentry entirely.
 
 **What gets captured automatically:**
+
 - Unhandled exceptions and promise rejections
 - HTTP request traces (10% sample rate in production)
 - CPU profiles (10% sample rate in production)
@@ -355,15 +363,16 @@ Set `SENTRY_DSN` in your `.env` to activate. Leave it empty to disable Sentry en
 
 The frontend uses three Sentry config files:
 
-| File | Runs in | Purpose |
-|---|---|---|
-| `sentry.client.config.ts` | Browser | Error tracking + Session Replay |
-| `sentry.server.config.ts` | Node.js (SSR) | Error tracking + traces |
-| `sentry.edge.config.ts` | Edge runtime | Error tracking + traces |
+| File                      | Runs in       | Purpose                         |
+| ------------------------- | ------------- | ------------------------------- |
+| `sentry.client.config.ts` | Browser       | Error tracking + Session Replay |
+| `sentry.server.config.ts` | Node.js (SSR) | Error tracking + traces         |
+| `sentry.edge.config.ts`   | Edge runtime  | Error tracking + traces         |
 
 Set `NEXT_PUBLIC_SENTRY_DSN` in the frontend environment to activate.
 
 **Session Replay** is enabled on the client:
+
 - `replaysSessionSampleRate: 0.1` — 10% of sessions are recorded
 - `replaysOnErrorSampleRate: 1.0` — 100% of sessions with errors are recorded
 - All text is masked and media is blocked by default
@@ -408,7 +417,6 @@ Add these rules to `infra/monitoring/prometheus.yml` under an `alerting` + `rule
 groups:
   - name: brain-storm-backend
     rules:
-
       # High 5xx error rate
       - alert: HighErrorRate
         expr: rate(http_requests_total{status_code=~"5.."}[5m]) > 0.05
@@ -416,8 +424,8 @@ groups:
         labels:
           severity: critical
         annotations:
-          summary: "High HTTP error rate"
-          description: "More than 5% of requests are returning 5xx errors for 2 minutes."
+          summary: 'High HTTP error rate'
+          description: 'More than 5% of requests are returning 5xx errors for 2 minutes.'
 
       # Slow Stellar RPC calls
       - alert: StellarRpcSlow
@@ -426,8 +434,8 @@ groups:
         labels:
           severity: warning
         annotations:
-          summary: "Stellar RPC p95 latency above 2s"
-          description: "95th percentile Stellar RPC latency has exceeded 2 seconds for 5 minutes."
+          summary: 'Stellar RPC p95 latency above 2s'
+          description: '95th percentile Stellar RPC latency has exceeded 2 seconds for 5 minutes.'
 
       # High heap memory usage
       - alert: HighHeapMemory
@@ -436,8 +444,8 @@ groups:
         labels:
           severity: warning
         annotations:
-          summary: "Node.js heap usage above 120 MB"
-          description: "Heap is approaching the 150 MB health check threshold."
+          summary: 'Node.js heap usage above 120 MB'
+          description: 'Heap is approaching the 150 MB health check threshold.'
 
       # Event loop lag
       - alert: EventLoopLag
@@ -446,8 +454,8 @@ groups:
         labels:
           severity: warning
         annotations:
-          summary: "Event loop lag above 100ms"
-          description: "The Node.js event loop is lagging, indicating CPU saturation or blocking I/O."
+          summary: 'Event loop lag above 100ms'
+          description: 'The Node.js event loop is lagging, indicating CPU saturation or blocking I/O.'
 
       # Backend down (no scrape data)
       - alert: BackendDown
@@ -456,8 +464,8 @@ groups:
         labels:
           severity: critical
         annotations:
-          summary: "Backend is unreachable"
-          description: "Prometheus cannot scrape the /metrics endpoint."
+          summary: 'Backend is unreachable'
+          description: 'Prometheus cannot scrape the /metrics endpoint.'
 ```
 
 To load the rules file, reference it in `prometheus.yml`:
@@ -465,7 +473,7 @@ To load the rules file, reference it in `prometheus.yml`:
 ```yaml
 # infra/monitoring/prometheus.yml
 rule_files:
-  - "alerts.yml"
+  - 'alerts.yml'
 
 alerting:
   alertmanagers:
@@ -475,11 +483,11 @@ alerting:
 
 ### Threshold summary
 
-| Signal | Warning | Critical | Source |
-|---|---|---|---|
-| 5xx error rate | > 1% | > 5% | `http_requests_total` |
-| Stellar RPC p95 latency | > 1s | > 2s | `stellar_rpc_latency_seconds` |
-| Heap memory | > 120 MB | > 150 MB (health check fails) | `nodejs_heap_size_used_bytes` |
-| RSS memory | — | > 300 MB (health check fails) | `process_resident_memory_bytes` |
-| Event loop lag | > 100ms | > 500ms | `nodejs_eventloop_lag_seconds` |
-| Backend scrape | — | `up == 0` | Prometheus `up` metric |
+| Signal                  | Warning  | Critical                      | Source                          |
+| ----------------------- | -------- | ----------------------------- | ------------------------------- |
+| 5xx error rate          | > 1%     | > 5%                          | `http_requests_total`           |
+| Stellar RPC p95 latency | > 1s     | > 2s                          | `stellar_rpc_latency_seconds`   |
+| Heap memory             | > 120 MB | > 150 MB (health check fails) | `nodejs_heap_size_used_bytes`   |
+| RSS memory              | —        | > 300 MB (health check fails) | `process_resident_memory_bytes` |
+| Event loop lag          | > 100ms  | > 500ms                       | `nodejs_eventloop_lag_seconds`  |
+| Backend scrape          | —        | `up == 0`                     | Prometheus `up` metric          |

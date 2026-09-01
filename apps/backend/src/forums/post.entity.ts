@@ -14,37 +14,37 @@ import { Reply } from './reply.entity';
 @Entity('posts')
 export class Post {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  courseId: string;
+  courseId!: string;
 
   @ManyToOne(() => Course, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'courseId' })
-  course: Course;
+  course!: Course;
 
   @Column()
-  userId: string;
+  userId!: string;
 
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
-  user: User;
+  user!: User;
 
   @Column()
-  title: string;
+  title!: string;
 
   @Column({ type: 'text' })
-  content: string;
+  content!: string;
 
   @Column({ default: false })
-  isPinned: boolean;
+  isPinned!: boolean;
 
   @Column({ nullable: true })
-  answerReplyId: string | null;
+  answerReplyId!: string | null;
 
   @OneToMany(() => Reply, (reply) => reply.post)
-  replies: Reply[];
+  replies!: Reply[];
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 }

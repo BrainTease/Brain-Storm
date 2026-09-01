@@ -12,25 +12,25 @@ import { User } from '../users/user.entity';
 @Entity('survey_responses')
 export class SurveyResponse {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  surveyId: string;
+  surveyId!: string;
 
   @ManyToOne(() => Survey, (s) => s.responses, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'surveyId' })
-  survey: Survey;
+  survey!: Survey;
 
   @Column()
-  userId: string;
+  userId!: string;
 
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
-  user: User;
+  user!: User;
 
   @Column('jsonb')
-  answers: Record<string, string | number>;
+  answers!: Record<string, string | number>;
 
   @CreateDateColumn()
-  submittedAt: Date;
+  submittedAt!: Date;
 }

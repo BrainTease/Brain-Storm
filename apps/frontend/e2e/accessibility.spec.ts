@@ -120,12 +120,10 @@ test.describe('Accessibility Tests - WCAG 2.1 AA Compliance', () => {
   });
 
   test.describe('Keyboard Navigation', () => {
-    test('should navigate through interactive elements with Tab', async ({
-      page,
-    }) => {
+    test('should navigate through interactive elements with Tab', async ({ page }) => {
       await page.goto('/');
       const focusableElements = await page.locator(
-        'a, button, input, select, textarea, [tabindex]',
+        'a, button, input, select, textarea, [tabindex]'
       );
       const count = await focusableElements.count();
 

@@ -37,10 +37,14 @@ consuming components switch on `state.status` instead of combining flags.
 ```ts
 function poolReducer(state: PoolState, action: PoolAction): PoolState {
   switch (action.type) {
-    case 'FETCH_START': return { status: 'loading' };
-    case 'FETCH_SUCCESS': return { status: 'success', pool: action.pool };
-    case 'FETCH_ERROR': return { status: 'error', message: action.message };
-    case 'RESET': return { status: 'idle' };
+    case 'FETCH_START':
+      return { status: 'loading' };
+    case 'FETCH_SUCCESS':
+      return { status: 'success', pool: action.pool };
+    case 'FETCH_ERROR':
+      return { status: 'error', message: action.message };
+    case 'RESET':
+      return { status: 'idle' };
   }
 }
 ```

@@ -10,44 +10,44 @@ import { ContentType, ModerationStatus } from './moderation.enums';
 @Entity('moderation_items')
 export class ModerationItem {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column({ type: 'enum', enum: ContentType })
-  contentType: ContentType;
+  contentType!: ContentType;
 
   @Column()
-  contentId: string;
+  contentId!: string;
 
   @Column()
-  reportedByUserId: string;
+  reportedByUserId!: string;
 
   @Column({ type: 'enum', enum: ModerationStatus, default: ModerationStatus.PENDING })
-  status: ModerationStatus;
+  status!: ModerationStatus;
 
   @Column({ type: 'text', nullable: true })
-  flagReason: string | null;
+  flagReason!: string | null;
 
   @Column({ type: 'float', nullable: true })
-  toxicityScore: number | null;
+  toxicityScore!: number | null;
 
   @Column({ type: 'jsonb', nullable: true })
-  comprehendResult: Record<string, unknown> | null;
+  comprehendResult!: Record<string, unknown> | null;
 
   @Column({ nullable: true })
-  reviewedByUserId: string | null;
+  reviewedByUserId!: string | null;
 
   @Column({ type: 'text', nullable: true })
-  reviewNote: string | null;
+  reviewNote!: string | null;
 
   @Column({ type: 'text', nullable: true })
-  appealReason: string | null;
+  appealReason!: string | null;
 
   @Column({ nullable: true })
-  appealedByUserId: string | null;
+  appealedByUserId!: string | null;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt!: Date;
 }

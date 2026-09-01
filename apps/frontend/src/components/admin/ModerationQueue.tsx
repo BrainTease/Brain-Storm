@@ -186,9 +186,7 @@ export function ModerationQueue() {
                     >
                       {item.status}
                     </span>
-                    <span className="text-xs text-gray-400">
-                      {formatDateShort(item.createdAt)}
-                    </span>
+                    <span className="text-xs text-gray-400">{formatDateShort(item.createdAt)}</span>
                   </div>
                   <p className="text-sm font-medium text-gray-700">ID: {item.contentId}</p>
                   <p className="text-sm text-gray-600 mt-0.5">{item.flagReason}</p>

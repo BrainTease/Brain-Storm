@@ -7,6 +7,9 @@
   "scripts": {
     "build": "tsc",
     "type-check": "tsc --noEmit",
+    "test": "jest",
+    "test:coverage": "jest --coverage --coverageThreshold='{\"global\":{\"lines\":85}}'",
+    "test:signing": "jest --testPathPattern=transaction-signing",
     "generate": "node ../../scripts/generate-sdk.js",
     "docs": "node scripts/generate-docs.js",
     "docs:typedoc": "typedoc --out ../../docs/api/sdk src/index.ts"
@@ -20,7 +23,12 @@
     "ts-jest": "^29.1.4",
     "typescript": "^5.4.0"
   },
-  "keywords": ["brain-storm", "sdk", "api", "stellar"],
+  "keywords": [
+    "brain-storm",
+    "sdk",
+    "api",
+    "stellar"
+  ],
   "author": "Brain-Storm",
   "license": "MIT"
 }

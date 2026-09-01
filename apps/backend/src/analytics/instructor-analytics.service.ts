@@ -2,7 +2,11 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
 import { InstructorAnalytics } from './instructor-analytics.entity';
-import { AnalyticsQueryDto, AnalyticsReportDto, CourseAnalyticsSummary } from './dto/instructor-analytics.dto.ts';
+import {
+  AnalyticsQueryDto,
+  AnalyticsReportDto,
+  CourseAnalyticsSummary,
+} from './dto/instructor-analytics.dto.ts';
 import { Enrollment } from '../enrollments/enrollment.entity';
 import { Review } from '../courses/review.entity';
 import { Course } from '../courses/course.entity';
@@ -16,12 +20,12 @@ export class InstructorAnalyticsService {
     @InjectRepository(InstructorAnalytics) private analyticsRepo: Repository<InstructorAnalytics>,
     @InjectRepository(Enrollment) private enrollmentRepo: Repository<Enrollment>,
     @InjectRepository(Review) private reviewRepo: Repository<Review>,
-    @InjectRepository(Course) private courseRepo: Repository<Course>,
+    @InjectRepository(Course) private courseRepo: Repository<Course>
   ) {}
 
   async getInstructorAnalytics(
     instructorId: string,
-    query: AnalyticsQueryDto,
+    query: AnalyticsQueryDto
   ): Promise<AnalyticsReportDto> {
     const courses = await this.courseRepo.find({
       where: { instructorId },
@@ -38,9 +42,10 @@ export class InstructorAnalyticsService {
     let analytics = await this.analyticsRepo.find({
       where: {
         instructorId,
-        month: startDate && endDate
-          ? Between(this.getMonthString(startDate), this.getMonthString(endDate))
-          : undefined,
+        month:
+          startDate && endDate
+            ? Between(this.getMonthString(startDate), this.getMonthString(endDate))
+            : undefined,
       },
     });
 
@@ -87,9 +92,7 @@ export class InstructorAnalyticsService {
       });
 
       const avgRating =
-        reviews.length > 0
-          ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
-          : 0;
+        reviews.length > 0 ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length : 0;
 
       // Compute revenue from payouts module (linked to completions)
       const payoutInfo = await this.getPayoutInfo(instructorId, courseId, month);
@@ -114,13 +117,10 @@ export class InstructorAnalyticsService {
     return { revenue: 0, payout: 0 };
   }
 
-  private buildReport(
-    analytics: InstructorAnalytics[],
-    courses: Course[],
-  ): AnalyticsReportDto {
+  private buildReport(analytics: InstructorAnalytics[], courses: Course[]): AnalyticsReportDto {
     const courseMap = new Map(courses.map((c) => [c.id, c]));
 
-    const courses Summary: CourseAnalyticsSummary[] = Array.from(
+    const coursesSummary: CourseAnalyticsSummary[] = Array.from(
       new Map(
         analytics.map((a) => [
           a.courseId,
@@ -134,9 +134,11 @@ export class InstructorAnalyticsService {
               .filter((x) => x.courseId === a.courseId)
               .reduce((sum, x) => sum + x.completions, 0),
             completionRate: 0,
-            averageRating: analytics
-              .filter((x) => x.courseId === a.courseId)
-              .reduce((sum, x) => sum + x.averageRating, 0) / analytics.filter((x) => x.courseId === a.courseId).length,
+            averageRating:
+              analytics
+                .filter((x) => x.courseId === a.courseId)
+                .reduce((sum, x) => sum + x.averageRating, 0) /
+              analytics.filter((x) => x.courseId === a.courseId).length,
             revenue: analytics
               .filter((x) => x.courseId === a.courseId)
               .reduce((sum, x) => sum + parseFloat(x.revenue.toString()), 0),
@@ -144,15 +146,13 @@ export class InstructorAnalyticsService {
               .filter((x) => x.courseId === a.courseId)
               .reduce((sum, x) => sum + parseFloat(x.payout.toString()), 0),
           },
-        ]),
-      ).values(),
+        ])
+      ).values()
     );
 
     coursesSummary.forEach((c) => {
       c.completionRate =
-        c.enrollments > 0
-          ? Math.round((c.completions / c.enrollments) * 10000) / 100
-          : 0;
+        c.enrollments > 0 ? Math.round((c.completions / c.enrollments) * 10000) / 100 : 0;
     });
 
     const totalEnrollments = coursesSummary.reduce((sum, c) => sum + c.enrollments, 0);
@@ -177,10 +177,7 @@ export class InstructorAnalyticsService {
     };
   }
 
-  async exportAnalyticsToCSV(
-    instructorId: string,
-    query: AnalyticsQueryDto,
-  ): Promise<string> {
+  async exportAnalyticsToCSV(instructorId: string, query: AnalyticsQueryDto): Promise<string> {
     const report = await this.getInstructorAnalytics(instructorId, query);
 
     const csvData = report.courses.map((c) => ({

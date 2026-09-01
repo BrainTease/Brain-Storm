@@ -7,12 +7,14 @@ module.exports = {
       jsx: true,
     },
   },
-  plugins: ['@typescript-eslint/eslint-plugin', 'react', 'react-hooks'],
+  plugins: ['@typescript-eslint/eslint-plugin', 'react', 'react-hooks', 'import'],
   extends: [
     'next/core-web-vitals',
     'plugin:@typescript-eslint/recommended',
     'plugin:react/recommended',
     'plugin:react-hooks/recommended',
+    'plugin:import/recommended',
+    'plugin:import/typescript',
     'plugin:prettier/recommended',
   ],
   root: true,
@@ -22,39 +24,43 @@ module.exports = {
     node: true,
   },
   ignorePatterns: ['.eslintrc.js', '.next', 'out', 'dist', 'coverage'],
-  rules: {
-    '@typescript-eslint/no-explicit-any': 'warn',
-    '@typescript-eslint/no-unused-vars': [
-      'error',
-      { argsIgnorePattern: '^_' },
-    ],
-    'react/react-in-jsx-scope': 'off',
-    'react/prop-types': 'off',
-    /**
-     * #971 — flag hardcoded JSX text that should be extracted to the i18n catalog.
-     *
-     * The rule warns on any string literal or template literal that appears
-     * directly inside JSX elements (e.g. <p>Hello world</p>).  Whitespace-only
-     * nodes and punctuation-only strings are intentionally excluded by the
-     * pattern.  Use next-intl's `useTranslations()` hook and the message
-     * catalog under `messages/` instead.
-     *
-     * To suppress a single justified exception (e.g. a brand name that must
-     * not be translated) add an eslint-disable-next-line comment:
-     *   // eslint-disable-next-line react/jsx-no-literals
-     */
-    'react/jsx-no-literals': [
-      'warn',
-      {
-        noStrings: true,
-        ignoreProps: true,
-        noAttributeStrings: false,
-      },
-    ],
-  },
   settings: {
     react: {
       version: 'detect',
     },
+    'import/resolver': {
+      typescript: { project: './tsconfig.json' },
+      node: { extensions: ['.js', '.jsx', '.ts', '.tsx'] },
+    },
+    'import/parsers': {
+      '@typescript-eslint/parser': ['.ts', '.tsx'],
+    },
+  },
+  rules: {
+    '@typescript-eslint/no-explicit-any': 'error',
+    '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+    'react/react-in-jsx-scope': 'off',
+    'react/prop-types': 'off',
+    'import/order': [
+      'error',
+      {
+        groups: ['builtin', 'external', 'internal', 'parent', 'sibling', 'index'],
+        pathGroups: [{ pattern: '@/**', group: 'internal', position: 'after' }],
+        'newlines-between': 'always',
+        alphabetize: { order: 'asc', caseInsensitive: true },
+      },
+    ],
+    'import/no-cycle': ['warn', { maxDepth: 3, ignoreExternal: true }],
+    'import/no-duplicates': 'error',
+    complexity: ['error', { max: 15 }],
+    'max-lines-per-function': [
+      'error',
+      {
+        max: 80,
+        skipBlankLines: true,
+        skipComments: true,
+        IIFEs: true,
+      },
+    ],
   },
 };

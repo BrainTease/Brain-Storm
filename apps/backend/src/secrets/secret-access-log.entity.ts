@@ -14,26 +14,26 @@ export enum SecretAccessAction {
 @Index(['accessedBy'])
 export class SecretAccessLog {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  secretName: string;
+  secretName!: string;
 
   @Column()
-  action: SecretAccessAction;
+  action!: SecretAccessAction;
 
   @Column({ nullable: true })
-  accessedBy: string | null;
+  accessedBy!: string | null;
 
   @Column({ nullable: true })
-  ipAddress: string | null;
+  ipAddress!: string | null;
 
   @Column({ default: true })
-  success: boolean;
+  success!: boolean;
 
   @Column({ nullable: true })
-  reason: string | null;
+  reason!: string | null;
 
   @CreateDateColumn()
-  accessedAt: Date;
+  accessedAt!: Date;
 }

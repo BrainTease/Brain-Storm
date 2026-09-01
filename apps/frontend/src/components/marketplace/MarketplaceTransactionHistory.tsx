@@ -1,19 +1,11 @@
 'use client';
 
 import React from 'react';
+import type { MarketplaceTx } from '@brain-storm/types';
 import { DataGrid, type ColumnDef } from '@/components/ui/DataGrid';
 import { Badge } from '@/components/ui/Badge';
 
-export interface MarketplaceTx {
-  id: string;
-  date: string;
-  course: string;
-  buyer: string;
-  seller: string;
-  amount: string;
-  fee: string;
-  status: 'completed' | 'pending' | 'refunded' | 'failed';
-}
+export type { MarketplaceTx } from '@brain-storm/types';
 
 const STATUS_STYLES: Record<MarketplaceTx['status'], string> = {
   completed: 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300',
@@ -78,18 +70,14 @@ const COLUMNS: ColumnDef<MarketplaceTx>[] = [
     header: 'Fee (BST)',
     sortable: true,
     width: '110px',
-    render: (row) => (
-      <span className="text-gray-600 dark:text-gray-400">{row.fee} BST</span>
-    ),
+    render: (row) => <span className="text-gray-600 dark:text-gray-400">{row.fee} BST</span>,
   },
   {
     key: 'status',
     header: 'Status',
     sortable: true,
     width: '110px',
-    render: (row) => (
-      <Badge className={STATUS_STYLES[row.status]}>{row.status}</Badge>
-    ),
+    render: (row) => <Badge className={STATUS_STYLES[row.status]}>{row.status}</Badge>,
   },
 ];
 

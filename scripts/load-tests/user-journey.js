@@ -118,10 +118,14 @@ export default function () {
 
     // 5. Enroll in course
     group('5. Enroll in Course', () => {
-      const enrollRes = http.post(`${BASE_URL}/v1/courses/1/enroll`, {}, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-        tags: { api: 'yes' },
-      });
+      const enrollRes = http.post(
+        `${BASE_URL}/v1/courses/1/enroll`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+          tags: { api: 'yes' },
+        }
+      );
 
       check(enrollRes, {
         'enroll status 200': (r) => r.status === 200 || r.status === 409,
@@ -153,7 +157,7 @@ export default function () {
         {
           headers: { Authorization: `Bearer ${accessToken}` },
           tags: { api: 'yes' },
-        },
+        }
       );
 
       check(balanceRes, {

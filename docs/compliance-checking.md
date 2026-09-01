@@ -92,6 +92,7 @@ cat compliance-report.json | jq '.overall_status'
 Scans for hardcoded passwords, API keys, tokens, and secrets in source code.
 
 **Patterns Checked**:
+
 - `password = "..."`
 - `api_key = "..."`
 - `secret = "..."`
@@ -100,6 +101,7 @@ Scans for hardcoded passwords, API keys, tokens, and secrets in source code.
 **Status**: ✅ Pass if no hardcoded secrets found
 
 **Remediation**:
+
 ```bash
 # Use environment variables instead
 export API_KEY="your-key"
@@ -113,12 +115,14 @@ API_KEY=your-key
 Ensures all external URLs use HTTPS encryption.
 
 **Patterns Checked**:
+
 - `http://` URLs (excluding localhost)
 - Unencrypted connections
 
 **Status**: ✅ Pass if all external URLs use HTTPS
 
 **Remediation**:
+
 ```bash
 # Update configuration
 EXTERNAL_API_URL=https://api.example.com
@@ -129,12 +133,14 @@ EXTERNAL_API_URL=https://api.example.com
 Checks for known vulnerabilities in npm packages.
 
 **Tools Used**:
+
 - `npm audit`
 - Dependency scanning
 
 **Status**: ✅ Pass if no vulnerabilities found
 
 **Remediation**:
+
 ```bash
 # Update vulnerable packages
 npm audit fix
@@ -148,17 +154,17 @@ npm update package-name
 Ensures all promises have error handlers.
 
 **Patterns Checked**:
+
 - `.then()` without `.catch()`
 - Unhandled promise rejections
 
 **Status**: ✅ Pass if all promises have error handlers
 
 **Remediation**:
+
 ```typescript
 // Add error handling
-promise
-  .then(result => console.log(result))
-  .catch(error => console.error(error));
+promise.then((result) => console.log(result)).catch((error) => console.error(error));
 
 // Or use async/await
 try {
@@ -173,6 +179,7 @@ try {
 Ensures all user inputs are validated.
 
 **Patterns Checked**:
+
 - `req.body` without validation
 - `req.query` without validation
 - `req.params` without validation
@@ -180,6 +187,7 @@ Ensures all user inputs are validated.
 **Status**: ✅ Pass if all inputs are validated
 
 **Remediation**:
+
 ```typescript
 // Use validation library
 import { validate } from 'class-validator';
@@ -198,6 +206,7 @@ async create(@Body() dto: CreateUserDto) {
 Ensures sensitive data is not logged.
 
 **Patterns Checked**:
+
 - `console.log()` with sensitive data
 - `logger.info()` with passwords/tokens
 - Unmasked PII in logs
@@ -205,6 +214,7 @@ Ensures sensitive data is not logged.
 **Status**: ✅ Pass if no sensitive data in logs
 
 **Remediation**:
+
 ```typescript
 // Mask sensitive data
 const maskedPassword = password.replace(/./g, '*');
@@ -220,6 +230,7 @@ logger.info('User created', safeUser);
 Ensures all endpoints require authentication.
 
 **Patterns Checked**:
+
 - Endpoints without `@UseGuards`
 - Endpoints without `@Auth` decorator
 - Unprotected public endpoints
@@ -227,6 +238,7 @@ Ensures all endpoints require authentication.
 **Status**: ✅ Pass if all endpoints are protected
 
 **Remediation**:
+
 ```typescript
 // Add authentication guard
 @UseGuards(AuthGuard('jwt'))
@@ -248,6 +260,7 @@ async getPublicData() {
 Ensures CORS is not overly permissive.
 
 **Patterns Checked**:
+
 - `origin: '*'`
 - `Access-Control-Allow-Origin: *`
 - Wildcard CORS settings
@@ -255,6 +268,7 @@ Ensures CORS is not overly permissive.
 **Status**: ✅ Pass if CORS is properly configured
 
 **Remediation**:
+
 ```typescript
 // Restrict CORS to specific origins
 app.enableCors({
@@ -323,7 +337,7 @@ on:
     branches: [main, develop]
   pull_request:
   schedule:
-    - cron: '0 3 * * *'  # Daily at 3 AM UTC
+    - cron: '0 3 * * *' # Daily at 3 AM UTC
 
 jobs:
   compliance:

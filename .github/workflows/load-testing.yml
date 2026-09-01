@@ -52,6 +52,7 @@ jobs:
 
       - name: Run smoke tests
         run: |
+          mkdir -p results
           k6 run --env PROFILE=smoke \
             --out json=results/smoke-test.json \
             packages/api/load/scenarios/search-discovery.js
@@ -257,7 +258,7 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            
+
             let body = '## 🚨 Load Test Failure\n\n';
             body += `**Date**: ${new Date().toISOString()}\n`;
             body += `**Environment**: ${{ needs.load-test.result }}\n`;
@@ -272,7 +273,7 @@ jobs:
             body += '### Resources\n\n';
             body += '- [Load Testing Guide](../blob/main/packages/api/load/README.md)\n';
             body += '- [Performance Optimization](../blob/main/docs/performance-optimization.md)\n';
-            
+
             await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -288,11 +289,11 @@ jobs:
           script: |
             const fs = require('fs');
             let trendReport = 'No trend report generated';
-            
+
             if (fs.existsSync('trend-report.md')) {
               trendReport = fs.readFileSync('trend-report.md', 'utf8');
             }
-            
+
             await github.rest.repos.createCommitComment({
               owner: context.repo.owner,
               repo: context.repo.repo,

@@ -8,19 +8,21 @@ import {
   MaxLength,
   IsObject,
 } from 'class-validator';
+import { Sanitize, Trim } from 'class-sanitizer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ProposalType } from './governance-proposal.entity';
 import { PaginationDto } from '../common/dto/pagination.dto';
+import { StripHtmlSanitizer } from '../../common/sanitizers/strip-html.sanitizer';
 
 export class CreateProposalDto {
   @ApiProperty({ description: 'Proposal title', maxLength: 200 })
   @IsString()
   @MaxLength(200)
-  title: string;
+  title!: string;
 
   @ApiProperty({ description: 'Detailed description of the proposal' })
   @IsString()
-  description: string;
+  description!: string;
 
   @ApiPropertyOptional({ enum: ProposalType, default: ProposalType.TEXT })
   @IsOptional()
@@ -29,7 +31,7 @@ export class CreateProposalDto {
 
   @ApiProperty({ description: 'Stellar address of the proposer' })
   @IsString()
-  proposerAddress: string;
+  proposerAddress!: string;
 
   @ApiPropertyOptional({ description: 'Minimum votes needed to pass' })
   @IsOptional()
@@ -58,11 +60,15 @@ export class UpdateProposalDto {
   @IsOptional()
   @IsString()
   @MaxLength(200)
+  @Trim()
+  @Sanitize(StripHtmlSanitizer)
   title?: string;
 
   @ApiPropertyOptional({ description: 'Detailed description of the proposal' })
   @IsOptional()
   @IsString()
+  @Trim()
+  @Sanitize(StripHtmlSanitizer)
   description?: string;
 
   @ApiPropertyOptional({ description: 'Arbitrary metadata (JSON)' })
@@ -95,10 +101,10 @@ export class ProposalQueryDto extends PaginationDto {
 export class VoteDto {
   @ApiProperty({ description: 'Voter Stellar address' })
   @IsString()
-  voter: string;
+  voter!: string;
 
   @ApiProperty({ description: 'true = vote for, false = vote against' })
-  support: boolean;
+  support!: boolean;
 
   @ApiPropertyOptional({ description: 'Signed Stellar transaction XDR' })
   @IsOptional()

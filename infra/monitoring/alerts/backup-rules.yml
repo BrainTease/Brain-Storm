@@ -16,14 +16,14 @@ groups:
         labels:
           severity: critical
           team: devops
-          oncall: "true"
+          oncall: 'true'
         annotations:
-          summary: "Database backup overdue — last success > 26 hours ago"
+          summary: 'Database backup overdue — last success > 26 hours ago'
           description: >
             The last successful database backup was more than 26 hours ago.
             The scheduled backup workflow may have failed.
             Check: https://github.com/BrainTease/Brain-Storm/actions/workflows/db-backup-restore-drill.yml
-          runbook_url: "https://github.com/BrainTease/Brain-Storm/blob/main/docs/incident-runbook.md#database-issues"
+          runbook_url: 'https://github.com/BrainTease/Brain-Storm/blob/main/docs/incident-runbook.md#database-issues'
 
       # Alert when the most recent restore drill failed
       - alert: DatabaseRestoreDrillFailed
@@ -33,13 +33,13 @@ groups:
         labels:
           severity: critical
           team: devops
-          oncall: "true"
+          oncall: 'true'
         annotations:
-          summary: "Database restore drill failed — backup may be unrecoverable"
+          summary: 'Database restore drill failed — backup may be unrecoverable'
           description: >
             The most recent automated restore drill did not pass integrity checks.
             The latest backup may not be restorable. Investigate immediately.
-          runbook_url: "https://github.com/BrainTease/Brain-Storm/blob/main/docs/incident-runbook.md#database-issues"
+          runbook_url: 'https://github.com/BrainTease/Brain-Storm/blob/main/docs/incident-runbook.md#database-issues'
 
       # Alert when restore drill hasn't run in more than 8 days
       - alert: DatabaseRestoreDrillOverdue
@@ -50,7 +50,7 @@ groups:
           severity: warning
           team: devops
         annotations:
-          summary: "Database restore drill overdue — last run > 8 days ago"
+          summary: 'Database restore drill overdue — last run > 8 days ago'
           description: >
             The weekly restore drill has not run in the last 8 days.
             Verify the Sunday 03:00 UTC workflow schedule is active.

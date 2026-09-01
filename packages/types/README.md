@@ -16,41 +16,50 @@ import type {
 ## Type Categories
 
 ### API Types (`api.types.ts`)
+
 - `PaginatedResponse<T>` - Paginated API responses
 - `ApiResponse<T>` - Standard API response wrapper
 - `QueryOptions` - Common query parameters
 
 ### Error Types (`error.types.ts`)
+
 - `ErrorCode` - Standardized error codes
 - `AppErrorResponse` - Error response format
 - `ValidationErrorDetail` - Validation error details
 
 ### User Types (`user.types.ts`)
+
 - `UserProfile` - User profile information
 - `CreateUserDto` - User creation DTO
 
 ### Course Types (`course.types.ts`)
+
 - `CourseDto` - Course information
 - `CreateCourseDto` - Course creation DTO
 - `CourseModule` - Course module structure
 
 ### Enrollment Types (`enrollment.types.ts`)
+
 - `EnrollmentDto` - Enrollment information
 - `EnrollmentStatus` - Enrollment status enum
 
 ### Quiz Types (`quiz.types.ts`)
+
 - `QuizDto` - Quiz information
 - `QuizAttempt` - Quiz attempt data
 
 ### Notification Types (`notification.types.ts`)
+
 - `NotificationDto` - Notification information
 - `NotificationPreference` - User notification preferences
 
 ### Stellar Types (`stellar.types.ts`)
+
 - `StellarAccount` - Stellar account information
 - `TransactionDetails` - Transaction details
 
 ### Common Types (`common.types.ts`)
+
 - `Pagination` - Pagination parameters
 - `SortOrder` - Sort order enum
 
@@ -91,12 +100,12 @@ resolves directly to `src/test-utils/index.ts` (no build step needed in Jest).
 
 ### Available Factories
 
-| Factory | Default shape | Key override fields |
-|---|---|---|
-| `UserFactory` | student, active | `role`, `email`, `firstName`, `lastName` |
-| `CourseFactory` | published | `status`, `instructor`, `instructorId` |
-| `EnrollmentFactory` | active, progress 0–100 | `status`, `progress`, `completedAt` |
-| `QuizFactory` | 70 % passing score | `passingScore`, `questions` |
+| Factory             | Default shape          | Key override fields                      |
+| ------------------- | ---------------------- | ---------------------------------------- |
+| `UserFactory`       | student, active        | `role`, `email`, `firstName`, `lastName` |
+| `CourseFactory`     | published              | `status`, `instructor`, `instructorId`   |
+| `EnrollmentFactory` | active, progress 0–100 | `status`, `progress`, `completedAt`      |
+| `QuizFactory`       | 70 % passing score     | `passingScore`, `questions`              |
 
 ### Usage examples
 
@@ -128,6 +137,7 @@ faker dependency. Tests that need ORM-specific fields (e.g. `passwordHash`,
 ## Contributing
 
 When adding new types:
+
 1. Create a new file: `src/[feature].types.ts`
 2. Export from `src/index.ts`
 3. Update this README

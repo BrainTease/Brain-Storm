@@ -10,13 +10,13 @@ describe('Import Ordering', () => {
 
     function scanDir(dir: string) {
       if (!fs.existsSync(dir)) return;
-      
+
       const files = fs.readdirSync(dir);
-      
+
       for (const file of files) {
         const fullPath = path.join(dir, file);
         const stat = fs.statSync(fullPath);
-        
+
         if (stat.isDirectory()) {
           scanDir(fullPath);
         } else if (stat.isFile() && /\.(ts|tsx)$/.test(file)) {
@@ -24,7 +24,7 @@ describe('Import Ordering', () => {
           const lines = content.split('\n');
           let importGroups: string[][] = [];
           let currentGroup: string[] = [];
-          
+
           for (let i = 0; i < lines.length; i++) {
             const line = lines[i];
             if (line.trim().startsWith('import ')) {
@@ -32,7 +32,7 @@ describe('Import Ordering', () => {
             } else if (currentGroup.length > 0) {
               const groupCopy = [...currentGroup];
               const sorted = groupCopy.sort((a, b) => a.localeCompare(b));
-              
+
               for (let j = 0; j < currentGroup.length; j++) {
                 if (currentGroup[j] !== sorted[j]) {
                   console.log(`❌ Import order violation in ${fullPath}:`);
@@ -41,7 +41,7 @@ describe('Import Ordering', () => {
                   violations++;
                 }
               }
-              
+
               currentGroup = [];
             }
           }
@@ -56,7 +56,7 @@ describe('Import Ordering', () => {
   it('should have import ordering ESLint rule configured', () => {
     const eslintPath = './.eslintrc.js';
     expect(fs.existsSync(eslintPath)).toBe(true);
-    
+
     const content = fs.readFileSync(eslintPath, 'utf-8');
     expect(content).toContain('simple-import-sort/imports');
   });

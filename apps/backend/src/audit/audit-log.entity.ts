@@ -25,36 +25,36 @@ export enum AuditAction {
 @Index(['createdAt'])
 export class AuditLog {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column({ nullable: true })
-  userId: string | null;
+  userId!: string | null;
 
   @Column()
-  action: string;
+  action!: string;
 
   /** Encrypted at rest via AES-256-CBC */
   @Column({ nullable: true, type: 'text' })
-  ipAddress: string | null;
+  ipAddress!: string | null;
 
   /** Encrypted at rest via AES-256-CBC */
   @Column({ nullable: true, type: 'text' })
-  userAgent: string | null;
+  userAgent!: string | null;
 
   @Column({ type: 'jsonb', nullable: true })
-  metadata: Record<string, any> | null;
+  metadata!: Record<string, any> | null;
 
   @Column({ default: true })
-  success: boolean;
+  success!: boolean;
 
   /** SHA-256 hash of the previous entry — forms a tamper-evident chain */
   @Column({ nullable: true, type: 'varchar', length: 64 })
-  prevHash: string | null;
+  prevHash!: string | null;
 
   /** SHA-256 hash of this entry's canonical fields + prevHash */
   @Column({ nullable: true, type: 'varchar', length: 64 })
-  entryHash: string | null;
+  entryHash!: string | null;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 }

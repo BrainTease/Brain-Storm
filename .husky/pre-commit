@@ -1,7 +1,35 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-npm run lint --workspace=apps/frontend -- --max-warnings=0
-npm run format:check --workspace=apps/frontend
-npm run lint --workspace=apps/backend -- --max-warnings=0
-npm run format:check --workspace=apps/backend
+# Get staged files
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACMR | tr '\n' ' ')
+
+if [ -n "$STAGED_FILES" ]; then
+  # Lint and format only staged files
+  echo "Checking staged files..."
+  
+  # Check frontend files
+  FRONTEND_FILES=$(echo "$STAGED_FILES" | tr ' ' '\n' | grep "^apps/frontend/" | tr '\n' ' ')
+  if [ -n "$FRONTEND_FILES" ]; then
+    echo "Linting frontend files: $FRONTEND_FILES"
+    npx eslint $FRONTEND_FILES --max-warnings=0
+    npx prettier --check $FRONTEND_FILES
+  fi
+  
+  # Check backend files
+  BACKEND_FILES=$(echo "$STAGED_FILES" | tr ' ' '\n' | grep "^apps/backend/" | tr '\n' ' ')
+  if [ -n "$BACKEND_FILES" ]; then
+    echo "Linting backend files: $BACKEND_FILES"
+    npx eslint $BACKEND_FILES --max-warnings=0
+    npx prettier --check $BACKEND_FILES
+  fi
+  
+  # Check root config files
+  ROOT_FILES=$(echo "$STAGED_FILES" | tr ' ' '\n' | grep -E "^(\.eslintrc\.js|\.prettierrc|\.prettierignore|package\.json|tsconfig\.json)$" | tr '\n' ' ')
+  if [ -n "$ROOT_FILES" ]; then
+    echo "Checking root config files: $ROOT_FILES"
+    npx prettier --check $ROOT_FILES
+  fi
+else
+  echo "No staged files to check"
+fi

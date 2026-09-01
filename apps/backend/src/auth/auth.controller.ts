@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
+import { Request } from 'express';
 import { AuthService } from './auth.service';
 import { StellarAuthService } from './stellar-auth.service';
 import { IsEmail, IsString, MinLength, IsOptional } from 'class-validator';
@@ -151,27 +152,27 @@ export class AuthController {
 
   @Post('mfa/enable')
   @UseGuards(JwtAuthGuard)
-  enableMfa(@Req() req) {
-    return this.authService.generateMfaSecret(req.user.id);
+  enableMfa(@Req() req: Request) {
+    return this.authService.generateMfaSecret(req.user!.id);
   }
 
   @Post('mfa/verify')
   @UseGuards(JwtAuthGuard)
-  verifyMfa(@Req() req, @Body('code') code: string) {
-    return this.authService.verifyMfaSecret(req.user.id, code);
+  verifyMfa(@Req() req: Request, @Body('code') code: string) {
+    return this.authService.verifyMfaSecret(req.user!.id, code);
   }
 
   @Post('mfa/disable')
   @UseGuards(JwtAuthGuard)
-  disableMfa(@Req() req, @Body('code') code: string) {
-    return this.authService.disableMfa(req.user.id, code);
+  disableMfa(@Req() req: Request, @Body('code') code: string) {
+    return this.authService.disableMfa(req.user!.id, code);
   }
 
   @Post('mfa/backup-codes/regenerate')
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Regenerate backup codes (requires valid TOTP)' })
-  regenerateBackupCodes(@Req() req, @Body('code') code: string) {
-    return this.authService.regenerateBackupCodes(req.user.id, code);
+  regenerateBackupCodes(@Req() req: Request, @Body('code') code: string) {
+    return this.authService.regenerateBackupCodes(req.user!.id, code);
   }
 
   @Post('admin/api-keys')
@@ -206,11 +207,11 @@ export class AuthController {
   @ApiResponse({ status: 400, description: 'Invalid signature or challenge' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   verifyStellarSignature(
-    @Req() req,
+    @Req() req: Request,
     @Body('publicKey') publicKey: string,
     @Body('signature') signature: string,
     @Body('challenge') challenge: string
   ) {
-    return this.authService.verifyStellarSignature(req.user.id, publicKey, signature, challenge);
+    return this.authService.verifyStellarSignature(req.user!.id, publicKey, signature, challenge);
   }
 }

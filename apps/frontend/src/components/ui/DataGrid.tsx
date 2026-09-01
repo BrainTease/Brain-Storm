@@ -62,16 +62,13 @@ function DataGridInner<T extends object>({
   const [sort, setSort] = useState<SortState>({ key: '', direction: 'none' });
   const [page, setPage] = useState(0);
 
-  const handleSort = useCallback(
-    (key: string) => {
-      setSort((prev) => {
-        const direction = prev.key === key ? nextDirection(prev.direction) : 'asc';
-        return { key, direction };
-      });
-      setPage(0);
-    },
-    [],
-  );
+  const handleSort = useCallback((key: string) => {
+    setSort((prev) => {
+      const direction = prev.key === key ? nextDirection(prev.direction) : 'asc';
+      return { key, direction };
+    });
+    setPage(0);
+  }, []);
 
   const sortedRows = useMemo(() => {
     if (sort.direction === 'none' || !sort.key) return rows;
@@ -87,18 +84,14 @@ function DataGridInner<T extends object>({
   const clampedPage = Math.min(page, totalPages - 1);
   const pagedRows = useMemo(
     () => sortedRows.slice(clampedPage * pageSize, (clampedPage + 1) * pageSize),
-    [sortedRows, clampedPage, pageSize],
+    [sortedRows, clampedPage, pageSize]
   );
 
   const skeletonRows = Array.from({ length: Math.min(pageSize, 5) });
 
   return (
     <div className="w-full overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-      <table
-        role="grid"
-        aria-label={ariaLabel}
-        className="min-w-full border-collapse text-sm"
-      >
+      <table role="grid" aria-label={ariaLabel} className="min-w-full border-collapse text-sm">
         <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
           <tr>
             {columns.map((col) => {
@@ -109,8 +102,8 @@ function DataGridInner<T extends object>({
                   ? sort.direction === 'asc'
                     ? 'ascending'
                     : sort.direction === 'desc'
-                    ? 'descending'
-                    : 'none'
+                      ? 'descending'
+                      : 'none'
                   : 'none';
 
               return (
@@ -167,10 +160,7 @@ function DataGridInner<T extends object>({
             pagedRows.map((row, rowIndex) => {
               const key = getRowKey ? getRowKey(row, rowIndex + clampedPage * pageSize) : rowIndex;
               return (
-                <tr
-                  key={key}
-                  className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                >
+                <tr key={key} className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                   {columns.map((col) => {
                     const colKey = String(col.key);
                     const value = col.render

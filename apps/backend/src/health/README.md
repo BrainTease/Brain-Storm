@@ -5,7 +5,7 @@ This module provides comprehensive health checking capabilities for the Brain-St
 ## Features
 
 - ✅ **Database Connectivity**: PostgreSQL connection health
-- ✅ **Redis Connectivity**: Cache/session store health  
+- ✅ **Redis Connectivity**: Cache/session store health
 - ✅ **Memory Usage**: Heap and RSS memory monitoring
 - ✅ **Stellar Horizon**: External service connectivity
 - ✅ **HTTP Status Codes**: 200 (healthy) / 503 (unhealthy)
@@ -21,6 +21,7 @@ GET /health
 ## Response Format
 
 ### Healthy Response (200 OK)
+
 ```json
 {
   "status": "ok",
@@ -43,6 +44,7 @@ GET /health
 ```
 
 ### Unhealthy Response (503 Service Unavailable)
+
 ```json
 {
   "status": "error",
@@ -67,21 +69,25 @@ GET /health
 ## Health Checks
 
 ### 1. Database (PostgreSQL)
+
 - **Check**: Connection ping to PostgreSQL database
 - **Failure**: Database unreachable or connection timeout
 - **Configuration**: Uses TypeORM connection
 
 ### 2. Redis Cache
+
 - **Check**: Set/get test value with 1-second TTL
 - **Failure**: Redis unreachable, connection refused, or value mismatch
 - **Configuration**: Uses configured cache manager
 
 ### 3. Memory Usage
+
 - **Heap Check**: Monitors V8 heap usage (limit: 150MB)
 - **RSS Check**: Monitors Resident Set Size (limit: 300MB)
 - **Failure**: Memory usage exceeds configured thresholds
 
 ### 4. Stellar Horizon
+
 - **Check**: HTTP ping to Stellar Horizon health endpoint
 - **Failure**: Horizon unreachable or unhealthy response
 - **Configuration**: Uses `STELLAR_HORIZON_URL` environment variable
@@ -106,6 +112,7 @@ REDIS_URL=redis://localhost:6379
 ## Load Balancer Configuration
 
 ### NGINX
+
 ```nginx
 upstream brain_storm_backend {
     server backend1:3000;
@@ -116,7 +123,7 @@ server {
     location / {
         proxy_pass http://brain_storm_backend;
     }
-    
+
     location /health {
         access_log off;
         proxy_pass http://brain_storm_backend;
@@ -127,6 +134,7 @@ server {
 ```
 
 ### HAProxy
+
 ```
 backend brain_storm_backend
     balance roundrobin
@@ -139,12 +147,13 @@ backend brain_storm_backend
 ## Container Orchestration
 
 ### Docker Compose
+
 ```yaml
 services:
   backend:
     image: brain-storm-backend
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      test: ['CMD', 'curl', '-f', 'http://localhost:3000/health']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -152,6 +161,7 @@ services:
 ```
 
 ### Kubernetes
+
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -161,31 +171,32 @@ spec:
   template:
     spec:
       containers:
-      - name: backend
-        image: brain-storm-backend
-        ports:
-        - containerPort: 3000
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 3000
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          timeoutSeconds: 5
-          failureThreshold: 3
-        readinessProbe:
-          httpGet:
-            path: /health
-            port: 3000
-          initialDelaySeconds: 5
-          periodSeconds: 5
-          timeoutSeconds: 3
-          failureThreshold: 2
+        - name: backend
+          image: brain-storm-backend
+          ports:
+            - containerPort: 3000
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 2
 ```
 
 ## CI/CD Integration
 
 ### Smoke Test Script
+
 Use the provided script for post-deployment verification:
 
 ```bash
@@ -200,11 +211,13 @@ RETRY_INTERVAL=10 \
 ```
 
 ### GitHub Actions
+
 See `.github/workflows/health-check-example.yml` for complete CI/CD integration example.
 
 ## Monitoring Integration
 
 ### Prometheus
+
 The health endpoint can be scraped by Prometheus for monitoring:
 
 ```yaml
@@ -217,6 +230,7 @@ scrape_configs:
 ```
 
 ### Custom Monitoring
+
 ```bash
 # Simple monitoring script
 #!/bin/bash
@@ -234,6 +248,7 @@ done
 ## Development
 
 ### Testing Health Checks Locally
+
 ```bash
 # Start the application
 npm run start:dev
@@ -250,13 +265,14 @@ curl http://localhost:3000/health
 ```
 
 ### Adding Custom Health Checks
+
 ```typescript
 // In health.controller.ts
 private async checkCustomService(): Promise<HealthIndicatorResult> {
   try {
     // Your custom health check logic
     const isHealthy = await this.customService.ping();
-    
+
     if (isHealthy) {
       return {
         custom_service: {
@@ -285,7 +301,7 @@ const result = await this.health.check([
 ### Common Issues
 
 1. **Database Connection Failures**
-   - Check DATABASE_* environment variables
+   - Check DATABASE\_\* environment variables
    - Verify PostgreSQL is running and accessible
    - Check network connectivity and firewall rules
 
@@ -305,6 +321,7 @@ const result = await this.health.check([
    - Monitor Stellar network status
 
 ### Debug Mode
+
 Enable debug logging to troubleshoot health check issues:
 
 ```bash

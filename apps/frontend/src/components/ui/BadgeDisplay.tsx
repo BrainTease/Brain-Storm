@@ -197,7 +197,13 @@ function InlineBadges({ items, tone = 'default', className = '' }: InlineVariant
   );
 }
 
-function CounterBadge({ count, label, tone = 'default', max, className = '' }: CounterVariantProps) {
+function CounterBadge({
+  count,
+  label,
+  tone = 'default',
+  max,
+  className = '',
+}: CounterVariantProps) {
   return (
     <Badge variant={tone} className={className}>
       <span className="font-bold">{max && count > max ? `${max}+` : count}</span>

@@ -135,7 +135,9 @@ describe('apiClient', () => {
       const updated = { id: 'abc', title: 'Updated title' };
       mockApi.patch.mockResolvedValueOnce({ data: updated });
 
-      const result = await apiClient.patch<typeof updated>('/courses/abc', { title: 'Updated title' });
+      const result = await apiClient.patch<typeof updated>('/courses/abc', {
+        title: 'Updated title',
+      });
 
       expect(result.ok).toBe(true);
       if (result.ok) {

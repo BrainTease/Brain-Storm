@@ -9,7 +9,7 @@ export class CreateCourseDto {
   @MinLength(3)
   @Trim()
   @Sanitize(StripHtmlSanitizer)
-  title: string;
+  title!: string;
 
   @ApiProperty({
     example: 'Learn the fundamentals of the Stellar network, wallets, and smart contracts.',
@@ -19,7 +19,7 @@ export class CreateCourseDto {
   @MinLength(10)
   @Trim()
   @Sanitize(StripHtmlSanitizer)
-  description: string;
+  description!: string;
 
   @ApiPropertyOptional({
     enum: ['beginner', 'intermediate', 'advanced'],

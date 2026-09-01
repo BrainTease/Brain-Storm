@@ -56,9 +56,7 @@ const COLUMNS: ColumnDef<RoyaltyTx>[] = [
     header: 'Royalty %',
     sortable: true,
     width: '110px',
-    render: (row) => (
-      <span className="text-gray-700 dark:text-gray-300">{row.royaltyPct}%</span>
-    ),
+    render: (row) => <span className="text-gray-700 dark:text-gray-300">{row.royaltyPct}%</span>,
   },
   {
     key: 'amount',

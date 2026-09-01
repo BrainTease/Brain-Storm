@@ -13,8 +13,8 @@ export const options = {
     { duration: '5m', target: 0 },
   ],
   thresholds: {
-    'soak_response_time': ['p(95)<600', 'p(99)<1200'],
-    'soak_errors': ['rate<0.05'],
+    soak_response_time: ['p(95)<600', 'p(99)<1200'],
+    soak_errors: ['rate<0.05'],
   },
 };
 

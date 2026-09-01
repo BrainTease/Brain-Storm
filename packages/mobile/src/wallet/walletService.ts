@@ -11,26 +11,26 @@ export class MobileWalletService {
 
   async connect(): Promise<WalletConnection> {
     const url = Linking.createURL('stellar://connect', {
-      queryParams: { 
+      queryParams: {
         callback: Linking.createURL('wallet-callback'),
-        network: 'testnet'
-      }
+        network: 'testnet',
+      },
     });
-    
+
     await Linking.openURL(url);
-    
+
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => reject(new Error('Connection timeout')), 60000);
-      
+
       const subscription = Linking.addEventListener('url', async ({ url }) => {
         clearTimeout(timeout);
         subscription.remove();
-        
+
         const { queryParams } = Linking.parse(url);
         if (queryParams?.publicKey) {
           this.connection = {
             publicKey: queryParams.publicKey as string,
-            provider: 'freighter'
+            provider: 'freighter',
           };
           await setSecureItem('wallet_public_key' as any, this.connection.publicKey);
           resolve(this.connection);
@@ -43,24 +43,24 @@ export class MobileWalletService {
 
   async signTransaction(xdr: string): Promise<string> {
     if (!this.connection) throw new Error('Wallet not connected');
-    
+
     const url = Linking.createURL('stellar://sign', {
-      queryParams: { 
+      queryParams: {
         xdr,
         callback: Linking.createURL('sign-callback'),
-        network: 'testnet'
-      }
+        network: 'testnet',
+      },
     });
-    
+
     await Linking.openURL(url);
-    
+
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => reject(new Error('Sign timeout')), 60000);
-      
+
       const subscription = Linking.addEventListener('url', ({ url }) => {
         clearTimeout(timeout);
         subscription.remove();
-        
+
         const { queryParams } = Linking.parse(url);
         if (queryParams?.signedXdr) {
           resolve(queryParams.signedXdr as string);
@@ -76,11 +76,11 @@ export class MobileWalletService {
     const response = await fetch('https://horizon-testnet.stellar.org/transactions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: `tx=${encodeURIComponent(signedXdr)}`
+      body: `tx=${encodeURIComponent(signedXdr)}`,
     });
-    
+
     if (!response.ok) throw new Error('Transaction failed');
-    
+
     const result = await response.json();
     return result.hash;
   }

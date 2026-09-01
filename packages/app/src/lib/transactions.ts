@@ -7,17 +7,12 @@ import {
   Memo,
   xdr,
 } from '@stellar/stellar-sdk';
-import type {
-  ParsedTransaction,
-  ParsedOperation,
-  ValidationResult,
-} from '@brain-storm/types';
+import type { ParsedTransaction, ParsedOperation, ValidationResult } from '@brain-storm/types';
 
 // Re-export so existing consumers of this module keep working without changes.
 export type { ParsedTransaction, ParsedOperation, ValidationResult } from '@brain-storm/types';
 
-const EXPECTED_NETWORK =
-  (process.env.NEXT_PUBLIC_STELLAR_NETWORK as string) || 'testnet';
+const EXPECTED_NETWORK = (process.env.NEXT_PUBLIC_STELLAR_NETWORK as string) || 'testnet';
 
 const NETWORK_PASSPHRASES: Record<string, string> = {
   testnet: Networks.TESTNET,
@@ -42,9 +37,7 @@ export function parseTransactionXDR(xdr: string): ParsedTransaction {
       }
     : null;
 
-  const operations: ParsedOperation[] = tx.operations.map(
-    (op: Operation) => parseOperation(op)
-  );
+  const operations: ParsedOperation[] = tx.operations.map((op: Operation) => parseOperation(op));
 
   return {
     source,
@@ -203,10 +196,7 @@ function formatOperationSummary(op: ParsedOperation): string {
   }
 }
 
-export function validateTransaction(
-  xdr: string,
-  expectedContractId?: string
-): ValidationResult {
+export function validateTransaction(xdr: string, expectedContractId?: string): ValidationResult {
   const errors: string[] = [];
   const warnings: string[] = [];
 
@@ -246,9 +236,7 @@ export function validateTransaction(
       errors.push('Invalid source account address format');
     }
   } catch (e) {
-    errors.push(
-      `Failed to parse transaction: ${e instanceof Error ? e.message : 'Invalid XDR'}`
-    );
+    errors.push(`Failed to parse transaction: ${e instanceof Error ? e.message : 'Invalid XDR'}`);
   }
 
   return { valid: errors.length === 0, errors, warnings };
@@ -280,9 +268,7 @@ function validateOperation(
 
       const decimals = getDecimalPlaces(payment.amount);
       if (decimals > 7) {
-        errors.push(
-          `${prefix}: Amount has ${decimals} decimal places (max 7 for Stellar assets)`
-        );
+        errors.push(`${prefix}: Amount has ${decimals} decimal places (max 7 for Stellar assets)`);
       }
 
       if (!isValidStellarAddress(payment.destination)) {
@@ -353,14 +339,8 @@ export function detectTamperedTransaction(
   const warnings: string[] = [];
 
   try {
-    const original = new Transaction(
-      originalXdr,
-      NETWORK_PASSPHRASES[EXPECTED_NETWORK]
-    );
-    const modified = new Transaction(
-      modifiedXdr,
-      NETWORK_PASSPHRASES[EXPECTED_NETWORK]
-    );
+    const original = new Transaction(originalXdr, NETWORK_PASSPHRASES[EXPECTED_NETWORK]);
+    const modified = new Transaction(modifiedXdr, NETWORK_PASSPHRASES[EXPECTED_NETWORK]);
 
     if (original.source !== modified.source) {
       errors.push('Transaction source account has been tampered with');
@@ -383,9 +363,7 @@ export function detectTamperedTransaction(
         const modOp = modOps[i];
 
         if (origOp.type !== modOp.type) {
-          errors.push(
-            `Operation #${i + 1} type changed from "${origOp.type}" to "${modOp.type}"`
-          );
+          errors.push(`Operation #${i + 1} type changed from "${origOp.type}" to "${modOp.type}"`);
           continue;
         }
 
@@ -399,9 +377,7 @@ export function detectTamperedTransaction(
     }
 
     if (original.fee !== modified.fee) {
-      warnings.push(
-        `Transaction fee changed from ${original.fee} to ${modified.fee}`
-      );
+      warnings.push(`Transaction fee changed from ${original.fee} to ${modified.fee}`);
     }
   } catch (e) {
     errors.push(
@@ -412,11 +388,7 @@ export function detectTamperedTransaction(
   return { valid: errors.length === 0, errors, warnings };
 }
 
-function compareOperations(
-  orig: Operation,
-  mod: Operation,
-  index: number
-): string[] {
+function compareOperations(orig: Operation, mod: Operation, index: number): string[] {
   const errors: string[] = [];
   const prefix = `Operation #${index + 1}`;
 
@@ -431,7 +403,9 @@ function compareOperations(
       if (o.asset.code !== m.asset.code)
         errors.push(`${prefix}: Asset code changed from "${o.asset.code}" to "${m.asset.code}"`);
       if (o.asset.issuer !== m.asset.issuer)
-        errors.push(`${prefix}: Asset issuer changed from "${o.asset.issuer}" to "${m.asset.issuer}"`);
+        errors.push(
+          `${prefix}: Asset issuer changed from "${o.asset.issuer}" to "${m.asset.issuer}"`
+        );
       break;
     }
     case 'createAccount': {
@@ -440,7 +414,9 @@ function compareOperations(
       if (o.destination !== m.destination)
         errors.push(`${prefix}: Destination changed from "${o.destination}" to "${m.destination}"`);
       if (o.startingBalance !== m.startingBalance)
-        errors.push(`${prefix}: Starting balance changed from "${o.startingBalance}" to "${m.startingBalance}"`);
+        errors.push(
+          `${prefix}: Starting balance changed from "${o.startingBalance}" to "${m.startingBalance}"`
+        );
       break;
     }
     case 'invokeHostFunction': {
@@ -449,7 +425,9 @@ function compareOperations(
       const origContractId = o.contractId?.toString() || '';
       const modContractId = m.contractId?.toString() || '';
       if (origContractId !== modContractId)
-        errors.push(`${prefix}: Contract ID changed from "${origContractId}" to "${modContractId}"`);
+        errors.push(
+          `${prefix}: Contract ID changed from "${origContractId}" to "${modContractId}"`
+        );
       break;
     }
     case 'manageSellOffer':
@@ -461,9 +439,13 @@ function compareOperations(
       if (o.price.toString() !== m.price.toString())
         errors.push(`${prefix}: Offer price changed from "${o.price}" to "${m.price}"`);
       if ((o.selling.code || 'XLM') !== (m.selling.code || 'XLM'))
-        errors.push(`${prefix}: Selling asset changed from "${o.selling.code}" to "${m.selling.code}"`);
+        errors.push(
+          `${prefix}: Selling asset changed from "${o.selling.code}" to "${m.selling.code}"`
+        );
       if ((o.buying.code || 'XLM') !== (m.buying.code || 'XLM'))
-        errors.push(`${prefix}: Buying asset changed from "${o.buying.code}" to "${m.buying.code}"`);
+        errors.push(
+          `${prefix}: Buying asset changed from "${o.buying.code}" to "${m.buying.code}"`
+        );
       break;
     }
     case 'setTrustline': {
@@ -479,7 +461,9 @@ function compareOperations(
       const o = orig as Operation.AccountMerge;
       const m = mod as Operation.AccountMerge;
       if (o.destination !== m.destination)
-        errors.push(`${prefix}: Merge destination changed from "${o.destination}" to "${m.destination}"`);
+        errors.push(
+          `${prefix}: Merge destination changed from "${o.destination}" to "${m.destination}"`
+        );
       break;
     }
   }
@@ -500,10 +484,7 @@ function getDecimalPlaces(amount: string): number {
   return parts.length === 2 ? parts[1].length : 0;
 }
 
-export function formatAmountHumanReadable(
-  amount: string,
-  asset: string
-): string {
+export function formatAmountHumanReadable(amount: string, asset: string): string {
   const num = parseFloat(amount);
   if (isNaN(num)) return `${amount} ${asset}`;
 

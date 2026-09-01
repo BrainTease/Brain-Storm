@@ -5,29 +5,22 @@
  * authorisation logic live in `GrantsBusinessService` so they can be tested
  * independently of the database.
  */
-import {
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindOptionsWhere } from 'typeorm';
 import { Grant } from './grant.entity';
 import { CreateGrantDto, UpdateGrantDto, PaginateGrantsDto } from './dto/grant.dto';
 import { GrantsBusinessService } from './grants-business.service';
+import type { PaginatedGrants } from '@brain-storm/types';
 
-export interface PaginatedGrants {
-  data: Grant[];
-  total: number;
-  page: number;
-  limit: number;
-}
+export type { PaginatedGrants } from '@brain-storm/types';
 
 @Injectable()
 export class GrantsService {
   constructor(
     @InjectRepository(Grant)
     private readonly grantsRepo: Repository<Grant>,
-    private readonly businessService: GrantsBusinessService,
+    private readonly businessService: GrantsBusinessService
   ) {}
 
   async create(dto: CreateGrantDto): Promise<Grant> {

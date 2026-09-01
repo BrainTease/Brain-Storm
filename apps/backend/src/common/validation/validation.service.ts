@@ -57,7 +57,7 @@ export class ValidationService {
    */
   async validateDtoSilent<T>(
     dtoClass: new () => T,
-    plainObject: unknown,
+    plainObject: unknown
   ): Promise<{ valid: boolean; errors?: ValidationError[] }> {
     const dto = plainToClass(dtoClass, plainObject);
     const errors = await validate(dto as object, {

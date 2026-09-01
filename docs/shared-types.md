@@ -1,14 +1,17 @@
 # Shared Types Documentation
 
 ## Overview
+
 Centralized TypeScript type definitions for Brain-Storm frontend and backend.
 
 ## Location
+
 `packages/types/src/index.ts`
 
 ## Core Types
 
 ### User
+
 ```typescript
 interface User {
   id: string;
@@ -23,6 +26,7 @@ interface User {
 ```
 
 ### Course
+
 ```typescript
 interface Course {
   id: string;
@@ -37,6 +41,7 @@ interface Course {
 ```
 
 ### Enrollment
+
 ```typescript
 interface Enrollment {
   id: string;
@@ -50,6 +55,7 @@ interface Enrollment {
 ```
 
 ### Credential
+
 ```typescript
 interface Credential {
   id: string;
@@ -63,13 +69,17 @@ interface Credential {
 ## Usage
 
 ### Frontend
+
 ```typescript
 import { User, Course, Enrollment } from '@brain-storm/types';
 
-const user: User = { /* ... */ };
+const user: User = {
+  /* ... */
+};
 ```
 
 ### Backend
+
 ```typescript
 import { User, Course, Enrollment } from '@brain-storm/types';
 
@@ -80,6 +90,7 @@ export class UserEntity implements User {
 ```
 
 ## Adding New Types
+
 1. Define in `packages/types/src/index.ts`
 2. Export from index
 3. Update documentation

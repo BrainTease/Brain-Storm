@@ -2,41 +2,45 @@
 
 ## Recovery objectives
 
-| Tier | RTO | RPO | Examples |
-|---|---|---|---|
-| Critical | 1 hour | 15 minutes | Authentication, payment processing, Stellar transactions |
-| High | 4 hours | 1 hour | Course delivery, progress tracking, notifications |
-| Medium | 8 hours | 4 hours | Analytics, search, leaderboard |
-| Low | 24 hours | 24 hours | Reports, exports, audit logs |
+| Tier     | RTO      | RPO        | Examples                                                 |
+| -------- | -------- | ---------- | -------------------------------------------------------- |
+| Critical | 1 hour   | 15 minutes | Authentication, payment processing, Stellar transactions |
+| High     | 4 hours  | 1 hour     | Course delivery, progress tracking, notifications        |
+| Medium   | 8 hours  | 4 hours    | Analytics, search, leaderboard                           |
+| Low      | 24 hours | 24 hours   | Reports, exports, audit logs                             |
 
 ## Backup strategy
 
 ### PostgreSQL (RDS)
+
 - **Automated RDS snapshots**: daily, retained for 35 days.
 - **Point-in-time recovery (PITR)**: enabled with WAL archiving; allows recovery to any second within the retention window.
 - **Cross-region copy**: nightly snapshot copy to `us-west-2` for regional-failure resilience.
 - **Manual pre-deployment snapshots**: taken automatically by CI before every production migration.
 
 ### Redis (ElastiCache)
+
 - **RDB snapshots**: every 6 hours, retained for 7 days.
 - **Multi-AZ replication**: automatic failover to replica within ~30 seconds.
 - **Export to S3**: daily export of RDB snapshot to `{env}-brain-storm-redis-backup-{account_id}`.
 
 ### Application secrets
+
 Secrets are stored in AWS Secrets Manager with versioning. See [secret-management.md](./secret-management.md) for backup procedures.
 
 ### Static assets / uploads
+
 - S3 bucket versioning enabled on all user-content buckets.
 - Cross-region replication to `us-west-2`.
 
 ## Automated backup scripts
 
-| Script | Purpose |
-|---|---|
-| `scripts/backup/database-backup.sh` | pg_dump → S3 with AES-256 encryption |
-| `scripts/backup/redis-backup.sh` | BGSAVE → download RDB → upload to S3 |
-| `scripts/backup/verify-backup.sh` | Restore-probe to a temporary instance |
-| `scripts/backup/restore-database.sh` | Guided restore from a backup set |
+| Script                               | Purpose                               |
+| ------------------------------------ | ------------------------------------- |
+| `scripts/backup/database-backup.sh`  | pg_dump → S3 with AES-256 encryption  |
+| `scripts/backup/redis-backup.sh`     | BGSAVE → download RDB → upload to S3  |
+| `scripts/backup/verify-backup.sh`    | Restore-probe to a temporary instance |
+| `scripts/backup/restore-database.sh` | Guided restore from a backup set      |
 
 Scripts are scheduled via cron on the bastion host and via AWS Backup for managed resources.
 
@@ -108,13 +112,13 @@ All backups must be verified before they are considered valid:
 
 ## Recovery testing
 
-| Test | Frequency | Owner |
-|---|---|---|
-| Automated backup verification | Daily | CI / cron |
-| Redis failover drill | Monthly | Platform team |
-| Full database restore to staging | Monthly | Platform team |
+| Test                                | Frequency | Owner                 |
+| ----------------------------------- | --------- | --------------------- |
+| Automated backup verification       | Daily     | CI / cron             |
+| Redis failover drill                | Monthly   | Platform team         |
+| Full database restore to staging    | Monthly   | Platform team         |
 | Regional failover tabletop exercise | Quarterly | Platform + leadership |
-| Full DR failover to us-west-2 | Annually | Platform team |
+| Full DR failover to us-west-2       | Annually  | Platform team         |
 
 ### Running a recovery test
 
@@ -133,16 +137,17 @@ Test results must be documented in the `docs/adr/` directory as an ADR or append
 
 ## Contacts and escalation
 
-| Role | Contact | Escalation trigger |
-|---|---|---|
-| On-call engineer | PagerDuty rotation | Any critical alert |
-| Platform lead | — | RTO > 30 min for Critical tier |
-| CTO | — | RTO > 2 hours or data loss confirmed |
-| Legal / compliance | — | PII data loss or breach |
+| Role               | Contact            | Escalation trigger                   |
+| ------------------ | ------------------ | ------------------------------------ |
+| On-call engineer   | PagerDuty rotation | Any critical alert                   |
+| Platform lead      | —                  | RTO > 30 min for Critical tier       |
+| CTO                | —                  | RTO > 2 hours or data loss confirmed |
+| Legal / compliance | —                  | PII data loss or breach              |
 
 ## Document maintenance
 
 This plan is reviewed and updated:
+
 - After every DR test.
 - After any significant infrastructure change.
 - At a minimum, quarterly.

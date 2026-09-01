@@ -5,6 +5,7 @@ This guide explains how to optimize database queries and prevent performance iss
 ## Overview
 
 The database optimization system provides:
+
 - **Query optimization utilities** to prevent N+1 problems
 - **Query caching** to reduce database load
 - **Performance monitoring** to detect slow queries
@@ -45,12 +46,12 @@ import { CacheQuery, InvalidateCache } from '@common/database/query-cache.decora
 
 @Injectable()
 export class CoursesService {
-  @CacheQuery(300, 'courses')  // Cache for 5 minutes
+  @CacheQuery(300, 'courses') // Cache for 5 minutes
   async findAll(page: number, limit: number) {
     return this.repo.find({ skip: (page - 1) * limit, take: limit });
   }
 
-  @InvalidateCache('courses:*')  // Invalidate all course caches
+  @InvalidateCache('courses:*') // Invalidate all course caches
   async create(data: CreateCourseDto) {
     return this.repo.save(data);
   }
@@ -80,7 +81,7 @@ export class MyService {
 
     // Get slow queries
     const slowQueries = await this.dbPerformance.getSlowQueries(10);
-    slowQueries.forEach(q => {
+    slowQueries.forEach((q) => {
       console.log(`${q.query} - ${q.meanTime}ms avg`);
     });
   }
@@ -92,6 +93,7 @@ export class MyService {
 ### Pattern 1: Prevent N+1 Queries
 
 **Problem:**
+
 ```typescript
 // This causes N+1 queries
 const courses = await this.repo.find();
@@ -101,6 +103,7 @@ for (const course of courses) {
 ```
 
 **Solution:**
+
 ```typescript
 // Use eager loading
 const qb = this.repo.createQueryBuilder('course');
@@ -111,12 +114,14 @@ const courses = await qb.getMany();
 ### Pattern 2: Optimize Large Result Sets
 
 **Problem:**
+
 ```typescript
 // Fetches all columns and all rows
 const users = await this.repo.find();
 ```
 
 **Solution:**
+
 ```typescript
 // Select only needed columns and paginate
 const qb = this.repo.createQueryBuilder('user');
@@ -128,6 +133,7 @@ const users = await qb.getMany();
 ### Pattern 3: Cache Frequently Accessed Data
 
 **Problem:**
+
 ```typescript
 // Queries database on every request
 async getPopularCourses() {
@@ -136,6 +142,7 @@ async getPopularCourses() {
 ```
 
 **Solution:**
+
 ```typescript
 // Cache the result
 @CacheQuery(600, 'popular-courses')
@@ -147,13 +154,15 @@ async getPopularCourses() {
 ### Pattern 4: Optimize Filtering
 
 **Problem:**
+
 ```typescript
 // Inefficient filtering
 const courses = await this.repo.find();
-return courses.filter(c => c.level === 'beginner' && c.isPublished);
+return courses.filter((c) => c.level === 'beginner' && c.isPublished);
 ```
 
 **Solution:**
+
 ```typescript
 // Filter at database level
 const qb = this.repo.createQueryBuilder('course');
@@ -255,13 +264,13 @@ await this.dbPerformance.optimizeTable('courses');
 
 Monitor these metrics to ensure good performance:
 
-| Metric | Target | Warning |
-|--------|--------|---------|
-| Query time | < 100ms | > 500ms |
-| Connection count | < 20 | > 50 |
-| Cache hit ratio | > 80% | < 50% |
-| Slow queries | 0 | > 5 |
-| Table size | < 1GB | > 5GB |
+| Metric           | Target  | Warning |
+| ---------------- | ------- | ------- |
+| Query time       | < 100ms | > 500ms |
+| Connection count | < 20    | > 50    |
+| Cache hit ratio  | > 80%   | < 50%   |
+| Slow queries     | 0       | > 5     |
+| Table size       | < 1GB   | > 5GB   |
 
 ## Troubleshooting
 

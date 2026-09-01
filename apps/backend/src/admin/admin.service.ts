@@ -12,10 +12,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { AuditService } from '../audit/audit.service';
 import { UsersService } from '../users/users.service';
-import { CreateDisputeDto, ResolveDisputeDto, SuspendUserDto } from './admin.dto';
+import { CreateDisputeDto, ResolveDisputeDto, SuspendUserDto, DisputeQueryDto } from './admin.dto';
 import { AuditAction } from '../audit/audit-log.entity';
 import { Dispute, DisputeStatus } from './dispute.entity';
 import { DisputeResolutionService } from './dispute-resolution.service';
+import { PaginatedResponseDto } from '../common/dto/api-response.dto';
 
 @Injectable()
 export class AdminService {
@@ -66,8 +67,8 @@ export class AdminService {
     return this.disputeResolutionService.createDispute(dto, userId);
   }
 
-  async listDisputes(status?: DisputeStatus): Promise<Dispute[]> {
-    return this.disputeResolutionService.listDisputes(status);
+  async listDisputes(query: DisputeQueryDto): Promise<PaginatedResponseDto<Dispute>> {
+    return this.disputeResolutionService.listDisputes(query);
   }
 
   async resolveDispute(id: string, dto: ResolveDisputeDto, adminId: string): Promise<Dispute> {

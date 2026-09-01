@@ -5,7 +5,7 @@
 module.exports = {
   moduleFileExtensions: ['js', 'json', 'ts'],
   rootDir: 'src',
-  testRegex: '.*\\.test\\.ts$',
+  testRegex: '.*\\.(test|spec)\\.ts$',
   transform: {
     '^.+\\.(t|j)s$': 'ts-jest',
   },
@@ -13,12 +13,12 @@ module.exports = {
   coverageDirectory: '../coverage',
   coverageReporters: ['text', 'lcov', 'html', 'json-summary'],
   coverageThreshold: {
-    // certificates module should meet the 85 % target
-    'global': {
-      lines: 70,
-      functions: 70,
-      branches: 60,
-      statements: 70,
+    // Issue #1023: 85% coverage threshold for core services
+    global: {
+      lines: 85,
+      functions: 85,
+      branches: 80,
+      statements: 85,
     },
   },
   testEnvironment: 'node',

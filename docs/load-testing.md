@@ -10,11 +10,13 @@ This document describes how to run load tests for the Brain-Storm API using k6.
 ## Installation
 
 ### macOS (Homebrew)
+
 ```bash
 brew install k6
 ```
 
 ### Linux (Ubuntu/Debian)
+
 ```bash
 sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
 echo "deb https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6-stable.list
@@ -23,6 +25,7 @@ sudo apt-get install k6
 ```
 
 ### Windows
+
 ```bash
 choco install k6
 ```
@@ -30,7 +33,9 @@ choco install k6
 ## Running Load Tests
 
 ### Quick Start
+
 Run all load tests with default settings:
+
 ```bash
 ./scripts/load-test.sh
 ```
@@ -38,21 +43,25 @@ Run all load tests with default settings:
 ### Individual Tests
 
 #### Test 1: GET /courses (500 VUs)
+
 ```bash
 k6 run --vus 500 --duration 30s scripts/load-tests/courses.js
 ```
 
 #### Test 2: POST /auth/login (100 VUs)
+
 ```bash
 k6 run --vus 100 --duration 30s scripts/load-tests/auth-login.js
 ```
 
 #### Test 3: GET /stellar/balance/:key (50 VUs)
+
 ```bash
 k6 run --vus 50 --duration 30s scripts/load-tests/stellar-balance.js
 ```
 
 ### Custom API URL
+
 ```bash
 API_URL=https://api.example.com ./scripts/load-test.sh
 ```
@@ -61,11 +70,11 @@ API_URL=https://api.example.com ./scripts/load-test.sh
 
 The load tests enforce the following SLOs:
 
-| Metric | Target |
-|--------|--------|
-| p95 Latency | < 500ms |
+| Metric      | Target   |
+| ----------- | -------- |
+| p95 Latency | < 500ms  |
 | p99 Latency | < 1000ms |
-| Error Rate | < 1% |
+| Error Rate  | < 1%     |
 
 If any threshold is exceeded, k6 will report a failure.
 
@@ -79,6 +88,7 @@ If any threshold is exceeded, k6 will report a failure.
 - **vus**: Virtual users (concurrent connections)
 
 ### Example Output
+
 ```
      checks.........................: 99.5% ✓ 1990 ✗ 10
      data_received..................: 1.2 MB 40 kB/s
@@ -113,17 +123,21 @@ Load tests can be integrated into CI/CD pipelines. Add to your workflow:
 ## Troubleshooting
 
 ### Connection Refused
+
 Ensure the backend is running:
+
 ```bash
 npm run dev:backend
 ```
 
 ### High Error Rate
+
 - Check backend logs for errors
 - Verify database connectivity
 - Check for rate limiting
 
 ### Timeout Issues
+
 - Increase `--duration` parameter
 - Reduce `--vus` (virtual users)
 - Check network latency

@@ -16,11 +16,11 @@ A dependency-free, typed client for the Brain-Storm **REST API**. It wraps HTTP 
 
 ## Requirements
 
-| Requirement | Detail |
-| --- | --- |
-| Global `fetch` | Any browser, Node **18+**, or React Native. No polyfill is bundled. |
-| `axios` | Declared as a `peerDependency` but **not used** by the current source. See [Known gaps](#known-gaps). |
-| Runtime deps | None. |
+| Requirement    | Detail                                                                                                |
+| -------------- | ----------------------------------------------------------------------------------------------------- |
+| Global `fetch` | Any browser, Node **18+**, or React Native. No polyfill is bundled.                                   |
+| `axios`        | Declared as a `peerDependency` but **not used** by the current source. See [Known gaps](#known-gaps). |
+| Runtime deps   | None.                                                                                                 |
 
 ## The public surface at a glance
 
@@ -28,35 +28,35 @@ Everything exported from `packages/sdk/src/index.ts`, and nothing else, is publi
 
 ### Values
 
-| Export | Kind | Summary |
-| --- | --- | --- |
-| [`BrainStormClient`](#brainstormclient) | `class` | The single entry point. Groups the API by resource. |
-| `default` | re-export | Identical to `BrainStormClient`. |
+| Export                                  | Kind      | Summary                                             |
+| --------------------------------------- | --------- | --------------------------------------------------- |
+| [`BrainStormClient`](#brainstormclient) | `class`   | The single entry point. Groups the API by resource. |
+| `default`                               | re-export | Identical to `BrainStormClient`.                    |
 
 ### Types
 
-| Export | Used by |
-| --- | --- |
-| [`BrainStormClientOptions`](#brainstormclientoptions) | `new BrainStormClient(…)` |
-| [`LoginDto`](#logindto) | `auth.login` |
-| [`RegisterDto`](#registerdto) | `auth.register` |
-| [`AuthResponse`](#authresponse) | `auth.login`, `auth.register` |
-| [`CourseDto`](#coursedto) | `courses.get`, `courses.create`, `courses.update` |
-| [`CreateCourseDto`](#createcoursedto) | `courses.create` |
-| [`UpdateCourseDto`](#updatecoursedto) | `courses.update` |
-| [`CourseListResponse`](#courselistresponse) | `courses.list` |
-| [`CourseQueryParams`](#coursequeryparams) | `courses.list` |
-| [`RecordProgressDto`](#recordprogressdto) | `progress.record` |
-| [`ProgressDto`](#progressdto) | `progress.record`, `progress.getMyCourseProgress` |
-| [`UserDto`](#userdto) | `users.getProfile`, `users.updateProfile` |
-| [`UpdateUserDto`](#updateuserdto) | `users.updateProfile` |
-| [`StellarBalanceResponse`](#stellarbalanceresponse) | `stellar.getBalance` |
-| [`ApiError`](#apierror) | Shape of thrown errors |
-| [`HttpAdapter`](#httpadapter) | Transport contract (not yet injectable) |
+| Export                                                | Used by                                           |
+| ----------------------------------------------------- | ------------------------------------------------- |
+| [`BrainStormClientOptions`](#brainstormclientoptions) | `new BrainStormClient(…)`                         |
+| [`LoginDto`](#logindto)                               | `auth.login`                                      |
+| [`RegisterDto`](#registerdto)                         | `auth.register`                                   |
+| [`AuthResponse`](#authresponse)                       | `auth.login`, `auth.register`                     |
+| [`CourseDto`](#coursedto)                             | `courses.get`, `courses.create`, `courses.update` |
+| [`CreateCourseDto`](#createcoursedto)                 | `courses.create`                                  |
+| [`UpdateCourseDto`](#updatecoursedto)                 | `courses.update`                                  |
+| [`CourseListResponse`](#courselistresponse)           | `courses.list`                                    |
+| [`CourseQueryParams`](#coursequeryparams)             | `courses.list`                                    |
+| [`RecordProgressDto`](#recordprogressdto)             | `progress.record`                                 |
+| [`ProgressDto`](#progressdto)                         | `progress.record`, `progress.getMyCourseProgress` |
+| [`UserDto`](#userdto)                                 | `users.getProfile`, `users.updateProfile`         |
+| [`UpdateUserDto`](#updateuserdto)                     | `users.updateProfile`                             |
+| [`StellarBalanceResponse`](#stellarbalanceresponse)   | `stellar.getBalance`                              |
+| [`ApiError`](#apierror)                               | Shape of thrown errors                            |
+| [`HttpAdapter`](#httpadapter)                         | Transport contract (not yet injectable)           |
 
 ### Not exported
 
-The per-resource classes — `AuthClient`, `CoursesClient`, `ProgressClient`, `UsersClient`, `StellarClient` — and `FetchHttpAdapter` are **internal**. Their *methods* are public API (reached through `client.auth`, `client.courses`, …), but the class names are not exported, so downstream code cannot annotate a variable as `CoursesClient`. Use `BrainStormClient['courses']` if you need the type:
+The per-resource classes — `AuthClient`, `CoursesClient`, `ProgressClient`, `UsersClient`, `StellarClient` — and `FetchHttpAdapter` are **internal**. Their _methods_ are public API (reached through `client.auth`, `client.courses`, …), but the class names are not exported, so downstream code cannot annotate a variable as `CoursesClient`. Use `BrainStormClient['courses']` if you need the type:
 
 ```typescript
 type CoursesNamespace = BrainStormClient['courses'];
@@ -86,8 +86,8 @@ The SDK's single entry point. All five namespaces share one HTTP adapter, so `se
 
 ### `new BrainStormClient(options)`
 
-| Parameter | Type | Notes |
-| --- | --- | --- |
+| Parameter | Type                                                  | Notes     |
+| --------- | ----------------------------------------------------- | --------- |
 | `options` | [`BrainStormClientOptions`](#brainstormclientoptions) | Required. |
 
 ```typescript
@@ -113,10 +113,10 @@ interface BrainStormClientOptions {
 }
 ```
 
-| Field | Type | Notes |
-| --- | --- | --- |
-| `baseURL` | `string` | **Must not** include the `/v1` prefix or a trailing slash — the SDK appends versioned paths such as `/v1/courses` itself. `'https://api.brain-storm.com'`, not `'https://api.brain-storm.com/v1/'`. |
-| `token` | `string?` | JWT to start with. Use when restoring a persisted session. |
+| Field     | Type      | Notes                                                                                                                                                                                               |
+| --------- | --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `baseURL` | `string`  | **Must not** include the `/v1` prefix or a trailing slash — the SDK appends versioned paths such as `/v1/courses` itself. `'https://api.brain-storm.com'`, not `'https://api.brain-storm.com/v1/'`. |
+| `token`   | `string?` | JWT to start with. Use when restoring a persisted session.                                                                                                                                          |
 
 ---
 
@@ -259,14 +259,14 @@ interface CourseDto {
 }
 ```
 
-| Field | Notes |
-| --- | --- |
-| `id` | UUID. |
-| `level` | Adding a tier is **breaking** for consumers that `switch` exhaustively. |
-| `durationHours` | Absent when the author has not set it. |
-| `isPublished` | `false` for drafts, visible only to their author and admins. |
-| `requiresKyc` | When `true`, enrolment requires a completed KYC check. |
-| `createdAt` | ISO 8601 string, not a `Date`. |
+| Field           | Notes                                                                   |
+| --------------- | ----------------------------------------------------------------------- |
+| `id`            | UUID.                                                                   |
+| `level`         | Adding a tier is **breaking** for consumers that `switch` exhaustively. |
+| `durationHours` | Absent when the author has not set it.                                  |
+| `isPublished`   | `false` for drafts, visible only to their author and admins.            |
+| `requiresKyc`   | When `true`, enrolment requires a completed KYC check.                  |
+| `createdAt`     | ISO 8601 string, not a `Date`.                                          |
 
 ### `CreateCourseDto`
 
@@ -365,12 +365,12 @@ interface UserDto {
 }
 ```
 
-| Field | Notes |
-| --- | --- |
-| `role` | Deliberately `string`, not a union, so adding a role server-side does not break downstream compilation. Compare against `'student'` / `'instructor'` / `'admin'`. |
-| `stellarPublicKey` | Present once a wallet has been linked. |
-| `avatar` | Absolute URL. |
-| `createdAt` | ISO 8601 string. |
+| Field              | Notes                                                                                                                                                             |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `role`             | Deliberately `string`, not a union, so adding a role server-side does not break downstream compilation. Compare against `'student'` / `'instructor'` / `'admin'`. |
+| `stellarPublicKey` | Present once a wallet has been linked.                                                                                                                            |
+| `avatar`           | Absolute URL.                                                                                                                                                     |
+| `createdAt`        | ISO 8601 string.                                                                                                                                                  |
 
 Which optional fields are populated depends on the caller's relationship to the user.
 
@@ -412,7 +412,7 @@ interface ApiError {
 }
 ```
 
-The SDK never *returns* this — it **throws** an `Error` whose `message` is `ApiError.message`, with the `ApiError` fields assigned onto the error object via `Object.assign`. Narrow it like this:
+The SDK never _returns_ this — it **throws** an `Error` whose `message` is `ApiError.message`, with the `ApiError` fields assigned onto the error object via `Object.assign`. Narrow it like this:
 
 ```typescript
 import type { ApiError } from '@brain-storm/sdk';
@@ -446,7 +446,7 @@ interface HttpAdapter {
 
 The transport contract the resource clients depend on. All four methods must reject on a non-2xx response.
 
-> **`BrainStormClient` does not accept one.** It always constructs its own `fetch`-based adapter internally. `HttpAdapter` is exported so consumers can *describe* a transport in their own code (for retries, logging, or a test double), but there is currently no way to inject it. Accepting an optional adapter in `BrainStormClientOptions` is a planned additive change — see [Known gaps](#known-gaps).
+> **`BrainStormClient` does not accept one.** It always constructs its own `fetch`-based adapter internally. `HttpAdapter` is exported so consumers can _describe_ a transport in their own code (for retries, logging, or a test double), but there is currently no way to inject it. Accepting an optional adapter in `BrainStormClientOptions` is a planned additive change — see [Known gaps](#known-gaps).
 
 ---
 
@@ -454,12 +454,12 @@ The transport contract the resource clients depend on. All four methods must rej
 
 Issue #766 assumed this SDK is consumed by `apps/frontend` and `packages/mobile*`. **As of this document, it is not.** Verified by searching every `.ts`/`.tsx`/`.js`/`.json` file in the repo for `@brain-storm/sdk`:
 
-| Consumer | Uses the SDK? | What it actually uses |
-| --- | --- | --- |
-| `apps/frontend` | No | Its own `axios` instance, `apps/frontend/src/lib/api.ts`, plus per-domain wrappers (`lib/forumApi.ts`, `lib/adminApi.ts`, …). |
-| `packages/mobile-app` | No | Its own `axios` `ApiClient`, `packages/mobile-app/src/api/client.ts`. |
-| `packages/mobile` | No | No HTTP layer; it covers auth storage, cache, notifications and wallet. |
-| `apps/backend` | No | Defines the API the SDK targets. |
+| Consumer              | Uses the SDK? | What it actually uses                                                                                                         |
+| --------------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `apps/frontend`       | No            | Its own `axios` instance, `apps/frontend/src/lib/api.ts`, plus per-domain wrappers (`lib/forumApi.ts`, `lib/adminApi.ts`, …). |
+| `packages/mobile-app` | No            | Its own `axios` `ApiClient`, `packages/mobile-app/src/api/client.ts`.                                                         |
+| `packages/mobile`     | No            | No HTTP layer; it covers auth storage, cache, notifications and wallet.                                                       |
+| `apps/backend`        | No            | Defines the API the SDK targets.                                                                                              |
 
 The only references anywhere are `packages/sdk`'s own files and one incorrect snippet in `docs/api-documentation-automation.md` (corrected alongside this document).
 
@@ -480,16 +480,16 @@ Any export that appears in the output must have an entry above.
 
 These are documented rather than fixed, because #766 is a documentation issue and each is an API or build change that warrants its own review. Each is annotated with how the [versioning policy](./sdk-versioning.md) would classify the fix.
 
-| # | Gap | Fix classification |
-| --- | --- | --- |
-| 1 | `packages/sdk` is **not** in the root `package.json` `workspaces` array, so `npm install` never links it. `import … from '@brain-storm/sdk'` would fail to resolve today. | Build fix — no version impact. |
-| 2 | `package.json` declares `"generate": "node ../../scripts/generate-sdk.js"`, but the script is `scripts/generate-sdk.sh`. The npm script is broken. | Patch. |
-| 3 | `scripts/generate-sdk.sh` only exports and copies `openapi.json` — it never regenerates `src/index.ts`. Despite the "auto-generated" description, **the surface is hand-maintained** and can silently drift from the backend. | Process fix; see [Keeping the surface honest](./sdk-versioning.md#keeping-the-surface-honest). |
-| 4 | `axios` is a `peerDependency` but is not imported anywhere in `src/`. Consumers are forced to install a dependency the SDK does not use. | Removing it is **breaking** (peer-dependency change), so it waits for the next major. |
-| 5 | `HttpAdapter` is exported but cannot be injected into `BrainStormClient`. | Minor (additive optional field). |
-| 6 | Resource client classes are not exported, so their types cannot be named downstream. | Minor (additive export). |
-| 7 | No `clearToken()` / `logout()` that resets client-side credentials. | Minor (additive method). |
-| 8 | The SDK has no tests. | No version impact. |
+| #   | Gap                                                                                                                                                                                                                           | Fix classification                                                                             |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| 1   | `packages/sdk` is **not** in the root `package.json` `workspaces` array, so `npm install` never links it. `import … from '@brain-storm/sdk'` would fail to resolve today.                                                     | Build fix — no version impact.                                                                 |
+| 2   | `package.json` declares `"generate": "node ../../scripts/generate-sdk.js"`, but the script is `scripts/generate-sdk.sh`. The npm script is broken.                                                                            | Patch.                                                                                         |
+| 3   | `scripts/generate-sdk.sh` only exports and copies `openapi.json` — it never regenerates `src/index.ts`. Despite the "auto-generated" description, **the surface is hand-maintained** and can silently drift from the backend. | Process fix; see [Keeping the surface honest](./sdk-versioning.md#keeping-the-surface-honest). |
+| 4   | `axios` is a `peerDependency` but is not imported anywhere in `src/`. Consumers are forced to install a dependency the SDK does not use.                                                                                      | Removing it is **breaking** (peer-dependency change), so it waits for the next major.          |
+| 5   | `HttpAdapter` is exported but cannot be injected into `BrainStormClient`.                                                                                                                                                     | Minor (additive optional field).                                                               |
+| 6   | Resource client classes are not exported, so their types cannot be named downstream.                                                                                                                                          | Minor (additive export).                                                                       |
+| 7   | No `clearToken()` / `logout()` that resets client-side credentials.                                                                                                                                                           | Minor (additive method).                                                                       |
+| 8   | The SDK has no tests.                                                                                                                                                                                                         | No version impact.                                                                             |
 
 ## See also
 

@@ -81,39 +81,42 @@ await client.progress.record({
 Every export from `packages/sdk/src/index.ts` is strictly governed by the semantic versioning contract:
 
 ### Main Client
-| Export | Kind | Description |
-|---|---|---|
-| [`BrainStormClient`](./classes/BrainStormClient.md) | `class` | Primary entry point grouping all resource namespaces. |
-| `default` | re-export | Default export alias for `BrainStormClient`. |
+
+| Export                                              | Kind      | Description                                           |
+| --------------------------------------------------- | --------- | ----------------------------------------------------- |
+| [`BrainStormClient`](./classes/BrainStormClient.md) | `class`   | Primary entry point grouping all resource namespaces. |
+| `default`                                           | re-export | Default export alias for `BrainStormClient`.          |
 
 ### Namespaces & Methods
-| Namespace | Methods | Description |
-|---|---|---|
-| `client.auth` | `register`, `login`, `logout` | User registration, credential authentication, session revocation |
-| `client.courses` | `list`, `get`, `create`, `update`, `remove` | Course catalogue browsing, search, authoring, and management |
-| `client.progress` | `record`, `getMyCourseProgress` | Student progress updates and course completion tracking |
-| `client.users` | `getProfile`, `updateProfile` | User profile retrieval and bio/avatar updates |
-| `client.stellar` | `getBalance` | Relay query for Stellar/Soroban account asset balances |
+
+| Namespace         | Methods                                     | Description                                                      |
+| ----------------- | ------------------------------------------- | ---------------------------------------------------------------- |
+| `client.auth`     | `register`, `login`, `logout`               | User registration, credential authentication, session revocation |
+| `client.courses`  | `list`, `get`, `create`, `update`, `remove` | Course catalogue browsing, search, authoring, and management     |
+| `client.progress` | `record`, `getMyCourseProgress`             | Student progress updates and course completion tracking          |
+| `client.users`    | `getProfile`, `updateProfile`               | User profile retrieval and bio/avatar updates                    |
+| `client.stellar`  | `getBalance`                                | Relay query for Stellar/Soroban account asset balances           |
 
 ### Types & Interfaces
-| Type / Interface | Description |
-|---|---|
-| [`BrainStormClientOptions`](./interfaces/types-and-dtos.md#brainstormclientoptions) | Constructor configuration options (`baseURL`, `token`) |
-| [`LoginDto`](./interfaces/types-and-dtos.md#logindto) | Payload for user login with optional MFA TOTP token |
-| [`RegisterDto`](./interfaces/types-and-dtos.md#registerdto) | Payload for user registration |
-| [`AuthResponse`](./interfaces/types-and-dtos.md#authresponse) | Access and refresh token pair |
-| [`CourseDto`](./interfaces/types-and-dtos.md#coursedto) | Full course entity model |
-| [`CreateCourseDto`](./interfaces/types-and-dtos.md#createcoursedto) | Course creation request payload |
-| [`UpdateCourseDto`](./interfaces/types-and-dtos.md#updatecoursedto) | Course partial update payload |
-| [`CourseListResponse`](./interfaces/types-and-dtos.md#courselistresponse) | Paginated list response for courses |
-| [`CourseQueryParams`](./interfaces/types-and-dtos.md#coursequeryparams) | Filter and pagination query parameters |
-| [`RecordProgressDto`](./interfaces/types-and-dtos.md#recordprogressdto) | Course/lesson progress submission payload |
-| [`ProgressDto`](./interfaces/types-and-dtos.md#progressdto) | Stored progress record with percentage and timestamps |
-| [`UserDto`](./interfaces/types-and-dtos.md#userdto) | User profile data with role and Stellar public key |
-| [`UpdateUserDto`](./interfaces/types-and-dtos.md#updateuserdto) | User profile editable fields |
-| [`StellarBalanceResponse`](./interfaces/types-and-dtos.md#stellarbalanceresponse) | Account balances (decimal strings for 7-decimal precision) |
-| [`ApiError`](./interfaces/types-and-dtos.md#apierror) | Standard error structure returned on non-2xx HTTP responses |
-| [`HttpAdapter`](./interfaces/types-and-dtos.md#httpadapter) | Abstract transport interface contract |
+
+| Type / Interface                                                                    | Description                                                 |
+| ----------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| [`BrainStormClientOptions`](./interfaces/types-and-dtos.md#brainstormclientoptions) | Constructor configuration options (`baseURL`, `token`)      |
+| [`LoginDto`](./interfaces/types-and-dtos.md#logindto)                               | Payload for user login with optional MFA TOTP token         |
+| [`RegisterDto`](./interfaces/types-and-dtos.md#registerdto)                         | Payload for user registration                               |
+| [`AuthResponse`](./interfaces/types-and-dtos.md#authresponse)                       | Access and refresh token pair                               |
+| [`CourseDto`](./interfaces/types-and-dtos.md#coursedto)                             | Full course entity model                                    |
+| [`CreateCourseDto`](./interfaces/types-and-dtos.md#createcoursedto)                 | Course creation request payload                             |
+| [`UpdateCourseDto`](./interfaces/types-and-dtos.md#updatecoursedto)                 | Course partial update payload                               |
+| [`CourseListResponse`](./interfaces/types-and-dtos.md#courselistresponse)           | Paginated list response for courses                         |
+| [`CourseQueryParams`](./interfaces/types-and-dtos.md#coursequeryparams)             | Filter and pagination query parameters                      |
+| [`RecordProgressDto`](./interfaces/types-and-dtos.md#recordprogressdto)             | Course/lesson progress submission payload                   |
+| [`ProgressDto`](./interfaces/types-and-dtos.md#progressdto)                         | Stored progress record with percentage and timestamps       |
+| [`UserDto`](./interfaces/types-and-dtos.md#userdto)                                 | User profile data with role and Stellar public key          |
+| [`UpdateUserDto`](./interfaces/types-and-dtos.md#updateuserdto)                     | User profile editable fields                                |
+| [`StellarBalanceResponse`](./interfaces/types-and-dtos.md#stellarbalanceresponse)   | Account balances (decimal strings for 7-decimal precision)  |
+| [`ApiError`](./interfaces/types-and-dtos.md#apierror)                               | Standard error structure returned on non-2xx HTTP responses |
+| [`HttpAdapter`](./interfaces/types-and-dtos.md#httpadapter)                         | Abstract transport interface contract                       |
 
 ---
 

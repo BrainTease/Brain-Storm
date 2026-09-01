@@ -5,6 +5,7 @@ This guide explains how to use the standardized logging system in Brain-Storm ba
 ## Overview
 
 The logging system provides:
+
 - **Structured logging** with consistent format across the application
 - **Log levels** (ERROR, WARN, INFO, DEBUG, VERBOSE)
 - **Request tracking** with unique request IDs
@@ -71,6 +72,7 @@ export class AppModule implements NestModule {
 ```
 
 Logs include:
+
 - HTTP method and path
 - Status code
 - Response time (duration)
@@ -97,38 +99,41 @@ export class UsersController {
 
 ## Log Levels
 
-| Level | Usage | Example |
-|-------|-------|---------|
-| ERROR | Errors that need immediate attention | Database connection failed |
-| WARN | Warnings about potential issues | High memory usage |
-| INFO | Important business events | User created, course published |
-| DEBUG | Detailed debugging information | Query executed, cache hit |
-| VERBOSE | Very detailed information | Step-by-step operation flow |
+| Level   | Usage                                | Example                        |
+| ------- | ------------------------------------ | ------------------------------ |
+| ERROR   | Errors that need immediate attention | Database connection failed     |
+| WARN    | Warnings about potential issues      | High memory usage              |
+| INFO    | Important business events            | User created, course published |
+| DEBUG   | Detailed debugging information       | Query executed, cache hit      |
+| VERBOSE | Very detailed information            | Step-by-step operation flow    |
 
 ## Structured Logging Examples
 
 ### API Request
+
 ```typescript
 logger.logRequest(
   'GET',
   '/api/users/123',
   200,
-  45,  // duration in ms
+  45, // duration in ms
   'user-id-123',
   { query: { page: 1 } }
 );
 ```
 
 ### Database Query
+
 ```typescript
 logger.logQuery(
   'SELECT * FROM users WHERE id = $1',
-  25,  // duration in ms
+  25, // duration in ms
   { userId: '123' }
 );
 ```
 
 ### Business Operation
+
 ```typescript
 logger.logOperation('course-enrollment', 'start');
 // ... operation code
@@ -136,13 +141,14 @@ logger.logOperation('course-enrollment', 'success', 150);
 ```
 
 ### Error Handling
+
 ```typescript
 try {
   await this.usersService.create(userData);
 } catch (error) {
   logger.error('Failed to create user', error, {
     email: userData.email,
-    retryCount: 3
+    retryCount: 3,
   });
 }
 ```
@@ -169,15 +175,17 @@ logger.info('Processing request', { requestId });
    - VERBOSE: For detailed tracing
 
 2. **Include context in metadata**
+
    ```typescript
    logger.info('User updated', {
      userId: user.id,
      changes: ['email', 'name'],
-     timestamp: new Date()
+     timestamp: new Date(),
    });
    ```
 
 3. **Log at operation boundaries**
+
    ```typescript
    logger.info('Starting user import', { fileSize: 1024 });
    // ... operation
@@ -185,11 +193,12 @@ logger.info('Processing request', { requestId });
    ```
 
 4. **Include error details**
+
    ```typescript
    logger.error('API call failed', error, {
      endpoint: 'https://api.example.com/users',
      statusCode: 500,
-     retryAttempt: 2
+     retryAttempt: 2,
    });
    ```
 
@@ -213,11 +222,13 @@ NODE_ENV=production  # Affects log format
 ## Log Output
 
 ### Development
+
 ```
 2024-01-15 10:30:45 info: [MyService] User created {"userId":"123","email":"user@example.com"}
 ```
 
 ### Production
+
 ```json
 {
   "timestamp": "2024-01-15T10:30:45.123Z",
@@ -232,15 +243,18 @@ NODE_ENV=production  # Affects log format
 ## Troubleshooting
 
 ### Logs not appearing
+
 - Check LOG_LEVEL environment variable
 - Ensure LoggingMiddleware is registered
 - Verify logger is created with LoggerFactory
 
 ### Performance impact
+
 - Use DEBUG level only in development
 - Avoid logging large objects
 - Use sampling for high-frequency operations
 
 ### Missing request IDs
+
 - Ensure LoggingMiddleware is applied to all routes
 - Check that x-request-id header is being passed

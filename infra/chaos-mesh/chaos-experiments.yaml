@@ -12,11 +12,11 @@ spec:
     labelSelectors:
       app: brain-storm-backend
   delay:
-    latency: "100ms"
-    jitter: "10ms"
+    latency: '100ms'
+    jitter: '10ms'
   duration: 5m
   scheduler:
-    cron: "@hourly"
+    cron: '@hourly'
 ---
 apiVersion: chaos-mesh.org/v1alpha1
 kind: NetworkChaos
@@ -34,7 +34,7 @@ spec:
   direction: both
   duration: 3m
   scheduler:
-    cron: "@daily"
+    cron: '@daily'
 ---
 apiVersion: chaos-mesh.org/v1alpha1
 kind: PodChaos
@@ -51,7 +51,7 @@ spec:
       app: brain-storm-backend
   duration: 1m
   scheduler:
-    cron: "0 2 * * *"
+    cron: '0 2 * * *'
 ---
 apiVersion: chaos-mesh.org/v1alpha1
 kind: PodChaos
@@ -61,7 +61,7 @@ metadata:
 spec:
   action: pod-failure
   mode: fixed
-  value: "1"
+  value: '1'
   selector:
     namespaces:
       - default
@@ -69,7 +69,7 @@ spec:
       app: brain-storm-backend
   duration: 2m
   scheduler:
-    cron: "0 3 * * *"
+    cron: '0 3 * * *'
 ---
 apiVersion: chaos-mesh.org/v1alpha1
 kind: StressChaos
@@ -90,4 +90,4 @@ spec:
       load: 80
   duration: 5m
   scheduler:
-    cron: "0 4 * * *"
+    cron: '0 4 * * *'

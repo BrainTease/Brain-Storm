@@ -3,7 +3,7 @@
 use soroban_sdk::{contracttype, symbol_short, Address, Env, Symbol, Vec};
 
 #[contracttype]
-#[derive(Clone, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum MsEscrowStatus {
     Pending,   // collecting approvals
     Released,  // threshold met, funds released

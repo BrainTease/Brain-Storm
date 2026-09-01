@@ -18,7 +18,7 @@ Implement a Plyr-based video player component with automatic progress tracking, 
     - Returns `0` when `duration` is `0` or `NaN`
     - _Requirements: 2.1_
 
-  - [ ]* 2.2 Write property test for `computeProgressPct`
+  - [ ]\* 2.2 Write property test for `computeProgressPct`
     - **Property 1: progressPct computation is correct for all valid inputs**
     - **Validates: Requirements 2.1**
     - Use `fc.float` for `currentTime` and `duration`; assert result equals formula and is in `[0, 100]`
@@ -33,19 +33,19 @@ Implement a Plyr-based video player component with automatic progress tracking, 
     - Updates `useProgressStore.markLesson` after each successful response
     - _Requirements: 2.1, 2.2, 2.3, 2.5_
 
-  - [ ]* 2.4 Write property test: store updated with correct progressPct
+  - [ ]\* 2.4 Write property test: store updated with correct progressPct
     - **Property 3: Store is updated with latest progressPct after successful response**
     - **Validates: Requirements 2.5**
     - Use `fc.integer({min:0, max:100})` for progressPct; mock API success; assert store entry matches
     - Tag: `Feature: video-player-progress-tracking, Property 3`
 
-  - [ ]* 2.5 Write property test: retry count on persistent failure
+  - [ ]\* 2.5 Write property test: retry count on persistent failure
     - **Property 2: Retry count is exactly 3 total attempts on persistent failure**
     - **Validates: Requirements 2.4**
     - Mock API to always return 500; assert total call count === 3
     - Tag: `Feature: video-player-progress-tracking, Property 2`
 
-  - [ ]* 2.6 Write unit tests for `useVideoProgress`
+  - [ ]\* 2.6 Write unit tests for `useVideoProgress`
     - Test flush on pause
     - Test flush on unmount
     - Test `onComplete` fires when `progressPct` reaches 100
@@ -62,7 +62,7 @@ Implement a Plyr-based video player component with automatic progress tracking, 
     - Wraps `localStorage` access in try/catch; falls back to `1` on error
     - _Requirements: 3.1, 3.3, 3.4, 3.5_
 
-  - [ ]* 4.2 Write property test: playback speed localStorage round-trip
+  - [ ]\* 4.2 Write property test: playback speed localStorage round-trip
     - **Property 7: Playback speed localStorage round-trip**
     - **Validates: Requirements 3.4, 3.5**
     - Use `fc.constantFrom(...SPEED_OPTIONS)`; set speed, remount hook, assert restored speed matches
@@ -76,7 +76,7 @@ Implement a Plyr-based video player component with automatic progress tracking, 
     - `volumeDown(volume: number): number` → `max(0, Math.round((volume - 0.1) * 10) / 10)`
     - _Requirements: 5.2, 5.3, 5.4, 5.5_
 
-  - [ ]* 5.2 Write property tests for keyboard shortcut functions
+  - [ ]\* 5.2 Write property tests for keyboard shortcut functions
     - **Property 5: Seek keyboard shortcuts clamp to valid range**
     - **Validates: Requirements 5.2, 5.3**
     - Use `fc.float` for currentTime/duration; assert clamped results
@@ -101,25 +101,25 @@ Implement a Plyr-based video player component with automatic progress tracking, 
     - Add ARIA labels to all interactive controls
     - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 2.6, 3.1, 3.2, 3.3, 4.1, 4.2, 4.3, 4.4, 5.1–5.8, 6.1, 6.3, 6.4_
 
-  - [ ]* 6.2 Write property test: initial seek position matches stored progressPct
+  - [ ]\* 6.2 Write property test: initial seek position matches stored progressPct
     - **Property 4: Initial seek position matches stored progressPct**
     - **Validates: Requirements 2.6**
     - Use `fc.integer({min:0, max:100})` for progressPct and `fc.float` for duration; assert `currentTime` set correctly
     - Tag: `Feature: video-player-progress-tracking, Property 4`
 
-  - [ ]* 6.3 Write property test: all interactive controls have ARIA labels
+  - [ ]\* 6.3 Write property test: all interactive controls have ARIA labels
     - **Property 8: All interactive controls have ARIA labels**
     - **Validates: Requirements 6.1**
     - Render VideoPlayer; query all buttons/inputs; assert each has non-empty `aria-label` or `aria-labelledby`
     - Tag: `Feature: video-player-progress-tracking, Property 8`
 
-  - [ ]* 6.4 Write property test: invalid URL always shows error state
+  - [ ]\* 6.4 Write property test: invalid URL always shows error state
     - **Property 9: Invalid video URL always shows error state**
     - **Validates: Requirements 1.2**
     - Use `fc.string()` filtered to non-URL strings; assert `role="alert"` element is rendered
     - Tag: `Feature: video-player-progress-tracking, Property 9`
 
-  - [ ]* 6.5 Write unit tests for VideoPlayer
+  - [ ]\* 6.5 Write unit tests for VideoPlayer
     - Test renders with valid `src`
     - Test PiP button visibility based on `document.pictureInPictureEnabled`
     - Test captions toggle button present when `captions` prop provided
@@ -138,7 +138,7 @@ Implement a Plyr-based video player component with automatic progress tracking, 
     - On `onComplete`, call `useProgressStore.markLesson` and optionally navigate to the next lesson
     - _Requirements: 1.1, 2.3, 2.6_
 
-  - [ ]* 8.2 Write unit test for lesson page
+  - [ ]\* 8.2 Write unit test for lesson page
     - Mock API response and progress store; assert VideoPlayer receives correct props
     - _Requirements: 1.1, 2.6_
 

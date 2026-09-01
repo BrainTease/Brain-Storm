@@ -51,14 +51,14 @@ npx playwright show-report playwright-report-visual
 
 ## Common Commands
 
-| Command | Description |
-|---------|-------------|
-| `npm run test:visual` | Run all visual tests |
-| `npm run test:visual:update` | Update baselines |
-| `npx playwright show-report playwright-report-visual` | Open test report |
-| `npx playwright test --headed` | Run tests in headed mode (see browser) |
-| `npx playwright test --debug` | Run tests in debug mode |
-| `npx playwright test --ui` | Run tests in UI mode (interactive) |
+| Command                                               | Description                            |
+| ----------------------------------------------------- | -------------------------------------- |
+| `npm run test:visual`                                 | Run all visual tests                   |
+| `npm run test:visual:update`                          | Update baselines                       |
+| `npx playwright show-report playwright-report-visual` | Open test report                       |
+| `npx playwright test --headed`                        | Run tests in headed mode (see browser) |
+| `npx playwright test --debug`                         | Run tests in debug mode                |
+| `npx playwright test --ui`                            | Run tests in UI mode (interactive)     |
 
 ## Your First Visual Test
 
@@ -73,10 +73,10 @@ test.describe('My Component - Visual Test', () => {
     // 1. Navigate to page
     await page.goto('/');
     await page.waitForLoadState('networkidle');
-    
+
     // 2. Find your component
     const component = page.locator('[data-testid="my-component"]');
-    
+
     // 3. Take screenshot
     await expect(component).toHaveScreenshot('my-component.png');
   });
@@ -101,6 +101,7 @@ npm run test:visual
 ### Making UI Changes
 
 1. **Before changes**: Ensure all tests pass
+
    ```bash
    npm run test:visual
    ```
@@ -108,16 +109,19 @@ npm run test:visual
 2. **Make your changes**: Edit CSS, components, etc.
 
 3. **Run tests**: See what changed
+
    ```bash
    npm run test:visual
    ```
 
 4. **Review diffs**: Open the report
+
    ```bash
    npx playwright show-report playwright-report-visual
    ```
 
 5. **Update baselines** (if changes are intentional):
+
    ```bash
    npm run test:visual:update
    ```
@@ -131,11 +135,13 @@ npm run test:visual
 ## Understanding Test Results
 
 ### Green ✅ - Test Passed
+
 - Screenshot matches baseline
 - No visual differences
 - Good to go!
 
 ### Red ❌ - Test Failed
+
 - Screenshot differs from baseline
 - Review the diff in the report
 - Decide: Bug fix or baseline update?
@@ -157,11 +163,11 @@ test('component light mode', async ({ page }) => {
 
 test('component dark mode', async ({ page }) => {
   await page.goto('/');
-  
+
   // Toggle theme
   await page.locator('[data-testid="theme-toggle"]').click();
   await page.waitForTimeout(500);
-  
+
   const component = page.locator('[data-testid="my-component"]');
   await expect(component).toHaveScreenshot('component-dark.png');
 });
@@ -173,7 +179,7 @@ test('component dark mode', async ({ page }) => {
 test('component mobile', async ({ page }) => {
   // Set mobile viewport
   await page.setViewportSize({ width: 375, height: 667 });
-  
+
   await page.goto('/');
   const component = page.locator('[data-testid="my-component"]');
   await expect(component).toHaveScreenshot('component-mobile.png');
@@ -199,10 +205,7 @@ await page.waitForTimeout(500);
 
 ```typescript
 await expect(page).toHaveScreenshot('page.png', {
-  mask: [
-    page.locator('[data-testid="timestamp"]'),
-    page.locator('[data-testid="user-avatar"]')
-  ]
+  mask: [page.locator('[data-testid="timestamp"]'), page.locator('[data-testid="user-avatar"]')],
 });
 ```
 
@@ -210,7 +213,7 @@ await expect(page).toHaveScreenshot('page.png', {
 
 ```jsx
 // In your component
-<button data-testid="submit-button">Submit</button>
+<button data-testid="submit-button">Submit</button>;
 
 // In your test
 const button = page.locator('[data-testid="submit-button"]');
@@ -220,7 +223,7 @@ const button = page.locator('[data-testid="submit-button"]');
 
 ```typescript
 await expect(page).toHaveScreenshot('page.png', {
-  animations: 'disabled'
+  animations: 'disabled',
 });
 ```
 
@@ -229,6 +232,7 @@ await expect(page).toHaveScreenshot('page.png', {
 ### Tests pass locally but fail in CI
 
 **Solution**: Use Docker to match CI environment
+
 ```bash
 docker run -v $(pwd):/work -w /work/apps/frontend \
   mcr.microsoft.com/playwright:v1.44.0-jammy \
@@ -238,6 +242,7 @@ docker run -v $(pwd):/work -w /work/apps/frontend \
 ### Flaky tests (sometimes pass, sometimes fail)
 
 **Solution**: Add more wait time or mask dynamic content
+
 ```typescript
 await page.waitForLoadState('networkidle');
 await page.waitForTimeout(1000); // Longer wait
@@ -246,15 +251,17 @@ await page.waitForTimeout(1000); // Longer wait
 ### Large diffs for small changes
 
 **Solution**: Allow small pixel differences
+
 ```typescript
 await expect(page).toHaveScreenshot('page.png', {
-  maxDiffPixels: 100
+  maxDiffPixels: 100,
 });
 ```
 
 ### "No tests found"
 
 **Solution**: Check your file path and config
+
 ```bash
 # Verify test files exist
 ls apps/frontend/e2e/visual/

@@ -91,9 +91,7 @@ export function ThreadDetail({
               )}
               <div>
                 <p className="font-semibold text-gray-900">{post.user?.username || 'Unknown'}</p>
-                <p className="text-xs text-gray-500">
-                  {formatDateTime(post.createdAt)}
-                </p>
+                <p className="text-xs text-gray-500">{formatDateTime(post.createdAt)}</p>
               </div>
             </div>
           </div>

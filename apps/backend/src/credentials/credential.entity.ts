@@ -16,28 +16,28 @@ import { Course } from '../courses/course.entity';
 @Index(['txHash'])
 export class Credential {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  userId: string;
+  userId!: string;
 
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
-  user: User;
+  user!: User;
 
   @Column()
-  courseId: string;
+  courseId!: string;
 
   @ManyToOne(() => Course, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'courseId' })
-  course: Course;
+  course!: Course;
 
   @Column({ nullable: true })
-  txHash: string;
+  txHash!: string;
 
   @Column({ nullable: true })
-  stellarPublicKey: string;
+  stellarPublicKey!: string;
 
   @CreateDateColumn()
-  issuedAt: Date;
+  issuedAt!: Date;
 }

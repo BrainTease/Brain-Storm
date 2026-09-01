@@ -16,8 +16,8 @@ import type { Grant } from '../grant.entity';
 // ─── Fixtures ────────────────────────────────────────────────────────────────
 
 const APPLICANT_ID = 'applicant-uuid-001';
-const REVIEWER_ID  = 'reviewer-uuid-002';
-const OTHER_ID     = 'other-uuid-003';
+const REVIEWER_ID = 'reviewer-uuid-002';
+const OTHER_ID = 'other-uuid-003';
 
 function makeGrant(overrides: Partial<Grant> = {}): Grant {
   return {
@@ -52,63 +52,55 @@ describe('GrantsBusinessService', () => {
       const grant = makeGrant();
       const dto = { title: 'New title', status: 'under_review' as const };
 
-      expect(() =>
-        service.assertUpdatePermission(grant, dto, APPLICANT_ID),
-      ).not.toThrow();
+      expect(() => service.assertUpdatePermission(grant, dto, APPLICANT_ID)).not.toThrow();
     });
 
     it('allows a reviewer to update status', () => {
       const grant = makeGrant();
       const dto = { status: 'approved' as const };
 
-      expect(() =>
-        service.assertUpdatePermission(grant, dto, REVIEWER_ID),
-      ).not.toThrow();
+      expect(() => service.assertUpdatePermission(grant, dto, REVIEWER_ID)).not.toThrow();
     });
 
     it('allows a reviewer to update reviewNotes', () => {
       const grant = makeGrant();
       const dto = { reviewNotes: 'Looks good' };
 
-      expect(() =>
-        service.assertUpdatePermission(grant, dto, REVIEWER_ID),
-      ).not.toThrow();
+      expect(() => service.assertUpdatePermission(grant, dto, REVIEWER_ID)).not.toThrow();
     });
 
     it('allows a reviewer to update reviewerId', () => {
       const grant = makeGrant();
       const dto = { reviewerId: REVIEWER_ID };
 
-      expect(() =>
-        service.assertUpdatePermission(grant, dto, REVIEWER_ID),
-      ).not.toThrow();
+      expect(() => service.assertUpdatePermission(grant, dto, REVIEWER_ID)).not.toThrow();
     });
 
     it('throws ForbiddenException when a non-applicant tries to change title', () => {
       const grant = makeGrant();
       const dto = { title: 'Hacked title' };
 
-      expect(() =>
-        service.assertUpdatePermission(grant, dto, OTHER_ID),
-      ).toThrow(ForbiddenException);
+      expect(() => service.assertUpdatePermission(grant, dto, OTHER_ID)).toThrow(
+        ForbiddenException
+      );
     });
 
     it('throws ForbiddenException when a non-applicant tries to change amount', () => {
       const grant = makeGrant();
       const dto = { amount: 99999 };
 
-      expect(() =>
-        service.assertUpdatePermission(grant, dto, OTHER_ID),
-      ).toThrow(ForbiddenException);
+      expect(() => service.assertUpdatePermission(grant, dto, OTHER_ID)).toThrow(
+        ForbiddenException
+      );
     });
 
     it('throws when a reviewer mixes reviewer + non-reviewer fields', () => {
       const grant = makeGrant();
       const dto = { status: 'approved' as const, title: 'Sneaky title change' };
 
-      expect(() =>
-        service.assertUpdatePermission(grant, dto, REVIEWER_ID),
-      ).toThrow(ForbiddenException);
+      expect(() => service.assertUpdatePermission(grant, dto, REVIEWER_ID)).toThrow(
+        ForbiddenException
+      );
     });
   });
 
@@ -201,7 +193,7 @@ describe('GrantsService', () => {
     const result = await service.create(dto as any);
 
     expect(mockRepo.create).toHaveBeenCalledWith(
-      expect.objectContaining({ status: 'open', currency: 'USD' }),
+      expect.objectContaining({ status: 'open', currency: 'USD' })
     );
     expect(result).toEqual(saved);
   });
@@ -227,7 +219,7 @@ describe('GrantsService', () => {
     mockRepo.findOne.mockResolvedValue(grant);
 
     await expect(
-      service.update(grant.id, { title: 'Unauthorized change' }, OTHER_ID),
+      service.update(grant.id, { title: 'Unauthorized change' }, OTHER_ID)
     ).rejects.toThrow(ForbiddenException);
   });
 
@@ -239,7 +231,7 @@ describe('GrantsService', () => {
     expect(result.page).toBe(2);
     expect(result.limit).toBe(5);
     expect(mockRepo.findAndCount).toHaveBeenCalledWith(
-      expect.objectContaining({ skip: 5, take: 5 }),
+      expect.objectContaining({ skip: 5, take: 5 })
     );
   });
 

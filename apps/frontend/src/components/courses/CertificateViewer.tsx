@@ -100,8 +100,7 @@ export function CertificateViewer({ certificate, isOpen, onClose }: CertificateV
           {/* Metadata row */}
           <div className="flex flex-wrap justify-center gap-4 text-sm text-gray-600 dark:text-gray-300 mt-4 mb-4">
             <span>
-              <span className="font-medium">Issued:</span>{' '}
-              {formatDateLong(certificate.issuedAt)}
+              <span className="font-medium">Issued:</span> {formatDateLong(certificate.issuedAt)}
             </span>
             {certificate.expiresAt && (
               <span>

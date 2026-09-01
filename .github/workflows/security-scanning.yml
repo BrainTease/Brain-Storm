@@ -176,7 +176,7 @@ jobs:
         uses: zaproxy/action-baseline@v0.12.0
         with:
           target: 'http://localhost:3000'
-          rules_file_name: '.github/zap-rules.tsv'
+          rules_file_name: '.zap/rules.tsv'
           cmd_options: '-a'
           allow_issue_writing: false
           fail_action: false
@@ -199,17 +199,17 @@ jobs:
       - name: Check for critical vulnerabilities
         run: |
           echo "## Security Gate Check" >> $GITHUB_STEP_SUMMARY
-          
+
           if [ "${{ needs.sast-sonarqube.result }}" == "failure" ]; then
             echo "❌ SAST scan failed - critical issues detected" >> $GITHUB_STEP_SUMMARY
             exit 1
           fi
-          
+
           if [ "${{ needs.container-scanning.result }}" == "failure" ]; then
             echo "❌ Container scan failed - critical vulnerabilities detected" >> $GITHUB_STEP_SUMMARY
             exit 1
           fi
-          
+
           echo "✅ All security gates passed" >> $GITHUB_STEP_SUMMARY
 
   vulnerability-tracking:
@@ -302,7 +302,7 @@ jobs:
           script: |
             const fs = require('fs');
             const report = fs.readFileSync('security-reports/vulnerability-report.md', 'utf8');
-            
+
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,

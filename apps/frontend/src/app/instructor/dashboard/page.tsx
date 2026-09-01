@@ -3,7 +3,12 @@
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
-import { StatsSkeleton, TableSkeleton, FormSkeleton, ListSkeleton } from '@/components/ui/SharedSkeletons';
+import {
+  StatsSkeleton,
+  TableSkeleton,
+  FormSkeleton,
+  ListSkeleton,
+} from '@/components/ui/SharedSkeletons';
 
 // Each tab is rarely viewed alongside the others, so its component bundle
 // only loads once that tab is selected rather than with the page shell.

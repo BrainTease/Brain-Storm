@@ -12,40 +12,40 @@ import { Course } from '../courses/course.entity';
 @Entity('payouts')
 export class Payout {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  instructorId: string;
+  instructorId!: string;
 
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'instructorId' })
-  instructor: User;
+  instructor!: User;
 
   @Column()
-  courseId: string;
+  courseId!: string;
 
   @ManyToOne(() => Course, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'courseId' })
-  course: Course;
+  course!: Course;
 
   @Column('decimal', { precision: 12, scale: 2 })
-  totalRevenue: number;
+  totalRevenue!: number;
 
   @Column('decimal', { precision: 12, scale: 2 })
-  platformFee: number;
+  platformFee!: number;
 
   @Column('decimal', { precision: 12, scale: 2 })
-  instructorShare: number;
+  instructorShare!: number;
 
   @Column({ default: 'pending' })
-  status: 'pending' | 'processed' | 'failed';
+  status!: 'pending' | 'processed' | 'failed';
 
   @Column({ nullable: true })
-  transactionId: string;
+  transactionId!: string;
 
   @Column({ type: 'timestamp' })
-  payoutDate: Date;
+  payoutDate!: Date;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 }

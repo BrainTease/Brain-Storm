@@ -2,9 +2,9 @@
 # Override per environment with -f values-staging.yaml or -f values-prod.yaml
 
 global:
-  imageRegistry: ""          # Optional prefix, e.g. ghcr.io/braintease
+  imageRegistry: '' # Optional prefix, e.g. ghcr.io/braintease
   imagePullSecrets: []
-  storageClass: ""
+  storageClass: ''
 
 # ─── Backend (NestJS API) ─────────────────────────────────────────────────────
 backend:
@@ -24,7 +24,7 @@ backend:
       cpu: 250m
       memory: 256Mi
     limits:
-      cpu: "1"
+      cpu: '1'
       memory: 1Gi
 
   autoscaling:
@@ -56,7 +56,7 @@ backend:
 
   env:
     NODE_ENV: production
-    PORT: "3000"
+    PORT: '3000'
     STELLAR_NETWORK: testnet
 
   # Secrets must be pre-created as Kubernetes Secrets
@@ -111,7 +111,7 @@ frontend:
 
   env:
     NODE_ENV: production
-    PORT: "3001"
+    PORT: '3001'
     NEXT_PUBLIC_STELLAR_NETWORK: testnet
     # NEXT_PUBLIC_API_URL is rendered from ingress host at deploy time
 
@@ -120,8 +120,8 @@ ingress:
   enabled: true
   className: nginx
   annotations:
-    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: '10m'
+    nginx.ingress.kubernetes.io/ssl-redirect: 'true'
   hosts:
     - host: brain-storm.example.com
       paths:
@@ -157,12 +157,12 @@ postgresql:
         cpu: 250m
         memory: 256Mi
       limits:
-        cpu: "1"
+        cpu: '1'
         memory: 1Gi
 
 # External DB settings (used when postgresql.enabled=false)
 externalDatabase:
-  host: ""
+  host: ''
   port: 5432
   database: brain-storm
   username: brain-storm
@@ -187,14 +187,14 @@ redis:
         memory: 512Mi
 
 externalRedis:
-  host: ""
+  host: ''
   port: 6379
 
 # ─── Service Account ──────────────────────────────────────────────────────────
 serviceAccount:
   create: true
   annotations: {}
-  name: ""
+  name: ''
 
 # ─── Pod settings ─────────────────────────────────────────────────────────────
 podAnnotations: {}
@@ -207,7 +207,7 @@ securityContext:
   allowPrivilegeEscalation: false
   readOnlyRootFilesystem: false
   capabilities:
-    drop: ["ALL"]
+    drop: ['ALL']
 
 nodeSelector: {}
 tolerations: []

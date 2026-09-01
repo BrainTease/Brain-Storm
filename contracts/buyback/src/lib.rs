@@ -455,3 +455,6 @@ impl BuybackContract {
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod invariant_tests;
