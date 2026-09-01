@@ -11,13 +11,9 @@ import { Repository, FindOptionsWhere } from 'typeorm';
 import { Grant } from './grant.entity';
 import { CreateGrantDto, UpdateGrantDto, PaginateGrantsDto } from './dto/grant.dto';
 import { GrantsBusinessService } from './grants-business.service';
+import type { PaginatedGrants } from '@brain-storm/types';
 
-export interface PaginatedGrants {
-  data: Grant[];
-  total: number;
-  page: number;
-  limit: number;
-}
+export type { PaginatedGrants } from '@brain-storm/types';
 
 @Injectable()
 export class GrantsService {

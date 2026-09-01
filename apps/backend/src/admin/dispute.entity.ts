@@ -6,21 +6,9 @@ import {
   UpdateDateColumn,
   Index,
 } from 'typeorm';
+import { DisputeStatus, DisputeType } from '@brain-storm/types';
 
-export enum DisputeStatus {
-  OPEN = 'open',
-  UNDER_REVIEW = 'under_review',
-  RESOLVED = 'resolved',
-  CLOSED = 'closed',
-}
-
-export enum DisputeType {
-  USER_CONTENT = 'user_content',
-  COURSE = 'course',
-  BILLING = 'billing',
-  ACCOUNT = 'account',
-  OTHER = 'other',
-}
+export { DisputeStatus, DisputeType } from '@brain-storm/types';
 
 @Entity('disputes')
 @Index(['status'])

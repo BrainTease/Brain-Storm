@@ -1,6 +1,7 @@
 'use client';
 
 import { z } from 'zod';
+import type { GrantApplicationValues } from '@brain-storm/types';
 import {
   TextField,
   TextareaField,
@@ -8,17 +9,6 @@ import {
   useZodForm,
   type WizardStep,
 } from '@/components/forms';
-
-export interface GrantApplicationValues {
-  applicantName: string;
-  email: string;
-  organization: string;
-  projectTitle: string;
-  projectDescription: string;
-  totalAmount: number;
-  milestonesPlan: string;
-  agreement: boolean;
-}
 
 interface GrantApplicationFormProps {
   onSubmit: (values: GrantApplicationValues) => void | Promise<void>;

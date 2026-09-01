@@ -1,19 +1,11 @@
 'use client';
 
 import React from 'react';
+import type { MarketplaceTx } from '@brain-storm/types';
 import { DataGrid, type ColumnDef } from '@/components/ui/DataGrid';
 import { Badge } from '@/components/ui/Badge';
 
-export interface MarketplaceTx {
-  id: string;
-  date: string;
-  course: string;
-  buyer: string;
-  seller: string;
-  amount: string;
-  fee: string;
-  status: 'completed' | 'pending' | 'refunded' | 'failed';
-}
+export type { MarketplaceTx } from '@brain-storm/types';
 
 const STATUS_STYLES: Record<MarketplaceTx['status'], string> = {
   completed: 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300',
