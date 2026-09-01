@@ -10,9 +10,12 @@ import { TypeOrmCoursesRepository } from './typeorm-courses.repository';
 import { TypeOrmCredentialsRepository } from './typeorm-credentials.repository';
 import { TypeOrmEnrollmentsRepository } from './typeorm-enrollments.repository';
 import { TypeOrmProgressRepository } from './typeorm-progress.repository';
+import { USERS_REPOSITORY_TOKEN } from './users-repository.interface';
+import { COURSES_REPOSITORY_TOKEN } from './courses-repository.interface';
 
-export const USERS_REPOSITORY_TOKEN = 'USERS_REPOSITORY';
-export const COURSES_REPOSITORY_TOKEN = 'COURSES_REPOSITORY';
+// Re-export tokens so consumers can import from this module.
+export { USERS_REPOSITORY_TOKEN } from './users-repository.interface';
+export { COURSES_REPOSITORY_TOKEN } from './courses-repository.interface';
 export const CREDENTIALS_REPOSITORY_TOKEN = 'CREDENTIALS_REPOSITORY';
 export const ENROLLMENTS_REPOSITORY_TOKEN = 'ENROLLMENTS_REPOSITORY';
 export const PROGRESS_REPOSITORY_TOKEN = 'PROGRESS_REPOSITORY';

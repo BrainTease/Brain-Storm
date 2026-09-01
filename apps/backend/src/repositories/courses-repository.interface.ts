@@ -2,6 +2,8 @@ import { Course } from '../courses/course.entity';
 import { CourseQueryDto } from '../courses/dto/course-query.dto';
 import { BaseRepository } from './base-repository.interface';
 
+export const COURSES_REPOSITORY_TOKEN = 'COURSES_REPOSITORY';
+
 export interface CoursesRepository extends BaseRepository<Course> {
   findAll(query?: CourseQueryDto): Promise<{
     data: Course[];

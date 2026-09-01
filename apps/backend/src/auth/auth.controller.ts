@@ -4,8 +4,6 @@ import { Throttle } from '@nestjs/throttler';
 import { Request } from 'express';
 import { AuthService } from './auth.service';
 import { StellarAuthService } from './stellar-auth.service';
-import { GoogleAuthGuard } from './google-auth.guard'; // eslint-disable-line @typescript-eslint/no-unused-vars
-import { GoogleProfile } from './google.strategy'; // eslint-disable-line @typescript-eslint/no-unused-vars
 import { IsEmail, IsString, MinLength, IsOptional } from 'class-validator';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { Roles } from './roles.decorator';
