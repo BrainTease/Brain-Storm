@@ -1,5 +1,6 @@
 /// Shared mathematical utilities
 pub mod math {
+    use super::super::constants::BASIS_POINTS_DENOMINATOR;
     use super::SharedError;
 
     /// Calculate percentage with basis points (bps)
@@ -8,7 +9,7 @@ pub mod math {
         if amount < 0 {
             return Err(SharedError::InvalidAmount);
         }
-        if bps < 0 || bps > 10_000 {
+        if bps < 0 || bps > BASIS_POINTS_DENOMINATOR {
             return Err(SharedError::InvalidInput);
         }
         if bps == 0 {
@@ -18,7 +19,7 @@ pub mod math {
         let result = amount
             .checked_mul(bps)
             .ok_or(SharedError::ArithmeticOverflow)?
-            .checked_div(10_000)
+            .checked_div(BASIS_POINTS_DENOMINATOR)
             .ok_or(SharedError::OperationFailed)?;
 
         Ok(result)

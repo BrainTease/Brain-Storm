@@ -32,6 +32,7 @@
 #![cfg(test)]
 
 use proptest::prelude::*;
+use brain_storm_shared::constants::BASIS_POINTS_DENOMINATOR;
 
 // ── Strategies ────────────────────────────────────────────────────────────────
 
@@ -46,7 +47,7 @@ fn arb_fee_bps() -> impl Strategy<Value = u32> {
 // ── Fee computation invariants ────────────────────────────────────────────────
 
 fn compute_fee(amount: i128, fee_bps: u32) -> (i128, i128) {
-    let fee = amount * fee_bps as i128 / 10_000;
+    let fee = amount * fee_bps as i128 / BASIS_POINTS_DENOMINATOR;
     (fee, amount - fee)
 }
 

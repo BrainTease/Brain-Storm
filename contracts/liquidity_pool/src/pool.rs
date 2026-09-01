@@ -8,6 +8,9 @@ use crate::types::{DataKey, PoolConfig, PoolStats};
 
 pub const MINIMUM_LIQUIDITY: i128 = 1000;
 
+/// Scaling factor used when computing the spot price (6 decimal places of precision).
+pub const PRICE_SCALE_FACTOR: i128 = 1_000_000;
+
 pub fn initialize(
     env: &Env,
     admin: Address,
@@ -134,7 +137,7 @@ pub fn get_pool_stats(env: &Env) -> PoolStats {
     let total_liquidity: i128 = env.storage().instance().get(&DataKey::TotalLiquidity).unwrap_or(0);
     
     let price = if reserve_a > 0 {
-        checked_mul_div_i128(reserve_b, 1_000_000, reserve_a)
+        checked_mul_div_i128(reserve_b, PRICE_SCALE_FACTOR, reserve_a)
     } else {
         0
     };

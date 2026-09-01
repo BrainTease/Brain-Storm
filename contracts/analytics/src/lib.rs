@@ -4,11 +4,23 @@ use soroban_sdk::{
 };
 
 use brain_storm_shared::access;
+use brain_storm_shared::constants::{MIN_TEMP_ENTRY_TTL, MIN_PERSISTENT_ENTRY_TTL, MAX_ENTRY_TTL};
 use brain_storm_shared::pagination::paginate;
 
 // TTL thresholds (in ledgers)
 const TTL_THRESHOLD: u32 = 100;
 const TTL_EXTEND_TO: u32 = 500;
+
+// Progress validation bounds
+const PROGRESS_MIN: u32 = 0;
+const PROGRESS_MAX: u32 = 100;
+const PROGRESS_COMPLETE: u32 = 100;
+
+// Milestone percentages at which achievements are recorded
+const MILESTONE_25: u32 = 25;
+const MILESTONE_50: u32 = 50;
+const MILESTONE_75: u32 = 75;
+const MILESTONE_100: u32 = 100;
 
 // =============================================================================
 // Storage keys
@@ -171,13 +183,13 @@ impl AnalyticsContract {
             caller == student || caller == admin || is_authorized,
             "Unauthorized: must be student, admin, or authorized caller"
         );
-        assert!(progress_pct <= 100, "Progress must be 0-100");
+        assert!(progress_pct <= PROGRESS_MAX, "Progress must be 0-100");
 
         let record = ProgressRecord {
             student: student.clone(),
             course_id: course_id.clone(),
             progress_pct,
-            completed: progress_pct == 100,
+            completed: progress_pct == PROGRESS_COMPLETE,
             timestamp: env.ledger().timestamp(),
         };
 
@@ -227,7 +239,7 @@ impl AnalyticsContract {
             (symbol_short!("analytics"), symbol_short!("prog_upd")),
             (student.clone(), course_id.clone(), progress_pct),
         );
-        if progress_pct == 100 {
+        if progress_pct == PROGRESS_COMPLETE {
             env.events().publish(
                 (symbol_short!("analytics"), symbol_short!("completed")),
                 (student, course_id),
@@ -305,7 +317,7 @@ impl AnalyticsContract {
     // -------------------------------------------------------------------------
 
     fn check_milestones(env: &Env, student: &Address, course_id: &Symbol, progress_pct: u32) {
-        let milestones = vec![&env, 25, 50, 75, 100];
+        let milestones = vec![&env, MILESTONE_25, MILESTONE_50, MILESTONE_75, MILESTONE_100];
         let milestone_key = DataKey::StudentMilestones(student.clone(), course_id.clone());
         let mut achieved: Vec<u32> = env
             .storage()
@@ -559,7 +571,7 @@ impl AnalyticsContract {
         student: Address,
         min_progress_pct: u32,
     ) -> Vec<ProgressRecord> {
-        assert!(min_progress_pct <= 100, "Threshold must be 0-100");
+        assert!(min_progress_pct <= PROGRESS_MAX, "Threshold must be 0-100");
         let all_progress = Self::get_all_progress(env.clone(), student);
         let mut filtered = vec![&env];
         
@@ -623,9 +635,9 @@ mod tests {
             protocol_version: 21,
             network_id: Default::default(),
             base_reserve: 10,
-            min_temp_entry_ttl: 1000,
-            min_persistent_entry_ttl: 1000,
-            max_entry_ttl: 100_000,
+            min_temp_entry_ttl: MIN_TEMP_ENTRY_TTL,
+            min_persistent_entry_ttl: MIN_PERSISTENT_ENTRY_TTL,
+            max_entry_ttl: MAX_ENTRY_TTL,
         });
     }
 

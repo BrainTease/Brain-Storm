@@ -4,6 +4,7 @@ use soroban_sdk::{
 };
 
 use brain_storm_shared::access;
+use brain_storm_shared::constants::{MIN_TEMP_ENTRY_TTL, MIN_PERSISTENT_ENTRY_TTL, MAX_ENTRY_TTL};
 
 pub mod voting;
 
@@ -597,9 +598,9 @@ mod tests {
             protocol_version: 21,
             network_id: Default::default(),
             base_reserve: 10,
-            min_temp_entry_ttl: 1000,
-            min_persistent_entry_ttl: 1000,
-            max_entry_ttl: 100_000,
+            min_temp_entry_ttl: MIN_TEMP_ENTRY_TTL,
+            min_persistent_entry_ttl: MIN_PERSISTENT_ENTRY_TTL,
+            max_entry_ttl: MAX_ENTRY_TTL,
         });
     }
 

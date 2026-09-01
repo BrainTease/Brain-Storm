@@ -5,6 +5,7 @@
 use soroban_sdk::{contracttype, Address, Env, Symbol, symbol_short};
 
 use soroban_sdk::{contracttype, Address, Env, Symbol, Vec, symbol_short};
+use brain_storm_shared::constants::{BASIS_POINTS_DENOMINATOR, PRECISION_SCALE_12};
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -109,10 +110,10 @@ fn accrue_global(env: &Env) {
     let rate: i128 = env.storage().instance().get(&StakingKey::RewardRate).unwrap_or(500);
     let rpt: i128 = env.storage().instance().get(&StakingKey::RewardPerToken).unwrap_or(0);
 
-    // new_rpt = rpt + rate * EPOCH_LENGTH / total  (scaled by 1e12)
+    // new_rpt = rpt + rate * EPOCH_LENGTH / total  (scaled by PRECISION_SCALE_12)
     let increment = rate
         .checked_mul(EPOCH_LENGTH as i128).expect("overflow")
-        .checked_mul(1_000_000_000_000).expect("overflow")
+        .checked_mul(PRECISION_SCALE_12).expect("overflow")
         .checked_div(total).expect("div zero");
 
     env.storage().instance().set(&StakingKey::RewardPerToken, &(rpt + increment));
@@ -122,8 +123,8 @@ fn accrue_global(env: &Env) {
 fn pending_rewards(env: &Env, amount: i128, reward_debt: i128) -> i128 {
     let rpt: i128 = env.storage().instance().get(&StakingKey::RewardPerToken).unwrap_or(0);
     let diff = rpt.saturating_sub(reward_debt);
-    // result = amount * diff / 1e12 (rounding down — safe against over-distribution)
-    amount.checked_mul(diff).expect("overflow").checked_div(1_000_000_000_000).expect("div zero")
+    // result = amount * diff / PRECISION_SCALE_12 (rounding down — safe against over-distribution)
+    amount.checked_mul(diff).expect("overflow").checked_div(PRECISION_SCALE_12).expect("div zero")
 }
 
 // ── Direct staking ────────────────────────────────────────────────────────────
@@ -189,7 +190,7 @@ pub fn withdraw(env: &Env, staker: Address, early: bool) -> i128 {
     if early && is_locked {
         let penalty_bps: i128 = env.storage().instance()
             .get(&StakingKey::EarlyWithdrawalPenalty).unwrap_or(100);
-        let penalty = record.amount.checked_mul(penalty_bps).expect("overflow") / 10_000;
+        let penalty = record.amount.checked_mul(penalty_bps).expect("overflow") / BASIS_POINTS_DENOMINATOR;
         net = net.checked_sub(penalty).expect("underflow");
     }
 
@@ -324,7 +325,7 @@ pub fn get_delegatee_list(env: &Env, delegator: Address) -> Vec<Address> {
 /// Configure slashing (admin only). Call with `enabled = false` to disable.
 pub fn set_slash_config(env: &Env, admin: Address, slash_rate_bps: u32, slash_recipient: Address, enabled: bool) {
     admin.require_auth();
-    assert!(slash_rate_bps <= 10_000, "Slash rate must be <= 10_000 bps");
+    assert!(slash_rate_bps <= BASIS_POINTS_DENOMINATOR as u32, "Slash rate must be <= 10_000 bps");
 
     env.storage().instance().set(&StakingKey::SlashConfig, &SlashConfig { slash_rate_bps, slash_recipient });
     env.storage().instance().set(&StakingKey::SlashEnabled, &enabled);
@@ -347,7 +348,7 @@ pub fn slash(env: &Env, admin: Address, staker: Address) -> i128 {
 
     let slash_amount = record.amount
         .checked_mul(config.slash_rate_bps as i128).expect("overflow")
-        / 10_000;
+        / BASIS_POINTS_DENOMINATOR;
 
     record.amount = record.amount.checked_sub(slash_amount).expect("underflow");
     env.storage().instance().set(&StakingKey::Stake(staker.clone()), &record);

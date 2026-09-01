@@ -8,10 +8,12 @@
 use soroban_sdk::{contract, contractimpl, contracttype, symbol_short, Address, BytesN, Env, Symbol};
 
 pub mod admin;
+pub mod constants;
 pub mod events;
 pub mod errors;
 pub mod oracle;
 pub mod math;
 
 // Re-export commonly used items
+pub use constants::{BASIS_POINTS_DENOMINATOR, PRECISION_SCALE_12};
 pub use errors::SharedError;
