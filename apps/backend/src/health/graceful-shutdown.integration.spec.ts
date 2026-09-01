@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { GracefulShutdownService } from './graceful-shutdown.service';
 
@@ -8,13 +8,21 @@ import { GracefulShutdownService } from './graceful-shutdown.service';
  *
  * Tests that the server properly drains in-flight requests and runs cleanup
  * handlers during shutdown, even when requests are still in-flight.
+ *
+ * All timing-based assertions use Jest fake timers so results are
+ * deterministic and the suite completes in milliseconds.
+ * process.exit is mocked so test teardown is not interrupted.
  */
 describe('GracefulShutdownService Integration Tests', () => {
   let app: TestingModule;
   let shutdownService: GracefulShutdownService;
   let configService: ConfigService;
+  let processExitSpy: jest.SpyInstance;
 
   beforeEach(async () => {
+    // Prevent tests from actually exiting the process
+    processExitSpy = jest.spyOn(process, 'exit').mockImplementation((() => {}) as () => never);
+
     process.env.SHUTDOWN_DRAIN_TIMEOUT_MS = '5000';
 
     @Injectable()
@@ -37,6 +45,8 @@ describe('GracefulShutdownService Integration Tests', () => {
   });
 
   afterEach(async () => {
+    jest.useRealTimers();
+    processExitSpy.mockRestore();
     await app.close();
   });
 
@@ -66,38 +76,45 @@ describe('GracefulShutdownService Integration Tests', () => {
   });
 
   it('should register and call cleanup handlers during shutdown', async () => {
-    let cleanupCalled = false;
-    const cleanup = jest.fn(async () => {
-      cleanupCalled = true;
-    });
+    jest.useFakeTimers();
+
+    const cleanup = jest.fn(async () => {});
 
     shutdownService.registerCleanup(cleanup);
 
+    // Put a request in flight so shutdown must wait before running cleanup
     shutdownService.trackRequest();
-    // Trigger shutdown manually (no SIGTERM)
-    shutdownService['isShuttingDown'] = true;
+
+    // Start the shutdown – it will wait for drainResolve
+    const shutdownPromise = shutdownService['shutdown']('SIGTERM');
+
+    // Release the in-flight request — this triggers drainResolve
     shutdownService.releaseRequest();
 
-    // Give the cleanup handlers a chance to run
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    // Let all timers / microtasks (including cleanup async chain) run
+    await jest.runAllTimersAsync();
+    await shutdownPromise;
 
     expect(cleanup).toHaveBeenCalled();
+    expect(shutdownService['inFlightCount']).toBe(0);
   });
 
   it('should drain in-flight requests before calling cleanup handlers', async () => {
-    const callOrder: string[] = [];
+    jest.useFakeTimers();
 
+    const callOrder: string[] = [];
     const cleanup = jest.fn(async () => {
       callOrder.push('cleanup');
     });
 
     shutdownService.registerCleanup(cleanup);
 
-    // Simulate slow request that completes mid-shutdown
+    // Simulate slow requests that complete after 100ms and 200ms
     let requestFinished = false;
     shutdownService.trackRequest();
     shutdownService.trackRequest();
 
+    // Schedule releases at fake t=100ms and t=200ms
     setTimeout(() => {
       shutdownService.releaseRequest();
     }, 100);
@@ -110,30 +127,39 @@ describe('GracefulShutdownService Integration Tests', () => {
     // Start shutdown while requests are in flight
     shutdownService['isShuttingDown'] = true;
 
-    // Drain should wait for requests to complete
-    await new Promise((resolve) => setTimeout(resolve, 50));
-    expect(shutdownService['inFlightCount']).toBe(2); // Still in flight
+    // Verify requests still in flight before any timers run
+    expect(shutdownService['inFlightCount']).toBe(2);
 
-    await new Promise((resolve) => setTimeout(resolve, 250));
+    // Advance to just after the first release (100ms), second not yet done
+    await jest.advanceTimersByTimeAsync(100);
+    expect(shutdownService['inFlightCount']).toBe(1);
+
+    // Advance to just after the second release (200ms)
+    await jest.advanceTimersByTimeAsync(100);
     expect(requestFinished).toBe(true);
     expect(shutdownService['inFlightCount']).toBe(0);
   });
 
   it('should handle multiple cleanup handlers', async () => {
+    jest.useFakeTimers();
+
     const cleanups: jest.Mock[] = [];
     for (let i = 0; i < 3; i++) {
       const cleanup = jest.fn(async () => {
-        // Simulate some async work
-        await new Promise((resolve) => setTimeout(resolve, 10));
+        // Simulate some async work (10ms each)
+        await new Promise<void>((resolve) => setTimeout(resolve, 10));
       });
       cleanups.push(cleanup);
       shutdownService.registerCleanup(cleanup);
     }
 
     shutdownService['isShuttingDown'] = true;
-    await shutdownService['shutdown']('SIGTERM').catch(() => {
-      // Ignore exit
-    });
+
+    const shutdownPromise = shutdownService['shutdown']('SIGTERM');
+
+    // Let all timers / microtasks run
+    await jest.runAllTimersAsync();
+    await shutdownPromise;
 
     // All cleanup handlers should have been called
     cleanups.forEach((cleanup) => {
@@ -142,6 +168,8 @@ describe('GracefulShutdownService Integration Tests', () => {
   });
 
   it('should continue even if a cleanup handler throws', async () => {
+    jest.useFakeTimers();
+
     const cleanup1 = jest.fn(async () => {
       throw new Error('Cleanup failed');
     });
@@ -153,39 +181,53 @@ describe('GracefulShutdownService Integration Tests', () => {
     shutdownService.registerCleanup(cleanup2);
 
     shutdownService['isShuttingDown'] = true;
-    await shutdownService['shutdown']('SIGTERM').catch(() => {
-      // Ignore exit
-    });
+
+    const shutdownPromise = shutdownService['shutdown']('SIGTERM');
+
+    await jest.runAllTimersAsync();
+    await shutdownPromise;
 
     expect(cleanup1).toHaveBeenCalled();
     expect(cleanup2).toHaveBeenCalled();
   });
 
   it('should drain timeout and force shutdown with in-flight requests', async () => {
-    shutdownService = new GracefulShutdownService(configService);
+    jest.useFakeTimers();
 
-    const cleanup = jest.fn(async () => {
-      // Simulate cleanup work
-    });
+    // Use a fresh service with a short, predictable drain timeout (1000ms)
+    @Injectable()
+    class ShortTimeoutConfigService {
+      get(key: string) {
+        if (key === 'shutdown.drainTimeoutMs') return 1000;
+        return null;
+      }
+    }
 
-    shutdownService.registerCleanup(cleanup);
-    shutdownService.trackRequest();
-    shutdownService.trackRequest();
+    const shortApp = await Test.createTestingModule({
+      providers: [
+        GracefulShutdownService,
+        { provide: ConfigService, useClass: ShortTimeoutConfigService },
+      ],
+    }).compile();
 
-    const startTime = Date.now();
-    shutdownService['isShuttingDown'] = true;
+    const svc = shortApp.get<GracefulShutdownService>(GracefulShutdownService);
+    const cleanup = jest.fn(async () => {});
 
-    // Don't release requests — they'll stay in-flight and timeout
-    await shutdownService['shutdown']('SIGTERM').catch(() => {
-      // Shutdown timeout is expected
-    });
+    svc.registerCleanup(cleanup);
+    svc.trackRequest();
+    svc.trackRequest();
+    svc['isShuttingDown'] = true;
 
-    const duration = Date.now() - startTime;
-    // Should have waited close to the drain timeout (5000ms)
-    expect(duration).toBeGreaterThanOrEqual(4500);
-    expect(duration).toBeLessThan(6000);
+    // Start shutdown — requests are never released so timeout will fire
+    const shutdownPromise = svc['shutdown']('SIGTERM');
+
+    // Advance past the drain timeout (1000ms)
+    await jest.advanceTimersByTimeAsync(1100);
+    await shutdownPromise;
 
     // Cleanup should still run even after timeout
     expect(cleanup).toHaveBeenCalled();
+
+    await shortApp.close();
   });
 });

@@ -105,7 +105,7 @@ export const stellarTransactionHashSchema = z
 // File upload validation schemas
 export const fileUploadSchema = z.object({
   filename: z.string().min(1, 'Filename is required'),
-  mimetype: z.string().regex(/^(image|video|application\/pdf)\//, 'Invalid file type'),
+  mimetype: z.string().regex(/^(image\/|video\/|application\/pdf$)/, 'Invalid file type'),
   size: z.number().max(100 * 1024 * 1024, 'File size cannot exceed 100MB'),
 });
 
