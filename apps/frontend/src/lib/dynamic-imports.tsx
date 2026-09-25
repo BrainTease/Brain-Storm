@@ -22,7 +22,7 @@ function createDynamicComponent<P extends object>(
 /**
  * Admin-heavy components with dynamic imports
  */
-export const AdminDashboard = dynamic(() => import('@/components/Admin/Dashboard/AdminDashboard'), {
+export const AdminDashboard = dynamic(() => import('@/components/admin/AdminDashboard'), {
   ssr: false,
   loading: () => <div>Loading admin dashboard...</div>,
 });

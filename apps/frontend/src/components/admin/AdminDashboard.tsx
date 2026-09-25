@@ -1,6 +1,8 @@
+/* eslint-disable max-lines-per-function */
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+
 import { fetchDashboardMetrics, type DashboardMetrics } from '@/lib/admin-api';
 
 export default function AdminDashboard() {
@@ -9,11 +11,7 @@ export default function AdminDashboard() {
   const [dateRange, setDateRange] = useState({ startDate: '', endDate: '' });
   const [exporting, setExporting] = useState(false);
 
-  useEffect(() => {
-    fetchMetrics();
-  }, [dateRange]);
-
-  const fetchMetrics = async () => {
+  const fetchMetrics = useCallback(async () => {
     setLoading(true);
     const result = await fetchDashboardMetrics({
       startDate: dateRange.startDate || undefined,
@@ -24,7 +22,11 @@ export default function AdminDashboard() {
     }
     // Silently ignore errors — the empty-state UI handles the null metrics case.
     setLoading(false);
-  };
+  }, [dateRange]);
+
+  useEffect(() => {
+    fetchMetrics();
+  }, [fetchMetrics]);
 
   const handleExport = async () => {
     setExporting(true);
