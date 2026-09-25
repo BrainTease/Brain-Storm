@@ -6,6 +6,7 @@ import { SearchAnalytic } from './search-analytic.entity';
 import { Course } from '../courses/course.entity';
 import { Lesson } from '../courses/lesson.entity';
 import { Post } from '../forums/post.entity';
+import { SearchFilters, SearchQueryBuilder } from './search-query-builder.util';
 
 export type IndexName = 'courses' | 'lessons' | 'posts';
 
@@ -265,70 +266,17 @@ export class SearchService implements OnModuleInit {
       enrolledCourseIds?: string[];
       respectPrivacy?: boolean;
       explain?: boolean;
+      filters?: SearchFilters;
     } = {}
   ) {
-    const { enrolledCourseIds = [], explain = false } = options;
+    const { enrolledCourseIds = [], explain = false, filters } = options;
 
-    // Build the base multi-match clause
-    const baseQuery: any = {
-      multi_match: {
-        query,
-        fields: ['title^4', 'title.autocomplete^3', 'description^2', 'content^1'],
-        fuzziness: 'AUTO',
-        prefix_length: 1,
-        type: 'best_fields',
-        tie_breaker: 0.3,
-      },
-    };
-
-    // Build function_score to blend lexical relevance with popularity
-    const functionScoreQuery: any = {
-      function_score: {
-        query: baseQuery,
-        functions: [
-          // Popularity boost for courses (field_value_factor)
-          {
-            filter: { term: { _index: 'courses' } },
-            field_value_factor: {
-              field: 'enrollmentCount',
-              factor: 0.5,
-              modifier: 'log1p',
-              missing: 0,
-            },
-          },
-        ],
-        score_mode: 'sum',
-        boost_mode: 'sum',
-      },
-    };
-
-    // Build should clauses for personalisation
-    const shouldClauses: any[] = [];
-    if (userId && enrolledCourseIds.length > 0 && indices.includes('courses')) {
-      // Soft boost for courses related to what the user has already enrolled in
-      shouldClauses.push({
-        more_like_this: {
-          fields: ['title', 'description'],
-          like: enrolledCourseIds.slice(0, 10).map((id) => ({
-            _index: 'courses',
-            _id: id,
-          })),
-          min_term_freq: 1,
-          max_query_terms: 12,
-          boost: 0.8,
-        },
-      });
-    }
-
-    const finalQuery =
-      shouldClauses.length > 0
-        ? {
-            bool: {
-              must: [functionScoreQuery],
-              should: shouldClauses,
-            },
-          }
-        : functionScoreQuery;
+    const finalQuery = SearchQueryBuilder.build({
+      query,
+      indices,
+      filters,
+      personalization: { userId, enrolledCourseIds },
+    });
 
     const response = await this.es.search({
       index: indices.join(','),
