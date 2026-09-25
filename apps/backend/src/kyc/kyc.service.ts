@@ -1,22 +1,19 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ConfigService } from '@nestjs/config';
 import { KycCustomer, KycStatus } from './kyc-customer.entity';
 import { KycDocument } from './kyc-document.entity';
+import { KYC_PROVIDER, KycProvider } from './providers/kyc-provider.interface';
 
 @Injectable()
 export class KycService {
   private readonly logger = new Logger(KycService.name);
-  private readonly apiKey: string;
 
   constructor(
     @InjectRepository(KycCustomer) private repo: Repository<KycCustomer>,
     @InjectRepository(KycDocument) private documentRepo: Repository<KycDocument>,
-    private configService: ConfigService
-  ) {
-    this.apiKey = this.configService.get<string>('kyc.providerApiKey') ?? '';
-  }
+    @Inject(KYC_PROVIDER) private readonly provider: KycProvider
+  ) {}
 
   async getStatus(stellarPublicKey: string): Promise<KycCustomer> {
     const customer = await this.repo.findOne({ where: { stellarPublicKey } });
@@ -39,28 +36,11 @@ export class KycService {
       customer.status = 'pending';
     }
 
-    // Submit to KYC provider
-    if (this.apiKey) {
-      try {
-        const res = await fetch('https://api.synaps.io/v4/individual/session', {
-          method: 'POST',
-          headers: {
-            'Client-Id': this.apiKey,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ alias: stellarPublicKey, ...fields }),
-        });
-        if (res.ok) {
-          const data = await res.json();
-          customer.providerId = data.session_id ?? data.id ?? null;
-        } else {
-          this.logger.warn(`KYC provider returned ${res.status} for ${stellarPublicKey}`);
-        }
-      } catch (err: unknown) {
-        this.logger.error(
-          `KYC provider request failed: ${err instanceof Error ? err.message : String(err)}`
-        );
-      }
+    const result = await this.provider.createSession(stellarPublicKey, fields);
+    if (result.ok) {
+      customer.providerId = result.providerId;
+    } else {
+      this.logger.warn(`KYC provider session creation failed for ${stellarPublicKey}`);
     }
 
     return this.repo.save(customer);
@@ -84,32 +64,17 @@ export class KycService {
       metadata: { uploadDate: new Date().toISOString() },
     });
 
-    if (this.apiKey) {
-      try {
-        const response = await fetch('https://api.synaps.io/v4/individual/document', {
-          method: 'POST',
-          headers: {
-            'Client-Id': this.apiKey,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            alias: stellarPublicKey,
-            filename: file.originalname,
-            contentBase64: file.buffer.toString('base64'),
-            mimeType: file.mimetype,
-          }),
-        });
-        if (response.ok) {
-          const payload = await response.json();
-          document.providerReference = payload.document_id ?? payload.id ?? null;
-        } else {
-          this.logger.warn(`KYC document upload failed with ${response.status}`);
-        }
-      } catch (err: unknown) {
-        this.logger.error(
-          `KYC document upload failed: ${err instanceof Error ? err.message : String(err)}`
-        );
-      }
+    const result = await this.provider.uploadDocument({
+      stellarPublicKey,
+      filename: file.originalname,
+      mimetype: file.mimetype,
+      contentBase64: file.buffer.toString('base64'),
+    });
+
+    if (result.ok) {
+      document.providerReference = result.providerReference;
+    } else {
+      this.logger.warn(`KYC document upload failed for ${stellarPublicKey}`);
     }
 
     const savedDocument = await this.documentRepo.save(document);
