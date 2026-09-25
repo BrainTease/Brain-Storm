@@ -7,6 +7,8 @@ import { CreateSessionDto } from './dto/session.dto';
 import { NotificationsService } from '../notifications/notifications.service';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import * as ics from 'ics';
+import { PaginationDto } from '../common/dto/pagination.dto';
+import { PaginatedListDto } from '../common/dto/paginated-list.dto';
 
 @Injectable()
 export class SessionsService {
@@ -44,12 +46,22 @@ export class SessionsService {
     });
   }
 
-  async getSessionsByCohort(cohortId: string) {
-    return this.sessionRepo.find({
+  async getSessionsByCohort(
+    cohortId: string,
+    pagination: PaginationDto = {}
+  ): Promise<PaginatedListDto<CohortSession>> {
+    const page = pagination.page ?? 1;
+    const limit = pagination.limit ?? 20;
+
+    const [data, total] = await this.sessionRepo.findAndCount({
       where: { cohortId },
       relations: ['attendances'],
       order: { startTime: 'ASC' },
+      skip: (page - 1) * limit,
+      take: limit,
     });
+
+    return new PaginatedListDto(data, page, limit, total);
   }
 
   async recordAttendance(

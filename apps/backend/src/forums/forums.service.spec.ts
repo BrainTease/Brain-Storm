@@ -18,6 +18,7 @@ describe('ForumsService', () => {
     save: jest.fn(),
     findOne: jest.fn(),
     find: jest.fn(),
+    findAndCount: jest.fn(),
     update: jest.fn(),
   };
   const mockReplyRepo = {
@@ -192,20 +193,43 @@ describe('ForumsService', () => {
       await expect(service.findPostsByCourse('nonexistent')).rejects.toThrow(NotFoundException);
     });
 
-    it('returns posts ordered by isPinned and createdAt', async () => {
+    it('returns a paginated page of posts ordered by isPinned and createdAt', async () => {
       const course = { id: 'c1' } as Course;
       const posts = [
         { id: 'p1', isPinned: true },
         { id: 'p2', isPinned: false },
       ] as Post[];
       mockCourseRepo.findOne.mockResolvedValue(course);
-      mockPostRepo.find.mockResolvedValue(posts);
+      mockPostRepo.findAndCount.mockResolvedValue([posts, 2]);
 
       const result = await service.findPostsByCourse('c1');
 
-      expect(result).toEqual(posts);
-      expect(mockPostRepo.find).toHaveBeenCalledWith(
-        expect.objectContaining({ order: { isPinned: 'DESC', createdAt: 'DESC' } })
+      expect(result).toEqual({
+        data: posts,
+        total: 2,
+        page: 1,
+        limit: 20,
+        totalPages: 1,
+        hasMore: false,
+      });
+      expect(mockPostRepo.findAndCount).toHaveBeenCalledWith(
+        expect.objectContaining({
+          order: { isPinned: 'DESC', createdAt: 'DESC' },
+          skip: 0,
+          take: 20,
+        })
+      );
+    });
+
+    it('applies the requested page and limit', async () => {
+      mockCourseRepo.findOne.mockResolvedValue({ id: 'c1' } as Course);
+      mockPostRepo.findAndCount.mockResolvedValue([[], 45]);
+
+      const result = await service.findPostsByCourse('c1', { page: 3, limit: 10 });
+
+      expect(result).toEqual({ data: [], total: 45, page: 3, limit: 10, totalPages: 5, hasMore: true });
+      expect(mockPostRepo.findAndCount).toHaveBeenCalledWith(
+        expect.objectContaining({ skip: 20, take: 10 })
       );
     });
   });

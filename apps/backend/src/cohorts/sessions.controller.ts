@@ -4,6 +4,7 @@ import { CurrentUser } from '../auth/current-user.decorator';
 import { SessionsService } from './sessions.service';
 import { CreateSessionDto } from './dto/session.dto';
 import { AttendanceStatus } from './session-attendance.entity';
+import { PaginationDto } from '../common/dto/pagination.dto';
 
 @Controller('v1/cohorts/:cohortId/sessions')
 @UseGuards(JwtAuthGuard)
@@ -20,8 +21,11 @@ export class SessionsController {
   }
 
   @Get()
-  async getSessionsByCohort(@Param('cohortId') cohortId: string) {
-    return this.sessionsService.getSessionsByCohort(cohortId);
+  async getSessionsByCohort(
+    @Param('cohortId') cohortId: string,
+    @Query() pagination: PaginationDto
+  ) {
+    return this.sessionsService.getSessionsByCohort(cohortId, pagination);
   }
 
   @Get(':sessionId')
