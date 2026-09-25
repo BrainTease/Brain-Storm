@@ -175,9 +175,10 @@ export class JobsService {
       .map((x) => x.job);
   }
 
-  // ── Auto-expiry (runs every hour) ─────────────────────────────────────────
+  // ── Auto-expiry ──────────────────────────────────────────────────────────
+  // Scheduling now lives in JobsJobRunnerAdapter (shared JobRunner), which
+  // calls this method directly instead of a standalone @Cron handler here.
 
-  @Cron(CronExpression.EVERY_HOUR)
   async expireOldJobs(): Promise<void> {
     const expired = await this.jobRepo.find({
       where: { status: JobStatus.OPEN, expiresAt: LessThan(new Date()) },
