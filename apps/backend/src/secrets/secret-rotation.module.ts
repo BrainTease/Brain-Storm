@@ -6,6 +6,7 @@ import { SecretRotationService } from './secret-rotation.service';
 import { SecretRotationController } from './secret-rotation.controller';
 import { AwsSecretsService } from './aws-secrets.service';
 import { SecretAccessLog } from './secret-access-log.entity';
+import { SecretsAccessor } from './secrets.accessor';
 import { ApiKey } from '../auth/api-key.entity';
 
 @Module({
@@ -13,8 +14,8 @@ import { ApiKey } from '../auth/api-key.entity';
     ScheduleModule.forRoot(),
     TypeOrmModule.forFeature([SecretRotation, ApiKey, SecretAccessLog]),
   ],
-  providers: [SecretRotationService, AwsSecretsService],
+  providers: [SecretRotationService, AwsSecretsService, SecretsAccessor],
   controllers: [SecretRotationController],
-  exports: [SecretRotationService, AwsSecretsService],
+  exports: [SecretRotationService, AwsSecretsService, SecretsAccessor],
 })
 export class SecretRotationModule {}

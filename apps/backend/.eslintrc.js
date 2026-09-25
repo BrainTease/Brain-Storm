@@ -55,5 +55,22 @@ module.exports = {
         IIFEs: true,
       },
     ],
+    'no-restricted-syntax': [
+      'error',
+      {
+        selector:
+          "MemberExpression[object.object.name='process'][object.property.name='env'][property.name=/(SECRET|TOKEN|PASSWORD|KEY|CREDENTIAL|PRIVATE)/i]",
+        message:
+          'Direct process.env access to secret-shaped variables is not allowed outside apps/backend/src/secrets and apps/backend/src/config. Use SecretsAccessor (src/secrets/secrets.accessor.ts) instead.',
+      },
+    ],
   },
+  overrides: [
+    {
+      files: ['src/secrets/**/*.ts', 'src/config/**/*.ts'],
+      rules: {
+        'no-restricted-syntax': 'off',
+      },
+    },
+  ],
 };
