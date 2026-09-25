@@ -1,0 +1,27 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "success": "Success",
+    "cancel": "Cancel",
+    "confirm": "Confirm"
+  },
+  "governance": {
+    "proposal": "Proposal",
+    "vote": "Vote",
+    "voting_power": "Voting Power",
+    "active": "Active",
+    "passed": "Passed",
+    "failed": "Failed"
+  },
+  "referral": {
+    "referral_code": "Referral Code",
+    "invite_friends": "Invite Friends",
+    "rewards": "Rewards"
+  },
+  "credentials": {
+    "certificate": "Certificate",
+    "verify": "Verify",
+    "verified": "Verified"
+  }
+}
