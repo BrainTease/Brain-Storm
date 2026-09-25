@@ -67,4 +67,39 @@ export class FeatureFlagsService {
       await this.cache.del(this.cacheKey(key));
     }
   }
+
+  /**
+   * Identifies flags that are effectively fully rolled out and are therefore
+   * safe candidates for removal (gating code paths that no longer need to
+   * branch on the flag). A flag is "fully rolled out" when it is a BOOLEAN
+   * flag that is enabled with no user targeting, or a PERCENTAGE flag at
+   * 100%. This does not delete anything automatically — callers should
+   * review the report before removing the flag and its dead branches.
+   */
+  async auditFullyRolledOutFlags(): Promise<
+    Array<{ key: string; type: FlagType; reason: string }>
+  > {
+    const flags = await this.repo.find();
+    const candidates: Array<{ key: string; type: FlagType; reason: string }> = [];
+
+    for (const flag of flags) {
+      if (!flag.enabled) continue;
+
+      if (flag.type === FlagType.BOOLEAN) {
+        candidates.push({
+          key: flag.key,
+          type: flag.type,
+          reason: 'Boolean flag enabled for all users with no targeting',
+        });
+      } else if (flag.type === FlagType.PERCENTAGE && flag.percentage >= 100) {
+        candidates.push({
+          key: flag.key,
+          type: flag.type,
+          reason: 'Percentage rollout at 100%',
+        });
+      }
+    }
+
+    return candidates;
+  }
 }

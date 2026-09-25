@@ -62,4 +62,12 @@ export class FeatureFlagsController {
   remove(@Param('key') key: string) {
     return this.service.remove(key);
   }
+
+  /** Admin: report of flags that are fully rolled out and safe to remove */
+  @Get('audit/fully-rolled-out')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  auditFullyRolledOut() {
+    return this.service.auditFullyRolledOutFlags();
+  }
 }

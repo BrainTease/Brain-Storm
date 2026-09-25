@@ -70,4 +70,34 @@ describe('FeatureFlagsService', () => {
     });
     expect(await service.evaluate('flag-x', 'user-99')).toBe(false);
   });
+
+  describe('auditFullyRolledOutFlags', () => {
+    it('flags enabled boolean flags with no targeting as removal candidates', async () => {
+      repo.find.mockResolvedValue([
+        { key: 'grants-v2', enabled: true, type: FlagType.BOOLEAN },
+        { key: 'cohorts-beta', enabled: false, type: FlagType.BOOLEAN },
+      ]);
+      const result = await service.auditFullyRolledOutFlags();
+      expect(result).toHaveLength(1);
+      expect(result[0].key).toBe('grants-v2');
+    });
+
+    it('flags percentage rollouts at 100% as removal candidates', async () => {
+      repo.find.mockResolvedValue([
+        { key: 'new-leaderboard', enabled: true, type: FlagType.PERCENTAGE, percentage: 100 },
+        { key: 'partial-rollout', enabled: true, type: FlagType.PERCENTAGE, percentage: 50 },
+      ]);
+      const result = await service.auditFullyRolledOutFlags();
+      expect(result).toHaveLength(1);
+      expect(result[0].key).toBe('new-leaderboard');
+    });
+
+    it('excludes user-targeted flags since they are not fully rolled out', async () => {
+      repo.find.mockResolvedValue([
+        { key: 'beta-testers', enabled: true, type: FlagType.USER_TARGETED, targetedUserIds: ['u1'] },
+      ]);
+      const result = await service.auditFullyRolledOutFlags();
+      expect(result).toHaveLength(0);
+    });
+  });
 });
