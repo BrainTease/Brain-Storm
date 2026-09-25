@@ -20,10 +20,7 @@ export class CourseResolver {
   @Query()
   @UseGuards(GqlAuthGuard)
   async courses(@Args('page') page = 1, @Args('limit') limit = 20) {
-    // reuse service listing
-    return this.coursesService.findAll
-      ? this.coursesService.findAll({ page, limit })
-      : { data: [], meta: {} };
+    return this.coursesService.findAll({ page, limit });
   }
 
   @ResolveField()
