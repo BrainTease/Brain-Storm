@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import * as AdmZip from 'adm-zip';
 import { User } from '../users/user.entity';
 import { AuditService } from '../audit/audit.service';
+import { GdprPartialFailureError, GdprTotalFailureError, runGdprModules } from './gdpr-errors';
 
 @Injectable()
 export class ExportService {
@@ -24,34 +25,83 @@ export class ExportService {
 
     const zip = new AdmZip();
 
-    // Profile data (strip sensitive fields)
-    const profile = {
-      id: user.id,
-      email: user.email,
-      username: user.username,
-      bio: user.bio,
-      avatar: user.avatar,
-      stellarPublicKey: user.stellarPublicKey,
-      role: user.role,
-      isVerified: user.isVerified,
-      createdAt: user.createdAt,
-    };
-    zip.addFile('profile.json', Buffer.from(JSON.stringify(profile, null, 2)));
+    const { results, failures } = await runGdprModules([
+      {
+        name: 'profile',
+        run: async () => ({
+          id: user.id,
+          email: user.email,
+          username: user.username,
+          bio: user.bio,
+          avatar: user.avatar,
+          stellarPublicKey: user.stellarPublicKey,
+          role: user.role,
+          isVerified: user.isVerified,
+          createdAt: user.createdAt,
+        }),
+      },
+      {
+        name: 'on_chain_notice',
+        run: async () =>
+          [
+            'On-chain data (credentials, reputation scores, analytics progress) is',
+            'stored immutably on the Stellar blockchain and cannot be deleted.',
+            'You can view your on-chain records via the Stellar explorer using',
+            `your public key: ${user.stellarPublicKey ?? '(not set)'}`,
+          ].join('\n'),
+      },
+    ]);
 
-    // On-chain data caveat
-    const onChainNote = [
-      'On-chain data (credentials, reputation scores, analytics progress) is',
-      'stored immutably on the Stellar blockchain and cannot be deleted.',
-      'You can view your on-chain records via the Stellar explorer using',
-      `your public key: ${user.stellarPublicKey ?? '(not set)'}`,
-    ].join('\n');
-    zip.addFile('on_chain_notice.txt', Buffer.from(onChainNote));
+    for (const result of results) {
+      if (result.module === 'profile') {
+        zip.addFile('profile.json', Buffer.from(JSON.stringify(result.data, null, 2)));
+      } else if (result.module === 'on_chain_notice') {
+        zip.addFile('on_chain_notice.txt', Buffer.from(result.data as string));
+      }
+    }
+
+    if (failures.length > 0) {
+      zip.addFile(
+        'partial_failure_report.json',
+        Buffer.from(JSON.stringify({ failures, generatedAt: new Date().toISOString() }, null, 2))
+      );
+    }
+
+    const succeededModules = results.map((r) => r.module);
+
+    if (failures.length > 0 && results.length === 0) {
+      await this.auditService.log(
+        'gdpr.export.failed',
+        userId,
+        false,
+        { failures },
+        ipAddress
+      );
+      this.logger.error(`GDPR export failed completely for user ${userId}: ${JSON.stringify(failures)}`);
+      throw new GdprTotalFailureError('export', userId, failures);
+    }
+
+    if (failures.length > 0) {
+      await this.auditService.log(
+        'gdpr.export.partial_failure',
+        userId,
+        false,
+        { failures, succeededModules },
+        ipAddress
+      );
+      this.logger.warn(
+        `GDPR export partially failed for user ${userId}: ${JSON.stringify(failures)}`
+      );
+      // Surface the partial failure to the caller (who may still choose to
+      // return zip.toBuffer() to the user alongside the error detail).
+      throw new GdprPartialFailureError('export', userId, failures, succeededModules, zip.toBuffer());
+    }
 
     await this.auditService.log(
       'gdpr.export.requested',
       userId,
       true,
-      { exportedAt: new Date().toISOString() },
+      { exportedAt: new Date().toISOString(), succeededModules },
       ipAddress
     );
 
@@ -70,28 +120,57 @@ export class ExportService {
     const user = await this.userRepo.findOne({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
 
-    // Erase all PII off-chain
-    await this.userRepo.save({
-      ...user,
-      email: `deleted-${userId}@deleted.invalid`,
-      username: null,
-      passwordHash: '',
-      avatar: null,
-      bio: null,
-      stellarPublicKey: null,
-      verificationToken: null,
-      mfaSecret: null,
-      mfaBackupCodes: null,
-      referralCode: null,
-      referredBy: null,
-      deletedAt: new Date(),
-    });
+    const { results, failures } = await runGdprModules([
+      {
+        name: 'profile_pii_erasure',
+        run: async () =>
+          this.userRepo.save({
+            ...user,
+            email: `deleted-${userId}@deleted.invalid`,
+            username: null,
+            passwordHash: '',
+            avatar: null,
+            bio: null,
+            stellarPublicKey: null,
+            verificationToken: null,
+            mfaSecret: null,
+            mfaBackupCodes: null,
+            referralCode: null,
+            referredBy: null,
+            deletedAt: new Date(),
+          }),
+      },
+    ]);
+
+    const succeededModules = results.map((r) => r.module);
+
+    if (failures.length > 0 && results.length === 0) {
+      await this.auditService.log('gdpr.account.deletion_failed', userId, false, { failures }, ipAddress);
+      this.logger.error(
+        `GDPR account deletion failed completely for user ${userId}: ${JSON.stringify(failures)}`
+      );
+      throw new GdprTotalFailureError('deletion', userId, failures);
+    }
+
+    if (failures.length > 0) {
+      await this.auditService.log(
+        'gdpr.account.deletion_partial_failure',
+        userId,
+        false,
+        { failures, succeededModules },
+        ipAddress
+      );
+      this.logger.warn(
+        `GDPR account deletion partially failed for user ${userId}: ${JSON.stringify(failures)}`
+      );
+      throw new GdprPartialFailureError('deletion', userId, failures, succeededModules);
+    }
 
     await this.auditService.log(
       'gdpr.account.deleted',
       userId,
       true,
-      { deletedAt: new Date().toISOString() },
+      { deletedAt: new Date().toISOString(), succeededModules },
       ipAddress
     );
 
