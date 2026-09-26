@@ -19,6 +19,7 @@ describe('SessionsService', () => {
     save: jest.fn(),
     findOne: jest.fn(),
     find: jest.fn(),
+    findAndCount: jest.fn(),
     update: jest.fn(),
   };
   const mockAttendanceRepo = {
@@ -212,6 +213,40 @@ describe('SessionsService', () => {
       expect(mockSessionRepo.update).toHaveBeenCalledWith(
         { id: 's1' },
         { recordingUrl: 'https://cdn.example.com/rec.mp4' }
+      );
+    });
+  });
+
+  // ── getSessionsByCohort ──────────────────────────────────────────────────────
+
+  describe('getSessionsByCohort', () => {
+    it('returns a paginated response using the shared list shape', async () => {
+      const sessions = [makeSession(), makeSession({ id: 's2' })];
+      mockSessionRepo.findAndCount.mockResolvedValue([sessions, 2]);
+
+      const result = await service.getSessionsByCohort('coh-1');
+
+      expect(result).toEqual({
+        data: sessions,
+        total: 2,
+        page: 1,
+        limit: 20,
+        totalPages: 1,
+        hasMore: false,
+      });
+      expect(mockSessionRepo.findAndCount).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { cohortId: 'coh-1' }, skip: 0, take: 20 })
+      );
+    });
+
+    it('honors the requested page and limit', async () => {
+      mockSessionRepo.findAndCount.mockResolvedValue([[], 5]);
+
+      const result = await service.getSessionsByCohort('coh-1', { page: 2, limit: 2 });
+
+      expect(result).toEqual({ data: [], total: 5, page: 2, limit: 2, totalPages: 3, hasMore: true });
+      expect(mockSessionRepo.findAndCount).toHaveBeenCalledWith(
+        expect.objectContaining({ skip: 2, take: 2 })
       );
     });
   });

@@ -12,6 +12,8 @@ import { OrganizationBillingProfile } from './organization-billing-profile.entit
 import { CreateOrgDto, InviteMemberDto } from './dto/organization.dto';
 import { User } from '../users/user.entity';
 import { randomBytes } from 'crypto';
+import { PaginationDto } from '../common/dto/pagination.dto';
+import { PaginatedListDto } from '../common/dto/paginated-list.dto';
 
 @Injectable()
 export class OrganizationsService {
@@ -163,11 +165,21 @@ export class OrganizationsService {
     await this.memberRepo.delete(member.id);
   }
 
-  async getOrganizationMembers(orgId: string) {
-    return this.memberRepo.find({
+  async getOrganizationMembers(
+    orgId: string,
+    pagination: PaginationDto = {}
+  ): Promise<PaginatedListDto<OrganizationMember>> {
+    const page = pagination.page ?? 1;
+    const limit = pagination.limit ?? 20;
+
+    const [data, total] = await this.memberRepo.findAndCount({
       where: { organizationId: orgId },
       relations: ['user'],
+      skip: (page - 1) * limit,
+      take: limit,
     });
+
+    return new PaginatedListDto(data, page, limit, total);
   }
 
   async getOrgBillingProfile(orgId: string) {

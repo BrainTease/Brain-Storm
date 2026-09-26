@@ -1,9 +1,10 @@
-import { Body, Controller, Get, Param, Post, Request, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, Param, Post, Query, Request, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CreatePostDto } from './dto/create-post.dto';
 import { CreateReplyDto } from './dto/create-reply.dto';
 import { ForumsService } from './forums.service';
+import { PaginationDto } from '../common/dto/pagination.dto';
 
 @ApiTags('forums')
 @Controller()
@@ -12,9 +13,11 @@ export class ForumsController {
 
   @Get('courses/:id/posts')
   @ApiOperation({ summary: 'Get forum posts for a course' })
-  @ApiResponse({ status: 200, description: 'Returns course forum posts' })
-  findByCourse(@Param('id') courseId: string) {
-    return this.forumsService.findPostsByCourse(courseId);
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiResponse({ status: 200, description: 'Returns a paginated page of course forum posts' })
+  findByCourse(@Param('id') courseId: string, @Query() pagination: PaginationDto) {
+    return this.forumsService.findPostsByCourse(courseId, pagination);
   }
 
   @Post('courses/:id/posts')

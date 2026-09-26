@@ -9,6 +9,8 @@ import { Reply } from './reply.entity';
 import { ModerationService } from '../moderation/moderation.service';
 import { ContentType } from '../moderation/moderation.enums';
 import { SearchService } from '../search/search.service';
+import { PaginationDto } from '../common/dto/pagination.dto';
+import { PaginatedListDto } from '../common/dto/paginated-list.dto';
 
 @Injectable()
 export class ForumsService {
@@ -23,14 +25,24 @@ export class ForumsService {
     private readonly searchService: SearchService
   ) {}
 
-  async findPostsByCourse(courseId: string) {
+  async findPostsByCourse(
+    courseId: string,
+    pagination: PaginationDto = {}
+  ): Promise<PaginatedListDto<Post>> {
     await this.ensureCourseExists(courseId);
 
-    return this.postRepo.find({
+    const page = pagination.page ?? 1;
+    const limit = pagination.limit ?? 20;
+
+    const [data, total] = await this.postRepo.findAndCount({
       where: { courseId },
       relations: ['user', 'replies', 'replies.user'],
       order: { isPinned: 'DESC', createdAt: 'DESC' },
+      skip: (page - 1) * limit,
+      take: limit,
     });
+
+    return new PaginatedListDto(data, page, limit, total);
   }
 
   async createPost(courseId: string, userId: string, role: string, dto: CreatePostDto) {

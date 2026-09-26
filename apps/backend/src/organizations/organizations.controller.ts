@@ -15,6 +15,7 @@ import { CurrentUser } from '../auth/current-user.decorator';
 import { OrganizationsService } from './organizations.service';
 import { CreateOrgDto, InviteMemberDto } from './dto/organization.dto';
 import { OrgRole } from './organization.entity';
+import { PaginationDto } from '../common/dto/pagination.dto';
 
 @Controller('v1/organizations')
 @UseGuards(JwtAuthGuard)
@@ -37,8 +38,8 @@ export class OrganizationsController {
   }
 
   @Get(':orgId/members')
-  async getMembers(@Param('orgId') orgId: string) {
-    return this.orgsService.getOrganizationMembers(orgId);
+  async getMembers(@Param('orgId') orgId: string, @Query() pagination: PaginationDto) {
+    return this.orgsService.getOrganizationMembers(orgId, pagination);
   }
 
   @Post(':orgId/invite')
