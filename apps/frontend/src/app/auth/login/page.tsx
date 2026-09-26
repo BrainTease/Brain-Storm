@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import api from '@/lib/api';
-import { useAuthStore } from '@/store/auth.store';
+import { useAuthStore, type AuthUser } from '@/store/auth.store';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 
@@ -32,15 +32,16 @@ export default function LoginPage() {
   const onSubmit = async (data: FormData) => {
     setApiError(null);
     try {
-      const res = await api.post<{ access_token: string; user: any }>('/auth/login', {
+      const res = await api.post<{ access_token: string; user: AuthUser }>('/auth/login', {
         email: data.email,
         password: data.password,
       });
       localStorage.setItem('access_token', res.data.access_token);
       login(res.data.access_token, res.data.user);
       router.push('/dashboard');
-    } catch (err: any) {
-      const message = err?.response?.data?.message;
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { message?: unknown } } };
+      const message = axiosErr?.response?.data?.message;
       setApiError(typeof message === 'string' ? message : 'Invalid credentials');
     }
   };

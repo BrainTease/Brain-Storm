@@ -60,9 +60,14 @@ export default function SecuritySettings({ userId, email }: Props) {
       });
       setFeedback({ type: 'success', message: 'Password updated successfully.' });
       reset(EMPTY_FORM);
-    } catch (err: any) {
-      const msg = err?.response?.data?.message ?? 'Failed to update password. Please try again.';
-      setFeedback({ type: 'error', message: msg });
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { message?: unknown } } };
+      const msg =
+        axiosErr?.response?.data?.message ?? 'Failed to update password. Please try again.';
+      setFeedback({
+        type: 'error',
+        message: typeof msg === 'string' ? msg : 'Failed to update password. Please try again.',
+      });
     }
   };
 

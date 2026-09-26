@@ -185,3 +185,16 @@ All REST endpoints are prefixed with `/v1`. Before introducing any breaking chan
 5. Keep both versions running for **at least 90 days** before removing `/v1`.
 
 See [docs/api-versioning.md](docs/api-versioning.md) for the full strategy, deprecation timeline, and migration examples.
+
+## Historical One-Off Migration Scripts
+
+The following scripts were used once to migrate the codebase and have since been **removed** (issue #1197). They are documented here for historical reference only — do not recreate them.
+
+| Script | What it did | Applied in |
+| ---------------------------------- | --------------------------------------------------------------------------- | ---------- |
+| `fix-catch-clauses.mjs` | Added `unknown` typing to `catch (err)` / `catch (error)` clauses in the backend | Committed prior to removal |
+| `fix-test-casts.mjs` | Added `as TestUserInput` casts to `service.create()` calls in integration specs | Committed prior to removal |
+| `fix-ts2564.mjs` | Added `!` definite-assignment assertions to a subset of entity properties (TS2564) | Committed prior to removal |
+| `fix-ts2564-all.mjs` | Broader pass of the same TS2564 fix across all DTO and entity files | Committed prior to removal |
+
+All fixes from these scripts are already committed to the codebase. The scripts themselves were removed once verified. If you need to perform a similar mass codebase transformation in the future, create a new migration script under `scripts/` (not the repo root), run it, commit the result, and remove the script in the same PR.
