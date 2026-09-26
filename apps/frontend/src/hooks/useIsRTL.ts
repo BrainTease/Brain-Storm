@@ -9,5 +9,5 @@ import { RTL_LOCALES } from '@/i18n/routing';
  */
 export function useIsRTL(): boolean {
   const locale = useLocale();
-  return RTL_LOCALES.includes(locale as any);
+  return (RTL_LOCALES as readonly string[]).includes(locale);
 }

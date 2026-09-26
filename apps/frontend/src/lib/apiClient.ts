@@ -11,8 +11,9 @@
  *   const courses = result.data;
  */
 
-import api from './api';
 import type { AxiosRequestConfig } from 'axios';
+
+import api from './api';
 
 // ── Result type ───────────────────────────────────────────────────────────────
 
@@ -29,7 +30,7 @@ export interface ApiError {
     status?: number;
     /** Raw response body, when available */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    raw?: any;
+    raw?: unknown;
   };
 }
 
@@ -37,11 +38,26 @@ export type ApiResult<T> = ApiSuccess<T> | ApiError;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+/** Minimal shape of an Axios error response — avoids importing the full axios types here. */
+interface AxiosLikeError {
+  response?: {
+    status?: number;
+    data?: {
+      message?: unknown;
+      error?: unknown;
+    };
+  };
+  message?: string;
+}
+
+function toAxiosLike(err: unknown): AxiosLikeError {
+  return err as AxiosLikeError;
+}
+
 function extractMessage(err: unknown): string {
   if (err instanceof Error) {
     // Axios error — prefer the server's message field
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const axiosErr = err as any;
+    const axiosErr = toAxiosLike(err);
     const serverMessage: unknown =
       axiosErr?.response?.data?.message ?? axiosErr?.response?.data?.error ?? axiosErr?.message;
     if (typeof serverMessage === 'string' && serverMessage.length > 0) {
@@ -55,14 +71,11 @@ function extractMessage(err: unknown): string {
 }
 
 function extractStatus(err: unknown): number | undefined {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (err as any)?.response?.status;
+  return toAxiosLike(err)?.response?.status;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function extractRaw(err: unknown): any {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (err as any)?.response?.data;
+function extractRaw(err: unknown): unknown {
+  return toAxiosLike(err)?.response?.data;
 }
 
 async function wrap<T>(promise: Promise<{ data: T }>): Promise<ApiResult<T>> {

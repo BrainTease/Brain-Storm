@@ -44,6 +44,13 @@ export const CoursePreviewModal: React.FC<CoursePreviewModalProps> = ({
 
   const previewLessons = course.syllabus.filter((lesson) => lesson.isPreview);
 
+  type TabId = 'preview' | 'syllabus' | 'instructor';
+  const tabs: { id: TabId; label: string }[] = [
+    { id: 'preview', label: 'Preview Lessons' },
+    { id: 'syllabus', label: 'Full Syllabus' },
+    { id: 'instructor', label: 'Instructor' },
+  ];
+
   const header = (
     <>
       <div className="flex items-center justify-between p-6 border-b dark:border-gray-700">
@@ -64,14 +71,10 @@ export const CoursePreviewModal: React.FC<CoursePreviewModalProps> = ({
 
       <div className="border-b dark:border-gray-700">
         <nav className="flex space-x-8 px-6" aria-label="Tabs">
-          {[
-            { id: 'preview', label: 'Preview Lessons' },
-            { id: 'syllabus', label: 'Full Syllabus' },
-            { id: 'instructor', label: 'Instructor' },
-          ].map((tab) => (
+          {tabs.map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
+              onClick={() => setActiveTab(tab.id)}
               className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                 activeTab === tab.id
                   ? 'border-blue-600 text-blue-600 dark:text-blue-400'

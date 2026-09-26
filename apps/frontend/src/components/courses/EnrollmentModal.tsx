@@ -63,9 +63,12 @@ export function EnrollmentModal({
 
     try {
       await api.post(`/courses/${courseId}/enroll`);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { message?: unknown } }; message?: string };
       const msg =
-        err?.response?.data?.message ?? err?.message ?? 'Enrollment failed. Please try again.';
+        axiosErr?.response?.data?.message ??
+        axiosErr?.message ??
+        'Enrollment failed. Please try again.';
       setErrorMsg(typeof msg === 'string' ? msg : JSON.stringify(msg));
       setStep('error');
       toast.error('Enrollment failed. Changes reverted.');
