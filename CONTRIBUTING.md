@@ -114,6 +114,62 @@ npm run lint
 
 See [docs/development-setup.md](docs/development-setup.md) for the full setup guide.
 
+## Shared Test Fixtures
+
+We maintain a shared test-fixtures module in `packages/types/src/test-utils/` that exports factory functions for every shared domain type.  **Always use these factories instead of hand-building inline mock objects** in tests.
+
+### Why
+
+Hand-built mocks like `{ id: '1', email: 'test@example.com' } as User` drift from the real type definition whenever a field is added, renamed, or removed.  Factories catch those changes at the point of definition instead of silently diverging across dozens of test files.
+
+### Import path
+
+```typescript
+import {
+  UserFactory,
+  CourseFactory,
+  EnrollmentFactory,
+  QuizFactory,
+  CredentialFactory,
+  ProgressFactory,
+  PaymentFactory,
+} from '@brain-storm/types/test-utils';
+```
+
+### Basic usage
+
+```typescript
+// Single object with defaults
+const user = UserFactory.create();
+
+// Single object with overrides
+const admin = UserFactory.create({ role: 'admin', email: 'admin@example.com' });
+
+// Batch of objects
+const students = UserFactory.createMany(10, { role: 'student' });
+
+// Cross-entity relationship
+const userId = 'user-123';
+const courseId = 'course-456';
+const enrollment = EnrollmentFactory.create({ userId, courseId, status: 'active' });
+const progress   = ProgressFactory.create({ userId, courseId, progressPct: 75 });
+const credential = CredentialFactory.create({ userId, courseId, status: 'issued' });
+const payment    = PaymentFactory.create({ userId, courseId, amount: 4999 });
+```
+
+### Rules
+
+1. **Pin fields you assert on** — don't rely on random defaults for test assertions; always override the fields your test cares about.
+2. **Share IDs explicitly** — when two entities must relate, pass the same `userId`/`courseId` to both factories rather than letting them each generate independent IDs.
+3. **Don't mutate factory output** — each call produces an independent plain object.
+4. **Add new factories** whenever you add a new shared type:
+   - Define the interface in `packages/types/src/test-utils/index.ts`
+   - Add `create()` and `createMany()` factory methods
+   - Export from the index
+   - Add tests in `packages/types/src/test-utils/factories.test.ts`
+
+For a full reference see [`packages/types/src/test-utils/README.md`](packages/types/src/test-utils/README.md).
+
 ## Security
 
 If you discover a security vulnerability, **do not open a public issue**. Follow our [Security Policy](SECURITY.md) for responsible disclosure.
