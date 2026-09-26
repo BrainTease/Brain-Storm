@@ -1,0 +1,105 @@
+##############################################################################
+# Chaos Mesh — Database latency injection experiment
+#
+# Injects artificial latency on TCP connections from the backend to the
+# PostgreSQL pod (port 5432), simulating real-world database slowness.
+# The health endpoint must continue to respond with either a degraded
+# (but non-500) response or a well-formed 503 ServiceUnavailable within
+# the SLA budget — the backend must NOT crash.
+#
+# Part of issue #1194 — chaos resilience testing for Brain-Storm backend.
+##############################################################################
+apiVersion: chaos-mesh.org/v1alpha1
+kind: NetworkChaos
+metadata:
+  name: brain-storm-db-latency
+  namespace: default
+  labels:
+    experiment: db-latency
+    issue: "1194"
+spec:
+  action: delay
+  mode: all
+  selector:
+    namespaces:
+      - default
+    labelSelectors:
+      app: brain-storm-backend
+  # Target only TCP traffic destined for the Postgres pod on port 5432
+  target:
+    selector:
+      namespaces:
+        - default
+      labelSelectors:
+        app: postgres
+    mode: all
+  direction: to
+  device: eth0
+  delay:
+    latency: '500ms'
+    jitter: '100ms'
+    correlation: '75'
+  duration: 2m
+  scheduler:
+    cron: '@manually'  # manual trigger only — do not run on a timer in CI
+---
+##############################################################################
+# Redis unavailability experiment
+#
+# Kills the Redis pod for 90 seconds.  The backend should fall back to
+# degraded mode (cache miss, continue serving from DB) or return a 503 on
+# cache-dependent endpoints.  The process must NOT crash.
+##############################################################################
+apiVersion: chaos-mesh.org/v1alpha1
+kind: PodChaos
+metadata:
+  name: brain-storm-redis-kill
+  namespace: default
+  labels:
+    experiment: redis-kill
+    issue: "1194"
+spec:
+  action: pod-kill
+  mode: one
+  selector:
+    namespaces:
+      - default
+    labelSelectors:
+      app: redis
+  duration: 90s
+  scheduler:
+    cron: '@manually'
+---
+##############################################################################
+# Stellar Horizon partition experiment
+#
+# Blocks outbound TCP traffic from the backend to Horizon on port 443.
+# The backend must return 503 on Stellar-dependent endpoints (/health
+# readiness probe, /stellar/balance) and must NOT crash.
+##############################################################################
+apiVersion: chaos-mesh.org/v1alpha1
+kind: NetworkChaos
+metadata:
+  name: brain-storm-stellar-partition
+  namespace: default
+  labels:
+    experiment: stellar-partition
+    issue: "1194"
+spec:
+  action: loss
+  mode: all
+  selector:
+    namespaces:
+      - default
+    labelSelectors:
+      app: brain-storm-backend
+  loss:
+    loss: '100'
+    correlation: '100'
+  externalTargets:
+    - horizon-testnet.stellar.org
+    - horizon.stellar.org
+  direction: to
+  duration: 2m
+  scheduler:
+    cron: '@manually'
