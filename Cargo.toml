@@ -28,9 +28,11 @@ members = [
 ]
 
 [workspace.dependencies]
-# Soroban SDK - latest stable
-soroban-sdk = "20.0.0"
-soroban-cli = "20.0.0"
+# Soroban SDK - latest stable (resolves to 21.7.7 in Cargo.lock)
+# Individual contracts may specify their own minimum versions; Cargo resolves
+# to the highest compatible version across the workspace.
+soroban-sdk = "21.7"
+soroban-cli = "21.7"
 
 # Common dependencies
 serde = { version = "1.0", features = ["derive"] }
