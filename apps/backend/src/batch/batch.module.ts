@@ -8,6 +8,8 @@ import { UsersModule } from '../users/users.module';
 import { CoursesModule } from '../courses/courses.module';
 import { CertificatesModule } from '../certificates/certificates.module';
 import { MailModule } from '../mail/mail.module';
+import { JobRunnerService } from '../common/job-runner/job-runner.service';
+import { BatchJobRunnerAdapter } from './batch.job-runner.adapter';
 
 @Module({
   imports: [
@@ -27,7 +29,13 @@ import { MailModule } from '../mail/mail.module';
     CertificatesModule,
     MailModule,
   ],
-  providers: [BatchService, BatchProcessor],
+  providers: [
+    BatchService,
+    BatchProcessor,
+    JobRunnerService,
+    BatchJobRunnerAdapter,
+  ],
+  exports: [JobRunnerService],
   controllers: [BatchController],
 })
 export class BatchModule {}

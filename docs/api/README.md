@@ -4,6 +4,14 @@ Auto-generated reference of every active REST route exposed by `apps/backend` (N
 
 This is a **generated index**, not the source of truth for request/response bodies. `apps/backend` already uses `@nestjs/swagger` decorators throughout its controllers and DTOs to produce a full OpenAPI 3.0 spec at runtime — that spec, not this file, has the authoritative request/response JSON schemas and error response shapes for every route. This file exists to answer "what routes exist and what do they need for auth," at a glance, without running the backend.
 
+## DTO field audits
+
+Response/request DTOs are periodically cross-referenced against actual
+frontend and SDK usage to keep payloads lean. See
+[`dto-field-audit.md`](./dto-field-audit.md) for the most recent pass
+(users/courses/progress DTOs, 2026-09-25) and the process for deprecating
+a field found to be unused in a future audit.
+
 ## How this was generated
 
 The table below was produced by mechanically parsing every `*.controller.ts` file under `apps/backend/src` for `@Controller(...)`, `@Get/@Post/@Put/@Patch/@Delete(...)`, `@UseGuards(...)`, `@Public()`, and `@Roles(...)` decorators — not hand-transcribed — so it can be regenerated and diffed against the router whenever controllers change. As of this writing it covers **314 routes across 57 controllers in 43 domains**, matching `find apps/backend/src -iname '*.controller.ts' | wc -l` (57) at the time of writing. No `@deprecated`/`@ApiExcludeEndpoint` markers were found in any controller, so every route listed here is active.
