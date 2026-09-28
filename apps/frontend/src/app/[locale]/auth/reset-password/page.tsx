@@ -34,8 +34,9 @@ export default function ResetPasswordPage() {
     try {
       await api.post('/auth/reset-password', { token, newPassword: password });
       router.push('/auth/login?reset=success');
-    } catch (err: any) {
-      if (err.response?.status === 400) {
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { status?: number } };
+      if (axiosErr.response?.status === 400) {
         setError(t('invalidOrExpiredToken'));
       } else {
         setError(t('resetFailed'));

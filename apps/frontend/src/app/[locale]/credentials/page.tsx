@@ -12,6 +12,14 @@ import api from '@/lib/api';
 import { NFTGrid, type NFTItem } from '@/components/nft';
 import { CertificateViewer } from '@/components/courses/CertificateViewer';
 
+/** Resolve the best available display name for the current user. */
+function resolveDisplayName(
+  user: { username?: string } | null | undefined,
+  fallback: string
+): string {
+  return user?.username ?? fallback;
+}
+
 export default function CredentialsPage() {
   const t = useTranslations('credentials');
   const { user, isAuthenticated } = useAuth();
@@ -35,10 +43,8 @@ export default function CredentialsPage() {
         issuedAt: cred.issuedAt,
         txHash: cred.txHash,
         isCompleted: true,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        owner: (user as any)?.name || user?.username,
+        owner: resolveDisplayName(user, t('defaultStudentName')),
       })),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     [credentials, user, t]
   );
 
@@ -60,10 +66,9 @@ export default function CredentialsPage() {
         onView={(item) => {
           const matched = credentials.find((c) => c.id === item.id);
           if (matched) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             setSelectedCert({
               ...matched,
-              studentName: (user as any)?.name || t('defaultStudentName'),
+              studentName: resolveDisplayName(user, t('defaultStudentName')),
             });
           }
         }}
@@ -73,8 +78,8 @@ export default function CredentialsPage() {
         <CertificateViewer
           certificate={{
             ...selectedCert,
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            studentName: selectedCert.studentName || (user as any)?.name || t('defaultStudentName'),
+            studentName:
+              selectedCert.studentName || resolveDisplayName(user, t('defaultStudentName')),
           }}
           isOpen={!!selectedCert}
           onClose={() => setSelectedCert(null)}

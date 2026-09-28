@@ -2,6 +2,8 @@
  * Command palette items and utilities
  */
 
+import type { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
+
 export interface Command {
   id: string;
   title: string;
@@ -12,7 +14,7 @@ export interface Command {
   keywords?: string[];
 }
 
-export const createNavigationCommands = (router: any): Command[] => [
+export const createNavigationCommands = (router: AppRouterInstance): Command[] => [
   {
     id: 'nav-courses',
     title: 'Go to Courses',

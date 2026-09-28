@@ -65,12 +65,13 @@ export default function WalletSection({ userId, stellarPublicKey, onLinked, onUn
       });
 
       onLinked(publicKey);
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Wallet linking error
-      if (error?.response?.status === 400) {
+      const axiosErr = error as { response?: { status?: number }; message?: string };
+      if (axiosErr?.response?.status === 400) {
         // Challenge or signature verification failed
         setFreighterMissing(true);
-      } else if (error?.message?.includes('User declined')) {
+      } else if (axiosErr?.message?.includes('User declined')) {
         // User declined to sign
         setFreighterMissing(false);
       } else {
