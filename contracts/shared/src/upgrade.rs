@@ -1,3 +1,42 @@
+//! Smart contract upgrade functionality with timelock security.
+//! 
+//! ## Authorization Invariants
+//!
+//! The upgrade system enforces the following security invariants:
+//!
+//! 1. **Admin-Only Operations**: Only the stored admin can schedule, execute, or cancel upgrades.
+//!    - Verified by `crate::access::require_admin()` in all entry points
+//!    - Both authentication (require_auth) and authorization (admin check) required
+//!
+//! 2. **Complete Authorization Required**: Partial or insufficient authorization is rejected.
+//!    - Address must match stored admin exactly
+//!    - Address must provide valid signature via require_auth()
+//!    - Role-based permissions (Instructor, Student) cannot override admin requirement
+//!
+//! 3. **Timelock Enforcement**: Upgrades cannot execute before their timelock expires.
+//!    - Scheduled upgrades have execute_after ledger number
+//!    - Current ledger must be >= execute_after to execute
+//!    - No bypass mechanism exists for emergency execution
+//!
+//! 4. **State Integrity**: Authorization state is preserved throughout upgrade lifecycle.
+//!    - Admin role maintained across schedule/cancel/execute operations
+//!    - No privilege escalation possible during upgrade process
+//!    - Storage keys remain consistent and protected
+//!
+//! 5. **Upgrade History**: All completed upgrades are recorded for audit trail.
+//!    - Immutable history stored with executor, timestamp, and WASM hash
+//!    - Cannot be modified or deleted after recording
+//!
+//! ## Security Review (#1169)
+//!
+//! The upgrade authorization flow has been comprehensively tested to ensure:
+//! - Unauthorized upgrade attempts are rejected with clear error messages
+//! - Authorization by wrong accounts fails even if they have other valid roles  
+//! - Insufficient authorization (e.g., non-admin roles) cannot bypass restrictions
+//! - Complete authorization sequence is required for all upgrade operations
+//! - Authorization invariants are preserved across the entire upgrade lifecycle
+//! - No multisig or partial authorization vulnerabilities exist
+
 #![allow(unused)]
 use soroban_sdk::{contracttype, symbol_short, Address, BytesN, Env, Symbol};
 

@@ -3,7 +3,7 @@ use soroban_sdk::{
     contract, contractimpl, contracttype, symbol_short, Address, BytesN, Env, Symbol, Vec,
 };
 
-use brain_storm_shared::access;
+use brain_storm_shared::{access, math};
 
 // =============================================================================
 // Storage keys
@@ -377,7 +377,7 @@ impl BuybackContract {
         if bst_price == 0 {
             return 0;
         }
-        (xlm_amount.checked_mul(1_000_000).unwrap_or(xlm_amount)) / bst_price
+        brain_storm_shared::math::checked_mul_div_i128(xlm_amount, 1_000_000, bst_price)
     }
 
     fn get_bst_price(env: &Env) -> i128 {
