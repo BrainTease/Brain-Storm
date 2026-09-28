@@ -188,6 +188,68 @@ mod tests {
         assert_eq!(client.get_owner_nfts(&nobody).len(), 0);
     }
 
+    // ── Pagination bounds (#1168) ─────────────────────────────────────────────
+
+    #[test]
+    fn test_get_max_page_size_returns_shared_cap() {
+        let (_, client, _) = setup();
+        assert_eq!(client.get_max_page_size(), 100);
+    }
+
+    #[test]
+    fn test_get_owner_nfts_paged_zero_limit_returns_empty() {
+        let (env, client, admin) = setup();
+        let owner = Address::generate(&env);
+        mint_nft(&env, &client, &admin, &owner);
+        let page = client.get_owner_nfts_paged(&owner, &0, &0);
+        assert_eq!(page.len(), 0);
+    }
+
+    #[test]
+    fn test_get_owner_nfts_paged_over_limit_is_truncated_to_max_page_size() {
+        let (env, client, admin) = setup();
+        // 120 mints is well past the default test budget.
+        env.budget().reset_unlimited();
+        let owner = Address::generate(&env);
+        for _ in 0..120 {
+            mint_nft(&env, &client, &admin, &owner);
+        }
+        assert_eq!(client.get_owner_nfts(&owner).len(), 120);
+
+        // Unbounded request → capped at the shared page-size limit.
+        let page = client.get_owner_nfts_paged(&owner, &0, &u32::MAX);
+        assert_eq!(page.len(), 100);
+
+        // A mid-list over-limit request stays capped (70 remaining < 100).
+        let tail = client.get_owner_nfts_paged(&owner, &50, &u32::MAX);
+        assert_eq!(tail.len(), 70);
+
+        // Exactly-at-the-limit requests are not truncated.
+        let full = client.get_owner_nfts_paged(&owner, &0, &100);
+        assert_eq!(full.len(), 100);
+    }
+
+    #[test]
+    fn test_get_owner_nfts_paged_walks_the_whole_list() {
+        let (env, client, admin) = setup();
+        let owner = Address::generate(&env);
+        for _ in 0..5 {
+            mint_nft(&env, &client, &admin, &owner);
+        }
+        let mut seen = 0;
+        let mut offset = 0;
+        loop {
+            let page = client.get_owner_nfts_paged(&owner, &offset, &2);
+            if page.len() == 0 {
+                break;
+            }
+            seen += page.len();
+            offset += 2;
+        }
+        assert_eq!(seen, 5);
+        assert_eq!(client.get_owner_nfts_paged(&owner, &0, &5).len(), 5);
+    }
+
     #[test]
     fn test_get_royalty_info_nonexistent_returns_none() {
         let (_, client, _) = setup();

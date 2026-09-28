@@ -8,6 +8,7 @@ use soroban_sdk::{
     contract, contractimpl, contracttype, symbol_short, Address, Env, String, Symbol, Vec,
 };
 
+use brain_storm_shared::pagination::{paginate, MAX_PAGE_SIZE};
 use brain_storm_shared::{access, validation};
 
 #[contracttype]
@@ -257,6 +258,27 @@ impl NftContract {
             .instance()
             .get(&DataKey::CourseNfts(owner))
             .unwrap_or_else(|| Vec::new(&env))
+    }
+
+    /// Largest page `get_owner_nfts_paged` will ever return (Issue #1168).
+    ///
+    /// Surfaced so clients can pick a `limit` that will not be truncated.
+    pub fn get_max_page_size() -> u32 {
+        MAX_PAGE_SIZE
+    }
+
+    /// Paged view of [`Self::get_owner_nfts`] (Issue #1168).
+    ///
+    /// `limit` is capped at [`MAX_PAGE_SIZE`] by the shared pagination helper,
+    /// so an over-limit request returns at most `MAX_PAGE_SIZE` items and a
+    /// `limit` of 0 returns an empty page.
+    pub fn get_owner_nfts_paged(env: Env, owner: Address, offset: u32, limit: u32) -> Vec<u32> {
+        let all: Vec<u32> = env
+            .storage()
+            .instance()
+            .get(&DataKey::CourseNfts(owner))
+            .unwrap_or_else(|| Vec::new(&env));
+        paginate(&env, &all, offset, limit)
     }
 
     pub fn get_royalty_info(env: Env, nft_id: u32) -> Option<(Address, u32)> {
