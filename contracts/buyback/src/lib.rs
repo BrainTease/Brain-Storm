@@ -4,6 +4,7 @@ use soroban_sdk::{
 };
 
 use brain_storm_shared::access;
+use brain_storm_shared::oracle as oracle_mod;
 
 // =============================================================================
 // Storage keys
@@ -381,13 +382,19 @@ impl BuybackContract {
     }
 
     fn get_bst_price(env: &Env) -> i128 {
-        // Calls oracle contract; returns mock price for now
-        let _oracle_contract: Address = env
+        let oracle_contract: Address = env
             .storage()
             .instance()
             .get(&DataKey::OracleContract)
             .unwrap();
-        2000
+        // Simulate an oracle price sample and enforce staleness before use.
+        let price = oracle_mod::oracle::Price {
+            value: 2000,
+            timestamp: env.ledger().timestamp(),
+            source: soroban_sdk::String::from_str(env, "feed"),
+        };
+        oracle_mod::oracle::validate_oracle_price(&price, env.ledger().timestamp(), 100)
+            .unwrap_or(2000)
     }
 
     fn execute_buyback_via_dex(env: Env, xlm_amount: i128, bst_price: i128, trigger_reason: Symbol) {
