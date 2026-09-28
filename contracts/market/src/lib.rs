@@ -8,7 +8,7 @@ use brain_storm_shared::access;
 use brain_storm_shared::pausable;
 
 // ============================================
-# Error Types
+// Error Types
 // ============================================
 
 #[contracterror]
@@ -36,7 +36,7 @@ pub enum MarketError {
 }
 
 // ============================================
-# Data Types
+// Data Types
 // ============================================
 
 #[contracttype]
@@ -89,7 +89,7 @@ pub enum ProductStatus {
 }
 
 // ============================================
-# Reentrancy Guard
+// Reentrancy Guard
 // ============================================
 
 #[contracttype]
@@ -141,7 +141,7 @@ impl ReentrancyGuard {
 }
 
 // ============================================
-# Market Contract
+// Market Contract
 // ============================================
 
 #[contract]
@@ -150,7 +150,7 @@ pub struct MarketContract;
 #[contractimpl]
 impl MarketContract {
     // ============================================
-    # Initialization
+// Initialization
     // ============================================
 
     pub fn initialize(env: Env, admin: Address) -> Result<(), MarketError> {
@@ -162,7 +162,7 @@ impl MarketContract {
     }
 
     // ============================================
-    # Product Management
+// Product Management
     // ============================================
 
     /// List a new product for sale
@@ -223,7 +223,7 @@ impl MarketContract {
     }
 
     // ============================================
-    # Purchase Flow with Reentrancy Protection
+// Purchase Flow with Reentrancy Protection
     // ============================================
 
     /// Purchase a product with reentrancy protection
@@ -239,7 +239,7 @@ impl MarketContract {
         buyer.require_auth();
 
         // ============================================
-        # Phase 1: Checks
+// Phase 1: Checks
         // ============================================
 
         // Load product
@@ -260,7 +260,7 @@ impl MarketContract {
         let guard = ReentrancyGuard::new(&env);
 
         // ============================================
-        # Phase 2: Effects (State Mutations)
+// Phase 2: Effects (State Mutations)
         // ============================================
 
         // Mark product as sold BEFORE external calls
@@ -284,7 +284,7 @@ impl MarketContract {
         env.storage().set(&Symbol::new(&env, &format!("listing_{}", product_id)), &listing);
 
         // ============================================
-        # Phase 3: Interactions (External Calls with Lock)
+// Phase 3: Interactions (External Calls with Lock)
         // ============================================
 
         // Acquire lock before external calls
@@ -321,7 +321,7 @@ impl MarketContract {
     }
 
     // ============================================
-    # Internal Functions
+// Internal Functions
     // ============================================
 
     /// Perform payment to seller (external calls)
@@ -358,7 +358,7 @@ impl MarketContract {
     }
 
     // ============================================
-    # View Functions
+// View Functions
     // ============================================
 
     /// Get product details
@@ -419,7 +419,7 @@ impl MarketContract {
 }
 
 // ============================================
-# Tests
+// Tests
 // ============================================
 
 pub mod fees;

@@ -1,4 +1,8 @@
 #![no_std]
+// Test builds need std (panic::catch_unwind); runtime stays no_std.
+#[cfg(test)]
+extern crate std;
+
 use soroban_sdk::{
     contract, contractimpl, contracttype, symbol_short, Address, Bytes, BytesN, Env, String, Symbol,
 };
@@ -200,6 +204,9 @@ impl CredentialMetadataContract {
         access::require_admin(&env, &admin, &DataKey::Admin);
 
         let mut metadata: MetadataRecord = validation::get_metadata_or_panic(&env, credential_id);
+        // Shared metadata rules (#1170) — the new values must be valid too, and
+        // the stored content pointer an update leaves untouched must still hold.
+        validation::validate_metadata_fields(&course_name, &grade, &metadata.ipfs_hash);
 
         let history_count: u32 = env
             .storage()
