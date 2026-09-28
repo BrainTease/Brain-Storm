@@ -2,6 +2,7 @@
 use soroban_sdk::{
     contract, contractimpl, contracttype, symbol_short, Address, Bytes, BytesN, Env, String, Symbol,
 };
+use brain_storm_shared::access;
 
 pub mod linkage;
 pub mod validation;
@@ -118,8 +119,7 @@ impl CredentialMetadataContract {
         royalty_basis: u32,
 
     ) -> u32 {
-        admin.require_auth();
-        validation::validate_admin(&env, &admin);
+        access::require_admin(&env, &admin, &DataKey::Admin);
 
         // Store credential metadata first
         let metadata = MetadataRecord {
@@ -171,8 +171,7 @@ impl CredentialMetadataContract {
         grade: String,
         ipfs_hash: String,
     ) {
-        admin.require_auth();
-        validation::validate_admin(&env, &admin);
+        access::require_admin(&env, &admin, &DataKey::Admin);
 
         let metadata = MetadataRecord {
             credential_id,
@@ -198,8 +197,7 @@ impl CredentialMetadataContract {
         course_name: String,
         grade: String,
     ) {
-        admin.require_auth();
-        validation::validate_admin(&env, &admin);
+        access::require_admin(&env, &admin, &DataKey::Admin);
 
         let mut metadata: MetadataRecord = validation::get_metadata_or_panic(&env, credential_id);
 
@@ -267,8 +265,7 @@ impl CredentialMetadataContract {
         credential_id: u64,
         new_expiry_timestamp: u64,
     ) {
-        admin.require_auth();
-        validation::validate_admin(&env, &admin);
+        access::require_admin(&env, &admin, &DataKey::Admin);
 
         let mut metadata: MetadataRecord = validation::get_metadata_or_panic(&env, credential_id);
 
@@ -295,8 +292,7 @@ impl CredentialMetadataContract {
     }
 
     pub fn store_metadata_hash(env: Env, admin: Address, credential_id: u64, hash: Bytes) {
-        admin.require_auth();
-        validation::validate_admin(&env, &admin);
+        access::require_admin(&env, &admin, &DataKey::Admin);
 
         env.storage()
             .persistent()
@@ -330,8 +326,7 @@ impl CredentialMetadataContract {
         issued_at: u64,
         expiry_timestamp: u64,
     ) {
-        admin.require_auth();
-        validation::validate_admin(&env, &admin);
+        access::require_admin(&env, &admin, &DataKey::Admin);
 
         let record = CompactMetadataRecord {
             credential_id,
@@ -399,8 +394,7 @@ impl CredentialMetadataContract {
         credential_id: u64,
         content_hash: soroban_sdk::BytesN<32>,
     ) {
-        admin.require_auth();
-        validation::validate_admin(&env, &admin);
+        access::require_admin(&env, &admin, &DataKey::Admin);
 
         let full: MetadataRecord = validation::get_metadata_or_panic(&env, credential_id);
 

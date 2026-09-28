@@ -4,18 +4,6 @@
 use soroban_sdk::{Address, Env};
 use crate::DataKey;
 
-/// Validates that the caller is the contract admin
-/// Returns the stored admin address for efficiency
-pub fn validate_admin(env: &Env, caller: &Address) -> Address {
-    let stored_admin: Address = env
-        .storage()
-        .instance()
-        .get(&DataKey::Admin)
-        .expect("Admin not set");
-    assert!(*caller == stored_admin, "Only admin can perform this action");
-    stored_admin
-}
-
 /// Checks if a credential metadata record exists
 pub fn metadata_exists(env: &Env, credential_id: u64) -> bool {
     env.storage()

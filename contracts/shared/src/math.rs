@@ -50,11 +50,39 @@ pub mod math {
         a.checked_mul(b).ok_or(SharedError::ArithmeticOverflow)
     }
 
-    /// Safe division with overflow check
-    pub fn safe_div(a: i128, b: i128) -> Result<i128, SharedError> {
-        if b == 0 {
-            return Err(SharedError::InvalidInput);
+/// Safe division with overflow check
+pub fn safe_div(a: i128, b: i128) -> Result<i128, SharedError> {
+    if b == 0 {
+        return Err(SharedError::InvalidInput);
+    }
+    a.checked_div(b).ok_or(SharedError::OperationFailed)
+}
+}
+
+#[cfg(test)]
+mod fuzz_tests {
+    use super::math::*;
+    use proptest::prelude::*;
+
+    proptest! {
+        #[test]
+        fn calculate_bps_doesnt_overflow(amount in 0i128..i128::MAX, bps in 0i128..10000) {
+            let _ = calculate_bps(amount, bps);
         }
-        a.checked_div(b).ok_or(SharedError::OperationFailed)
+
+        #[test]
+        fn safe_add_doesnt_overflow(a in i128::MIN..i128::MAX, b in i128::MIN..i128::MAX) {
+            let _ = safe_add(a, b);
+        }
+
+        #[test]
+        fn safe_sub_doesnt_overflow(a in i128::MIN..i128::MAX, b in i128::MIN..i128::MAX) {
+            let _ = safe_sub(a, b);
+        }
+
+        #[test]
+        fn safe_mul_doesnt_overflow(a in i128::MIN..1000i128, b in i128::MIN..1000i128) {
+            let _ = safe_mul(a, b);
+        }
     }
 }

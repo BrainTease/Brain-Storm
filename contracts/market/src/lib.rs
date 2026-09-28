@@ -4,6 +4,8 @@ use soroban_sdk::{
     contract, contractimpl, contracttype, contracterror,
     Address, Env, String, Symbol, Vec,
 };
+use brain_storm_shared::access;
+use brain_storm_shared::pausable;
 
 // ============================================
 # Error Types
@@ -414,27 +416,19 @@ impl MarketContract {
         let guard = ReentrancyGuard::new(&env);
         guard.is_locked()
     }
-
-    // ── Fee config ────────────────────────────────────────────────────────────
-
-    fn is_paused_internal(env: &Env) -> bool {
-        env.storage().instance().get(&Symbol::new(env, "paused")).unwrap_or(false)
-    }
-
-    fn require_not_paused(env: &Env) {
-        assert!(!Self::is_paused_internal(env), "Contract is paused");
-    }
-
-    fn assert_admin_addr(env: &Env, caller: &Address) {
-        let admin: Address = env.storage().instance().get(&Symbol::new(env, "admin"))
-            .unwrap();
-        assert_eq!(&admin, caller, "Only admin");
-    }
 }
 
 // ============================================
 # Tests
 // ============================================
+
+pub mod fees;
+pub mod fuzz_tests;
+pub mod listing;
+pub mod multisig_escrow;
+pub mod offer;
+pub mod settlement;
+pub mod tests_coverage;
 
 #[cfg(test)]
 mod test;
