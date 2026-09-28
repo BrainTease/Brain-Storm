@@ -372,7 +372,7 @@ mod tests {
         let instructor = Address::generate(&env);
         
         // Baseline: single mint instruction count check
-        env.budget().reset();
+        env.budget().reset_default();
         let nft_id = client.mint_course_nft(
             &admin,
             &owner,
@@ -398,7 +398,7 @@ mod tests {
         
         let nft_id = mint_nft(&env, &client, &admin, &owner);
         
-        env.budget().reset();
+        env.budget().reset_default();
         client.transfer_nft(&owner, &new_owner, &nft_id);
         
         let cpu_instructions = env.budget().cpu_instruction_cost();
@@ -412,7 +412,7 @@ mod tests {
         let (env, client, admin) = setup();
         let owner = Address::generate(&env);
         
-        env.budget().reset();
+        env.budget().reset_default();
         // Mint 5 NFTs and measure total instruction cost
         for _ in 0..5 {
             mint_nft(&env, &client, &admin, &owner);
@@ -425,5 +425,63 @@ mod tests {
         
         // Verify all 5 were minted
         assert_eq!(client.get_owner_nfts(&owner).len(), 5);
+    }
+
+    // ── Metadata validation (Issue #1170) ─────────────────────────────────────
+    // The rules live in `brain_storm_shared::validation` and are shared with
+    // `contracts/credential_metadata`.
+
+    fn mint_with_course_name(env: &Env, client: &NftContractClient, admin: &Address, name: &str) {
+        let owner = Address::generate(env);
+        let instructor = Address::generate(env);
+        client.mint_course_nft(
+            admin,
+            &owner,
+            &symbol_short!("RUST101"),
+            &String::from_str(env, name),
+            &instructor,
+            &1000,
+            &500,
+        );
+    }
+
+    #[test]
+    #[should_panic(expected = "Course name must be between 3 and 100 characters")]
+    fn test_mint_rejects_empty_course_name() {
+        let (env, client, admin) = setup();
+        mint_with_course_name(&env, &client, &admin, "");
+    }
+
+    #[test]
+    #[should_panic(expected = "Course name must be between 3 and 100 characters")]
+    fn test_mint_rejects_too_short_course_name() {
+        let (env, client, admin) = setup();
+        mint_with_course_name(&env, &client, &admin, "Ab");
+    }
+
+    #[test]
+    #[should_panic(expected = "Course name must be between 3 and 100 characters")]
+    fn test_mint_rejects_overlong_course_name() {
+        let (env, client, admin) = setup();
+        let overlong = "X".repeat(101);
+        mint_with_course_name(&env, &client, &admin, &overlong);
+    }
+
+    #[test]
+    fn test_mint_accepts_boundary_course_name_and_royalty() {
+        let (env, client, admin) = setup();
+        let owner = Address::generate(&env);
+        let instructor = Address::generate(&env);
+        // Exactly 3 characters and the maximum royalty basis both pass.
+        let nft_id = client.mint_course_nft(
+            &admin,
+            &owner,
+            &symbol_short!("RUST101"),
+            &String::from_str(&env, "Rst"),
+            &instructor,
+            &1000,
+            &10000,
+        );
+        assert_eq!(client.get_royalty_info(&nft_id).unwrap().1, 10000);
     }
 }

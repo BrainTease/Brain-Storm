@@ -1,9 +1,14 @@
 #![no_std]
+// Test builds need std (panic::catch_unwind, println!); runtime stays no_std.
+#[cfg(test)]
+#[macro_use]
+extern crate std;
+
 use soroban_sdk::{
     contract, contractimpl, contracttype, symbol_short, Address, Env, String, Symbol, Vec,
 };
 
-use brain_storm_shared::access;
+use brain_storm_shared::{access, validation};
 
 #[contracttype]
 pub enum DataKey {
@@ -80,7 +85,9 @@ impl NftContract {
         royalty_basis: u32,
     ) -> u32 {
         access::require_admin(&env, &admin, &DataKey::Admin);
-        assert!(royalty_basis <= 10000, "Royalty basis must be <= 10000");
+        // Shared metadata rules (#1170) — same helpers credential_metadata uses.
+        validation::require_valid_course_name(&course_name);
+        validation::require_valid_royalty_basis(royalty_basis);
 
         // OPTIMIZATION: Cache NextNftId read (issue #1001)
         let nft_id_key = DataKey::NextNftId;

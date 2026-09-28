@@ -97,6 +97,15 @@ fn role_has_permission(role: &Role, permission: &Permission) -> bool {
 impl SharedContract {
     /// Initialize the contract with an admin address
     pub fn initialize(env: Env, admin: Address) {
+        // Security (#1169): the admin slot gates every upgrade, so it must be
+        // written exactly once. Without this guard any address could call
+        // `initialize` again, become the admin and then schedule + execute an
+        // upgrade (the `governance` and `credential_metadata` contracts already
+        // enforce the same rule).
+        assert!(
+            !env.storage().instance().has(&DataKey::Admin),
+            "Already initialized"
+        );
         admin.require_auth();
         env.storage().instance().set(&DataKey::Admin, &admin);
         env.storage()
@@ -137,17 +146,21 @@ impl SharedContract {
         }
     }
 
-    /// Upgrade the contract wasm (admin only). Emits ("shared", "upgraded").
+    /// Upgrades must go through the timelocked flow instead (issue #1169).
+    ///
+    /// This entry point used to swap the WASM immediately for the admin,
+    /// bypassing the timelock, the pending-upgrade record and the upgrade
+    /// history that `schedule_upgrade` / `execute_upgrade` enforce. The admin
+    /// check runs first so an unauthenticated caller is still rejected with
+    /// `"Unauthorized: admin required"`; an authorized caller is told to use
+    /// the timelocked path rather than being handed a bypass.
     pub fn upgrade(env: Env, admin: Address, new_wasm_hash: BytesN<32>) {
         crate::access::require_admin(&env, &admin, &DataKey::Admin);
-
-        env.events().publish(
-            (symbol_short!("shared"), symbol_short!("upgraded")),
-            new_wasm_hash.clone(),
+        assert!(
+            new_wasm_hash != BytesN::from_array(&env, &[0u8; 32]),
+            "Invalid WASM hash"
         );
-
-        env.deployer()
-            .update_current_contract_wasm(new_wasm_hash);
+        panic!("Direct upgrade disabled: use schedule_upgrade then execute_upgrade");
     }
 
     // -------------------------------------------------------------------------
@@ -318,25 +331,25 @@ impl SharedContract {
     // -------------------------------------------------------------------------
 
     /// Schedule a WASM upgrade with a timelock delay (admin only).
+    ///
+    /// Authorization (`require_admin`) is enforced inside `upgrade` itself so
+    /// the check cannot be skipped by a future entry point (issue #1169).
     pub fn schedule_upgrade(
         env: Env,
         admin: Address,
         new_wasm_hash: BytesN<32>,
         timelock_ledgers: u32,
     ) {
-        crate::access::require_admin(&env, &admin, &DataKey::Admin);
         upgrade::schedule_upgrade(&env, &admin, new_wasm_hash, timelock_ledgers);
     }
 
     /// Execute a previously scheduled upgrade once its timelock has expired (admin only).
     pub fn execute_upgrade(env: Env, admin: Address) {
-        crate::access::require_admin(&env, &admin, &DataKey::Admin);
         upgrade::execute_upgrade(&env, &admin);
     }
 
     /// Cancel a pending upgrade before it executes (admin only).
     pub fn cancel_upgrade(env: Env, admin: Address) {
-        crate::access::require_admin(&env, &admin, &DataKey::Admin);
         upgrade::cancel_upgrade(&env, &admin);
     }
 
