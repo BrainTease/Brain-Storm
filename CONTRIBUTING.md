@@ -14,6 +14,23 @@ All contributors are expected to follow our [Code of Conduct](CODE_OF_CONDUCT.md
 4. **Create a new branch** from `main` for your change (see naming conventions below).
 5. Make your changes, add tests, and open a pull request.
 
+## Task Tracking & TODOs
+
+**All actionable items must be tracked as [GitHub Issues](https://github.com/BrainTease/Brain-Storm/issues)**, not in root-level TODO files. This ensures:
+
+- Visibility across the entire team
+- Clear assignment and progress tracking
+- Integration with project boards and milestones
+- Historical record for future reference
+
+**Never commit TODOs or task lists to the root directory.** If you encounter untracked work during development:
+
+1. Create a GitHub issue with a clear title, description, and acceptance criteria
+2. Link it in your PR if it's blocking or related
+3. Add it to the appropriate project board (e.g., "Feature Development", "Bug Fixes")
+
+For multi-step features, break them into smaller issues or create a GitHub project to organize related issues together.
+
 ## Branch Naming Conventions
 
 | Prefix      | When to use                                              |
