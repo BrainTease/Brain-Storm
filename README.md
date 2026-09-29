@@ -345,3 +345,8 @@ The CI workflow runs on every push and PR, ensuring code quality and functionali
 2. **Test** - `cargo test` with coverage
 3. **Build** - WASM compilation
 4. **Coverage** - Code coverage reporting
+
+## Handsoff notes
+
+<!-- handsoff-issue-1183 -->
+- #1183: 88. [Testing] Add integration tests for webhooks module signature verification
