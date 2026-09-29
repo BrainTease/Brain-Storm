@@ -7,7 +7,8 @@
     "packages/types",
     "packages/sdk",
     "apps/frontend",
-    "apps/backend"
+    "apps/backend",
+    "packages/api"
   ],
   "scripts": {
     "dev:frontend": "npm run dev --workspace=apps/frontend",
