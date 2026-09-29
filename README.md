@@ -350,3 +350,6 @@ The CI workflow runs on every push and PR, ensuring code quality and functionali
 
 <!-- handsoff-issue-1176 -->
 - #1176: 81. [Testing] Add unit tests for backend certificates module to reach 85%+ coverage
+
+<!-- handsoff-issue-1178 -->
+- #1178: 83. [Testing] Add integration tests for auth guards and strategies
