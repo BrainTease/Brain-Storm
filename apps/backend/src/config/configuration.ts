@@ -1,3 +1,4 @@
+import { getStellarNetworkConfig } from '@brain-storm/sdk';
 /**
  * NestJS ConfigModule factory.
  *
@@ -54,8 +55,8 @@ export default () => ({
   stellar: {
     network: process.env.STELLAR_NETWORK as 'testnet' | 'mainnet',
     secretKey: process.env.STELLAR_SECRET_KEY!,
-    horizonUrl: process.env.STELLAR_HORIZON_URL || 'https://horizon-testnet.stellar.org',
-    sorobanRpcUrl: process.env.SOROBAN_RPC_URL || 'https://soroban-testnet.stellar.org',
+    horizonUrl: process.env.STELLAR_HORIZON_URL || getStellarNetworkConfig((process.env.STELLAR_NETWORK as 'testnet' | 'mainnet') || 'testnet').horizonUrl,
+    sorobanRpcUrl: process.env.SOROBAN_RPC_URL || getStellarNetworkConfig((process.env.STELLAR_NETWORK as 'testnet' | 'mainnet') || 'testnet').sorobanRpcUrl,
     contractId: process.env.SOROBAN_CONTRACT_ID || '',
     analyticsContractId: process.env.ANALYTICS_CONTRACT_ID || '',
     tokenContractId: process.env.TOKEN_CONTRACT_ID || '',
