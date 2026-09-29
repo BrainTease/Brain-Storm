@@ -91,6 +91,15 @@ jobs:
       - name: Run Playwright tests
         run: npm run test:e2e:ci --workspace=apps/frontend
 
+      # Stability gate: the full enrollment-to-completion journey must pass
+      # across 5 consecutive runs (issue #1180 acceptance criteria).
+      - name: Verify journey stability (5 consecutive runs)
+        run: |
+          for i in 1 2 3 4 5; do
+            echo "── Stability run $i/5 ──"
+            npm run test:e2e:ci --workspace=apps/frontend -- --grep "enrollment-to-completion"
+          done
+
       - name: Upload test report
         if: always()
         uses: actions/upload-artifact@v4

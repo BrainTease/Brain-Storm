@@ -17,6 +17,7 @@
     "test": "npm run test --workspaces",
     "test:e2e": "npm run test:e2e --workspace=apps/frontend",
     "test:e2e:ci": "npm run test:e2e:ci --workspace=apps/frontend",
+    "test:e2e:enrollment": "npm run test:e2e:enrollment --workspace=apps/frontend",
     "test:unit:frontend": "npm run test --workspace=apps/frontend",
     "test:unit:backend": "npm run test:unit --workspace=apps/backend",
     "test:coverage:frontend": "npm run test:coverage --workspace=apps/frontend",

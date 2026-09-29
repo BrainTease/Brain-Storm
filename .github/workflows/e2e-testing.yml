@@ -87,6 +87,13 @@ jobs:
           NEXT_PUBLIC_API_URL: http://localhost:3000
           CI: true
 
+      - name: Run enrollment-to-completion journey (stability check)
+        run: npm run test:e2e:ci --workspace=apps/frontend -- --grep "enrollment-to-completion" --repeat-each=5
+        env:
+          PLAYWRIGHT_BASE_URL: http://localhost:3001
+          NEXT_PUBLIC_API_URL: http://localhost:3000
+          CI: true
+
       - name: Upload test results (always)
         if: always()
         uses: actions/upload-artifact@v4
