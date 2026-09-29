@@ -350,3 +350,6 @@ The CI workflow runs on every push and PR, ensuring code quality and functionali
 
 <!-- handsoff-issue-1188 -->
 - #1188: 93. [Testing] Add WebSocket gateway tests for ws-gateway module
+
+<!-- handsoff-issue-1189 -->
+- #1189: 94. [Testing] Remove redundant duplicate tests between unit and integration suites in courses module
