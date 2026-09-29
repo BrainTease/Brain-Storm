@@ -345,3 +345,8 @@ The CI workflow runs on every push and PR, ensuring code quality and functionali
 2. **Test** - `cargo test` with coverage
 3. **Build** - WASM compilation
 4. **Coverage** - Code coverage reporting
+
+## Handsoff notes
+
+<!-- handsoff-issue-1184 -->
+- #1184: 89. [Testing] Establish coverage targets (85%+) for apps/backend/src/organizations module
