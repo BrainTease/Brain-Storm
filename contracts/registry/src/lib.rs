@@ -19,7 +19,8 @@ use soroban_sdk::{
 };
 
 use brain_storm_shared::access;
-use brain_storm_shared::pagination::{paginate, MAX_PAGE_SIZE};
+use brain_storm_shared::pagination::paginate;
+use brain_storm_shared::pausable;
 
 // ── Storage keys ──────────────────────────────────────────────────────────────
 
@@ -32,7 +33,6 @@ pub enum DataKey {
     Specialisation(Address),      // persistent: Vec<Symbol>
     SkillExpiry(Address, Symbol), // persistent: u64 timestamp (0 = never)
     UserList,                     // instance: Vec<Address> — ordered registration list
-    Paused,                       // instance: bool (#663)
 }
 
 fn level_ord(level: &VerificationLevel) -> u32 {
@@ -62,8 +62,6 @@ const EVT_SKILL_ADD: Symbol = symbol_short!("sk_add");
 const EVT_SKILL_RM: Symbol = symbol_short!("sk_rm");
 const EVT_SPEC_SET: Symbol = symbol_short!("sp_set");
 const EVT_CURATOR_ADD: Symbol = symbol_short!("cur_add");
-const EVT_PAUSED: Symbol = symbol_short!("paused");
-const EVT_UNPAUSED: Symbol = symbol_short!("unpaused");
 
 #[contract]
 pub struct RegistryContract;
@@ -76,7 +74,7 @@ impl RegistryContract {
         assert!(!env.storage().instance().has(&DataKey::Admin), "Already initialized");
         admin.require_auth();
         env.storage().instance().set(&DataKey::Admin, &admin);
-        env.storage().instance().set(&DataKey::Paused, &false);
+        pausable::initialize_pausable(&env);
     }
 
     pub fn get_admin(env: Env) -> Address {
@@ -85,26 +83,16 @@ impl RegistryContract {
 
     // ── Pausable (#663) ───────────────────────────────────────────────────────
 
-    /// Pause all mutating operations. Admin only.
     pub fn pause(env: Env, admin: Address) {
-        admin.require_auth();
-        Self::assert_admin(&env, &admin);
-        assert!(!Self::is_paused_internal(&env), "Already paused");
-        env.storage().instance().set(&DataKey::Paused, &true);
-        env.events().publish((EVT_PAUSED,), admin);
+        pausable::pause(&env, &admin, 100);
     }
 
-    /// Resume all operations. Admin only.
     pub fn unpause(env: Env, admin: Address) {
-        admin.require_auth();
-        Self::assert_admin(&env, &admin);
-        assert!(Self::is_paused_internal(&env), "Not paused");
-        env.storage().instance().set(&DataKey::Paused, &false);
-        env.events().publish((EVT_UNPAUSED,), admin);
+        pausable::unpause(&env, &admin);
     }
 
     pub fn is_paused(env: Env) -> bool {
-        Self::is_paused_internal(&env)
+        pausable::is_paused(&env)
     }
 
     // ── Curator management (admin-only) ───────────────────────────────────────
@@ -138,7 +126,7 @@ impl RegistryContract {
         user: Address,
         level: VerificationLevel,
     ) {
-        Self::require_not_paused(&env);
+        pausable::check_not_paused(&env);
         setter.require_auth();
         Self::assert_admin_or_curator(&env, &setter);
         env.storage()
@@ -165,7 +153,7 @@ impl RegistryContract {
         skill: Symbol,
         expiry_ts: u64,
     ) {
-        Self::require_not_paused(&env);
+        pausable::check_not_paused(&env);
         setter.require_auth();
         Self::assert_admin_or_curator(&env, &setter);
 
@@ -192,7 +180,7 @@ impl RegistryContract {
 
     /// Remove a certified skill from `user`. Blocked when paused.
     pub fn remove_certified_skill(env: Env, setter: Address, user: Address, skill: Symbol) {
-        Self::require_not_paused(&env);
+        pausable::check_not_paused(&env);
         setter.require_auth();
         Self::assert_admin_or_curator(&env, &setter);
 
@@ -256,7 +244,7 @@ impl RegistryContract {
         user: Address,
         specs: Vec<Symbol>,
     ) {
-        Self::require_not_paused(&env);
+        pausable::check_not_paused(&env);
         setter.require_auth();
         Self::assert_admin_or_curator(&env, &setter);
         env.storage()
@@ -277,7 +265,7 @@ impl RegistryContract {
 
     /// Register multiple users in one transaction. Blocked when paused.
     pub fn batch_register_users(env: Env, users: Vec<Address>) {
-        Self::require_not_paused(&env);
+        pausable::check_not_paused(&env);
         // Read list once
         let mut list: Vec<Address> = env
             .storage()
@@ -302,7 +290,7 @@ impl RegistryContract {
         users: Vec<Address>,
         level: VerificationLevel,
     ) {
-        Self::require_not_paused(&env);
+        pausable::check_not_paused(&env);
         setter.require_auth();
         Self::assert_admin_or_curator(&env, &setter);
 
@@ -397,14 +385,6 @@ impl RegistryContract {
     }
 
     // ── Internal helpers ──────────────────────────────────────────────────────
-
-    fn is_paused_internal(env: &Env) -> bool {
-        env.storage().instance().get(&DataKey::Paused).unwrap_or(false)
-    }
-
-    fn require_not_paused(env: &Env) {
-        assert!(!Self::is_paused_internal(env), "Contract is paused");
-    }
 
     fn assert_admin(env: &Env, caller: &Address) {
         assert!(access::is_admin(env, caller, &DataKey::Admin), "Only admin");

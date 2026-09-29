@@ -7,6 +7,7 @@
 
 pub mod access;
 pub mod admin;
+pub mod access;
 pub mod constants;
 pub mod errors;
 pub mod events;
