@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as winston from 'winston';
 import { v4 as uuidv4 } from 'uuid';
+import { getCorrelationId } from './correlation.store';
 
 export interface StructuredLogContext {
   requestId?: string;
@@ -86,6 +87,21 @@ export class StructuredLoggerService extends Logger {
     return this.requestId;
   }
 
+
+  /**
+   * Resolve the correlation ID for this log call (#1215):
+   *   1. explicit context.correlationId if provided
+   *   2. the AsyncLocalStorage-bound ID for the current request
+   *   3. fall back to the instance requestId
+   */
+  private resolveCorrelationId(context?: StructuredLogContext): string {
+    return (
+      context?.correlationId ??
+      getCorrelationId() ??
+      this.getRequestId()
+    );
+  }
+
   /**
    * Log informational message with structured context
    */
@@ -93,6 +109,7 @@ export class StructuredLoggerService extends Logger {
     const meta = {
       ...context,
       requestId: context?.requestId || this.getRequestId(),
+      correlationId: this.resolveCorrelationId(context),
     };
     this.logger.info(message, meta);
   }
@@ -104,6 +121,7 @@ export class StructuredLoggerService extends Logger {
     const meta = {
       ...context,
       requestId: context?.requestId || this.getRequestId(),
+      correlationId: this.resolveCorrelationId(context),
     };
     this.logger.debug(message, meta);
   }
@@ -115,6 +133,7 @@ export class StructuredLoggerService extends Logger {
     const meta = {
       ...context,
       requestId: context?.requestId || this.getRequestId(),
+      correlationId: this.resolveCorrelationId(context),
     };
     this.logger.warn(message, meta);
   }
@@ -136,6 +155,7 @@ export class StructuredLoggerService extends Logger {
     const meta = {
       ...context,
       requestId: context?.requestId || this.getRequestId(),
+      correlationId: this.resolveCorrelationId(context),
       ...(stack && { stack }),
     };
 
