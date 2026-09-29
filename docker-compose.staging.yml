@@ -2,12 +2,13 @@ version: '3.8'
 
 # Staging environment — mirrors production config but uses staging secrets
 # and reduced resource limits. Start with:
-#   docker compose -f docker-compose.staging.yml up -d
+#   docker compose -f docker-compose.base.yml -f docker-compose.staging.yml up -d
 
 services:
   postgres:
-    image: postgres:16-alpine
-    restart: unless-stopped
+    extends:
+      file: docker-compose.base.yml
+      service: postgres
     environment:
       POSTGRES_DB: brain-storm-staging
       POSTGRES_USER: ${STAGING_DATABASE_USER:-brain-storm-staging}
@@ -16,11 +17,6 @@ services:
       - postgres_staging_data:/var/lib/postgresql/data
     networks:
       - brain-storm-staging
-    healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U ${STAGING_DATABASE_USER:-brain-storm-staging}']
-      interval: 10s
-      timeout: 5s
-      retries: 5
     deploy:
       resources:
         limits:
@@ -28,18 +24,13 @@ services:
           memory: 512M
 
   redis:
-    image: redis:7-alpine
-    restart: unless-stopped
-    command: redis-server --appendonly yes
+    extends:
+      file: docker-compose.base.yml
+      service: redis
     volumes:
       - redis_staging_data:/data
     networks:
       - brain-storm-staging
-    healthcheck:
-      test: ['CMD', 'redis-cli', 'ping']
-      interval: 10s
-      timeout: 3s
-      retries: 5
     deploy:
       resources:
         limits:

@@ -209,6 +209,25 @@ npm run lint
 
 See [docs/development-setup.md](docs/development-setup.md) for the full setup guide.
 
+## Pre-commit Hooks (Husky)
+
+The `.husky/pre-commit` hook runs automatically before every commit. It only checks file types that are staged:
+
+| Staged files | Checks run |
+| --------------------------------- | ----------------------------------------------- |
+| `apps/frontend/**` | `eslint`, `prettier --check` |
+| `apps/backend/**` | `eslint`, `prettier --check` |
+| Root config files | `prettier --check` |
+| `contracts/**/*.rs` | `cargo fmt --all -- --check`, `cargo clippy` |
+
+If you stage only JS/TS files, the Rust checks are skipped — pure-JS commits are unaffected in speed. To fix a formatting failure from the Rust check run:
+
+```bash
+cargo fmt --all
+```
+
+To fix a Clippy failure, address the warning reported on stderr before re-committing.
+
 ## Shared Test Fixtures
 
 We maintain a shared test-fixtures module in `packages/types/src/test-utils/` that exports factory functions for every shared domain type.  **Always use these factories instead of hand-building inline mock objects** in tests.
