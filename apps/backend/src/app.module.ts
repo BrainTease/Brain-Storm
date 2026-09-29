@@ -1,6 +1,7 @@
 import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ShutdownMiddleware, CacheHeadersMiddleware } from './middleware';
+import { CorrelationMiddleware } from './common/logger/correlation.middleware';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CacheModule } from '@nestjs/cache-manager';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
@@ -170,6 +171,9 @@ import { GrantsModule } from './grants/grants.module';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
+    // #1215: bind correlation ID first so every subsequent middleware / interceptor /
+    // service can read it via getCorrelationId().
+    consumer.apply(CorrelationMiddleware).forRoutes('*');
     consumer.apply(ShutdownMiddleware).forRoutes('*');
     // #707: attach cache-control / ETag headers on all routes
     consumer.apply(CacheHeadersMiddleware).forRoutes('*');
