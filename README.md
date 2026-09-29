@@ -350,3 +350,6 @@ The CI workflow runs on every push and PR, ensuring code quality and functionali
 
 <!-- handsoff-issue-1184 -->
 - #1184: 89. [Testing] Establish coverage targets (85%+) for apps/backend/src/organizations module
+
+<!-- handsoff-issue-1185 -->
+- #1185: 90. [Testing] Add unit tests for frontend store slices (src/store)
