@@ -356,3 +356,6 @@ The CI workflow runs on every push and PR, ensuring code quality and functionali
 
 <!-- handsoff-issue-1186 -->
 - #1186: 91. [Testing] Add contract-level fixtures/mocks for Stellar SDK calls in backend tests
+
+<!-- handsoff-issue-1187 -->
+- #1187: 92. [Testing] Add regression test suite for GraphQL resolvers
