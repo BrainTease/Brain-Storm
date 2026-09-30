@@ -323,6 +323,8 @@ export class SearchService implements OnModuleInit {
       size: 0,
     });
 
+    // The Elasticsearch suggest API response shape is not typed by the client library;
+    // `any` is required to access the nested suggest bucket structure at runtime.
     const suggestions =
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (response.suggest?.['suggestions'] as any[])?.flatMap((s: any) =>
