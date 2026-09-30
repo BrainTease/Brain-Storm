@@ -348,14 +348,11 @@ The CI workflow runs on every push and PR, ensuring code quality and functionali
 
 ## Handsoff notes
 
-<!-- handsoff-issue-1184 -->
-- #1184: 89. [Testing] Establish coverage targets (85%+) for apps/backend/src/organizations module
+<!-- handsoff-issue-1188 -->
+- #1188: 93. [Testing] Add WebSocket gateway tests for ws-gateway module
 
-<!-- handsoff-issue-1185 -->
-- #1185: 90. [Testing] Add unit tests for frontend store slices (src/store)
+<!-- handsoff-issue-1189 -->
+- #1189: 94. [Testing] Remove redundant duplicate tests between unit and integration suites in courses module
 
-<!-- handsoff-issue-1186 -->
-- #1186: 91. [Testing] Add contract-level fixtures/mocks for Stellar SDK calls in backend tests
-
-<!-- handsoff-issue-1187 -->
-- #1187: 92. [Testing] Add regression test suite for GraphQL resolvers
+<!-- handsoff-issue-1190 -->
+- #1190: 95. [Testing] Add snapshot tests for i18n locale key parity
