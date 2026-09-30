@@ -348,5 +348,11 @@ The CI workflow runs on every push and PR, ensuring code quality and functionali
 
 ## Handsoff notes
 
-<!-- handsoff-issue-1183 -->
-- #1183: 88. [Testing] Add integration tests for webhooks module signature verification
+<!-- handsoff-issue-1188 -->
+- #1188: 93. [Testing] Add WebSocket gateway tests for ws-gateway module
+
+<!-- handsoff-issue-1189 -->
+- #1189: 94. [Testing] Remove redundant duplicate tests between unit and integration suites in courses module
+
+<!-- handsoff-issue-1190 -->
+- #1190: 95. [Testing] Add snapshot tests for i18n locale key parity
