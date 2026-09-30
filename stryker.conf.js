@@ -27,10 +27,13 @@ const config = {
     '!**/index.ts',
     '!**/types.ts',
   ],
+  // Baseline mutation score recorded from the initial `npm run test:mutation` run.
+  // `break` enforces the minimum acceptable score so weak tests fail the run.
   thresholds: {
     high: 80,
     medium: 60,
     low: 40,
+    break: 40,
   },
   timeoutMS: 5000,
   timeoutFactor: 1.25,

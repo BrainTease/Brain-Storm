@@ -13,9 +13,25 @@ import { Rate, Trend } from 'k6/metrics';
  * Environment variables:
  *   API_URL       – Backend base URL (default: http://localhost:3000)
  *   AUTH_TOKEN    – Pre-authenticated JWT (optional; falls back to login flow)
- *   PROFILE       – Load profile: smoke | load | stress | spike (default: load)
+ *   PROFILE       – Load profile: smoke | load | stress | spike | sustained (default: load)
  *   COURSE_ID     – Target course UUID for checkout (required)
  *   PRICE_ID      – Stripe price ID for the course (required)
+ *
+ * ── Target thresholds (Issue #1191) ──────────────────────────────────────────
+ *   p95 latency:      < 500ms  (checkout < 500ms, enrollment < 400ms)
+ *   p99 latency:      < 1000ms
+ *   HTTP error rate:  < 2%     (http_req_failed rate < 0.02)
+ *   Success rate:     > 95%    (checkout & enrollment)
+ *
+ *   These thresholds are enforced below in `options.thresholds`; a run that
+ *   breaches any of them exits non-zero so CI can fail the build.
+ *
+ * ── Load profiles ────────────────────────────────────────────────────────────
+ *   smoke     – 2 VUs, sanity check
+ *   load      – baseline ramp to 50 VUs
+ *   stress    – ramp to 200 VUs to find the breaking point
+ *   spike     – sudden burst to 150 VUs (Issue #1191)
+ *   sustained – hold expected peak traffic (~80 VUs) for 5m (Issue #1191)
  */
 
 // ── Custom metrics ────────────────────────────────────────────────────────────
@@ -58,6 +74,7 @@ const PROFILES = {
       { duration: '30s', target: 0 },
     ],
   },
+  // Spike-load: sudden burst of traffic to validate autoscaling / backpressure.
   spike: {
     stages: [
       { duration: '10s', target: 5 },
@@ -65,6 +82,16 @@ const PROFILES = {
       { duration: '1m', target: 150 },
       { duration: '5s', target: 5 },
       { duration: '10s', target: 0 },
+    ],
+  },
+  // Sustained-load: hold expected peak traffic for a prolonged window.
+  sustained: {
+    stages: [
+      { duration: '1m', target: 40 },
+      { duration: '2m', target: 80 },
+      { duration: '5m', target: 80 },
+      { duration: '1m', target: 40 },
+      { duration: '30s', target: 0 },
     ],
   },
 };

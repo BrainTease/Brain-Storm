@@ -10,6 +10,7 @@
     "test": "jest",
     "test:coverage": "jest --coverage --coverageThreshold='{\"global\":{\"lines\":85}}'",
     "test:signing": "jest --testPathPattern=transaction-signing",
+    "test:signing:coverage": "jest --testPathPattern=transaction-signing --coverage --collectCoverageFrom=src/transaction-signing.ts --coverageThreshold='{\"src/transaction-signing.ts\":{\"lines\":90,\"statements\":90,\"functions\":90,\"branches\":90}}'",
     "generate": "node ../../scripts/generate-sdk.js",
     "docs": "node scripts/generate-docs.js",
     "docs:typedoc": "typedoc --out ../../docs/api/sdk src/index.ts"

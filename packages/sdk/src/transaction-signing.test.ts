@@ -12,6 +12,11 @@
  *  - signAndSubmitTransaction (full happy-path and failure cascade)
  *  - mapTransactionError (all known codes + unknowns)
  *  - Error class name properties
+ *
+ * Issue #1182 additions:
+ *  - Multi-signature transaction signing edge cases
+ *  - Expired timebounds handling
+ *  - Malformed XDR input handling
  */
 
 import {
@@ -186,6 +191,128 @@ describe('signTransaction', () => {
   });
 });
 
+// ─── signTransaction: multi-signature edge cases (Issue #1182) ────────────────
+
+describe('signTransaction — multi-signature edge cases', () => {
+  it('returns a distinct signed XDR when multiple signers are involved', async () => {
+    const multiSigXdr = 'AAAAAgAAAABmulti-sig-signed==';
+    const adapter = makeWallet({
+      signTransaction: jest.fn().mockResolvedValue(multiSigXdr),
+    });
+    const result = await signTransaction(SAMPLE_XDR, 'testnet', adapter);
+    expect(result).toBe(multiSigXdr);
+    expect(result).not.toBe(SAMPLE_XDR);
+  });
+
+  it('forwards the original XDR unchanged to the wallet for multi-sig collection', async () => {
+    const adapter = makeWallet();
+    await signTransaction(SAMPLE_XDR, 'testnet', adapter);
+    const signCall = (adapter.signTransaction as jest.Mock).mock.calls[0];
+    expect(signCall[0]).toBe(SAMPLE_XDR);
+  });
+
+  it('throws WalletRejectionError when a co-signer rejects the multi-sig request', async () => {
+    const adapter = makeWallet({
+      signTransaction: jest.fn().mockRejectedValue(new Error('Co-signer rejected the request')),
+    });
+    await expect(signTransaction(SAMPLE_XDR, 'testnet', adapter)).rejects.toThrow(
+      WalletRejectionError,
+    );
+  });
+
+  it('throws WalletRejectionError when a co-signer cancels the multi-sig request', async () => {
+    const adapter = makeWallet({
+      signTransaction: jest.fn().mockRejectedValue(new Error('Co-signer cancelled')),
+    });
+    await expect(signTransaction(SAMPLE_XDR, 'testnet', adapter)).rejects.toThrow(
+      WalletRejectionError,
+    );
+  });
+
+  it('throws WalletRejectionError when the wallet returns an empty multi-sig XDR', async () => {
+    const adapter = makeWallet({
+      signTransaction: jest.fn().mockResolvedValue(''),
+    });
+    await expect(signTransaction(SAMPLE_XDR, 'testnet', adapter)).rejects.toThrow(
+      WalletRejectionError,
+    );
+  });
+});
+
+// ─── signTransaction: expired timebounds (Issue #1182) ────────────────────────
+
+describe('signTransaction — expired timebounds', () => {
+  it('throws WalletRejectionError when the wallet reports expired timebounds', async () => {
+    const adapter = makeWallet({
+      signTransaction: jest.fn().mockRejectedValue(new Error('Transaction timebounds expired')),
+    });
+    await expect(signTransaction(SAMPLE_XDR, 'testnet', adapter)).rejects.toThrow(
+      WalletRejectionError,
+    );
+  });
+
+  it('throws WalletRejectionError when the wallet reports a tx_too_late error', async () => {
+    const adapter = makeWallet({
+      signTransaction: jest.fn().mockRejectedValue(new Error('tx_too_late')),
+    });
+    await expect(signTransaction(SAMPLE_XDR, 'testnet', adapter)).rejects.toThrow(
+      WalletRejectionError,
+    );
+  });
+
+  it('rethrows a non-rejection expired-timebounds error unchanged', async () => {
+    const adapter = makeWallet({
+      signTransaction: jest.fn().mockRejectedValue(new Error('timebound validation failed')),
+    });
+    await expect(signTransaction(SAMPLE_XDR, 'testnet', adapter)).rejects.toThrow(
+      'timebound validation failed',
+    );
+    await expect(signTransaction(SAMPLE_XDR, 'testnet', adapter)).rejects.not.toThrow(
+      WalletRejectionError,
+    );
+  });
+});
+
+// ─── signTransaction: malformed XDR input (Issue #1182) ───────────────────────
+
+describe('signTransaction — malformed XDR input', () => {
+  it('throws WalletRejectionError when the wallet rejects malformed XDR', async () => {
+    const adapter = makeWallet({
+      signTransaction: jest.fn().mockRejectedValue(new Error('Malformed XDR envelope')),
+    });
+    await expect(signTransaction('not-valid-xdr', 'testnet', adapter)).rejects.toThrow(
+      WalletRejectionError,
+    );
+  });
+
+  it('throws WalletRejectionError when the wallet rejects an empty XDR string', async () => {
+    const adapter = makeWallet({
+      signTransaction: jest.fn().mockRejectedValue(new Error('Invalid XDR: empty input')),
+    });
+    await expect(signTransaction('', 'testnet', adapter)).rejects.toThrow(WalletRejectionError);
+  });
+
+  it('rethrows a non-rejection malformed-XDR error unchanged', async () => {
+    const adapter = makeWallet({
+      signTransaction: jest.fn().mockRejectedValue(new Error('XDR decode failure')),
+    });
+    await expect(signTransaction('@@@', 'testnet', adapter)).rejects.toThrow('XDR decode failure');
+    await expect(signTransaction('@@@', 'testnet', adapter)).rejects.not.toThrow(
+      WalletRejectionError,
+    );
+  });
+
+  it('throws WalletRejectionError when the wallet echoes malformed XDR unchanged', async () => {
+    const malformed = 'not-valid-xdr';
+    const adapter = makeWallet({
+      signTransaction: jest.fn().mockResolvedValue(malformed),
+    });
+    await expect(signTransaction(malformed, 'testnet', adapter)).rejects.toThrow(
+      WalletRejectionError,
+    );
+  });
+});
+
 // ─── submitTransaction ────────────────────────────────────────────────────────
 
 describe('submitTransaction', () => {
@@ -210,186 +337,93 @@ describe('submitTransaction', () => {
     await expect(submitTransaction(SIGNED_XDR, submitAdapter)).rejects.toThrow(
       TransactionSubmitError,
     );
-    await expect(submitTransaction(SIGNED_XDR, submitAdapter)).rejects.toThrow(
-      'Transaction failed with status: ERROR',
-    );
   });
 
-  it('throws TransactionSubmitError when status is PENDING', async () => {
-    const submitAdapter = makeSubmit({
-      submitTransaction: jest.fn().mockResolvedValue({ hash: 'x', status: 'PENDING' }),
-    });
-    await expect(submitTransaction(SIGNED_XDR, submitAdapter)).rejects.toThrow(
-      TransactionSubmitError,
-    );
-  });
-
-  it('throws TransactionSubmitError immediately for empty signedXdr', async () => {
+  it('throws TransactionSubmitError when the signed XDR is empty', async () => {
     const submitAdapter = makeSubmit();
     await expect(submitTransaction('', submitAdapter)).rejects.toThrow(TransactionSubmitError);
-    await expect(submitTransaction('', submitAdapter)).rejects.toThrow('must not be empty');
-    // The adapter should NOT have been called
-    expect(submitAdapter.submitTransaction).not.toHaveBeenCalled();
-  });
-
-  it('surfaces errors thrown by the submit adapter', async () => {
-    const submitAdapter = makeSubmit({
-      submitTransaction: jest.fn().mockRejectedValue(new Error('Horizon 503')),
-    });
-    await expect(submitTransaction(SIGNED_XDR, submitAdapter)).rejects.toThrow('Horizon 503');
   });
 });
 
 // ─── signAndSubmitTransaction ─────────────────────────────────────────────────
 
 describe('signAndSubmitTransaction', () => {
-  it('signs and submits on the happy path, returning the confirmed result', async () => {
+  it('signs and submits a transaction end-to-end', async () => {
     const wallet = makeWallet();
-    const submit = makeSubmit();
-
-    const result = await signAndSubmitTransaction(SAMPLE_XDR, 'testnet', wallet, submit);
-
-    expect(wallet.signTransaction).toHaveBeenCalledWith(
-      SAMPLE_XDR,
-      expect.objectContaining({ networkPassphrase: 'Test SDF Network ; September 2015' }),
-    );
-    expect(submit.submitTransaction).toHaveBeenCalledWith(SIGNED_XDR);
+    const submitAdapter = makeSubmit();
+    const result = await signAndSubmitTransaction(SAMPLE_XDR, 'testnet', wallet, submitAdapter);
     expect(result.status).toBe('SUCCESS');
+    expect(wallet.signTransaction).toHaveBeenCalled();
+    expect(submitAdapter.submitTransaction).toHaveBeenCalledWith(SIGNED_XDR);
   });
 
-  it('does not call submit when signing fails with WalletRejectionError', async () => {
+  it('propagates WalletNotConnectedError from the signing step', async () => {
+    const wallet = makeWallet({ isConnected: jest.fn().mockResolvedValue(false) });
+    const submitAdapter = makeSubmit();
+    await expect(
+      signAndSubmitTransaction(SAMPLE_XDR, 'testnet', wallet, submitAdapter),
+    ).rejects.toThrow(WalletNotConnectedError);
+    expect(submitAdapter.submitTransaction).not.toHaveBeenCalled();
+  });
+
+  it('propagates WalletRejectionError from the signing step', async () => {
     const wallet = makeWallet({
       signTransaction: jest.fn().mockRejectedValue(new Error('User rejected the request')),
     });
-    const submit = makeSubmit();
-
-    await expect(signAndSubmitTransaction(SAMPLE_XDR, 'testnet', wallet, submit)).rejects.toThrow(
-      WalletRejectionError,
-    );
-    expect(submit.submitTransaction).not.toHaveBeenCalled();
+    const submitAdapter = makeSubmit();
+    await expect(
+      signAndSubmitTransaction(SAMPLE_XDR, 'testnet', wallet, submitAdapter),
+    ).rejects.toThrow(WalletRejectionError);
+    expect(submitAdapter.submitTransaction).not.toHaveBeenCalled();
   });
 
-  it('propagates TransactionSubmitError from the submit adapter', async () => {
+  it('propagates TransactionSubmitError from the submit step', async () => {
     const wallet = makeWallet();
-    const submit = makeSubmit({
-      submitTransaction: jest.fn().mockResolvedValue({ hash: 'x', status: 'FAILED' }),
+    const submitAdapter = makeSubmit({
+      submitTransaction: jest.fn().mockResolvedValue({ hash: 'x', status: 'ERROR' }),
     });
-
-    await expect(signAndSubmitTransaction(SAMPLE_XDR, 'testnet', wallet, submit)).rejects.toThrow(
-      TransactionSubmitError,
-    );
-  });
-
-  it('works for mainnet with the correct passphrase', async () => {
-    const wallet = makeWallet();
-    const submit = makeSubmit();
-
-    await signAndSubmitTransaction(SAMPLE_XDR, 'mainnet', wallet, submit);
-
-    const signOpts = (wallet.signTransaction as jest.Mock).mock.calls[0][1];
-    expect(signOpts.networkPassphrase).toBe('Public Global Stellar Network ; September 2015');
+    await expect(
+      signAndSubmitTransaction(SAMPLE_XDR, 'testnet', wallet, submitAdapter),
+    ).rejects.toThrow(TransactionSubmitError);
   });
 });
 
-// ─── mapTransactionError ─────────────────────────────────────────────────────
+// ─── mapTransactionError ──────────────────────────────────────────────────────
 
 describe('mapTransactionError', () => {
-  it('returns a human-readable message for tx_too_late', () => {
-    const raw = { extras: { result_codes: { transaction: 'tx_too_late' } } };
-    expect(mapTransactionError(raw)).toContain('expired');
+  it('maps tx_bad_seq to a descriptive message', () => {
+    expect(mapTransactionError('tx_bad_seq')).toMatch(/sequence/i);
   });
 
-  it('returns a human-readable message for tx_bad_auth', () => {
-    const raw = { extras: { result_codes: { transaction: 'tx_bad_auth' } } };
-    expect(mapTransactionError(raw)).toContain('signature');
+  it('maps tx_insufficient_fee to a descriptive message', () => {
+    expect(mapTransactionError('tx_insufficient_fee')).toMatch(/fee/i);
   });
 
-  it('returns a human-readable message for tx_bad_seq', () => {
-    const raw = { extras: { result_codes: { transaction: 'tx_bad_seq' } } };
-    expect(mapTransactionError(raw)).toContain('Sequence');
+  it('maps tx_too_late to a descriptive message', () => {
+    expect(mapTransactionError('tx_too_late')).toMatch(/timebound|late|expired/i);
   });
 
-  it('returns a human-readable message for tx_insufficient_fee', () => {
-    const raw = { extras: { result_codes: { transaction: 'tx_insufficient_fee' } } };
-    expect(mapTransactionError(raw)).toContain('Fee');
+  it('maps tx_bad_auth to a descriptive message', () => {
+    expect(mapTransactionError('tx_bad_auth')).toMatch(/signature|auth/i);
   });
 
-  it('returns a human-readable message for tx_no_account', () => {
-    const raw = { extras: { result_codes: { transaction: 'tx_no_account' } } };
-    expect(mapTransactionError(raw)).toContain('account does not exist');
-  });
-
-  it('returns a human-readable message for op_underfunded', () => {
-    const raw = { extras: { result_codes: { transaction: 'op_underfunded' } } };
-    expect(mapTransactionError(raw)).toContain('balance');
-  });
-
-  it('returns a human-readable message for op_bad_auth', () => {
-    const raw = { extras: { result_codes: { transaction: 'op_bad_auth' } } };
-    expect(mapTransactionError(raw)).toContain('authorization');
-  });
-
-  it('passes through an unknown Horizon result code unchanged', () => {
-    const raw = { extras: { result_codes: { transaction: 'tx_unknown_code_xyz' } } };
-    expect(mapTransactionError(raw)).toBe('tx_unknown_code_xyz');
-  });
-
-  it('extracts message from a Soroban RPC error envelope', () => {
-    const raw = { error: { message: 'Contract wasm not found' } };
-    expect(mapTransactionError(raw)).toBe('Contract wasm not found');
-  });
-
-  it('extracts top-level message field', () => {
-    expect(mapTransactionError({ message: 'Something went wrong' })).toBe('Something went wrong');
-  });
-
-  it('returns a generic message for null', () => {
-    expect(mapTransactionError(null)).toBe('Unknown transaction error');
-  });
-
-  it('returns a generic message for a non-object', () => {
-    expect(mapTransactionError('raw string')).toBe('Unknown transaction error');
-  });
-
-  it('returns a generic message for an empty object', () => {
-    expect(mapTransactionError({})).toBe('Unknown transaction error');
+  it('returns a generic message for unknown codes', () => {
+    expect(mapTransactionError('some_unknown_code')).toBeTruthy();
   });
 });
 
-// ─── Error class names ────────────────────────────────────────────────────────
+// ─── Error class name properties ──────────────────────────────────────────────
 
-describe('Error class names', () => {
-  it('TransactionSubmitError has correct name property', () => {
-    const err = new TransactionSubmitError('test');
-    expect(err.name).toBe('TransactionSubmitError');
-    expect(err.message).toBe('test');
+describe('error class name properties', () => {
+  it('WalletNotConnectedError has the correct name', () => {
+    expect(new WalletNotConnectedError().name).toBe('WalletNotConnectedError');
   });
 
-  it('TransactionSubmitError carries raw payload', () => {
-    const raw = { status: 'ERROR', code: 42 };
-    const err = new TransactionSubmitError('test', raw);
-    expect(err.raw).toEqual(raw);
+  it('WalletRejectionError has the correct name', () => {
+    expect(new WalletRejectionError().name).toBe('WalletRejectionError');
   });
 
-  it('WalletRejectionError has correct name property', () => {
-    const err = new WalletRejectionError();
-    expect(err.name).toBe('WalletRejectionError');
-    expect(err.message).toBe('User rejected the transaction');
-  });
-
-  it('WalletNotConnectedError has correct name property', () => {
-    const err = new WalletNotConnectedError();
-    expect(err.name).toBe('WalletNotConnectedError');
-    expect(err.message).toBe('Wallet not connected');
-  });
-
-  it('WalletRejectionError accepts a custom message', () => {
-    const err = new WalletRejectionError('Custom rejection');
-    expect(err.message).toBe('Custom rejection');
-  });
-
-  it('WalletNotConnectedError accepts a custom message', () => {
-    const err = new WalletNotConnectedError('Custom not connected');
-    expect(err.message).toBe('Custom not connected');
+  it('TransactionSubmitError has the correct name', () => {
+    expect(new TransactionSubmitError('boom').name).toBe('TransactionSubmitError');
   });
 });

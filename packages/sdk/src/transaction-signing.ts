@@ -75,7 +75,33 @@ export class WalletNotConnectedError extends Error {
   }
 }
 
+/** Thrown when the supplied transaction XDR is malformed or unparseable. */
+export class MalformedTransactionError extends Error {
+  constructor(message = 'Malformed transaction XDR') {
+    super(message);
+    this.name = 'MalformedTransactionError';
+  }
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+
+/**
+ * Validates that a string looks like a base64-encoded Stellar transaction XDR.
+ *
+ * This is a lightweight structural check (no network / no stellar-sdk parse)
+ * so that malformed input is rejected before it ever reaches the wallet.
+ *
+ * @throws {@link MalformedTransactionError} when the XDR is empty or not base64.
+ */
+export function assertValidTransactionXdr(xdr: string): void {
+  if (typeof xdr !== 'string' || xdr.trim().length === 0) {
+    throw new MalformedTransactionError('Transaction XDR must not be empty');
+  }
+  // Base64 alphabet (standard, with optional padding).
+  if (!/^[A-Za-z0-9+/]+={0,2}$/.test(xdr.trim())) {
+    throw new MalformedTransactionError('Transaction XDR is not valid base64');
+  }
+}
 
 /**
  * Ensures Freighter is installed and connected.
@@ -110,6 +136,7 @@ export async function getWalletPublicKey(adapter: FreighterAdapter): Promise<str
  * @param network - Target network (`'testnet'` or `'mainnet'`).
  * @param adapter - Freighter adapter. Defaults to `window.freighter` when not supplied.
  *
+ * @throws {@link MalformedTransactionError} when the XDR is empty or not base64.
  * @throws {@link WalletNotConnectedError} when Freighter is absent.
  * @throws {@link WalletRejectionError} when the user cancels the signing prompt.
  *
@@ -120,6 +147,7 @@ export async function signTransaction(
   network: StellarNetwork,
   adapter: FreighterAdapter,
 ): Promise<string> {
+  assertValidTransactionXdr(xdr);
   await requireWalletConnected(adapter);
 
   const config = getStellarNetworkConfig(network);
