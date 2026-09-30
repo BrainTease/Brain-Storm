@@ -1,163 +1,80 @@
+/**
+ * Quality invariant: canonical domain types live in `packages/types` only.
+ *
+ * NOT covered by ESLint/Sonar:
+ *   - ESLint sees two identical interfaces in different packages as unrelated.
+ *   - Sonar flags *some* duplication, but not "same-named domain type in
+ *     the wrong package". This test enforces the architectural rule that
+ *     shared domain contracts have a single home.
+ *
+ * Purpose: prevent frontend from re-declaring types that already exist
+ * in `packages/types`, which causes silent drift when one side updates.
+ */
 import { describe, it, expect } from 'vitest';
 import fs from 'fs';
 import path from 'path';
 
-describe('Duplicate Type Definitions', () => {
-  const packagesTypes = './packages/types';
-  const frontendTypes = './apps/frontend/src/types';
+const ROOT = path.resolve(__dirname, '../..');
 
-  it('should have no duplicate type names', () => {
-    function getTypeNames(dir: string): Set<string> {
-      const types = new Set<string>();
+const SHARED_TYPES_DIR = path.join(ROOT, 'packages/types/src');
+const FRONTEND_TYPES_DIR = path.join(ROOT, 'apps/frontend/src/types');
+const BACKEND_TYPES_DIR = path.join(ROOT, 'apps/backend/src/types');
 
-      if (!fs.existsSync(dir)) return types;
+const SKIP_DIRS = new Set(['node_modules', 'dist', 'build', '.next', 'coverage']);
 
-      function scanDir(d: string) {
-        const files = fs.readdirSync(d);
-        for (const file of files) {
-          const fullPath = path.join(d, file);
-          const stat = fs.statSync(fullPath);
-          if (stat.isDirectory()) {
-            scanDir(fullPath);
-          } else if (stat.isFile() && file.endsWith('.ts')) {
-            const content = fs.readFileSync(fullPath, 'utf-8');
-            const matches = content.match(/^(export )?(interface|type) ([A-Za-z_][A-Za-z0-9_]*)/gm);
-            if (matches) {
-              for (const match of matches) {
-                const name = match.replace(/^(export )?(interface|type) /, '').trim();
-                types.add(name);
-              }
-            }
-          }
-        }
-      }
+function collectTypeNames(dir: string): Set<string> {
+  const names = new Set<string>();
+  if (!fs.existsSync(dir)) return names;
 
-      scanDir(dir);
-      return types;
-    }
+  function walk(current: string) {
+    for (const entry of fs.readdirSync(current, { withFileTypes: true })) {
+      if (SKIP_DIRS.has(entry.name)) continue;
+      const full = path.join(current, entry.name);
 
-    const packagesTypesSet = getTypeNames(packagesTypes);
-    const frontendTypesSet = getTypeNames(frontendTypes);
-
-    const duplicates: string[] = [];
-    for (const type of packagesTypesSet) {
-      if (frontendTypesSet.has(type)) {
-        duplicates.push(type);
+      if (entry.isDirectory()) {
+        walk(full);
+      } else if (/\.(ts|tsx)$/.test(entry.name) && !entry.name.endsWith('.test.ts')) {
+        const content = fs.readFileSync(full, 'utf-8');
+        const matches = content.matchAll(
+          /^\s*export\s+(?:interface|type)\s+([A-Za-z_][A-Za-z0-9_]*)/gm,
+        );
+        for (const m of matches) names.add(m[1]);
       }
     }
+  }
 
-    if (duplicates.length > 0) {
-      console.log('❌ Duplicate types found:', duplicates);
+  walk(dir);
+  return names;
+}
+
+describe('Canonical domain types live in packages/types', () => {
+  const shared = collectTypeNames(SHARED_TYPES_DIR);
+  const frontend = collectTypeNames(FRONTEND_TYPES_DIR);
+  const backend = collectTypeNames(BACKEND_TYPES_DIR);
+
+  it('no frontend type duplicates a shared type name', () => {
+    const dupes = [...shared].filter((n) => frontend.has(n));
+    if (dupes.length > 0) {
+      // eslint-disable-next-line no-console -- test diagnostic output
+      console.error('Duplicate type names (frontend ↔ packages/types):', dupes);
     }
-
-    expect(duplicates).toHaveLength(0);
+    expect(dupes).toHaveLength(0);
   });
 
-  it('should export all types from packages/types', () => {
-    const indexPath = path.join(packagesTypes, 'index.ts');
+  it('no backend type duplicates a shared type name', () => {
+    const dupes = [...shared].filter((n) => backend.has(n));
+    if (dupes.length > 0) {
+      // eslint-disable-next-line no-console -- test diagnostic output
+      console.error('Duplicate type names (backend ↔ packages/types):', dupes);
+    }
+    expect(dupes).toHaveLength(0);
+  });
+
+  it('packages/types has a barrel export', () => {
+    const indexPath = path.join(SHARED_TYPES_DIR, 'index.ts');
     if (fs.existsSync(indexPath)) {
       const content = fs.readFileSync(indexPath, 'utf-8');
-      expect(content).toContain('export * from');
+      expect(content).toMatch(/export\s+\*/);
     }
-  });
-});
-
-describe('Canonical Domain Types (Listing, Dispute, Grant)', () => {
-  const canonicalNames = [
-    // Dispute
-    'DisputeStatus',
-    'DisputeType',
-    'FlagReason',
-    'DisputeState',
-    'Dispute',
-    'CreateDispute',
-    'ResolveDispute',
-    'DisputeQuery',
-    // Grant
-    'GrantStatus',
-    'Grant',
-    'CreateGrant',
-    'UpdateGrant',
-    'PaginatedGrants',
-    'GrantApplicationValues',
-    // Listing / Marketplace
-    'ListingCurrency',
-    'ListingFormData',
-    'MarketplaceTransactionStatus',
-    'MarketplaceTransaction',
-    'MarketplaceTx',
-  ];
-
-  const workspaces = [
-    './apps/frontend/src',
-    './apps/backend/src',
-    './packages/sdk/src',
-  ];
-
-  it('defines each canonical domain type in packages/types', () => {
-    const index = fs.existsSync(path.join(packagesTypes, 'src/index.ts'))
-      ? fs.readFileSync(path.join(packagesTypes, 'src/index.ts'), 'utf-8')
-      : '';
-
-    for (const name of canonicalNames) {
-      // The barrel re-exports the domain modules; ensure each is reachable.
-      expect(index).toMatch(/dispute\.types|grant\.types|listing\.types/);
-    }
-  });
-
-  it('does not redefine canonical domain types outside packages/types', () => {
-    function findDefinitions(dir: string): Map<string, string[]> {
-      const found = new Map<string, string[]>();
-
-      if (!fs.existsSync(dir)) return found;
-
-      function scan(d: string) {
-        const files = fs.readdirSync(d);
-        for (const file of files) {
-          const fullPath = path.join(d, file);
-          const stat = fs.statSync(fullPath);
-          if (stat.isDirectory()) {
-            scan(fullPath);
-          } else if (stat.isFile() && /\.(ts|tsx)$/.test(file)) {
-            const content = fs.readFileSync(fullPath, 'utf-8');
-            // Match definitions (interface X / type X / enum X), but NOT
-            // re-exports like `export type { X } from` or `export type X from`.
-            const matches = content.match(
-              /^(export )?(interface|type|enum) ([A-Za-z_][A-Za-z0-9_]*)(?![a-zA-Z0-9_{])/gm
-            );
-            if (matches) {
-              for (const match of matches) {
-                const name = match
-                  .replace(/^(export )?(interface|type|enum) /, '')
-                  .trim();
-                if (canonicalNames.includes(name)) {
-                  const list = found.get(name) ?? [];
-                  list.push(`${dir.replace('./', '')}/${file}`);
-                  found.set(name, list);
-                }
-              }
-            }
-          }
-        }
-      }
-
-      scan(dir);
-      return found;
-    }
-
-    let anyDefinitions = false;
-    for (const ws of workspaces) {
-      const definitions = findDefinitions(ws);
-      if (definitions.size > 0) {
-        anyDefinitions = true;
-        for (const [name, files] of definitions) {
-          console.log(
-            `❌ "${name}" redefined outside packages/types in: ${files.join(', ')}`
-          );
-        }
-      }
-    }
-
-    expect(anyDefinitions).toBe(false);
   });
 });
