@@ -50,10 +50,14 @@ const config = {
     'UnaryOperator',
     'UpdateOperator',
   ],
+  // Baseline mutation score recorded from the initial `npm run test:mutation` run.
+  // `break` enforces the minimum acceptable score so weak tests fail the run.
+  // `high`/`medium`/`low` drive the reporter color coding.
   thresholds: {
     high: 80,
     medium: 60,
     low: 40,
+    break: 40,
   },
   timeoutMS: 5000,
   timeoutFactor: 1.25,
