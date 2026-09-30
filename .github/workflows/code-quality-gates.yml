@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 env:
-  COVERAGE_THRESHOLD: 80
+  COVERAGE_THRESHOLD: 85
   COMPLEXITY_THRESHOLD: 10
 
 jobs:
@@ -149,37 +149,53 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Generate backend coverage
-        run: npm run test --workspace=apps/backend -- --coverage --coverageReporters=json --coverageReporters=text
-        continue-on-error: true
-
       - name: Generate frontend coverage
-        run: npm run test --workspace=apps/frontend -- --coverage --coverageReporters=json --coverageReporters=text
-        continue-on-error: true
+        run: npm run test:coverage:frontend
+
+      - name: Generate backend coverage
+        run: npm run test:coverage:backend
+
+      - name: Generate SDK coverage
+        run: npm run test:coverage --workspace=packages/sdk
 
       - name: Check coverage thresholds
         run: |
-          node -e "
-            const fs = require('fs');
-            const threshold = ${{ env.COVERAGE_THRESHOLD }};
-            
-            try {
-              const backendCoverage = JSON.parse(fs.readFileSync('apps/backend/coverage/coverage-summary.json', 'utf8'));
-              const frontendCoverage = JSON.parse(fs.readFileSync('apps/frontend/coverage/coverage-summary.json', 'utf8'));
-              
-              const backendLines = backendCoverage.total.lines.pct;
-              const frontendLines = frontendCoverage.total.lines.pct;
-              
-              console.log(\`Backend coverage: \${backendLines}%\`);
-              console.log(\`Frontend coverage: \${frontendLines}%\`);
-              
-              if (backendLines < threshold || frontendLines < threshold) {
-                console.log(\`::warning::Coverage below threshold of \${threshold}%\`);
-              }
-            } catch (e) {
-              console.log('Coverage files not found, skipping check');
+          node <<'NODE'
+          const fs = require('fs');
+          const threshold = Number(process.env.COVERAGE_THRESHOLD);
+          const workspaces = [
+            ['Frontend', 'apps/frontend/coverage/coverage-summary.json'],
+            ['Backend', 'apps/backend/coverage/coverage-summary.json'],
+            ['SDK', 'packages/sdk/coverage/coverage-summary.json'],
+          ];
+          let failed = false;
+
+          for (const [name, reportPath] of workspaces) {
+            if (!fs.existsSync(reportPath)) {
+              console.error(`::error::${name} coverage report is missing: ${reportPath}`);
+              failed = true;
+              continue;
             }
-          "
+
+            const report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
+            const lines = report.total?.lines?.pct;
+            if (typeof lines !== 'number') {
+              console.error(`::error::${name} coverage report has no total line percentage`);
+              failed = true;
+              continue;
+            }
+
+            console.log(`${name} line coverage: ${lines}% (minimum ${threshold}%)`);
+            if (lines < threshold) {
+              console.error(`::error::${name} line coverage is below ${threshold}%`);
+              failed = true;
+            }
+          }
+
+          if (failed) process.exit(1);
+          NODE
+        env:
+          COVERAGE_THRESHOLD: ${{ env.COVERAGE_THRESHOLD }}
 
       - name: Upload coverage reports
         if: always()
@@ -189,7 +205,60 @@ jobs:
           path: |
             apps/backend/coverage/
             apps/frontend/coverage/
+            packages/sdk/coverage/
           retention-days: 30
+
+  contracts-coverage:
+    name: Contracts Coverage
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: llvm-tools-preview
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-llvm-cov
+
+      - name: Generate contract coverage and enforce threshold
+        run: |
+          set -o pipefail
+          cargo llvm-cov \
+            --workspace \
+            --all-features \
+            --summary-only \
+            --fail-under-lines "$COVERAGE_THRESHOLD" \
+            -- --test-threads=1 \
+            2>&1 | tee contracts-coverage-summary.txt
+          echo "Contract line coverage minimum: ${COVERAGE_THRESHOLD}%"
+
+      - name: Upload contract coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: contracts-coverage-report
+          path: contracts-coverage-summary.txt
+          retention-days: 30
+
+      - name: Add contract coverage to workflow summary
+        if: always()
+        run: |
+          echo "## Contract Coverage" >> "$GITHUB_STEP_SUMMARY"
+          echo "Minimum line coverage: **${COVERAGE_THRESHOLD}%**" >> "$GITHUB_STEP_SUMMARY"
+          if [ -f contracts-coverage-summary.txt ]; then
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+            tail -20 contracts-coverage-summary.txt >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+          fi
 
   complexity-analysis:
     name: Complexity Analysis
@@ -250,7 +319,7 @@ jobs:
   quality-gates-summary:
     name: Quality Gates Summary
     runs-on: ubuntu-latest
-    needs: [eslint-frontend, eslint-backend, clippy-contracts, code-coverage, complexity-analysis]
+    needs: [eslint-frontend, eslint-backend, clippy-contracts, code-coverage, contracts-coverage, complexity-analysis]
     if: always()
 
     steps:
@@ -263,7 +332,8 @@ jobs:
           echo "| ESLint (Frontend) | ${{ needs.eslint-frontend.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| ESLint (Backend) | ${{ needs.eslint-backend.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Clippy (Contracts) | ${{ needs.clippy-contracts.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Code Coverage | ${{ needs.code-coverage.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| JavaScript Workspace Coverage | ${{ needs.code-coverage.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Contract Coverage | ${{ needs.contracts-coverage.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Complexity Analysis | ${{ needs.complexity-analysis.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Quality Standards" >> $GITHUB_STEP_SUMMARY
@@ -273,9 +343,13 @@ jobs:
 
       - name: Fail if quality gates failed
         if: |
-          needs.eslint-frontend.result == 'failure' ||
-          needs.eslint-backend.result == 'failure' ||
-          needs.clippy-contracts.result == 'failure'
+          always() && (
+            needs.eslint-frontend.result == 'failure' ||
+            needs.eslint-backend.result == 'failure' ||
+            needs.clippy-contracts.result == 'failure' ||
+            needs.code-coverage.result == 'failure' ||
+            needs.contracts-coverage.result == 'failure'
+          )
         run: |
           echo "❌ Code quality gates failed"
           exit 1
@@ -293,7 +367,8 @@ jobs:
             | ESLint (Frontend) | ${{ needs.eslint-frontend.result }} |
             | ESLint (Backend) | ${{ needs.eslint-backend.result }} |
             | Clippy (Contracts) | ${{ needs.clippy-contracts.result }} |
-            | Code Coverage | ${{ needs.code-coverage.result }} |
+            | JavaScript Workspace Coverage | ${{ needs.code-coverage.result }} |
+            | Contract Coverage | ${{ needs.contracts-coverage.result }} |
             | Complexity Analysis | ${{ needs.complexity-analysis.result }} |
 
             ### Quality Standards
