@@ -54,9 +54,9 @@ Entry point for `docs/`. Start here, then follow the links below by topic.
 
 ## Historical Artifacts
 
-Implementation summaries and PR description drafts from earlier development phases have been moved out of the repository root and consolidated here for posterity:
+Implementation summaries and PR description drafts from earlier development phases have been moved out of the repository root and consolidated in [archive/](./archive/INDEX.md) for posterity:
 
-**[history/](./history/README.md)** — `IMPLEMENTATION_SUMMARY*.md` and `PR_DESC*.md` files (issues #626–#841). These are no longer actively referenced; see merged PRs in GitHub for full context.
+**[archive/](./archive/INDEX.md)** — `IMPLEMENTATION_SUMMARY*.md` and `PR_DESC*.md` files (issues #541–#841), with a dated index. These are no longer actively referenced; see merged PRs in GitHub for full context.
 
 ---
 
