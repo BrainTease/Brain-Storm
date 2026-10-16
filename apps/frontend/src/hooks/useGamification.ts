@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import api from '@/lib/api';
+import { useApiQuery } from '@/hooks/useApiQuery';
 import type { Badge } from '@/components/gamification/BadgeGrid';
 
 export interface GamificationData {
@@ -30,38 +30,11 @@ const DEFAULT: GamificationData = {
 };
 
 export function useGamification(userId?: string): UseGamificationResult {
-  const [data, setData] = useState<GamificationData | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [tick, setTick] = useState(0);
+  const { data, isLoading, error, refresh } = useApiQuery<GamificationData>(
+    userId ? ['gamification', userId] : null,
+    () => api.get(`/gamification/${userId}`).then((res) => res.data ?? DEFAULT),
+    { errorMessage: 'Failed to load gamification data.' }
+  );
 
-  useEffect(() => {
-    if (!userId) return;
-    let cancelled = false;
-    setIsLoading(true);
-    setError(null);
-
-    api
-      .get(`/gamification/${userId}`)
-      .then((res) => {
-        if (!cancelled) setData(res.data ?? DEFAULT);
-      })
-      .catch(() => {
-        if (!cancelled) setError('Failed to load gamification data.');
-      })
-      .finally(() => {
-        if (!cancelled) setIsLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [userId, tick]);
-
-  return {
-    data,
-    isLoading,
-    error,
-    refresh: () => setTick((t) => t + 1),
-  };
+  return { data, isLoading, error, refresh };
 }

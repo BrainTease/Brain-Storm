@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import api from '@/lib/api';
+import { useApiQuery } from '@/hooks/useApiQuery';
 import type { RoyaltyTx } from '@/components/royalties/RoyaltyTransactionHistory';
 
 export interface UseRoyaltiesResult {
@@ -12,38 +12,11 @@ export interface UseRoyaltiesResult {
 }
 
 export function useRoyalties(userId?: string): UseRoyaltiesResult {
-  const [transactions, setTransactions] = useState<RoyaltyTx[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [tick, setTick] = useState(0);
+  const { data, isLoading, error, refresh } = useApiQuery<RoyaltyTx[]>(
+    userId ? ['royalties', userId] : null,
+    () => api.get(`/royalties/${userId}/transactions`).then((res) => res.data ?? []),
+    { errorMessage: 'Failed to load royalty transactions.' }
+  );
 
-  useEffect(() => {
-    if (!userId) return;
-    let cancelled = false;
-    setIsLoading(true);
-    setError(null);
-
-    api
-      .get(`/royalties/${userId}/transactions`)
-      .then((res) => {
-        if (!cancelled) setTransactions(res.data ?? []);
-      })
-      .catch(() => {
-        if (!cancelled) setError('Failed to load royalty transactions.');
-      })
-      .finally(() => {
-        if (!cancelled) setIsLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [userId, tick]);
-
-  return {
-    transactions,
-    isLoading,
-    error,
-    refresh: () => setTick((t) => t + 1),
-  };
+  return { transactions: data ?? [], isLoading, error, refresh };
 }
