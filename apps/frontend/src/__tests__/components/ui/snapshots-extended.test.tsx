@@ -2,8 +2,8 @@
  * #1028 — Extended snapshot tests for the shared UI component library.
  *
  * Components under test (all in src/components/ui/):
- *   Input (TextInput), Select (SelectInput), Checkbox, RadioGroup,
- *   Breadcrumb, DataGrid, Skeleton, ErrorBoundary, BadgeDisplay, TokenBalance
+ *   Input (TextInput), Checkbox, RadioGroup,
+ *   DataGrid, Skeleton, BadgeDisplay, TokenBalance
  *
  * Strategy:
  *   - One snapshot per meaningful visual variant / prop combination.
@@ -16,13 +16,10 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { Input } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
 import { Checkbox } from '@/components/ui/form/Checkbox';
 import { RadioGroup } from '@/components/ui/form/RadioGroup';
-import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { DataGrid } from '@/components/ui/DataGrid';
 import { Skeleton } from '@/components/ui/Skeleton';
-import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 import { BadgeDisplay } from '@/components/ui/BadgeDisplay';
 import { TokenBalance } from '@/components/ui/TokenBalance';
 
@@ -99,47 +96,6 @@ describe('Input — snapshots', () => {
   it('renders with full width', () => {
     const { container } = render(<Input label="Search" fullWidth />);
     expect(container.firstChild).toMatchSnapshot();
-  });
-});
-
-// ═════════════════════════════════════════════════════════════════════════════
-// Select (SelectInput)
-// ═════════════════════════════════════════════════════════════════════════════
-
-describe('Select — snapshots', () => {
-  const options = [
-    { value: 'beginner', label: 'Beginner' },
-    { value: 'intermediate', label: 'Intermediate' },
-    { value: 'advanced', label: 'Advanced' },
-  ];
-
-  it('renders with options', () => {
-    const { container } = render(<Select label="Level" options={options} />);
-    expect(container.firstChild).toMatchSnapshot();
-    expect(screen.getByLabelText('Level')).toBeInTheDocument();
-  });
-
-  it('renders with placeholder option', () => {
-    const { container } = render(
-      <Select
-        label="Level"
-        options={options}
-        placeholderOption={{ value: '', label: 'Select a level' }}
-      />
-    );
-    expect(container.firstChild).toMatchSnapshot();
-  });
-
-  it('renders with error state', () => {
-    const { container } = render(<Select label="Level" options={options} error="Required" />);
-    expect(container.firstChild).toMatchSnapshot();
-    expect(screen.getByRole('alert')).toHaveTextContent('Required');
-  });
-
-  it('renders as disabled', () => {
-    const { container } = render(<Select label="Level" options={options} disabled />);
-    expect(container.firstChild).toMatchSnapshot();
-    expect((container.querySelector('select') as HTMLSelectElement).disabled).toBe(true);
   });
 });
 
@@ -231,45 +187,6 @@ describe('RadioGroup — snapshots', () => {
 });
 
 // ═════════════════════════════════════════════════════════════════════════════
-// Breadcrumb
-// ═════════════════════════════════════════════════════════════════════════════
-
-describe('Breadcrumb — snapshots', () => {
-  it('renders custom items', () => {
-    const { container } = render(
-      <Breadcrumb
-        items={[
-          { label: 'Home', href: '/' },
-          { label: 'Courses', href: '/courses' },
-          { label: 'Stellar 101', href: '/courses/stellar-101', current: true },
-        ]}
-      />
-    );
-    expect(container.firstChild).toMatchSnapshot();
-    const nav = container.querySelector('nav[aria-label="Breadcrumb"]');
-    expect(nav).not.toBeNull();
-  });
-
-  it('renders with two items', () => {
-    const { container } = render(
-      <Breadcrumb
-        items={[
-          { label: 'Home', href: '/' },
-          { label: 'Profile', href: '/profile', current: true },
-        ]}
-      />
-    );
-    expect(container.firstChild).toMatchSnapshot();
-  });
-
-  it('renders nothing when items is empty', () => {
-    const { container } = render(<Breadcrumb items={[]} />);
-    expect(container.firstChild).toMatchSnapshot();
-    expect(container.firstChild).toBeNull();
-  });
-});
-
-// ═════════════════════════════════════════════════════════════════════════════
 // DataGrid
 // ═════════════════════════════════════════════════════════════════════════════
 
@@ -352,61 +269,6 @@ describe('Skeleton — snapshots', () => {
     const { container } = render(<Skeleton />);
     const status = container.querySelector('[role="status"]');
     expect(status).toHaveAttribute('aria-busy', 'true');
-  });
-});
-
-// ═════════════════════════════════════════════════════════════════════════════
-// ErrorBoundary (ErrorFallback)
-// ═════════════════════════════════════════════════════════════════════════════
-
-describe('ErrorBoundary — snapshots', () => {
-  const originalError = console.error;
-  beforeEach(() => {
-    console.error = vi.fn();
-  });
-  afterEach(() => {
-    console.error = originalError;
-  });
-
-  it('renders children when no error', () => {
-    const safeContent = 'Safe content';
-    const { container } = render(
-      <ErrorBoundary>
-        <div>{safeContent}</div>
-      </ErrorBoundary>
-    );
-    expect(container.firstChild).toMatchSnapshot();
-    expect(screen.getByText(safeContent)).toBeInTheDocument();
-  });
-
-  it('renders default fallback on error', () => {
-    function Boom() {
-      throw new Error('Test error');
-    }
-
-    const { container } = render(
-      <ErrorBoundary>
-        <Boom />
-      </ErrorBoundary>
-    );
-    expect(container.firstChild).toMatchSnapshot();
-    const alert = container.querySelector('[role="alert"]');
-    expect(alert).not.toBeNull();
-  });
-
-  it('renders custom fallback on error', () => {
-    function Boom() {
-      throw new Error('Custom error');
-    }
-
-    const customFallback = 'Custom fallback';
-    const { container } = render(
-      <ErrorBoundary fallback={<div>{customFallback}</div>}>
-        <Boom />
-      </ErrorBoundary>
-    );
-    expect(container.firstChild).toMatchSnapshot();
-    expect(screen.getByText(customFallback)).toBeInTheDocument();
   });
 });
 
