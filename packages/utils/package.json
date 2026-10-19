@@ -1,0 +1,28 @@
+{
+  "name": "@brain-storm/utils",
+  "version": "1.0.0",
+  "description": "Shared utility helpers for Brain-Storm (date, number, address formatting)",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "type-check": "tsc --noEmit",
+    "test": "jest",
+    "test:coverage": "jest --coverage"
+  },
+  "keywords": ["utils", "helpers", "shared"],
+  "author": "Brain-Storm",
+  "license": "MIT",
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.4",
+    "typescript": "^5.4.0"
+  }
+}

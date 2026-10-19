@@ -1,0 +1,15 @@
+{
+  "name": "@brain-storm/app",
+  "version": "1.0.0",
+  "private": true,
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@brain-storm/types": "*",
+    "@brain-storm/utils": "*",
+    "@stellar/stellar-sdk": "^12.0.0"
+  }
+}

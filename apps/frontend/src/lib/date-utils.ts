@@ -1,7 +1,14 @@
 /**
- * Shared date formatting utilities for consistent date/time presentation
- * Replaces ad-hoc toLocaleDateString calls across the application
+ * Shared date formatting utilities for consistent date/time presentation.
+ * Replaces ad-hoc toLocaleDateString calls across the application.
+ *
+ * `toDate` now lives in `@brain-storm/utils` (issue #1376 — removed duplicate).
+ * This file re-exports it so existing imports from '@/lib/date-utils' keep working.
  */
+
+import { toDate } from '@brain-storm/utils';
+
+export { toDate } from '@brain-storm/utils';
 
 const DATE_OPTIONS_SHORT = {
   year: 'numeric' as const,
@@ -32,13 +39,6 @@ const MONTH_DAY_OPTIONS = {
   month: 'short' as const,
   day: 'numeric' as const,
 };
-
-/**
- * Convert various date input formats to a Date object
- */
-export function toDate(d: Date | number | string): Date {
-  return d instanceof Date ? d : new Date(d);
-}
 
 /**
  * Format date in short format: "Jan 1, 2024"

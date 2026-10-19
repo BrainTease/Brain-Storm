@@ -34,6 +34,7 @@
     "@aws-sdk/client-comprehend": "^3.758.0",
     "@aws-sdk/s3-request-presigner": "^3.758.0",
     "@brain-storm/types": "*",
+    "@brain-storm/utils": "*",
     "@elastic/elasticsearch": "^8.17.0",
     "@nest-lab/throttler-storage-redis": "^1.2.0",
     "@nestjs/axios": "^4.0.1",

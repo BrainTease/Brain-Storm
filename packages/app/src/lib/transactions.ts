@@ -484,26 +484,5 @@ function getDecimalPlaces(amount: string): number {
   return parts.length === 2 ? parts[1].length : 0;
 }
 
-export function formatAmountHumanReadable(amount: string, asset: string): string {
-  const num = parseFloat(amount);
-  if (isNaN(num)) return `${amount} ${asset}`;
-
-  if (asset === 'XLM') {
-    return `${num.toLocaleString('en-US', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 7,
-    })} XLM`;
-  }
-
-  if (num >= 1_000_000) {
-    return `${(num / 1_000_000).toFixed(2)}M ${asset}`;
-  }
-  if (num >= 1_000) {
-    return `${(num / 1_000).toFixed(2)}K ${asset}`;
-  }
-
-  return `${num.toLocaleString('en-US', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 7,
-  })} ${asset}`;
-}
+// Re-export from the canonical shared package (issue #1376 — removed duplicate).
+export { formatAmountHumanReadable } from '@brain-storm/utils';

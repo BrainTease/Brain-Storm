@@ -10,6 +10,7 @@ import {
   ParsedTransaction,
   ValidationResult,
 } from '../../lib/transactions';
+import { truncateAddress } from '@brain-storm/utils';
 
 interface TransactionSummaryProps {
   xdr: string;
@@ -245,7 +246,4 @@ function getOperationTypeColor(type: string): string {
   }
 }
 
-function truncateAddress(addr: string): string {
-  if (!addr || addr.length < 10) return addr || 'unknown';
-  return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
-}
+// truncateAddress is imported from '@brain-storm/utils' (issue #1376 — removed duplicate).

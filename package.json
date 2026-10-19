@@ -5,7 +5,9 @@
   "description": "Brain-Storm - Blockchain Education Platform on Stellar",
   "workspaces": [
     "packages/types",
+    "packages/utils",
     "packages/sdk",
+    "packages/app",
     "apps/frontend",
     "apps/backend",
     "packages/api"
