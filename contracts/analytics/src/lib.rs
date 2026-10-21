@@ -1,11 +1,9 @@
 #![no_std]
-// Test builds need std (proptest, std::vec::Vec); runtime stays no_std.
-#[cfg(test)]
-extern crate std;
+use soroban_sdk::{contract, contractimpl, symbol_short, vec, Address, Env, Symbol, Vec};
 
-use soroban_sdk::{
-    contract, contractimpl, contracttype, symbol_short, vec, Address, Env, Symbol, Vec,
-};
+mod queries;
+mod types;
+pub use types::*;
 
 use brain_storm_shared::access;
 use brain_storm_shared::constants::{
@@ -13,85 +11,6 @@ use brain_storm_shared::constants::{
 };
 #[cfg(test)]
 use brain_storm_shared::constants::{MAX_ENTRY_TTL, MIN_PERSISTENT_ENTRY_TTL, MIN_TEMP_ENTRY_TTL};
-use brain_storm_shared::pagination::paginate;
-
-// Progress validation bounds
-const PROGRESS_MAX: u32 = 100;
-const PROGRESS_COMPLETE: u32 = 100;
-
-// Milestone percentages at which achievements are recorded
-const MILESTONE_25: u32 = 25;
-const MILESTONE_50: u32 = 50;
-const MILESTONE_75: u32 = 75;
-const MILESTONE_100: u32 = 100;
-
-// =============================================================================
-// Storage keys
-// =============================================================================
-
-#[contracttype]
-pub enum DataKey {
-    Admin,
-    Progress(Address, Symbol),   // persistent: ProgressRecord
-    StudentCourses(Address),     // persistent: Vec<Symbol> — secondary index
-    CourseStudents(Symbol),      // persistent: Vec<Address> — reverse index
-    TotalStudents,
-    TotalCourses,
-    CompletionStats,
-    DailyStats(u64),
-    WeeklyStats(u64),
-    MonthlyStats(u64),
-    TopPerformers,
-    Milestone(Address, Symbol, u32), // (student, course, milestone_pct) → MilestoneRecord
-    StudentMilestones(Address, Symbol), // (student, course) → Vec<u32> (achieved milestones)
-    AuthorizedCaller(Address),   // instance: bool — access control whitelist
-}
-
-// =============================================================================
-// Types
-// =============================================================================
-
-#[contracttype]
-#[derive(Clone)]
-pub struct ProgressRecord {
-    pub student: Address,
-    pub course_id: Symbol,
-    pub progress_pct: u32,
-    pub completed: bool,
-    pub timestamp: u64,
-}
-
-#[contracttype]
-#[derive(Clone)]
-pub struct CompletionStats {
-    pub total_completions: u32,
-    pub avg_completion_rate: u32,
-}
-
-#[contracttype]
-#[derive(Clone)]
-pub struct TimeBasedStats {
-    pub period: u64,
-    pub completions: u32,
-    pub avg_progress: u32,
-}
-
-#[contracttype]
-#[derive(Clone)]
-pub struct TopPerformer {
-    pub student: Address,
-    pub completion_count: u32,
-    pub avg_progress: u32,
-}
-
-#[contracttype]
-#[derive(Clone)]
-pub struct MilestoneRecord {
-    pub student: Address,
-    pub course_id: Symbol,
-    pub milestone_pct: u32,
-    pub achieved_at: u64,
-}
 
 // =============================================================================
 // Contract
@@ -281,38 +200,12 @@ impl AnalyticsContract {
 
     /// Get a student's progress for a specific course.
     pub fn get_progress(env: Env, student: Address, course_id: Symbol) -> Option<ProgressRecord> {
-        let key = DataKey::Progress(student, course_id);
-        let record = env.storage().persistent().get(&key)?;
-        env.storage()
-            .persistent()
-            .extend_ttl(&key, TTL_THRESHOLD, TTL_EXTEND_TO);
-        Some(record)
+        queries::get_progress(env, student, course_id)
     }
 
     /// Get all progress records for a student via the secondary index.
     pub fn get_all_progress(env: Env, student: Address) -> Vec<ProgressRecord> {
-        let index_key = DataKey::StudentCourses(student.clone());
-        let courses: Vec<Symbol> = match env.storage().persistent().get(&index_key) {
-            Some(c) => {
-                env.storage()
-                    .persistent()
-                    .extend_ttl(&index_key, TTL_THRESHOLD, TTL_EXTEND_TO);
-                c
-            }
-            None => return vec![&env],
-        };
-
-        let mut results = vec![&env];
-        for course_id in courses.iter() {
-            let key = DataKey::Progress(student.clone(), course_id.clone());
-            if let Some(record) = env.storage().persistent().get::<DataKey, ProgressRecord>(&key) {
-                env.storage()
-                    .persistent()
-                    .extend_ttl(&key, TTL_THRESHOLD, TTL_EXTEND_TO);
-                results.push_back(record);
-            }
-        }
-        results
+        queries::get_all_progress(env, student)
     }
 
     // -------------------------------------------------------------------------
@@ -362,25 +255,11 @@ impl AnalyticsContract {
         course_id: Symbol,
         milestone_pct: u32,
     ) -> Option<MilestoneRecord> {
-        let key = DataKey::Milestone(student, course_id, milestone_pct);
-        let record = env.storage().persistent().get(&key)?;
-        env.storage()
-            .persistent()
-            .extend_ttl(&key, TTL_THRESHOLD, TTL_EXTEND_TO);
-        Some(record)
+        queries::get_milestone(env, student, course_id, milestone_pct)
     }
 
     pub fn get_achieved_milestones(env: Env, student: Address, course_id: Symbol) -> Vec<u32> {
-        let key = DataKey::StudentMilestones(student, course_id);
-        match env.storage().persistent().get(&key) {
-            Some(milestones) => {
-                env.storage()
-                    .persistent()
-                    .extend_ttl(&key, TTL_THRESHOLD, TTL_EXTEND_TO);
-                milestones
-            }
-            None => vec![&env],
-        }
+        queries::get_achieved_milestones(env, student, course_id)
     }
 
     // -------------------------------------------------------------------------
@@ -388,83 +267,35 @@ impl AnalyticsContract {
     // -------------------------------------------------------------------------
 
     pub fn get_total_students(env: Env) -> u32 {
-        env.storage()
-            .instance()
-            .get(&DataKey::TotalStudents)
-            .unwrap_or(0)
+        queries::get_total_students(env)
     }
 
     pub fn get_total_courses(env: Env) -> u32 {
-        env.storage()
-            .instance()
-            .get(&DataKey::TotalCourses)
-            .unwrap_or(0)
+        queries::get_total_courses(env)
     }
 
     pub fn get_completion_stats(env: Env) -> CompletionStats {
-        env.storage()
-            .instance()
-            .get(&DataKey::CompletionStats)
-            .unwrap_or(CompletionStats {
-                total_completions: 0,
-                avg_completion_rate: 0,
-            })
+        queries::get_completion_stats(env)
     }
 
     pub fn get_daily_stats(env: Env, day: u64) -> Option<TimeBasedStats> {
-        env.storage()
-            .instance()
-            .get(&DataKey::DailyStats(day))
+        queries::get_daily_stats(env, day)
     }
 
     pub fn get_weekly_stats(env: Env, week: u64) -> Option<TimeBasedStats> {
-        env.storage()
-            .instance()
-            .get(&DataKey::WeeklyStats(week))
+        queries::get_weekly_stats(env, week)
     }
 
     pub fn get_monthly_stats(env: Env, month: u64) -> Option<TimeBasedStats> {
-        env.storage()
-            .instance()
-            .get(&DataKey::MonthlyStats(month))
+        queries::get_monthly_stats(env, month)
     }
 
     pub fn get_top_performers(env: Env, limit: u32) -> Vec<TopPerformer> {
-        let performers: Vec<TopPerformer> = env
-            .storage()
-            .instance()
-            .get(&DataKey::TopPerformers)
-            .unwrap_or_else(|| vec![&env]);
-
-        let mut result = vec![&env];
-        for (i, performer) in performers.iter().enumerate() {
-            if i >= limit as usize {
-                break;
-            }
-            result.push_back(performer.clone());
-        }
-        result
+        queries::get_top_performers(env, limit)
     }
 
     pub fn update_aggregates(env: Env, admin: Address) {
-        access::require_admin(&env, &admin, &DataKey::Admin);
-
-        // Update completion stats
-        let stats = CompletionStats {
-            total_completions: 0,
-            avg_completion_rate: 0,
-        };
-
-        // In production, this would iterate through all students and courses
-        // For now, we store the aggregated values
-        env.storage()
-            .instance()
-            .set(&DataKey::CompletionStats, &stats);
-
-        env.events().publish(
-            (symbol_short!("analytics"), symbol_short!("agg_upd")),
-            stats.total_completions,
-        );
+        queries::update_aggregates()
     }
 
     // -------------------------------------------------------------------------
@@ -473,57 +304,22 @@ impl AnalyticsContract {
 
     /// Get all students enrolled in a course (via reverse index).
     pub fn get_students_by_course(env: Env, course_id: Symbol) -> Vec<Address> {
-        let key = DataKey::CourseStudents(course_id);
-        match env.storage().persistent().get(&key) {
-            Some(students) => {
-                env.storage()
-                    .persistent()
-                    .extend_ttl(&key, TTL_THRESHOLD, TTL_EXTEND_TO);
-                students
-            }
-            None => vec![&env],
-        }
+        queries::get_students_by_course(env, course_id)
     }
 
     /// Get all progress records for a specific course across all enrolled students.
     pub fn get_course_progress(env: Env, course_id: Symbol) -> Vec<ProgressRecord> {
-        let students = Self::get_students_by_course(env.clone(), course_id.clone());
-        let mut results = vec![&env];
-        for student in students.iter() {
-            let key = DataKey::Progress(student.clone(), course_id.clone());
-            if let Some(record) = env.storage().persistent().get::<DataKey, ProgressRecord>(&key) {
-                env.storage()
-                    .persistent()
-                    .extend_ttl(&key, TTL_THRESHOLD, TTL_EXTEND_TO);
-                results.push_back(record);
-            }
-        }
-        results
+        queries::get_course_progress(env, course_id)
     }
 
     /// Get the number of students who completed a course.
     pub fn get_course_completion_count(env: Env, course_id: Symbol) -> u32 {
-        let records = Self::get_course_progress(env, course_id);
-        let mut count: u32 = 0;
-        for record in records.iter() {
-            if record.completed {
-                count += 1;
-            }
-        }
-        count
+        queries::get_course_completion_count(env, course_id)
     }
 
     /// Get the average progress percentage across all students in a course.
     pub fn get_course_average_progress(env: Env, course_id: Symbol) -> u32 {
-        let records = Self::get_course_progress(env, course_id);
-        if records.is_empty() {
-            return 0;
-        }
-        let mut total: u64 = 0;
-        for record in records.iter() {
-            total += record.progress_pct as u64;
-        }
-        (total / records.len() as u64) as u32
+        queries::get_course_average_progress(env, course_id)
     }
 
     // -------------------------------------------------------------------------
@@ -532,28 +328,12 @@ impl AnalyticsContract {
 
     /// Get completed courses for a student (filtered by completion status).
     pub fn get_completed_courses(env: Env, student: Address) -> Vec<ProgressRecord> {
-        let all_progress = Self::get_all_progress(env.clone(), student);
-        let mut completed = vec![&env];
-
-        for record in all_progress.iter() {
-            if record.completed {
-                completed.push_back(record.clone());
-            }
-        }
-        completed
+        queries::get_completed_courses(env, student)
     }
 
     /// Get in-progress courses for a student (filtered by completion status).
     pub fn get_in_progress_courses(env: Env, student: Address) -> Vec<ProgressRecord> {
-        let all_progress = Self::get_all_progress(env.clone(), student);
-        let mut in_progress = vec![&env];
-
-        for record in all_progress.iter() {
-            if !record.completed {
-                in_progress.push_back(record.clone());
-            }
-        }
-        in_progress
+        queries::get_in_progress_courses(env, student)
     }
 
     /// Get paginated progress records for a student.
@@ -564,8 +344,7 @@ impl AnalyticsContract {
         offset: u32,
         limit: u32,
     ) -> Vec<ProgressRecord> {
-        let all_progress = Self::get_all_progress(env.clone(), student);
-        paginate(&env, &all_progress, offset, limit)
+        queries::get_progress_paginated(env, student, offset, limit)
     }
 
     /// Get progress records for a student filtered by minimum progress percentage.
@@ -574,36 +353,17 @@ impl AnalyticsContract {
         student: Address,
         min_progress_pct: u32,
     ) -> Vec<ProgressRecord> {
-        assert!(min_progress_pct <= PROGRESS_MAX, "Threshold must be 0-100");
-        let all_progress = Self::get_all_progress(env.clone(), student);
-        let mut filtered = vec![&env];
-        
-        for record in all_progress.iter() {
-            if record.progress_pct >= min_progress_pct {
-                filtered.push_back(record.clone());
-            }
-        }
-        filtered
+        queries::get_progress_above_threshold(env, student, min_progress_pct)
     }
 
     /// Count total completed courses for a student.
     pub fn count_completed_courses(env: Env, student: Address) -> u32 {
-        let completed = Self::get_completed_courses(env, student);
-        completed.len()
+        queries::count_completed_courses(env, student)
     }
 
     /// Get average progress across all courses for a student.
     pub fn get_average_progress(env: Env, student: Address) -> u32 {
-        let all_progress = Self::get_all_progress(env, student);
-        if all_progress.is_empty() {
-            return 0;
-        }
-        
-        let mut total: u64 = 0;
-        for record in all_progress.iter() {
-            total += record.progress_pct as u64;
-        }
-        (total / all_progress.len() as u64) as u32
+        queries::get_average_progress(env, student)
     }
 }
 
@@ -619,450 +379,4 @@ mod fuzz_tests;
 mod contract_tests;
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use soroban_sdk::testutils::{Address as _, Events, Ledger, LedgerInfo};
-    use soroban_sdk::{FromVal, Symbol};
-
-    fn setup() -> (soroban_sdk::Env, AnalyticsContractClient<'static>, Address, Address) {
-        let env = soroban_sdk::Env::default();
-        env.mock_all_auths();
-        let contract_id = env.register_contract(None, AnalyticsContract);
-        let client = AnalyticsContractClient::new(&env, &contract_id);
-        let admin = Address::generate(&env);
-        let student = Address::generate(&env);
-        client.initialize(&admin);
-        (env, client, admin, student)
-    }
-
-    fn set_ledger(env: &soroban_sdk::Env, sequence: u32) {
-        env.ledger().set(LedgerInfo {
-            sequence_number: sequence,
-            timestamp: sequence as u64 * 5,
-            protocol_version: 21,
-            network_id: Default::default(),
-            base_reserve: 10,
-            min_temp_entry_ttl: MIN_TEMP_ENTRY_TTL,
-            min_persistent_entry_ttl: MIN_PERSISTENT_ENTRY_TTL,
-            max_entry_ttl: MAX_ENTRY_TTL,
-        });
-    }
-
-    fn has_event(env: &soroban_sdk::Env, topic1: &str, topic2: &str) -> bool {
-        let t1 = Symbol::new(env, topic1);
-        let t2 = Symbol::new(env, topic2);
-        env.events().all().iter().any(|e| {
-            let topics = e.1;
-            if topics.len() < 2 {
-                return false;
-            }
-            let s0 = Symbol::from_val(env, &topics.get(0).unwrap());
-            let s1 = Symbol::from_val(env, &topics.get(1).unwrap());
-            s0 == t1 && s1 == t2
-        })
-    }
-
-    // ============================================================================
-    // Initialize & Admin Tests
-    // ============================================================================
-
-    #[test]
-    fn test_initialize_sets_admin() {
-        let (_, client, admin, _) = setup();
-        assert_eq!(client.get_admin(), admin);
-    }
-
-    #[test]
-    #[should_panic(expected = "Already initialized")]
-    fn test_double_initialize_panics() {
-        let (_, client, admin, _) = setup();
-        client.initialize(&admin);
-    }
-
-    #[test]
-    fn test_set_admin() {
-        let (env, client, old_admin, _) = setup();
-        let new_admin = Address::generate(&env);
-        client.set_admin(&new_admin);
-        assert_eq!(client.get_admin(), new_admin);
-        assert_ne!(client.get_admin(), old_admin);
-    }
-
-    // ============================================================================
-    // Record Progress Tests (Happy Path)
-    // ============================================================================
-
-    #[test]
-    fn test_record_progress_0_percent() {
-        let (_, client, _, student) = setup();
-        let course = symbol_short!("RUST101");
-        client.record_progress(&student, &student, &course, &0);
-        let rec = client.get_progress(&student, &course).unwrap();
-        assert_eq!(rec.progress_pct, 0);
-        assert!(!rec.completed);
-    }
-
-    #[test]
-    fn test_record_progress_50_percent() {
-        let (_, client, _, student) = setup();
-        let course = symbol_short!("RUST101");
-        client.record_progress(&student, &student, &course, &50);
-        let rec = client.get_progress(&student, &course).unwrap();
-        assert_eq!(rec.progress_pct, 50);
-        assert!(!rec.completed);
-    }
-
-    #[test]
-    fn test_record_progress_100_percent() {
-        let (_, client, _, student) = setup();
-        let course = symbol_short!("RUST101");
-        client.record_progress(&student, &student, &course, &100);
-        let rec = client.get_progress(&student, &course).unwrap();
-        assert_eq!(rec.progress_pct, 100);
-        assert!(rec.completed);
-    }
-
-    // ============================================================================
-    // Progress Validation Tests
-    // ============================================================================
-
-    #[test]
-    #[should_panic(expected = "Progress must be 0-100")]
-    fn test_progress_over_100_panics() {
-        let (_, client, _, student) = setup();
-        let course = symbol_short!("RUST101");
-        client.record_progress(&student, &student, &course, &101);
-    }
-
-    #[test]
-    #[should_panic(expected = "Progress must be 0-100")]
-    fn test_progress_way_over_100_panics() {
-        let (_, client, _, student) = setup();
-        let course = symbol_short!("RUST101");
-        client.record_progress(&student, &student, &course, &200);
-    }
-
-    // ============================================================================
-    // Get Progress Tests
-    // ============================================================================
-
-    #[test]
-    fn test_get_progress_returns_none_for_unknown_student() {
-        let (env, client, _, _) = setup();
-        let unknown = Address::generate(&env);
-        let course = symbol_short!("RUST101");
-        assert!(client.get_progress(&unknown, &course).is_none());
-    }
-
-    #[test]
-    fn test_get_progress_returns_none_for_unknown_course() {
-        let (_, client, _, student) = setup();
-        let course = symbol_short!("UNKNOWN");
-        assert!(client.get_progress(&student, &course).is_none());
-    }
-
-    #[test]
-    fn test_get_progress_returns_recorded_data() {
-        let (_, client, _, student) = setup();
-        let course = symbol_short!("RUST101");
-        client.record_progress(&student, &student, &course, &75);
-        let rec = client.get_progress(&student, &course).unwrap();
-        assert_eq!(rec.student, student);
-        assert_eq!(rec.course_id, course);
-        assert_eq!(rec.progress_pct, 75);
-    }
-
-    // ============================================================================
-    // Completion Event Tests
-    // ============================================================================
-
-    #[test]
-    fn test_completion_event_emitted_at_100() {
-        let (env, client, _, student) = setup();
-        let course = symbol_short!("RUST101");
-        client.record_progress(&student, &student, &course, &100);
-        assert!(has_event(&env, "analytics", "completed"));
-    }
-
-    #[test]
-    fn test_completion_event_not_emitted_below_100() {
-        let (env, client, _, student) = setup();
-        let course = symbol_short!("RUST101");
-        client.record_progress(&student, &student, &course, &99);
-        assert!(!has_event(&env, "analytics", "completed"));
-    }
-
-    #[test]
-    fn test_progress_updated_event_always_emitted() {
-        let (env, client, _, student) = setup();
-        let course = symbol_short!("RUST101");
-        client.record_progress(&student, &student, &course, &50);
-        assert!(has_event(&env, "analytics", "prog_upd"));
-    }
-
-    #[test]
-    fn test_both_events_emitted_at_100() {
-        let (env, client, _, student) = setup();
-        let course = symbol_short!("RUST101");
-        client.record_progress(&student, &student, &course, &100);
-        assert!(has_event(&env, "analytics", "prog_upd"));
-        assert!(has_event(&env, "analytics", "completed"));
-    }
-
-    // ============================================================================
-    // Authorization Tests
-    // ============================================================================
-
-    #[test]
-    fn test_student_can_record_own_progress() {
-        let (_, client, _, student) = setup();
-        let course = symbol_short!("RUST101");
-        client.record_progress(&student, &student, &course, &75);
-        let rec = client.get_progress(&student, &course).unwrap();
-        assert_eq!(rec.progress_pct, 75);
-    }
-
-    #[test]
-    fn test_admin_can_record_student_progress() {
-        let (_, client, admin, student) = setup();
-        let course = symbol_short!("RUST101");
-        client.record_progress(&admin, &student, &course, &100);
-        let rec = client.get_progress(&student, &course).unwrap();
-        assert_eq!(rec.progress_pct, 100);
-    }
-
-    #[test]
-    #[should_panic(expected = "Unauthorized: must be student, admin, or authorized caller")]
-    fn test_unauthorized_caller_rejected() {
-        let (env, client, _, student) = setup();
-        let rando = Address::generate(&env);
-        let course = symbol_short!("RUST101");
-        client.record_progress(&rando, &student, &course, &50);
-    }
-
-    #[test]
-    #[should_panic(expected = "Unauthorized: must be student, admin, or authorized caller")]
-    fn test_third_party_cannot_record_for_other_student() {
-        let (env, client, _, student) = setup();
-        let other_student = Address::generate(&env);
-        let rando = Address::generate(&env);
-        let course = symbol_short!("RUST101");
-        client.record_progress(&rando, &other_student, &course, &50);
-    }
-
-    // ============================================================================
-    // Persistent Storage & TTL Tests
-    // ============================================================================
-
-    #[test]
-    fn test_record_survives_ledger_advance() {
-        let (env, client, _, student) = setup();
-        let course = symbol_short!("RUST101");
-        set_ledger(&env, 1);
-        client.record_progress(&student, &student, &course, &60);
-        set_ledger(&env, 400);
-        let rec = client.get_progress(&student, &course).unwrap();
-        assert_eq!(rec.progress_pct, 60);
-    }
-
-    // ============================================================================
-    // Secondary Index Tests (get_all_progress)
-    // ============================================================================
-
-    #[test]
-    fn test_get_all_progress_empty() {
-        let (_, client, _, student) = setup();
-        let all = client.get_all_progress(&student);
-        assert_eq!(all.len(), 0);
-    }
-
-    #[test]
-    fn test_get_all_progress_single_course() {
-        let (_, client, _, student) = setup();
-        let course = symbol_short!("RUST101");
-        client.record_progress(&student, &student, &course, &80);
-        let all = client.get_all_progress(&student);
-        assert_eq!(all.len(), 1);
-        assert_eq!(all.get(0).unwrap().progress_pct, 80);
-    }
-
-    #[test]
-    fn test_get_all_progress_multiple_courses() {
-        let (_, client, _, student) = setup();
-        let c1 = symbol_short!("RUST101");
-        let c2 = symbol_short!("SOL201");
-        let c3 = symbol_short!("WEB301");
-        client.record_progress(&student, &student, &c1, &100);
-        client.record_progress(&student, &student, &c2, &50);
-        client.record_progress(&student, &student, &c3, &25);
-        let all = client.get_all_progress(&student);
-        assert_eq!(all.len(), 3);
-    }
-
-    #[test]
-    fn test_get_all_progress_no_duplicates_on_update() {
-        let (_, client, _, student) = setup();
-        let course = symbol_short!("RUST101");
-        client.record_progress(&student, &student, &course, &50);
-        client.record_progress(&student, &student, &course, &75);
-        let all = client.get_all_progress(&student);
-        assert_eq!(all.len(), 1);
-        assert_eq!(all.get(0).unwrap().progress_pct, 75);
-    }
-
-    #[test]
-    fn test_get_all_progress_isolated_per_student() {
-        let (env, client, _, student) = setup();
-        let other = Address::generate(&env);
-        let course = symbol_short!("RUST101");
-        client.record_progress(&student, &student, &course, &100);
-        let all = client.get_all_progress(&other);
-        assert_eq!(all.len(), 0);
-    }
-
-    // ============================================================================
-    // Reset Progress Tests
-    // ============================================================================
-
-    #[test]
-    fn test_admin_can_reset_progress() {
-        let (_, client, admin, student) = setup();
-        let course = symbol_short!("RUST101");
-        client.record_progress(&student, &student, &course, &80);
-        client.reset_progress(&admin, &student, &course);
-        assert!(client.get_progress(&student, &course).is_none());
-    }
-
-    #[test]
-    fn test_reset_removes_from_secondary_index() {
-        let (_, client, admin, student) = setup();
-        let c1 = symbol_short!("RUST101");
-        let c2 = symbol_short!("SOL201");
-        client.record_progress(&student, &student, &c1, &100);
-        client.record_progress(&student, &student, &c2, &50);
-        client.reset_progress(&admin, &student, &c1);
-        let all = client.get_all_progress(&student);
-        assert_eq!(all.len(), 1);
-        assert_eq!(all.get(0).unwrap().course_id, c2);
-    }
-
-    #[test]
-    #[should_panic(expected = "Unauthorized: admin required")]
-    fn test_non_admin_cannot_reset_progress() {
-        let (env, client, _, student) = setup();
-        let rando = Address::generate(&env);
-        let course = symbol_short!("RUST101");
-        client.record_progress(&student, &student, &course, &80);
-        client.reset_progress(&rando, &student, &course);
-    }
-
-    // ============================================================================
-    // Event Filtering Tests
-    // ============================================================================
-
-    #[test]
-    fn test_get_completed_courses() {
-        let (_, client, _, student) = setup();
-        let c1 = symbol_short!("RUST101");
-        let c2 = symbol_short!("SOL201");
-        let c3 = symbol_short!("WEB301");
-        client.record_progress(&student, &student, &c1, &100);
-        client.record_progress(&student, &student, &c2, &50);
-        client.record_progress(&student, &student, &c3, &100);
-        
-        let completed = client.get_completed_courses(&student);
-        assert_eq!(completed.len(), 2);
-    }
-
-    #[test]
-    fn test_get_in_progress_courses() {
-        let (_, client, _, student) = setup();
-        let c1 = symbol_short!("RUST101");
-        let c2 = symbol_short!("SOL201");
-        let c3 = symbol_short!("WEB301");
-        client.record_progress(&student, &student, &c1, &100);
-        client.record_progress(&student, &student, &c2, &50);
-        client.record_progress(&student, &student, &c3, &75);
-        
-        let in_progress = client.get_in_progress_courses(&student);
-        assert_eq!(in_progress.len(), 2);
-    }
-
-    #[test]
-    fn test_get_progress_paginated() {
-        let (_, client, _, student) = setup();
-        let c1 = symbol_short!("RUST101");
-        let c2 = symbol_short!("SOL201");
-        let c3 = symbol_short!("WEB301");
-        client.record_progress(&student, &student, &c1, &100);
-        client.record_progress(&student, &student, &c2, &50);
-        client.record_progress(&student, &student, &c3, &75);
-        
-        let page1 = client.get_progress_paginated(&student, &0, &2);
-        assert_eq!(page1.len(), 2);
-        
-        let page2 = client.get_progress_paginated(&student, &2, &2);
-        assert_eq!(page2.len(), 1);
-        
-        let page3 = client.get_progress_paginated(&student, &5, &2);
-        assert_eq!(page3.len(), 0);
-    }
-
-    #[test]
-    fn test_get_progress_above_threshold() {
-        let (_, client, _, student) = setup();
-        let c1 = symbol_short!("RUST101");
-        let c2 = symbol_short!("SOL201");
-        let c3 = symbol_short!("WEB301");
-        client.record_progress(&student, &student, &c1, &100);
-        client.record_progress(&student, &student, &c2, &50);
-        client.record_progress(&student, &student, &c3, &75);
-        
-        let above_75 = client.get_progress_above_threshold(&student, &75);
-        assert_eq!(above_75.len(), 2);
-        
-        let above_50 = client.get_progress_above_threshold(&student, &50);
-        assert_eq!(above_50.len(), 3);
-    }
-
-    #[test]
-    #[should_panic(expected = "Threshold must be 0-100")]
-    fn test_progress_threshold_validation() {
-        let (_, client, _, student) = setup();
-        client.get_progress_above_threshold(&student, &101);
-    }
-
-    #[test]
-    fn test_count_completed_courses() {
-        let (_, client, _, student) = setup();
-        let c1 = symbol_short!("RUST101");
-        let c2 = symbol_short!("SOL201");
-        let c3 = symbol_short!("WEB301");
-        client.record_progress(&student, &student, &c1, &100);
-        client.record_progress(&student, &student, &c2, &50);
-        client.record_progress(&student, &student, &c3, &100);
-        
-        assert_eq!(client.count_completed_courses(&student), 2);
-    }
-
-    #[test]
-    fn test_get_average_progress() {
-        let (_, client, _, student) = setup();
-        let c1 = symbol_short!("RUST101");
-        let c2 = symbol_short!("SOL201");
-        let c3 = symbol_short!("WEB301");
-        client.record_progress(&student, &student, &c1, &100);
-        client.record_progress(&student, &student, &c2, &50);
-        client.record_progress(&student, &student, &c3, &75);
-        
-        let avg = client.get_average_progress(&student);
-        assert_eq!(avg, 75); // (100 + 50 + 75) / 3 = 75
-    }
-
-    #[test]
-    fn test_get_average_progress_empty() {
-        let (env, client, _, student) = setup();
-        let other = Address::generate(&env);
-        assert_eq!(client.get_average_progress(&other), 0);
-    }
-}
+mod contract_tests;

@@ -77,7 +77,7 @@ pub fn require_valid_royalty_basis(royalty_basis: u32) {
 /// longer CIDv1/URL forms are accepted up to a sane upper bound.
 pub fn is_valid_ipfs_hash(ipfs_hash: &String) -> bool {
     let len = ipfs_hash.len();
-    len >= 46 && len <= 100
+    (46..=100).contains(&len)
 }
 
 pub fn require_valid_ipfs_hash(ipfs_hash: &String) {
@@ -87,7 +87,7 @@ pub fn require_valid_ipfs_hash(ipfs_hash: &String) {
 /// Metadata URI: non-empty, bounded length (HTTP(S) URLs and `ipfs://` URIs).
 pub fn is_valid_metadata_uri(uri: &String) -> bool {
     let len = uri.len();
-    len >= 10 && len <= 256
+    (10..=256).contains(&len)
 }
 
 pub fn require_valid_metadata_uri(uri: &String) {
@@ -112,7 +112,7 @@ pub fn require_reasonable_metadata_size(metadata_string: &String, max_bytes: u32
 /// Course name format shared by NFT minting and credential issuance.
 pub fn is_valid_course_name(course_name: &String) -> bool {
     let len = course_name.len();
-    len >= 3 && len <= 100
+    (3..=100).contains(&len)
 }
 
 pub fn require_valid_course_name(course_name: &String) {
@@ -125,7 +125,7 @@ pub fn require_valid_course_name(course_name: &String) {
 /// Grade format shared by credential contracts.
 pub fn is_valid_grade(grade: &String) -> bool {
     let len = grade.len();
-    len >= 1 && len <= 20
+    (1..=20).contains(&len)
 }
 
 pub fn require_valid_grade(grade: &String) {

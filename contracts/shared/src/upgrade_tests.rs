@@ -217,7 +217,7 @@ fn test_unauthorized_schedule_attempt() {
 #[test]
 #[should_panic(expected = "Unauthorized: admin required")]
 fn test_authorization_by_wrong_account() {
-    let (env, admin, client) = setup();
+    let (env, _admin, client) = setup();
     let wrong_admin = Address::generate(&env);
     // Legit admin exists but wrong account attempts upgrade
     client.schedule_upgrade(&wrong_admin, &fake_hash(&env, 43), &10);
@@ -275,7 +275,7 @@ fn test_cancel_authorization_boundary() {
 fn test_partial_multisig_authorization_rejected() {
     // This test verifies that upgrade cannot proceed without complete authorization
     // Even if we simulate a partial multisig scenario
-    let (env, admin, client) = setup();
+    let (env, _admin, client) = setup();
     
     // Create scenario with potential "partial" authorization
     let co_admin = Address::generate(&env);
