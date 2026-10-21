@@ -14,54 +14,14 @@
 #[cfg(test)]
 extern crate std;
 
-use soroban_sdk::{
-    contract, contractimpl, contracttype, symbol_short, Address, Env, Symbol, Vec,
-};
+use soroban_sdk::{contract, contractimpl, symbol_short, Address, Env, Symbol, Vec};
 
 use brain_storm_shared::access;
 use brain_storm_shared::pagination::{paginate, MAX_PAGE_SIZE};
+
+mod types;
+pub use types::*;
 use brain_storm_shared::pausable;
-
-// ── Storage keys ──────────────────────────────────────────────────────────────
-
-#[contracttype]
-pub enum DataKey {
-    Admin,
-    Curator(Address),
-    VerificationLevel(Address),   // persistent: VerificationLevel
-    CertifiedSkills(Address),     // persistent: Vec<Symbol>
-    Specialisation(Address),      // persistent: Vec<Symbol>
-    SkillExpiry(Address, Symbol), // persistent: u64 timestamp (0 = never)
-    UserList,                     // instance: Vec<Address> — ordered registration list
-}
-
-fn level_ord(level: &VerificationLevel) -> u32 {
-    match level {
-        VerificationLevel::Unverified => 0,
-        VerificationLevel::Basic => 1,
-        VerificationLevel::Advanced => 2,
-        VerificationLevel::Expert => 3,
-    }
-}
-
-// ── Types ─────────────────────────────────────────────────────────────────────
-
-/// Numeric verification tier (0 = unverified … 3 = fully verified).
-#[contracttype]
-#[derive(Clone, PartialEq, Debug)]
-pub enum VerificationLevel {
-    Unverified,
-    Basic,
-    Advanced,
-    Expert,
-}
-
-// ── Events ────────────────────────────────────────────────────────────────────
-const EVT_VL_SET: Symbol = symbol_short!("vl_set");
-const EVT_SKILL_ADD: Symbol = symbol_short!("sk_add");
-const EVT_SKILL_RM: Symbol = symbol_short!("sk_rm");
-const EVT_SPEC_SET: Symbol = symbol_short!("sp_set");
-const EVT_CURATOR_ADD: Symbol = symbol_short!("cur_add");
 
 #[contract]
 pub struct RegistryContract;
