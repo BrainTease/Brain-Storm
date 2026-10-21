@@ -374,5 +374,9 @@ impl AnalyticsContract {
 #[cfg(test)]
 mod fuzz_tests;
 
+// Dedicated per-function tests for every public entry point (#1363).
+#[cfg(test)]
+mod contract_tests;
+
 #[cfg(test)]
 mod contract_tests;

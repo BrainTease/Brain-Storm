@@ -3,7 +3,7 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import * as request from 'supertest';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 
 // Modules under test
 import { AuthModule } from '../src/auth/auth.module';
@@ -22,6 +22,9 @@ import { StellarTransactionLog } from '../src/stellar/stellar-transaction-log.en
 
 // Stub StellarService so no real Horizon/Soroban calls are made
 import { StellarService } from '../src/stellar/stellar.service';
+
+// Per-test data reset so specs pass in any order (#1362)
+import { clearE2ETestData } from './e2e-test-utils';
 
 const STELLAR_STUB = {
   issueCredential: jest.fn().mockResolvedValue('FAKE_TX_HASH'),
@@ -78,6 +81,7 @@ describe('Certificate Issuance & Verification (E2E)', () => {
   let courseRepo: Repository<Course>;
   let enrollmentRepo: Repository<Enrollment>;
   let certRepo: Repository<Certificate>;
+  let dataSource: DataSource;
 
   let adminToken: string;
   let studentToken: string;
@@ -110,10 +114,31 @@ describe('Certificate Issuance & Verification (E2E)', () => {
     app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }));
     await app.init();
 
+    dataSource = moduleFixture.get<DataSource>(DataSource);
+
     userRepo = moduleFixture.get<Repository<User>>(getRepositoryToken(User));
     courseRepo = moduleFixture.get<Repository<Course>>(getRepositoryToken(Course));
     enrollmentRepo = moduleFixture.get<Repository<Enrollment>>(getRepositoryToken(Enrollment));
     certRepo = moduleFixture.get<Repository<Certificate>>(getRepositoryToken(Certificate));
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  /**
+   * Reset the database before every test and re-seed the shared fixtures.
+   *
+   * Without this reset the rows written by one test are still present in the
+   * next one, which makes the suite order-dependent: the "certificate is
+   * already issued" case only holds if an earlier test issued the certificate,
+   * and re-running the suite fails because the seeded users already exist.
+   */
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    STELLAR_STUB.issueCredential.mockResolvedValue('FAKE_TX_HASH');
+
+    await clearE2ETestData(dataSource);
 
     // Seed an admin user and a student user
     adminToken = await registerAndLogin(
@@ -144,14 +169,28 @@ describe('Certificate Issuance & Verification (E2E)', () => {
     testUser = (await userRepo.findOne({ where: { email: 'student@cert-e2e.test' } }))!;
   });
 
-  afterAll(async () => {
-    await app.close();
-  });
+  /**
+   * Issue a certificate for the shared student/course pair and return it.
+   * Tests that assert on an existing certificate use this so they do not
+   * depend on a certificate created by another test.
+   */
+  async function issueCertificateForStudent(): Promise<Certificate> {
+    await enrollmentRepo.save(
+      enrollmentRepo.create({
+        userId: testUser.id,
+        courseId: testCourse.id,
+        completedAt: new Date(),
+      })
+    );
 
-  beforeEach(() => {
-    jest.clearAllMocks();
-    STELLAR_STUB.issueCredential.mockResolvedValue('FAKE_TX_HASH');
-  });
+    const resp = await request(app.getHttpServer())
+      .post('/v1/certificates')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ userId: testUser.id, courseId: testCourse.id })
+      .expect(201);
+
+    return resp.body as Certificate;
+  }
 
   // ── Issue certificate ────────────────────────────────────────────────────
 
@@ -189,12 +228,10 @@ describe('Certificate Issuance & Verification (E2E)', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .send({ userId: testUser.id, courseId: testCourse.id })
         .expect(400);
-
-      // clean up so later tests have a clean slate
-      await enrollmentRepo.delete({ userId: testUser.id, courseId: testCourse.id });
     });
 
     it('issues a certificate successfully when enrollment is completed', async () => {
+      // Create enrollment for this specific test
       await enrollmentRepo.save(
         enrollmentRepo.create({
           userId: testUser.id,
@@ -218,7 +255,9 @@ describe('Certificate Issuance & Verification (E2E)', () => {
     });
 
     it('returns 400 when certificate is already issued', async () => {
-      // Enrollment already exists from previous test; try to issue again
+      // Issue a certificate for this test only, then try to issue it again.
+      await issueCertificateForStudent();
+
       await request(app.getHttpServer())
         .post('/v1/certificates')
         .set('Authorization', `Bearer ${adminToken}`)
@@ -240,11 +279,11 @@ describe('Certificate Issuance & Verification (E2E)', () => {
   describe('POST /v1/certificates/verify', () => {
     let issuedHash: string;
 
-    beforeAll(async () => {
-      const cert = await certRepo.findOne({
-        where: { userId: testUser.id, courseId: testCourse.id },
-      });
-      issuedHash = cert!.certificateHash;
+    beforeEach(async () => {
+      // Each test issues its own certificate so it does not depend on a
+      // certificate created by a previously executed test.
+      const cert = await issueCertificateForStudent();
+      issuedHash = cert.certificateHash;
     });
 
     it('returns valid: true for a known certificate hash', async () => {
@@ -281,11 +320,9 @@ describe('Certificate Issuance & Verification (E2E)', () => {
   describe('GET /v1/certificates/verify/:hash', () => {
     let issuedHash: string;
 
-    beforeAll(async () => {
-      const cert = await certRepo.findOne({
-        where: { userId: testUser.id, courseId: testCourse.id },
-      });
-      issuedHash = cert!.certificateHash;
+    beforeEach(async () => {
+      const cert = await issueCertificateForStudent();
+      issuedHash = cert.certificateHash;
     });
 
     it('returns valid: true for a valid hash', async () => {
@@ -312,11 +349,9 @@ describe('Certificate Issuance & Verification (E2E)', () => {
   describe('GET /v1/certificates/:id', () => {
     let certId: string;
 
-    beforeAll(async () => {
-      const cert = await certRepo.findOne({
-        where: { userId: testUser.id, courseId: testCourse.id },
-      });
-      certId = cert!.id;
+    beforeEach(async () => {
+      const cert = await issueCertificateForStudent();
+      certId = cert.id;
     });
 
     it('returns the certificate details', async () => {
@@ -346,6 +381,8 @@ describe('Certificate Issuance & Verification (E2E)', () => {
 
   describe('GET /v1/certificates/user/:userId', () => {
     it('returns an array of certificates for the user', async () => {
+      await issueCertificateForStudent();
+
       const resp = await request(app.getHttpServer())
         .get(`/v1/certificates/user/${testUser.id}`)
         .set('Authorization', `Bearer ${studentToken}`)

@@ -38,6 +38,28 @@ export class UsersService {
     return this.usersRepository.save({ ...user, ...data });
   }
 
+  /**
+   * Whether `actor` is allowed to modify the profile of `targetUserId`.
+   *
+   * Users may always update their own profile; admins may update any profile.
+   */
+  canUpdateUser(actorId: string, targetUserId: string, actorRole?: string): boolean {
+    if (actorRole === 'admin') return true;
+    return actorId === targetUserId;
+  }
+
+  /**
+   * Stores the URL of an uploaded avatar on the user's profile.
+   */
+  async uploadAvatar(userId: string, file: { originalname?: string; mimetype?: string }) {
+    const user = await this.findById(userId);
+    if (!user) throw new NotFoundException('User not found');
+
+    const extension = (file.originalname?.split('.').pop() || 'png').toLowerCase();
+    const avatar = `avatars/${userId}.${extension}`;
+    return this.usersRepository.save({ ...user, avatar });
+  }
+
   findAll(
     options: {
       page?: number;
