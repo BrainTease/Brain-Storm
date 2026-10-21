@@ -84,13 +84,17 @@ mod tests {
 
     #[test]
     fn test_ledger_ttl_constants() {
-        assert!(MIN_TEMP_ENTRY_TTL <= MAX_ENTRY_TTL);
-        assert!(MIN_PERSISTENT_ENTRY_TTL <= MAX_ENTRY_TTL);
+        // Const assertions: the TTL bounds are compile-time constants, so a
+        // runtime `assert!` would trip `clippy::assertions_on_constants`.
+        const _: () = assert!(MIN_TEMP_ENTRY_TTL <= MAX_ENTRY_TTL);
+        const _: () = assert!(MIN_PERSISTENT_ENTRY_TTL <= MAX_ENTRY_TTL);
     }
 
     #[test]
     fn test_storage_ttl_constants() {
-        assert!(STORAGE_TTL_THRESHOLD < STORAGE_TTL_EXTEND_TO);
-        assert!(STORAGE_TTL_EXTEND_TO <= MAX_ENTRY_TTL);
+        // The threshold is the remaining TTL that triggers an extension, the
+        // extension target is the TTL the entry is bumped to.
+        const _: () = assert!(STORAGE_TTL_THRESHOLD < STORAGE_TTL_EXTEND_TO);
+        const _: () = assert!(STORAGE_TTL_EXTEND_TO <= MAX_ENTRY_TTL);
     }
 }
