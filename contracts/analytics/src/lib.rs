@@ -1,4 +1,8 @@
 #![no_std]
+// Test builds need std (proptest, std::vec::Vec); runtime stays no_std.
+#[cfg(test)]
+extern crate std;
+
 use soroban_sdk::{
     contract, contractimpl, contracttype, symbol_short, vec, Address, Env, Symbol, Vec,
 };
@@ -609,6 +613,10 @@ impl AnalyticsContract {
 
 #[cfg(test)]
 mod fuzz_tests;
+
+// Dedicated per-function tests for every public entry point (#1363).
+#[cfg(test)]
+mod contract_tests;
 
 #[cfg(test)]
 mod tests {
