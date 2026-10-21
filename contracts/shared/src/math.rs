@@ -81,7 +81,7 @@ pub fn calculate_bps(amount: i128, bps: i128) -> Result<i128, SharedError> {
 
 /// Check if a value is within bounds
 pub fn is_within_bounds(value: i128, min: i128, max: i128) -> bool {
-    value >= min && value <= max
+    (min..=max).contains(&value)
 }
 
 /// Clamp a value between min and max
