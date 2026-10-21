@@ -25,6 +25,7 @@ members = [
     "contracts/market",
     "contracts/dispute",
     "contracts/royalty_distribution",
+    "contracts/escrow",
 ]
 
 [workspace.dependencies]
