@@ -1,3 +1,4 @@
+import { env } from '../config/env';
 import { Injectable } from '@nestjs/common';
 
 export interface RouteDefinition {
@@ -83,6 +84,6 @@ export class GatewayService {
   }
 
   getHealthSummary(): { status: string; routes: number; version: string } {
-    return { status: 'ok', routes: ROUTES.length, version: process.env.APP_VERSION ?? 'unknown' };
+    return { status: 'ok', routes: ROUTES.length, version: env.appVersion };
   }
 }

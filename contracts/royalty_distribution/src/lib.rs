@@ -1,9 +1,10 @@
 #![no_std]
+#![allow(clippy::needless_pass_by_value)] // Soroban SDK types like Address are Copy
 use soroban_sdk::{
     contract, contractimpl, contracttype, symbol_short, Address, Env, Symbol,
 };
 
-use brain_storm_shared::{access, events::emit_contract_event};
+use brain_storm_shared::{access, events::emit_contract_event, validation};
 
 #[contracttype]
 pub enum DataKey {
@@ -115,7 +116,7 @@ impl RoyaltyDistributionContract {
         total_amount: i128,
     ) {
         access::require_admin(&env, &admin, &DataKey::Admin);
-        assert!(total_amount > 0, "Amount must be positive");
+        validation::require_positive_amount(total_amount);
 
         let split: RoyaltySplit = env
             .storage()

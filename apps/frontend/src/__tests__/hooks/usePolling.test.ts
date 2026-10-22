@@ -7,10 +7,23 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { renderHook, act, waitFor } from '@testing-library/react';
+import { renderHook, act } from '@testing-library/react';
 import { usePolling } from '@/hooks/usePolling';
 
 const MOCK_DATA = { value: 42 };
+
+async function flushPromises() {
+  await act(async () => {
+    await Promise.resolve();
+    await Promise.resolve();
+  });
+}
+
+async function advance(ms: number) {
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(ms);
+  });
+}
 
 describe('usePolling', () => {
   beforeEach(() => {
@@ -25,11 +38,11 @@ describe('usePolling', () => {
   // ---------------------------------------------------------------------------
   // Initial fetch
   // ---------------------------------------------------------------------------
-  it('calls fetchFn immediately when immediate=true (default)', async () => {
+  it('calls fetchFn immediately when immediate=true (default)', () => {
     const fetchFn = vi.fn().mockResolvedValue(MOCK_DATA);
     renderHook(() => usePolling(fetchFn, { interval: 5000 }));
 
-    await waitFor(() => expect(fetchFn).toHaveBeenCalledTimes(1));
+    expect(fetchFn).toHaveBeenCalledTimes(1);
   });
 
   it('does NOT call fetchFn immediately when immediate=false', async () => {
@@ -37,7 +50,7 @@ describe('usePolling', () => {
     renderHook(() => usePolling(fetchFn, { interval: 5000, immediate: false }));
 
     // Give a tick for any accidental immediate call
-    await act(async () => {});
+    await flushPromises();
     expect(fetchFn).toHaveBeenCalledTimes(0);
   });
 
@@ -49,18 +62,14 @@ describe('usePolling', () => {
     renderHook(() => usePolling(fetchFn, { interval: 1000 }));
 
     // First immediate call
-    await waitFor(() => expect(fetchFn).toHaveBeenCalledTimes(1));
+    expect(fetchFn).toHaveBeenCalledTimes(1);
 
     // Advance two full intervals
-    await act(async () => {
-      vi.advanceTimersByTime(1000);
-    });
-    await waitFor(() => expect(fetchFn).toHaveBeenCalledTimes(2));
+    await advance(1000);
+    expect(fetchFn).toHaveBeenCalledTimes(2);
 
-    await act(async () => {
-      vi.advanceTimersByTime(1000);
-    });
-    await waitFor(() => expect(fetchFn).toHaveBeenCalledTimes(3));
+    await advance(1000);
+    expect(fetchFn).toHaveBeenCalledTimes(3);
   });
 
   // ---------------------------------------------------------------------------
@@ -70,15 +79,13 @@ describe('usePolling', () => {
     const fetchFn = vi.fn().mockResolvedValue(MOCK_DATA);
     const { unmount } = renderHook(() => usePolling(fetchFn, { interval: 1000 }));
 
-    await waitFor(() => expect(fetchFn).toHaveBeenCalledTimes(1));
+    expect(fetchFn).toHaveBeenCalledTimes(1);
 
     // Unmount while interval is still running
     unmount();
 
     // Advance timer — interval should already be cleared
-    await act(async () => {
-      vi.advanceTimersByTime(3000);
-    });
+    await advance(3000);
 
     // Must still be exactly 1 — no additional calls after unmount
     expect(fetchFn).toHaveBeenCalledTimes(1);
@@ -90,24 +97,22 @@ describe('usePolling', () => {
       initialProps: { interval: 1000 },
     });
 
-    await waitFor(() => expect(fetchFn).toHaveBeenCalledTimes(1));
+    expect(fetchFn).toHaveBeenCalledTimes(1);
 
     // Change the interval — the old setInterval should have been cleared
     rerender({ interval: 2000 });
 
-    // Advance only 1000ms — old interval would have fired, new one should not yet
-    await act(async () => {
-      vi.advanceTimersByTime(1000);
-    });
-    // immediate=true triggers a fresh call on re-mount, so we get call #2 from that
-    // Then at 2000ms the new interval fires — we just assert it didn't fire at 1000ms
-    const callCountAt1s = fetchFn.mock.calls.length;
+    // immediate=true triggers a fresh call on re-mount
+    await flushPromises();
+    expect(fetchFn).toHaveBeenCalledTimes(2);
 
-    await act(async () => {
-      vi.advanceTimersByTime(1000);
-    });
+    // Advance only 1000ms — old interval would have fired, new one should not yet
+    await advance(1000);
+    expect(fetchFn).toHaveBeenCalledTimes(2);
+
     // Now 2000ms elapsed since rerender — new interval fires
-    expect(fetchFn.mock.calls.length).toBeGreaterThan(callCountAt1s);
+    await advance(1000);
+    expect(fetchFn).toHaveBeenCalledTimes(3);
 
     unmount();
   });
@@ -119,9 +124,7 @@ describe('usePolling', () => {
     const fetchFn = vi.fn().mockResolvedValue(MOCK_DATA);
     renderHook(() => usePolling(fetchFn, { interval: 1000, paused: true }));
 
-    await act(async () => {
-      vi.advanceTimersByTime(5000);
-    });
+    await advance(5000);
 
     expect(fetchFn).toHaveBeenCalledTimes(0);
   });
@@ -133,7 +136,8 @@ describe('usePolling', () => {
     const fetchFn = vi.fn().mockRejectedValue(new Error('Network down'));
     const { result } = renderHook(() => usePolling(fetchFn, { interval: 5000 }));
 
-    await waitFor(() => expect(result.current.error).toBe('Network down'));
+    await flushPromises();
+    expect(result.current.error).toBe('Network down');
     expect(result.current.data).toBeNull();
   });
 
@@ -141,7 +145,8 @@ describe('usePolling', () => {
     const fetchFn = vi.fn().mockRejectedValue('raw string');
     const { result } = renderHook(() => usePolling(fetchFn, { interval: 5000 }));
 
-    await waitFor(() => expect(result.current.error).toBe('Polling failed'));
+    await flushPromises();
+    expect(result.current.error).toBe('Polling failed');
   });
 
   // ---------------------------------------------------------------------------
@@ -151,14 +156,14 @@ describe('usePolling', () => {
     const fetchFn = vi.fn().mockResolvedValue(MOCK_DATA);
     const { result } = renderHook(() => usePolling(fetchFn, { interval: 60_000 }));
 
-    await waitFor(() => expect(fetchFn).toHaveBeenCalledTimes(1));
+    expect(fetchFn).toHaveBeenCalledTimes(1);
 
     // Manually refresh before interval fires
     await act(async () => {
       result.current.refresh();
     });
 
-    await waitFor(() => expect(fetchFn).toHaveBeenCalledTimes(2));
+    expect(fetchFn).toHaveBeenCalledTimes(2);
   });
 
   // ---------------------------------------------------------------------------
@@ -168,7 +173,8 @@ describe('usePolling', () => {
     const fetchFn = vi.fn().mockResolvedValue(MOCK_DATA);
     const { result } = renderHook(() => usePolling(fetchFn, { interval: 5000 }));
 
-    await waitFor(() => expect(result.current.data).toEqual(MOCK_DATA));
+    await flushPromises();
+    expect(result.current.data).toEqual(MOCK_DATA);
     expect(result.current.loading).toBe(false);
     expect(result.current.error).toBeNull();
   });

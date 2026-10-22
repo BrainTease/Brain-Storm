@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { EnrollmentPage, LoginPage, RegisterPage, uniqueUser } from './page-objects';
 
 /**
  * Verifies that a credential appears on the credentials page after a user
@@ -9,40 +10,22 @@ import { test, expect } from '@playwright/test';
  *  - The staging environment is pre-seeded (or the test registers a fresh user).
  */
 
-function uniqueUser() {
-  const ts = Date.now();
-  return {
-    username: `creduser_${ts}`,
-    email: `creduser_${ts}@example.com`,
-    password: 'Test@1234!',
-  };
-}
-
 test.describe('Credential issuance journey', () => {
   test('credential appears in credentials page after course completion', async ({ page }) => {
-    const user = uniqueUser();
+    const user = uniqueUser('creduser');
 
     // ── Register & login ─────────────────────────────────────────────────────
-    await page.goto('/auth/register');
-    await page.getByLabel(/username/i).fill(user.username);
-    await page.getByLabel(/email/i).fill(user.email);
-    await page.getByLabel(/^password$/i).fill(user.password);
-    await page.getByRole('button', { name: /register|sign up|create account/i }).click();
-
-    if (page.url().includes('login')) {
-      await page.getByLabel(/email/i).fill(user.email);
-      await page.getByLabel(/^password$/i).fill(user.password);
-      await page.getByRole('button', { name: /log in|sign in/i }).click();
-    }
+    await new RegisterPage(page).register(user);
+    await new LoginPage(page).loginIfRedirected(user);
 
     await expect(page).not.toHaveURL(/login|register/);
 
     // ── Enroll in course 1 ───────────────────────────────────────────────────
-    await page.goto('/courses/1');
-    const enrollBtn = page.getByRole('button', { name: /enroll/i });
-    await expect(enrollBtn).toBeVisible();
-    await enrollBtn.click();
-    await expect(page.getByText(/enrolled|enrollment confirmed/i)).toBeVisible({ timeout: 8_000 });
+    const enrollment = new EnrollmentPage(page);
+    await enrollment.goto(1);
+    await expect(enrollment.enrollButton).toBeVisible();
+    await enrollment.enroll();
+    await expect(enrollment.enrolledConfirmation).toBeVisible({ timeout: 8_000 });
 
     // ── Complete every lesson ────────────────────────────────────────────────
     // Navigate through all lessons and mark each complete
@@ -65,7 +48,7 @@ test.describe('Credential issuance journey', () => {
       await expect(page.getByText(/completed|progress saved/i)).toBeVisible({ timeout: 8_000 });
 
       // Go back to course page for next lesson
-      await page.goto('/courses/1');
+      await enrollment.goto(1);
     }
 
     // ── Verify credential issued ─────────────────────────────────────────────

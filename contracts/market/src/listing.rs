@@ -1,32 +1,33 @@
-use soroban_sdk::{Address, Env, String as SorString, Symbol, Vec};
-use brain_storm_shared::pausable;
-use crate::{MarketError, Product, ProductListing, ProductStatus};
+use soroban_sdk::{Address, Env, String, Vec};
 
-fn product_key(env: &Env, id: u32) -> Symbol {
-    let mut s = SorString::from_str(env, "product_");
-    // Append the id as string suffix using symbol_short-style approach
-    Symbol::new(env, "product")
-}
+use brain_storm_shared::events::emit_contract_event;
+use brain_storm_shared::validation;
 
-fn listing_key(env: &Env, id: u32) -> Symbol {
-    Symbol::new(env, "listing")
-}
+use crate::storage::{self, DataKey};
+use crate::types::{
+    MarketError, Product, ProductListing, ProductStatus, EVT_DOMAIN, EVT_PRODUCT_LISTED,
+};
 
 pub fn list_product(
-    env: Env,
+    env: &Env,
     seller: Address,
     price: i128,
     token_address: Address,
-    metadata: SorString,
+    metadata: String,
 ) -> Result<u32, MarketError> {
     seller.require_auth();
-    pausable::check_not_paused(&env);
+    storage::require_not_paused(env);
 
-    if price <= 0 {
+    if !validation::is_positive_amount(price)
+        || !validation::is_non_empty_string(&metadata)
+    {
         return Err(MarketError::InvalidProductState);
     }
 
-    let counter: u32 = env.storage().instance().get(&Symbol::new(env, "product_counter"))
+    let counter: u32 = env
+        .storage()
+        .instance()
+        .get(&DataKey::ProductCounter)
         .unwrap_or(0);
     let product_id = counter + 1;
 
@@ -40,9 +41,6 @@ pub fn list_product(
         created_at: env.ledger().timestamp(),
     };
 
-    env.storage().instance().set(&Symbol::new(env, "product"), &product);
-    env.storage().instance().set(&Symbol::new(env, "product_counter"), &product_id);
-
     let listing = ProductListing {
         product_id,
         seller: seller.clone(),
@@ -51,36 +49,53 @@ pub fn list_product(
         metadata,
         status: ProductStatus::Available,
     };
-    env.storage().instance().set(&Symbol::new(env, "listing"), &listing);
 
-    env.events().publish(
-        (Symbol::new(env, "product_listed"),),
+    env.storage()
+        .persistent()
+        .set(&DataKey::Product(product_id), &product);
+    env.storage()
+        .persistent()
+        .set(&DataKey::Listing(product_id), &listing);
+    env.storage()
+        .instance()
+        .set(&DataKey::ProductCounter, &product_id);
+
+    emit_contract_event(
+        env,
+        EVT_DOMAIN,
+        EVT_PRODUCT_LISTED,
         (product_id, seller, price),
     );
 
     Ok(product_id)
 }
 
-pub fn get_product(env: Env, product_id: u32) -> Result<Product, MarketError> {
-    env.storage().instance().get(&Symbol::new(env, "product"))
+pub fn get_product(env: &Env, product_id: u32) -> Result<Product, MarketError> {
+    env.storage()
+        .persistent()
+        .get(&DataKey::Product(product_id))
         .ok_or(MarketError::ProductNotFound)
 }
 
-pub fn get_listing(env: Env, product_id: u32) -> Result<ProductListing, MarketError> {
-    env.storage().instance().get(&Symbol::new(env, "listing"))
+pub fn get_listing(env: &Env, product_id: u32) -> Result<ProductListing, MarketError> {
+    env.storage()
+        .persistent()
+        .get(&DataKey::Listing(product_id))
         .ok_or(MarketError::ProductNotFound)
 }
 
-pub fn get_available_products(env: Env) -> Vec<Product> {
-    let counter: u32 = env.storage().instance().get(&Symbol::new(env, "product_counter"))
+pub fn get_available_products(env: &Env) -> Vec<Product> {
+    let counter: u32 = env
+        .storage()
+        .instance()
+        .get(&DataKey::ProductCounter)
         .unwrap_or(0);
-    let mut products: Vec<Product> = Vec::new(&env);
-    for i in 1..=counter {
-        if let Some(product) = env.storage().instance().get::<Symbol, Product>(&Symbol::new(env, "product")) {
-            if !product.sold {
-                products.push_back(product);
-            }
+
+    let mut available = Vec::new(env);
+    for product in storage::read_products_batch(env, 1, counter.saturating_add(1)).iter() {
+        if !product.sold {
+            available.push_back(product);
         }
     }
-    products
+    available
 }

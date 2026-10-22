@@ -1,3 +1,4 @@
+import { Role } from '../common/enums/role.enum';
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -119,6 +120,6 @@ export class ForumsService {
   }
 
   private canModerate(role: string) {
-    return role === 'admin' || role === 'instructor';
+    return role === Role.ADMIN || role === Role.INSTRUCTOR;
   }
 }

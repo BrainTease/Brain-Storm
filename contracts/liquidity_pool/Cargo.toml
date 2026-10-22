@@ -7,6 +7,10 @@ edition = "2021"
 soroban-sdk = { version = "21.5.0", features = ["testutils"] }
 brain-storm-shared = { path = "../shared", default-features = false }
 
+[dev-dependencies]
+proptest = "1.4"
+brain-storm-shared = { path = "../shared", features = ["testutils"] }
+
 [lib]
 crate-type = ["cdylib", "rlib"]
 
@@ -15,5 +19,3 @@ opt-level = "z"
 lto = true
 codegen-units = 1
 strip = true
-[lints]
-workspace = true

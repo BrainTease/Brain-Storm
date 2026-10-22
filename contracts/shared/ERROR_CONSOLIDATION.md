@@ -75,3 +75,8 @@ variant replaced with the shared one plus a `From` impl.
 A follow-up PR should perform the mechanical `From<SharedError>` wiring per
 contract and delete the now-redundant local variants, contract by contract,
 verified independently with `cargo test -p <contract>` per crate.
+
+## Status (issue #1313)
+
+- `contracts/shared/src/error.rs` is the canonical module name and re-exports `SharedError`.
+- Not yet migrated: `market` and `token` still define their own error enums (`MarketError`, and the token enum). `governance` has no error enum; it uses `DataKey` and state enums.

@@ -23,7 +23,11 @@ export function Toaster() {
         >
           <span className="font-bold mt-0.5">{icons[t.type]}</span>
           <span className="flex-1">{t.message}</span>
-          <button onClick={() => remove(t.id)} className="opacity-70 hover:opacity-100 ml-2">
+          <button
+            onClick={() => remove(t.id)}
+            aria-label="Dismiss notification"
+            className="opacity-70 hover:opacity-100 ml-2"
+          >
             ✕
           </button>
         </div>

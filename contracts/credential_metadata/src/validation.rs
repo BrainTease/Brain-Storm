@@ -1,7 +1,7 @@
 //! Credential metadata validation module
 //! Centralizes common validation logic used across credential operations
 
-use soroban_sdk::{Address, Env, String};
+use soroban_sdk::{Env, String};
 
 use brain_storm_shared::validation as shared;
 

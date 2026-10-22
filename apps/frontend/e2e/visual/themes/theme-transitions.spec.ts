@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { CoursesPage } from '../../page-objects';
 
 /**
  * Visual regression tests for Theme transitions
@@ -53,7 +54,7 @@ test.describe('Theme Transitions - Visual Regression', () => {
       await page.waitForTimeout(500);
 
       // Navigate to courses page
-      await page.goto('/courses');
+      await new CoursesPage(page).goto();
       await page.waitForLoadState('networkidle');
       await page.waitForTimeout(300);
 
@@ -84,10 +85,11 @@ test.describe('Theme Transitions - Visual Regression', () => {
   });
 
   test('card components theme contrast', async ({ page }) => {
-    await page.goto('/courses');
+    const courses = new CoursesPage(page);
+    await courses.goto();
     await page.waitForLoadState('networkidle');
 
-    const card = page.locator('[data-testid="course-card"]').first();
+    const card = courses.courseCard.first();
 
     if (await card.isVisible()) {
       // Light mode card
@@ -104,7 +106,7 @@ test.describe('Theme Transitions - Visual Regression', () => {
   });
 
   test('shadows and borders in different themes', async ({ page }) => {
-    await page.goto('/courses');
+    await new CoursesPage(page).goto();
     await page.waitForLoadState('networkidle');
 
     const container = page.locator('.shadow, [class*="shadow"]').first();

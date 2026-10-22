@@ -1,3 +1,4 @@
+import { env } from '../../config/env';
 import { Injectable, Logger } from '@nestjs/common';
 import * as winston from 'winston';
 import { v4 as uuidv4 } from 'uuid';
@@ -19,7 +20,7 @@ export class StructuredLoggerService extends Logger {
   constructor() {
     super();
     this.logger = winston.createLogger({
-      level: process.env.LOG_LEVEL || 'info',
+      level: env.logLevel,
       format: winston.format.combine(
         winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss.SSS' }),
         winston.format.errors({ stack: true }),
@@ -53,7 +54,7 @@ export class StructuredLoggerService extends Logger {
     });
 
     // Add file transport for production
-    if (process.env.NODE_ENV === 'production') {
+    if (env.isProduction) {
       this.logger.add(
         new winston.transports.File({
           filename: 'logs/error.log',

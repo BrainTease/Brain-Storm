@@ -1,11 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAuthStore } from '@/store/auth.store';
+
 import { Button } from '@/components/ui/Button';
+import { useAuth } from '@/hooks/useAuth';
 
 export function ReferralLink() {
-  const { user } = useAuthStore();
+  const { user } = useAuth();
   const [referralCode, setReferralCode] = useState('');
   const [copied, setCopied] = useState(false);
 

@@ -31,6 +31,7 @@ export class CorrelationMiddleware implements NestMiddleware {
     (req as any).correlationId = correlationId;
     (req as any).requestId = correlationId; // keep existing field name populated
     res.setHeader('X-Correlation-ID', correlationId);
+    res.setHeader('X-Request-ID', correlationId);
 
     // Bind for downstream async code (stellar handlers, ws-gateway, etc.)
     runWithCorrelationId(correlationId, () => next());

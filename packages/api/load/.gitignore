@@ -1,0 +1,31 @@
+# k6 Test Results and Reports
+reports/
+*.html
+*.json.gz
+results/
+
+# Performance Baselines (temporary, local runs)
+/baselines/*.json
+!/baselines/*.json.template
+!/baselines/README.md
+
+# Environment-specific files
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.tmp.js
+
+# k6 cache
+.k6cache/

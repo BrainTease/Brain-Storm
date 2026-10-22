@@ -43,7 +43,7 @@ export function CircularProgress({
       </div>
       <span className="text-sm font-semibold text-gray-700 dark:text-gray-300 -mt-1">{value}%</span>
       {label && (
-        <span className="text-xs text-gray-500 dark:text-gray-400 text-center">{label}</span>
+        <span className="text-xs text-gray-600 dark:text-gray-400 text-center">{label}</span>
       )}
     </div>
   );

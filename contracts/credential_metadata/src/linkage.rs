@@ -161,6 +161,7 @@ pub fn is_linked(env: &Env, credential_id: u64) -> bool {
 mod nft_contract_client {
     use soroban_sdk::{contractclient, Address, Env, String, Symbol};
 
+    #[allow(dead_code)]
     #[contractclient(name = "Client")]
     pub trait NftContract {
         fn mint_course_nft(

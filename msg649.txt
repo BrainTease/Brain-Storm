@@ -1,0 +1,29 @@
+feat(#649): implement secure file upload and media pipeline
+
+- Create apps/backend/src/media/media.entity.ts
+  - Media entity: ownerId, originalName, mimeType, sizeBytes, storageKey,
+    bucket, publicUrl, status (pending/ready/failed/deleted), derivatives (jsonb),
+    metadata (jsonb), uploadedAt, deletedAt
+  - Indexes on ownerId and status
+- Create apps/backend/src/media/storage.service.ts
+  - validateFile(): checks MIME type against allowlist, extension allowlist, max 50MB
+  - sanitiseFilename(): strips path separators, non-ASCII chars, limits to 80 chars + ext
+  - upload(): validate, sanitise, upload original to S3 (AES256 SSE), generate responsive
+    WebP derivatives (thumb 150, small 400, medium 800) via Sharp, persist Media record
+  - getSignedUrl(): pre-signed S3 GET URL with configurable TTL (default 1h)
+  - getDerivativeSignedUrl(): signed URL for a specific derivative suffix
+  - softDelete(): mark status=deleted, set deletedAt (S3 object retained)
+  - hardDelete(): delete original and all derivatives from S3, remove DB record
+  - findByOwner() / findById(): metadata queries
+  - AWS SDK v3 (PutObjectCommand, GetObjectCommand, DeleteObjectCommand)
+  - S3 endpoint configurable for MinIO/localstack local dev
+- Create apps/backend/src/media/media.controller.ts
+  - POST /media/upload (multer memoryStorage, 50MB limit)
+  - GET /media/mine
+  - GET /media/:id/url?ttl=
+  - GET /media/:id/url/:suffix (derivatives)
+  - DELETE /media/:id (soft), DELETE /media/:id/purge (hard)
+  - All routes require JwtAuthGuard
+- Create apps/backend/src/media/media.module.ts
+
+Closes #649

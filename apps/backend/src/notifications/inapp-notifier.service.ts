@@ -1,3 +1,4 @@
+import type { NotificationChannel } from './notification-channel.interface';
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -5,7 +6,9 @@ import { Notification, NotificationType } from './notification.entity';
 import { NotificationsGateway } from './notifications.gateway';
 
 @Injectable()
-export class InAppNotifierService {
+export class InAppNotifierService implements NotificationChannel {
+  readonly channel = 'inapp' as const;
+
   private readonly logger = new Logger(InAppNotifierService.name);
 
   constructor(

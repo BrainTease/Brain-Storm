@@ -1,16 +1,24 @@
-use soroban_sdk::{Address, Env, Symbol};
-use brain_storm_shared::access;
-use crate::{MarketError, Purchase};
+use soroban_sdk::{Address, Env, Vec};
+
+use brain_storm_shared::events::emit_contract_event;
+
+use crate::storage::{self, DataKey};
+use crate::types::{
+    MarketError, Product, ProductListing, ProductStatus, Purchase, EVT_DOMAIN, EVT_PRODUCT_SOLD,
+};
 
 pub fn purchase_product(
-    env: Env,
+    env: &Env,
     buyer: Address,
     product_id: u32,
 ) -> Result<(), MarketError> {
     buyer.require_auth();
+    storage::require_not_paused(env);
 
-    // Load product
-    let mut product: super::Product = env.storage().instance().get(&Symbol::new(&env, "product"))
+    let mut product: Product = env
+        .storage()
+        .persistent()
+        .get(&DataKey::Product(product_id))
         .ok_or(MarketError::ProductNotFound)?;
 
     if product.sold {
@@ -21,24 +29,66 @@ pub fn purchase_product(
         return Err(MarketError::Unauthorized);
     }
 
-    // Mark product as sold
-    product.sold = true;
-    env.storage().instance().set(&Symbol::new(&env, "product"), &product);
+    storage::acquire_lock(env)?;
 
-    // Create purchase record
+    product.sold = true;
+    env.storage()
+        .persistent()
+        .set(&DataKey::Product(product_id), &product);
+
     let purchase = Purchase {
         product_id,
         buyer: buyer.clone(),
         amount: product.price,
         timestamp: env.ledger().timestamp(),
-        completed: false,
+        completed: true,
     };
-    env.storage().instance().set(&Symbol::new(&env, "purchase"), &purchase);
+    env.storage()
+        .persistent()
+        .set(&DataKey::Purchase(product_id), &purchase);
 
-    env.events().publish(
-        (Symbol::new(&env, "product_purchased"),),
+    if let Some(mut listing) = env
+        .storage()
+        .persistent()
+        .get::<DataKey, ProductListing>(&DataKey::Listing(product_id))
+    {
+        listing.status = ProductStatus::Sold;
+        env.storage()
+            .persistent()
+            .set(&DataKey::Listing(product_id), &listing);
+    }
+
+    storage::release_lock(env);
+
+    emit_contract_event(
+        env,
+        EVT_DOMAIN,
+        EVT_PRODUCT_SOLD,
         (product_id, buyer, product.price),
     );
 
     Ok(())
+}
+
+pub fn get_purchase(env: &Env, product_id: u32) -> Result<Purchase, MarketError> {
+    env.storage()
+        .persistent()
+        .get(&DataKey::Purchase(product_id))
+        .ok_or(MarketError::ProductNotFound)
+}
+
+pub fn get_purchases_by_buyer(env: &Env, buyer: Address) -> Vec<Purchase> {
+    let counter: u32 = env
+        .storage()
+        .instance()
+        .get(&DataKey::ProductCounter)
+        .unwrap_or(0);
+
+    let mut purchases = Vec::new(env);
+    for purchase in storage::read_purchases_batch(env, 1, counter.saturating_add(1)).iter() {
+        if purchase.buyer == buyer {
+            purchases.push_back(purchase);
+        }
+    }
+    purchases
 }

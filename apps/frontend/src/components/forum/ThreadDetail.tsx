@@ -2,10 +2,12 @@
 
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { Post, Reply } from '@/lib/forumApi';
-import { formatDateTime } from '@/lib/date-utils';
-import { useAuthStore } from '@/store/auth.store';
+
+import { useAuth } from '@/hooks/useAuth';
 import { useCreateReply, useFlagContent, useDeletePost } from '@/hooks/useForum';
+import { formatDateTime } from '@/lib/date-utils';
+import { Post, Reply } from '@/lib/forumApi';
+
 import { MarkdownEditor } from './MarkdownEditor';
 import { ReplyItem } from './ReplyItem';
 
@@ -20,6 +22,7 @@ interface ThreadDetailProps {
 /**
  * Full thread detail view with replies and composer
  */
+// eslint-disable-next-line max-lines-per-function -- large thread view; split in a follow-up
 export function ThreadDetail({
   post,
   replies,
@@ -29,7 +32,7 @@ export function ThreadDetail({
 }: ThreadDetailProps) {
   const [replyContent, setReplyContent] = useState('');
   const [showReplyForm, setShowReplyForm] = useState(false);
-  const user = useAuthStore((s) => s.user);
+  const { user } = useAuth();
   const isAuthor = user?.id === post.userId;
 
   const { createReply, isLoading: isCreatingReply } = useCreateReply(post.id);

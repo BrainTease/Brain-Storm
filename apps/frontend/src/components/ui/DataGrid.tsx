@@ -125,7 +125,7 @@ function DataGridInner<T extends object>({
                     {col.sortable && (
                       <span
                         aria-hidden="true"
-                        className={`text-xs ${isSorted ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400'}`}
+                        className={`text-xs ${isSorted ? 'text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400'}`}
                       >
                         {sort.key === colKey ? getSortIcon(sort.direction) : '⇅'}
                       </span>
@@ -151,7 +151,7 @@ function DataGridInner<T extends object>({
             <tr>
               <td
                 colSpan={columns.length}
-                className="px-4 py-10 text-center text-gray-500 dark:text-gray-400"
+                className="px-4 py-10 text-center text-gray-600 dark:text-gray-400"
               >
                 {emptyText}
               </td>
@@ -185,7 +185,7 @@ function DataGridInner<T extends object>({
       {/* Pagination footer */}
       {!isLoading && rows.length > 0 && (
         <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-          <p className="text-xs text-gray-500 dark:text-gray-400">
+          <p className="text-xs text-gray-600 dark:text-gray-400">
             {rows.length === 0
               ? '0 results'
               : `Showing ${clampedPage * pageSize + 1}–${Math.min((clampedPage + 1) * pageSize, rows.length)} of ${rows.length}`}
@@ -199,7 +199,7 @@ function DataGridInner<T extends object>({
             >
               Previous
             </button>
-            <span className="text-xs text-gray-500 dark:text-gray-400">
+            <span className="text-xs text-gray-600 dark:text-gray-400">
               Page {clampedPage + 1} of {totalPages}
             </span>
             <button

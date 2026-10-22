@@ -1,9 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import api from '@/lib/api';
+
 import { Button } from '@/components/ui/Button';
 import { TokenBalance } from '@/components/ui/TokenBalance';
+import { useFreighterDetection } from '@/hooks/useFreighterDetection';
+import api from '@/lib/api';
 
 interface Props {
   userId: string;
@@ -12,12 +14,14 @@ interface Props {
   onUnlinked: () => void;
 }
 
+// eslint-disable-next-line max-lines-per-function -- profile wallet card; split in a follow-up
 export default function WalletSection({ userId, stellarPublicKey, onLinked, onUnlinked }: Props) {
   const [bstBalance, setBstBalance] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [freighterMissing, setFreighterMissing] = useState(false);
   const [funding, setFunding] = useState(false);
   const [fundMessage, setFundMessage] = useState<string | null>(null);
+  const { detectFreighter, getPublicKey } = useFreighterDetection();
 
   useEffect(() => {
     if (stellarPublicKey) {
@@ -37,13 +41,13 @@ export default function WalletSection({ userId, stellarPublicKey, onLinked, onUn
     setLoading(true);
     setFreighterMissing(false);
     try {
-      const { isConnected } = await import('@stellar/freighter-api').then((m) => m.isConnected());
-      if (!isConnected) {
+      const detection = await detectFreighter();
+      if (detection.status === 'missing') {
         setFreighterMissing(true);
         setLoading(false);
         return;
       }
-      const { publicKey } = await import('@stellar/freighter-api').then((m) => m.getPublicKey());
+      const publicKey = await getPublicKey();
       await api.patch(`/users/${userId}`, { stellarPublicKey: publicKey });
       onLinked(publicKey);
     } catch {

@@ -5,6 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { BatchJob } from './batch-job.entity';
 import { UsersService } from '../users/users.service';
+import { AccountService } from '../users/account.service';
 import { CoursesService } from '../courses/courses.service';
 import { CertificatesService } from '../certificates/certificates.service';
 import { MailService } from '../mail/mail.service';
@@ -18,6 +19,7 @@ export class BatchProcessor {
     @InjectRepository(BatchJob)
     private readonly jobRepo: Repository<BatchJob>,
     private readonly usersService: UsersService,
+    private readonly accountService: AccountService,
     private readonly coursesService: CoursesService,
     private readonly certificatesService: CertificatesService,
     private readonly mailService: MailService
@@ -60,13 +62,13 @@ export class BatchProcessor {
         if (action === 'update' && userId) {
           result = await this.usersService.update(userId, data);
         } else if (action === 'ban' && userId) {
-          result = await this.usersService.banUser(userId, true);
+          result = await this.accountService.banUser(userId, true);
         } else if (action === 'unban' && userId) {
-          result = await this.usersService.banUser(userId, false);
+          result = await this.accountService.banUser(userId, false);
         } else if (action === 'changeRole' && userId) {
-          result = await this.usersService.changeRole(userId, data.role);
+          result = await this.accountService.changeRole(userId, data.role);
         } else if (action === 'delete' && userId) {
-          result = await this.usersService.softDelete(userId);
+          result = await this.accountService.softDelete(userId);
         } else {
           throw new Error(`Unknown action: ${action}`);
         }

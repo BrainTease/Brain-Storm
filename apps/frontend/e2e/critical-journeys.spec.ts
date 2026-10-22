@@ -1,5 +1,6 @@
 import { test, expect } from './fixtures/auth-fixtures';
 import { mockWallet, TEST_WALLET } from './fixtures/wallet-mock';
+import { CoursesPage } from './page-objects';
 
 /**
  * Critical User Journeys E2E Tests
@@ -14,11 +15,12 @@ test.describe('Critical Journey: Discovery → Profile → Tip', () => {
 
   test('discover course → view instructor profile → tip instructor', async ({ authedPage }) => {
     // ── 1. Discover courses ──────────────────────────────────────────────────
-    await authedPage.goto('/courses');
-    await expect(authedPage.getByRole('heading', { name: /courses|browse/i })).toBeVisible();
+    const courses = new CoursesPage(authedPage);
+    await courses.goto();
+    await expect(courses.catalogueHeading).toBeVisible();
 
     // Pick a course with visible instructor info
-    const courseCard = authedPage.locator('[data-testid="course-card"]').first();
+    const courseCard = courses.courseCard.first();
     await expect(courseCard).toBeVisible();
 
     // Extract instructor link/name

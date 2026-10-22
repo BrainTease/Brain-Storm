@@ -1,6 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { ErrorState } from '@/components/ui/ErrorState';
+import { LoadingState } from '@/components/ui/LoadingState';
 import { Spinner } from '@/components/ui/Spinner';
 import { Card } from '@/components/ui/Card';
 import { ProposalCard } from './ProposalCard';
@@ -34,31 +37,24 @@ export function ProposalList({
   }, [proposals, filter]);
 
   if (loading && proposals.length === 0) {
-    return (
-      <div className="flex justify-center py-16">
-        <Spinner size="lg" label="Loading proposals…" />
-      </div>
-    );
+    return <LoadingState label="Loading proposals…" className="py-16" />;
   }
 
   if (error) {
     return (
-      <Card className="p-8 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
-        <p className="text-center text-red-700 dark:text-red-400">
-          Failed to load proposals. Please try again later.
-        </p>
-        <p className="text-center text-sm text-red-600 dark:text-red-500 mt-2">{error}</p>
-      </Card>
+      <ErrorState
+        title="Failed to load proposals."
+        message="Please try again later."
+        errorCode={error}
+      />
     );
   }
 
   if (filteredProposals.length === 0) {
     return (
-      <Card className="p-8 text-center">
-        <p className="text-gray-600 dark:text-gray-400">
-          {filter === 'all' ? 'No proposals found.' : `No ${filter} proposals found.`}
-        </p>
-      </Card>
+      <EmptyState
+        title={filter === 'all' ? 'No proposals found.' : `No ${filter} proposals found.`}
+      />
     );
   }
 

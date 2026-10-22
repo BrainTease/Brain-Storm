@@ -44,6 +44,8 @@ const BASE_DELAY_MS = 1_000;
 @Injectable()
 export class SorobanRpcClientService implements OnModuleInit {
   private readonly logger = new Logger(SorobanRpcClientService.name);
+  /** Hash of the transaction the current invokeContract call has submitted, if any. */
+  private lastSubmittedHash?: string;
 
   readonly server: rpc.Server;
   readonly networkPassphrase: string;
@@ -94,9 +96,28 @@ export class SorobanRpcClientService implements OnModuleInit {
    * Uses circuit breaker and retryWithBackoff so transient RPC errors are handled transparently.
    */
   async invokeContract(contractId: string, method: string, args: any[]): Promise<string> {
+    this.lastSubmittedHash = undefined;
     return this.withCircuitBreaker('soroban-sendTransaction', () =>
-      this.retryWithBackoff(() => this.invokeContractOnce(contractId, method, args))
+      this.retryWithBackoff(() => this.invokeContractOnceChecked(contractId, method, args))
     );
+  }
+
+  /**
+   * Invokes once, but never resubmits a transaction that already reached the network. If an
+   * earlier attempt produced a hash, the retry checks that transaction's on-chain status first:
+   * SUCCESS returns the hash, FAILED throws, and anything else falls through to a new attempt.
+   */
+  private async invokeContractOnceChecked(contractId: string, method: string, args: any[]): Promise<string> {
+    if (this.lastSubmittedHash) {
+      const status = await this.server.getTransaction(this.lastSubmittedHash);
+      if (status.status === 'SUCCESS') return this.lastSubmittedHash;
+      if (status.status === 'FAILED') {
+        throw new Error(`Transaction ${this.lastSubmittedHash} failed on-chain`);
+      }
+    }
+    const hash = await this.invokeContractOnce(contractId, method, args);
+    this.lastSubmittedHash = hash;
+    return hash;
   }
 
   /**

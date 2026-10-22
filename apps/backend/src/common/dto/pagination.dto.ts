@@ -1,4 +1,7 @@
 import { IsOptional, IsInt, Min, Max } from 'class-validator';
+
+/** Largest page size any list endpoint accepts. */
+export const MAX_PAGE_LIMIT = 100;
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -29,13 +32,13 @@ export class PaginationDto {
     description: 'Number of items per page',
     default: 20,
     minimum: 1,
-    maximum: 100,
+    maximum: MAX_PAGE_LIMIT,
   })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  @Max(100)
+  @Max(MAX_PAGE_LIMIT)
   limit?: number = 20;
 }
 

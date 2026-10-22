@@ -3,9 +3,10 @@
 #[cfg(test)]
 extern crate std;
 
-use soroban_sdk::{
-    contract, contractimpl, contracttype, symbol_short, Address, Bytes, BytesN, Env, String, Symbol,
-};
+use soroban_sdk::{contract, contractimpl, symbol_short, Address, Bytes, Env, String, Symbol};
+
+mod types;
+pub use types::*;
 use brain_storm_shared::access;
 
 pub mod linkage;
@@ -15,65 +16,6 @@ pub use linkage::{
     CredentialNftLink,
 };
 
-#[contracttype]
-pub enum DataKey {
-    Admin,
-    Metadata(u64),
-    MetadataHash(u64),
-    MetadataHistory(u64, u32),
-    HistoryCount(u64),
-    /// Compact storage: content-addressed hash + off-chain URI pointer only.
-    /// Replaces a full `MetadataRecord` blob when the contract is operating
-    /// in reduced-footprint mode.  Both variants may exist for the same
-    /// `credential_id` during migration; `get_metadata_compact` prefers this
-    /// key and falls back to `Metadata`.
-    CompactMeta(u64),
-}
-
-#[contracttype]
-#[derive(Clone)]
-pub struct MetadataRecord {
-    pub credential_id: u64,
-    pub course_name: String,
-    pub completion_date: u64,
-    pub expiry_timestamp: u64,
-    pub grade: String,
-    pub ipfs_hash: String,
-}
-
-/// Compact on-chain representation: stores only the content hash and a short
-/// off-chain pointer.  All mutable human-readable fields live in IPFS (or
-/// another content-addressed store) and are authenticated by `content_hash`.
-///
-/// Storage cost vs full `MetadataRecord`:
-/// - Full record (Strings): ≈ 150–400 bytes depending on field lengths
-/// - Compact record (fixed BytesN<32> + u64 timestamps): ≈ 56 bytes flat
-#[contracttype]
-#[derive(Clone)]
-pub struct CompactMetadataRecord {
-    pub credential_id: u64,
-    /// SHA-256 / IPFS CIDv1 content hash (32 bytes, fixed size).
-    pub content_hash: soroban_sdk::BytesN<32>,
-    /// Timestamp at which the credential was issued.
-    pub issued_at: u64,
-    /// Timestamp at which the credential expires (0 = never).
-    pub expiry_timestamp: u64,
-}
-
-#[contracttype]
-#[derive(Clone)]
-pub struct MetadataHistoryEntry {
-    pub credential_id: u64,
-    pub course_name: String,
-    pub grade: String,
-    pub recorded_at: u64,
-}
-
-const STORE: Symbol = symbol_short!("store");
-const UPDATE: Symbol = symbol_short!("update");
-const EXPIRE: Symbol = symbol_short!("expire");
-const RENEW: Symbol = symbol_short!("renew");
-const GRACE_PERIOD_SECONDS: u64 = 30 * 24 * 60 * 60;
 
 #[contract]
 pub struct CredentialMetadataContract;
@@ -107,22 +49,21 @@ impl CredentialMetadataContract {
     ///
     /// # Returns
     /// The minted NFT ID.
-    #[allow(clippy::too_many_arguments)]
-    pub fn issue_with_nft(
-        env: Env,
-        admin: Address,
-        credential_id: u64,
-        course_name: String,
-        completion_date: u64,
-        expiry_timestamp: u64,
-        grade: String,
-        ipfs_hash: String,
-        owner: Address,
-        course_id: soroban_sdk::Symbol,
-        instructor: Address,
-        royalty_basis: u32,
+    pub fn issue_with_nft(env: Env, params: IssueWithNftParams) -> u32 {
+        let IssueWithNftParams {
+            admin,
+            credential_id,
+            course_name,
+            completion_date,
+            expiry_timestamp,
+            grade,
+            ipfs_hash,
+            owner,
+            course_id,
+            instructor,
+            royalty_basis,
+        } = params;
 
-    ) -> u32 {
         access::require_admin(&env, &admin, &DataKey::Admin);
 
         // Store credential metadata first

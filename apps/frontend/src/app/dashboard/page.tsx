@@ -1,18 +1,30 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useMemo } from 'react';
-import { ProtectedRoute } from '@/components/ProtectedRoute';
+
 import {
-  CourseProgressList,
   DashboardError,
   DashboardHeader,
   DashboardSection,
-  RecentCredentialList,
+  SkeletonBlock,
   TokenBalanceCard,
 } from '@/components/dashboard';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { useDashboardData } from '@/hooks/useDashboardData';
 
 const RECENT_CREDENTIAL_COUNT = 5;
+
+// The course and credential lists sit below the fold, so their bundles load
+// after the shell and balance card paint. Each shows a skeleton until ready.
+const CourseProgressList = dynamic(
+  () => import('@/components/dashboard/CourseProgressList').then((m) => m.CourseProgressList),
+  { loading: () => <SkeletonBlock /> }
+);
+const RecentCredentialList = dynamic(
+  () => import('@/components/dashboard/RecentCredentialList').then((m) => m.RecentCredentialList),
+  { loading: () => <SkeletonBlock /> }
+);
 
 /**
  * Learner dashboard overview.

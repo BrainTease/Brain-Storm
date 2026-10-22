@@ -1,9 +1,11 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import api from '@/lib/api';
-import { useVideoShortcuts } from '@/hooks/useVideoShortcuts';
+
 import { useOptimisticProgress } from '@/hooks/useOptimisticProgress';
+import { useVideoShortcuts } from '@/hooks/useVideoShortcuts';
+import api from '@/lib/api';
+import { formatDuration } from '@/lib/format';
 
 export interface VideoPlayerProps {
   src: string;
@@ -17,12 +19,6 @@ export interface VideoPlayerProps {
 
 const SYNC_INTERVAL_MS = 10_000;
 const COMPLETION_THRESHOLD = 0.9;
-
-function formatTime(seconds: number): string {
-  const m = Math.floor(seconds / 60);
-  const s = Math.floor(seconds % 60);
-  return `${m}:${s.toString().padStart(2, '0')}`;
-}
 
 export function VideoPlayer({
   src,
@@ -185,7 +181,7 @@ export function VideoPlayer({
 
       <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent px-4 pb-3 pt-6 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
         <div className="flex items-center gap-2 mb-2">
-          <span className="text-white text-xs tabular-nums">{formatTime(currentTime)}</span>
+          <span className="text-white text-xs tabular-nums">{formatDuration(currentTime)}</span>
           <input
             type="range"
             min={0}
@@ -196,7 +192,7 @@ export function VideoPlayer({
             className="flex-1 h-1 accent-blue-500 cursor-pointer"
             aria-label="Seek video"
           />
-          <span className="text-white text-xs tabular-nums">{formatTime(duration)}</span>
+          <span className="text-white text-xs tabular-nums">{formatDuration(duration)}</span>
         </div>
 
         <div className="flex items-center gap-3">

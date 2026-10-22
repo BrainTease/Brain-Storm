@@ -1,0 +1,18 @@
+feat(#634): add token delegation and staking with epoch rewards
+
+- Rewrite contracts/token/src/staking.rs with full delegation support
+- DelegationRecord: delegator, delegatee, amount, epoch, rewards_accrued, reward_debt
+- Global reward-per-token accumulator (scaled 1e12) updated each epoch
+- delegate(): create delegation, add to total staked, snapshot reward debt
+- undelegate(): compute pending rewards, remove delegation, emit event
+- claim_rewards(): settle pending rewards for direct stakers without withdrawing
+- withdraw(): net = principal + rewards - optional early penalty (checked arithmetic)
+- set_slash_config() / slash(): admin-gated slashing with configurable rate and recipient
+- accrue_global(): epoch-based accumulator update (rounding-safe, division-last)
+- pending_rewards(): correct proportional accrual across arbitrary epochs
+- Events: stake, unstake, reward, delegate, undelegate, slashed
+- New keys: Delegation, DelegatorTargets, RewardPerToken, StakerRewardDebt, SlashConfig, SlashEnabled
+- 8 unit tests: stake/withdraw, early penalty, delegate/undelegate, rewards across epochs,
+  slash, self-delegation guard, overflow safety
+
+Closes #634

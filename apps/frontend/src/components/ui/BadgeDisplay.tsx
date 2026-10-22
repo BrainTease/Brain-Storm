@@ -134,7 +134,7 @@ function GridBadges({
   columns = 6,
 }: GridVariantProps) {
   if (badges.length === 0) {
-    return <p className={`text-sm text-gray-500 py-4 text-center ${className}`}>{emptyMessage}</p>;
+    return <p className={`text-sm text-gray-600 py-4 text-center ${className}`}>{emptyMessage}</p>;
   }
 
   return (
@@ -173,7 +173,10 @@ function GridBadges({
                 {badge.name}
               </p>
               {unlocked && badge.unlockedAt && (
-                <time dateTime={badge.unlockedAt} className="text-[10px] text-gray-400">
+                <time
+                  dateTime={badge.unlockedAt}
+                  className="text-[10px] text-gray-600 dark:text-gray-400"
+                >
                   {formatDateShort(badge.unlockedAt)}
                 </time>
               )}

@@ -1,7 +1,8 @@
-import type { ReactNode } from 'react';
+import { memo, type ReactNode } from 'react';
+
+import { CourseCardActions } from './CourseCardActions';
 import { CourseCardHeader } from './CourseCardHeader';
 import { CourseCardImage } from './CourseCardImage';
-import { CourseCardActions } from './CourseCardActions';
 
 export { CourseCardHeader } from './CourseCardHeader';
 export { CourseCardImage } from './CourseCardImage';

@@ -12,7 +12,7 @@ use soroban_sdk::{
     contract, contractimpl, contracttype, symbol_short, Address, BytesN, Env, Symbol,
 };
 
-use brain_storm_shared::{access, events::emit_contract_event};
+use brain_storm_shared::{access, events::emit_contract_event, validation};
 
 // ── Storage keys ──────────────────────────────────────────────────────────────
 
@@ -98,7 +98,7 @@ impl DisputeContract {
         amount: i128,
     ) -> u64 {
         claimant.require_auth();
-        assert!(amount > 0, "Amount must be positive");
+        validation::require_positive_amount(amount);
 
         let id: u64 = env.storage().instance().get(&DataKey::NextId).unwrap_or(1);
 

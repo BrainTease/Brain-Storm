@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { injectAxe, checkA11y, getViolations } from 'axe-playwright';
+import { CoursesPage } from '../../page-objects';
 
 /**
  * Accessibility tests for Courses Page
@@ -9,7 +10,7 @@ import { injectAxe, checkA11y, getViolations } from 'axe-playwright';
 
 test.describe('Courses Page Accessibility @a11y', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/courses');
+    await new CoursesPage(page).goto();
     await page.waitForLoadState('networkidle');
     await injectAxe(page);
   });
@@ -29,7 +30,7 @@ test.describe('Courses Page Accessibility @a11y', () => {
   });
 
   test('course cards should be accessible', async ({ page }) => {
-    const courseCards = await page.locator('[data-testid="course-card"]').all();
+    const courseCards = await new CoursesPage(page).courseCard.all();
 
     expect(courseCards.length).toBeGreaterThan(0);
 
@@ -147,7 +148,7 @@ test.describe('Courses Page Accessibility @a11y', () => {
   });
 
   test('course links should have descriptive text', async ({ page }) => {
-    const courseLinks = await page.locator('a[href*="/courses/"]').all();
+    const courseLinks = await new CoursesPage(page).courseDetailLinks.all();
 
     for (const link of courseLinks.slice(0, 5)) {
       const text = await link.textContent();
@@ -164,9 +165,7 @@ test.describe('Courses Page Accessibility @a11y', () => {
   });
 
   test('enrollment buttons should be accessible', async ({ page }) => {
-    const enrollButtons = await page
-      .locator('[data-testid*="enroll"], button:has-text("Enroll")')
-      .all();
+    const enrollButtons = await new CoursesPage(page).enrollControls.all();
 
     for (const button of enrollButtons.slice(0, 3)) {
       if (await button.isVisible()) {

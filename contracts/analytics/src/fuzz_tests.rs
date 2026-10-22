@@ -62,10 +62,10 @@ mod fuzz_tests {
             let defined_milestones = [25u32, 50, 75, 100];
             let min_pct = pct_a.min(pct_b);
             let max_pct = pct_a.max(pct_b);
-            let after_min: Vec<u32> = defined_milestones.iter().copied()
+            let after_min: std::vec::Vec<u32> = defined_milestones.iter().copied()
                 .filter(|&m| m <= min_pct)
                 .collect();
-            let after_max: Vec<u32> = defined_milestones.iter().copied()
+            let after_max: std::vec::Vec<u32> = defined_milestones.iter().copied()
                 .filter(|&m| m <= max_pct)
                 .collect();
             prop_assert!(after_max.len() >= after_min.len());

@@ -1,3 +1,4 @@
+import { THROTTLE } from '../rate-limit/rate-limit.config';
 import { Body, Controller, Get, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
@@ -56,7 +57,7 @@ export class AuthController {
   }
 
   @Post('stellar')
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Throttle(THROTTLE.perMinute10)
   @ApiOperation({ summary: 'SEP-0010: verify signed challenge and receive JWT' })
   @ApiResponse({ status: 201, description: 'Returns access_token' })
   @ApiResponse({ status: 401, description: 'Invalid or expired challenge' })
@@ -65,7 +66,7 @@ export class AuthController {
   }
 
   @Post('register')
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @Throttle(THROTTLE.perMinute5)
   @ApiOperation({ summary: 'Register a new user' })
   @ApiBody({ schema: { example: { email: 'user@example.com', password: 'password123' } } })
   @ApiResponse({
@@ -80,7 +81,7 @@ export class AuthController {
   }
 
   @Post('login')
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @Throttle(THROTTLE.perMinute5)
   @ApiOperation({ summary: 'Login with email and password' })
   @ApiBody({ schema: { example: { email: 'user@example.com', password: 'password123' } } })
   @ApiResponse({
@@ -131,7 +132,7 @@ export class AuthController {
     return this.authService.resendVerification(dto.email);
   }
 
-  @Throttle({ default: { limit: 3, ttl: 3600000 } })
+  @Throttle(THROTTLE.perHour3)
   @Post('forgot-password')
   @ApiOperation({ summary: 'Request a password reset email' })
   @ApiBody({ schema: { example: { email: 'user@example.com' } } })
@@ -191,7 +192,7 @@ export class AuthController {
 
   @Post('stellar-challenge')
   @UseGuards(JwtAuthGuard)
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Throttle(THROTTLE.perMinute10)
   @ApiOperation({ summary: 'Generate a challenge for Stellar wallet signing' })
   @ApiResponse({ status: 200, description: 'Challenge generated successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -201,7 +202,7 @@ export class AuthController {
 
   @Post('stellar-verify')
   @UseGuards(JwtAuthGuard)
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Throttle(THROTTLE.perMinute10)
   @ApiOperation({ summary: 'Verify Stellar wallet signature and link to account' })
   @ApiResponse({ status: 200, description: 'Wallet linked successfully' })
   @ApiResponse({ status: 400, description: 'Invalid signature or challenge' })

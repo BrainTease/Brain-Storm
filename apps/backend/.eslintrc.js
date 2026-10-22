@@ -4,7 +4,7 @@ module.exports = {
     project: undefined,
     sourceType: 'module',
   },
-  plugins: ['@typescript-eslint/eslint-plugin', 'import'],
+  plugins: ['@typescript-eslint/eslint-plugin', 'import', 'filenames'],
   extends: [
     'plugin:@typescript-eslint/recommended',
     'plugin:import/recommended',
@@ -16,7 +16,13 @@ module.exports = {
     node: true,
     jest: true,
   },
-  ignorePatterns: ['.eslintrc.js', 'dist', 'coverage'],
+  ignorePatterns: [
+    '.eslintrc.js',
+    'dist',
+    'coverage',
+    'node_modules',
+    '*.d.ts',
+  ],
   settings: {
     'import/resolver': {
       typescript: { project: './tsconfig.json' },
@@ -30,7 +36,7 @@ module.exports = {
     '@typescript-eslint/interface-name-prefix': 'off',
     '@typescript-eslint/explicit-function-return-type': 'off',
     '@typescript-eslint/explicit-module-boundary-types': 'off',
-    '@typescript-eslint/no-explicit-any': 'warn',
+    '@typescript-eslint/no-explicit-any': 'error',
     '@typescript-eslint/no-unused-vars': [
       'error',
       { argsIgnorePattern: '^_' },
@@ -45,6 +51,11 @@ module.exports = {
     ],
     'import/no-cycle': ['warn', { maxDepth: 3, ignoreExternal: true }],
     'import/no-duplicates': 'error',
+    'filenames/match-regex': [
+      'error',
+      '^[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.(?:d|spec|test))?$',
+      true,
+    ],
     complexity: ['error', { max: 15 }],
     'max-lines-per-function': [
       'error',
@@ -70,6 +81,12 @@ module.exports = {
       files: ['src/secrets/**/*.ts', 'src/config/**/*.ts'],
       rules: {
         'no-restricted-syntax': 'off',
+      },
+    },
+    {
+      files: ['**/index.ts'],
+      rules: {
+        'filenames/match-regex': 'off',
       },
     },
   ],

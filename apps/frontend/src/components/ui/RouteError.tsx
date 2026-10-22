@@ -59,9 +59,9 @@ export function RouteError({ error, reset, boundary, root = false }: RouteErrorP
         {category === 'chunk-load' ? '🔄' : category === 'network' ? '🌐' : '⚠️'}
       </div>
       <h1 className="text-2xl font-bold mb-2">{getErrorTitle(category)}</h1>
-      <p className="text-gray-500 mb-6 max-w-md">{getErrorDescription(category)}</p>
+      <p className="text-gray-600 mb-6 max-w-md">{getErrorDescription(category)}</p>
       {error?.message && (
-        <p className="text-xs text-gray-400 bg-gray-100 dark:bg-gray-800 rounded px-3 py-2 mb-6 max-w-md break-all font-mono">
+        <p className="text-xs text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded px-3 py-2 mb-6 max-w-md break-all font-mono">
           {error.message}
         </p>
       )}

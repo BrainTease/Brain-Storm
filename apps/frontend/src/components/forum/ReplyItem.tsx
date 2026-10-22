@@ -2,10 +2,11 @@
 
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { Reply } from '@/lib/forumApi';
-import { formatDateTime } from '@/lib/date-utils';
-import { useAuthStore } from '@/store/auth.store';
+
+import { useAuth } from '@/hooks/useAuth';
 import { useFlagContent, useMarkAsAnswer, useDeleteReply } from '@/hooks/useForum';
+import { formatDateTime } from '@/lib/date-utils';
+import { Reply } from '@/lib/forumApi';
 
 interface ReplyItemProps {
   reply: Reply;
@@ -19,16 +20,15 @@ interface ReplyItemProps {
 /**
  * Individual forum reply component
  */
+// eslint-disable-next-line max-lines-per-function -- reply item with menu; split in a follow-up
 export function ReplyItem({
   reply,
   isAnswer,
   onAnswerMarked,
   canMarkAsAnswer = false,
-  courseId,
-  postId,
 }: ReplyItemProps) {
   const [showMenu, setShowMenu] = useState(false);
-  const user = useAuthStore((s) => s.user);
+  const { user } = useAuth();
   const isAuthor = user?.id === reply.userId;
   const { markAsAnswer, isLoading: isMarkingAnswer } = useMarkAsAnswer();
   const { deleteReply, isLoading: isDeleting } = useDeleteReply();

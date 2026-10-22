@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useAuthStore } from '@/store/auth.store';
 import { createPortal } from 'react-dom';
+
+import { useAuth } from '@/hooks/useAuth';
 
 interface TourStep {
   target: string; // CSS selector
@@ -38,8 +39,9 @@ interface TourProps {
   forceStart?: boolean;
 }
 
+// eslint-disable-next-line max-lines-per-function -- guided tour steps; split in a follow-up
 export function Tour({ onComplete, onSkip, forceStart = false }: TourProps) {
-  const { user } = useAuthStore();
+  const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -174,7 +176,7 @@ export function Tour({ onComplete, onSkip, forceStart = false }: TourProps) {
           </h3>
           <button
             onClick={handleSkip}
-            className="text-gray-400 hover:text-gray-600 text-xl leading-none"
+            className="text-gray-600 dark:text-gray-400 hover:text-gray-600 text-xl leading-none"
             aria-label="Skip tour"
           >
             ×
@@ -184,7 +186,7 @@ export function Tour({ onComplete, onSkip, forceStart = false }: TourProps) {
           {step.content}
         </p>
         <div className="flex justify-between items-center">
-          <div className="text-sm text-gray-500">
+          <div className="text-sm text-gray-600">
             {currentStep + 1} of {TOUR_STEPS.length}
           </div>
           <div className="flex gap-2">

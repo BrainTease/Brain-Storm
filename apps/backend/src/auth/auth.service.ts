@@ -1,3 +1,4 @@
+import { Role } from '../common/enums/role.enum';
 import {
   Injectable,
   UnauthorizedException,
@@ -113,7 +114,7 @@ export class AuthService {
     }
 
     // Enforce 2FA for admin accounts
-    if (user.role === 'admin' && !user.mfaEnabled) {
+    if (user.role === Role.ADMIN && !user.mfaEnabled) {
       await this.auditService.log(
         AuditAction.LOGIN_FAILURE,
         user.id,
@@ -430,7 +431,7 @@ export class AuthService {
 
   // ── Helpers ──────────────────────────────────────────────────────────────
 
-  private async issueTokenPair(userId: string, email: string, role: string = 'student') {
+  private async issueTokenPair(userId: string, email: string, role: string = Role.STUDENT) {
     const access_token = this.jwtService.sign({ sub: userId, email, role }, { expiresIn: '15m' });
 
     const { token: rawRefresh, hash, expiresAt } = this.generateOpaqueToken(24 * 7); // 7 days

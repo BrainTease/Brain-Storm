@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { renderHook, act, waitFor } from '@testing-library/react';
+import { renderHook, act } from '@testing-library/react';
 import { useDebounce } from '@/hooks/useDebounce';
 
 describe('useDebounce', () => {
@@ -41,9 +41,7 @@ describe('useDebounce', () => {
     });
 
     // Should now be updated
-    await waitFor(() => {
-      expect(result.current).toBe('updated');
-    });
+    expect(result.current).toBe('updated');
   });
 
   it('should cancel previous debounce on rapid updates', async () => {
@@ -75,9 +73,7 @@ describe('useDebounce', () => {
       vi.advanceTimersByTime(300); // Total 500ms from last update
     });
 
-    await waitFor(() => {
-      expect(result.current).toBe('value4');
-    });
+    expect(result.current).toBe('value4');
   });
 
   it('should work with different data types', async () => {
@@ -111,9 +107,7 @@ describe('useDebounce', () => {
       vi.advanceTimersByTime(0);
     });
 
-    await waitFor(() => {
-      expect(result.current).toBe('updated');
-    });
+    expect(result.current).toBe('updated');
   });
 
   it('should cleanup on unmount', () => {
@@ -162,9 +156,7 @@ describe('useDebounce', () => {
         vi.advanceTimersByTime(1);
       });
 
-      await waitFor(() => {
-        expect(result.current).toBe('updated');
-      });
+      expect(result.current).toBe('updated');
     }
   });
 });
@@ -197,7 +189,7 @@ describe('useDebounce - Real-world scenarios', () => {
       'blockchain',
     ];
 
-    letters.forEach((query, index) => {
+    letters.forEach((query) => {
       rerender({ query });
       act(() => {
         vi.advanceTimersByTime(50); // User types quickly
@@ -212,9 +204,7 @@ describe('useDebounce - Real-world scenarios', () => {
       vi.advanceTimersByTime(300);
     });
 
-    await waitFor(() => {
-      expect(result.current).toBe('blockchain');
-    });
+    expect(result.current).toBe('blockchain');
   });
 
   it('should work for window resize scenario', async () => {
@@ -240,9 +230,7 @@ describe('useDebounce - Real-world scenarios', () => {
       vi.advanceTimersByTime(250);
     });
 
-    await waitFor(() => {
-      expect(result.current).toBe(1700);
-    });
+    expect(result.current).toBe(1700);
   });
 
   it('should work for form validation scenario', async () => {
@@ -275,8 +263,6 @@ describe('useDebounce - Real-world scenarios', () => {
       vi.advanceTimersByTime(400);
     });
 
-    await waitFor(() => {
-      expect(result.current).toBe('test@example.com');
-    });
+    expect(result.current).toBe('test@example.com');
   });
 });

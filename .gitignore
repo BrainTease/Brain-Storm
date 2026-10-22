@@ -10,3 +10,7 @@ target/
 *.log
 .DS_Store
 coverage/
+
+# TypeScript incremental build artifacts
+*.tsbuildinfo
+contracts/*/test_snapshots/

@@ -1,14 +1,13 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Modal } from '@/components/ui/Modal';
+
 import { Button } from '@/components/ui/Button';
+import { Modal } from '@/components/ui/Modal';
 import { Spinner } from '@/components/ui/Spinner';
-import api from '@/lib/api';
-import { toast } from '@/lib/toast';
+import { useEnrollCourse } from '@/hooks/useEnrollCourse';
 
 const schema = z.object({
   agreedToTerms: z.boolean().refine((v) => v === true, 'You must agree to the terms'),
@@ -25,8 +24,6 @@ export interface EnrollmentModalProps {
   onSuccess?: () => void;
 }
 
-type Step = 'confirm' | 'success' | 'error';
-
 export function EnrollmentModal({
   isOpen,
   onClose,
@@ -35,9 +32,18 @@ export function EnrollmentModal({
   price,
   onSuccess,
 }: EnrollmentModalProps) {
-  const [step, setStep] = useState<Step>('confirm');
-  const [errorMsg, setErrorMsg] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const {
+    step,
+    setStep,
+    errorMsg,
+    isSubmitting,
+    enroll,
+    reset: resetEnroll,
+  } = useEnrollCourse({
+    courseId,
+    courseTitle,
+    onSuccess,
+  });
 
   const {
     register,
@@ -48,39 +54,14 @@ export function EnrollmentModal({
 
   function handleClose() {
     reset();
-    setStep('confirm');
-    setErrorMsg('');
+    resetEnroll();
     onClose();
   }
-
-  const onSubmit = useCallback(async () => {
-    setIsSubmitting(true);
-
-    // Optimistic: show success immediately
-    setStep('success');
-    toast.success(`Enrolled in "${courseTitle}" successfully!`);
-    onSuccess?.();
-
-    try {
-      await api.post(`/courses/${courseId}/enroll`);
-    } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: { message?: unknown } }; message?: string };
-      const msg =
-        axiosErr?.response?.data?.message ??
-        axiosErr?.message ??
-        'Enrollment failed. Please try again.';
-      setErrorMsg(typeof msg === 'string' ? msg : JSON.stringify(msg));
-      setStep('error');
-      toast.error('Enrollment failed. Changes reverted.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [courseId, courseTitle, onSuccess]);
 
   return (
     <Modal isOpen={isOpen} onClose={handleClose} title="Enroll in Course">
       {step === 'confirm' && (
-        <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
+        <form onSubmit={handleSubmit(enroll)} noValidate className="space-y-4">
           <div>
             <p className="text-gray-700 dark:text-gray-300 font-medium">{courseTitle}</p>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">

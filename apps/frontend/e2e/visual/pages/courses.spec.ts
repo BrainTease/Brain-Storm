@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { CoursesPage } from '../../page-objects';
 
 /**
  * Visual regression tests for Courses page
@@ -7,7 +8,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Courses Page - Visual Regression', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/courses');
+    await new CoursesPage(page).goto();
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(500);
   });

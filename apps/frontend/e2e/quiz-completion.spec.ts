@@ -1,35 +1,17 @@
 import { test, expect } from '@playwright/test';
-
-function uniqueUser() {
-  const ts = Date.now();
-  return {
-    username: `quiztest_${ts}`,
-    email: `quiztest_${ts}@example.com`,
-    password: 'SecurePass@123',
-  };
-}
+import { CoursesPage, registerAndLogin, uniqueUser } from './page-objects';
 
 test.describe('Quiz Completion E2E', () => {
-  test('complete quiz with correct answers', async ({ page }) => {
-    const user = uniqueUser();
-
+  test.beforeEach(async ({ page }) => {
     // Register, login, and enroll
-    await page.goto('/auth/register');
-    await page.getByLabel(/username/i).fill(user.username);
-    await page.getByLabel(/email/i).fill(user.email);
-    await page.getByLabel(/^password$/i).fill(user.password);
-    await page.getByLabel(/confirm password/i).fill(user.password);
-    await page.getByRole('button', { name: /register|sign up|create account/i }).click();
+    await registerAndLogin(page, uniqueUser('quiztest'));
 
-    await page.goto('/auth/login');
-    await page.getByLabel(/email/i).fill(user.email);
-    await page.getByLabel(/^password$/i).fill(user.password);
-    await page.getByRole('button', { name: /log in|sign in/i }).click();
+    const courses = new CoursesPage(page);
+    await courses.goto();
+    await courses.enrollInFirstCourse();
+  });
 
-    await page.goto('/courses');
-    const enrollBtn = page.getByRole('button', { name: /enroll/i }).first();
-    await enrollBtn.click();
-
+  test('complete quiz with correct answers', async ({ page }) => {
     // Navigate to quiz
     await page.goto('/dashboard');
     const quizLink = page.getByRole('link', { name: /quiz|assessment|test/i }).first();
@@ -57,25 +39,6 @@ test.describe('Quiz Completion E2E', () => {
   });
 
   test('quiz shows progress', async ({ page }) => {
-    const user = uniqueUser();
-
-    // Register, login, and enroll
-    await page.goto('/auth/register');
-    await page.getByLabel(/username/i).fill(user.username);
-    await page.getByLabel(/email/i).fill(user.email);
-    await page.getByLabel(/^password$/i).fill(user.password);
-    await page.getByLabel(/confirm password/i).fill(user.password);
-    await page.getByRole('button', { name: /register|sign up|create account/i }).click();
-
-    await page.goto('/auth/login');
-    await page.getByLabel(/email/i).fill(user.email);
-    await page.getByLabel(/^password$/i).fill(user.password);
-    await page.getByRole('button', { name: /log in|sign in/i }).click();
-
-    await page.goto('/courses');
-    const enrollBtn = page.getByRole('button', { name: /enroll/i }).first();
-    await enrollBtn.click();
-
     // Navigate to quiz
     await page.goto('/dashboard');
     const quizLink = page.getByRole('link', { name: /quiz|assessment|test/i }).first();
@@ -96,25 +59,6 @@ test.describe('Quiz Completion E2E', () => {
   });
 
   test('quiz can be retaken', async ({ page }) => {
-    const user = uniqueUser();
-
-    // Register, login, and enroll
-    await page.goto('/auth/register');
-    await page.getByLabel(/username/i).fill(user.username);
-    await page.getByLabel(/email/i).fill(user.email);
-    await page.getByLabel(/^password$/i).fill(user.password);
-    await page.getByLabel(/confirm password/i).fill(user.password);
-    await page.getByRole('button', { name: /register|sign up|create account/i }).click();
-
-    await page.goto('/auth/login');
-    await page.getByLabel(/email/i).fill(user.email);
-    await page.getByLabel(/^password$/i).fill(user.password);
-    await page.getByRole('button', { name: /log in|sign in/i }).click();
-
-    await page.goto('/courses');
-    const enrollBtn = page.getByRole('button', { name: /enroll/i }).first();
-    await enrollBtn.click();
-
     // Navigate to quiz and complete it
     await page.goto('/dashboard');
     const quizLink = page.getByRole('link', { name: /quiz|assessment|test/i }).first();

@@ -10,7 +10,8 @@
 //   - Event emission for every state transition
 // =============================================================================
 use soroban_sdk::{contracttype, symbol_short, Address, Env, String, Symbol};
-use brain_storm_shared::constants::{MIN_TEMP_ENTRY_TTL, MIN_PERSISTENT_ENTRY_TTL, MAX_ENTRY_TTL};
+#[cfg(test)]
+use brain_storm_shared::constants::{MAX_ENTRY_TTL, MIN_PERSISTENT_ENTRY_TTL, MIN_TEMP_ENTRY_TTL};
 
 // =============================================================================
 // Types

@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { CoursesPage } from '../page-objects';
 
 test.describe('Visual Regression Tests', () => {
   test.beforeEach(async ({ page }) => {
@@ -12,16 +13,17 @@ test.describe('Visual Regression Tests', () => {
   });
 
   test('courses page visual regression', async ({ page }) => {
-    await page.goto('/courses');
+    await new CoursesPage(page).goto();
     await page.waitForLoadState('networkidle');
     await expect(page).toHaveScreenshot('courses-page.png');
   });
 
   test('course card component visual regression', async ({ page }) => {
-    await page.goto('/courses');
+    const courses = new CoursesPage(page);
+    await courses.goto();
     await page.waitForLoadState('networkidle');
 
-    const courseCard = page.locator('[data-testid="course-card"]').first();
+    const courseCard = courses.courseCard.first();
     await expect(courseCard).toHaveScreenshot('course-card.png');
   });
 

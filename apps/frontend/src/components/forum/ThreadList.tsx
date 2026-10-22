@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { Post } from '@/lib/forumApi';
 import { formatDateShort } from '@/lib/date-utils';
 import { useForumPosts } from '@/hooks/useForum';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { ErrorState } from '@/components/ui/ErrorState';
 
 interface ThreadListProps {
   courseId: string;
@@ -41,11 +43,7 @@ export function ThreadList({ courseId, onThreadClick }: ThreadListProps) {
   }, [posts]);
 
   if (error) {
-    return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-        <p className="text-red-700">Failed to load forum posts. Please try again.</p>
-      </div>
-    );
+    return <ErrorState title="Failed to load forum posts." message="Please try again." />;
   }
 
   const displayPosts = allPosts.length > 0 ? allPosts : posts;
@@ -76,9 +74,7 @@ export function ThreadList({ courseId, onThreadClick }: ThreadListProps) {
             ))}
           </div>
         ) : displayPosts.length === 0 ? (
-          <div className="text-center py-8">
-            <p className="text-gray-500">No discussions yet. Be the first to start one!</p>
-          </div>
+          <EmptyState title="No discussions yet." description="Be the first to start one!" />
         ) : (
           <div className="space-y-2">
             {displayPosts

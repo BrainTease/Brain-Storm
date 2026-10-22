@@ -1,3 +1,4 @@
+import { Role } from '../common/enums/role.enum';
 import { Body, Controller, Delete, Get, Param, Post, Request, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -47,7 +48,7 @@ export class EnrollmentsController {
     @Body() body: { courseId: string; adminOverride?: boolean },
     @Request() req: { user: { id: string; role: string } }
   ) {
-    const isAdmin = req.user.role === 'admin';
+    const isAdmin = req.user.role === Role.ADMIN;
     return this.enrollmentsService.enroll(
       req.user.id,
       body.courseId,

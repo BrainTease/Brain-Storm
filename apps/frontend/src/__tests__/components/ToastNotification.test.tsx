@@ -3,8 +3,8 @@
  * Tests toast display, dismissal, and interaction behavior
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import React from 'react';
 
 // Mock Toast component for testing
@@ -75,6 +75,10 @@ describe('Toast Notification Component', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('should render toast with message', () => {
@@ -151,13 +155,11 @@ describe('Toast Notification Component', () => {
     expect(screen.getByText('Auto-dismiss message')).toBeInTheDocument();
 
     // Fast-forward time
-    vi.advanceTimersByTime(3000);
-
-    await waitFor(() => {
-      expect(mockOnClose).toHaveBeenCalledWith('1');
+    act(() => {
+      vi.advanceTimersByTime(3000);
     });
 
-    vi.useRealTimers();
+    expect(mockOnClose).toHaveBeenCalledWith('1');
   });
 
   it('should not auto-dismiss when duration is 0', async () => {
@@ -282,9 +284,9 @@ describe('Toast Container', () => {
 
     render(
       <div>
-        <Toast id="1" type="success" message="Toast 1" onClose={mockOnClose} duration={0} />
-        <Toast id="2" type="error" message="Toast 2" onClose={mockOnClose} duration={0} />
-        <Toast id="3" type="warning" message="Toast 3" onClose={mockOnClose} duration={0} />
+        <Toast key="1" id="1" type="success" message="Toast 1" onClose={mockOnClose} duration={0} />
+        <Toast key="2" id="2" type="error" message="Toast 2" onClose={mockOnClose} duration={0} />
+        <Toast key="3" id="3" type="warning" message="Toast 3" onClose={mockOnClose} duration={0} />
       </div>
     );
 
@@ -298,8 +300,8 @@ describe('Toast Container', () => {
 
     const { rerender } = render(
       <div>
-        <Toast id="1" type="success" message="Toast 1" onClose={mockOnClose} duration={0} />
-        <Toast id="2" type="error" message="Toast 2" onClose={mockOnClose} duration={0} />
+        <Toast key="1" id="1" type="success" message="Toast 1" onClose={mockOnClose} duration={0} />
+        <Toast key="2" id="2" type="error" message="Toast 2" onClose={mockOnClose} duration={0} />
       </div>
     );
 
@@ -313,7 +315,7 @@ describe('Toast Container', () => {
     // Rerender without first toast
     rerender(
       <div>
-        <Toast id="2" type="error" message="Toast 2" onClose={mockOnClose} duration={0} />
+        <Toast key="2" id="2" type="error" message="Toast 2" onClose={mockOnClose} duration={0} />
       </div>
     );
 

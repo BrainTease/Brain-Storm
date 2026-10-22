@@ -86,21 +86,6 @@ export class DIContainer {
   }
 }
 
-/**
- * Service locator pattern (use sparingly)
- */
-@Injectable()
-export class ServiceLocator {
-  constructor(private container: DIContainer) {}
-
-  getService<T>(token: string): T {
-    return this.container.get<T>(token);
-  }
-
-  hasService(token: string): boolean {
-    return this.container.has(token);
-  }
-}
 
 /**
  * Dependency injection decorator for property injection

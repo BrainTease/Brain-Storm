@@ -10,7 +10,7 @@ All contributors are expected to follow our [Code of Conduct](CODE_OF_CONDUCT.md
 
 1. **Fork the repository** on GitHub.
 2. **Clone your fork** locally: `git clone https://github.com/<your-username>/Brain-Storm.git`
-3. **Follow the [Developer Setup Guide](docs/development-setup.md)** to set up your environment.
+3. **Follow the [Developer Setup Guide](docs/contributing/setup.md)** to set up your environment.
 4. **Create a new branch** from `main` for your change (see naming conventions below).
 5. Make your changes, add tests, and open a pull request.
 
@@ -189,6 +189,7 @@ Before submitting your PR, verify:
 - [ ] Commits follow Conventional Commits format with an allowed scope.
 - [ ] Documentation is updated if behaviour changes.
 - [ ] No secrets or PII are committed.
+- [ ] No commented-out code is left behind; git history keeps the old version.
 - [ ] PR description clearly explains the _what_ and _why_.
 
 ## Development Workflow
@@ -207,7 +208,7 @@ cd apps/backend && npm test
 npm run lint
 ```
 
-See [docs/development-setup.md](docs/development-setup.md) for the full setup guide.
+See [docs/contributing/setup.md](docs/contributing/setup.md) for the full setup guide.
 
 ## Pre-commit Hooks (Husky)
 
@@ -411,3 +412,7 @@ The following scripts were used once to migrate the codebase and have since been
 | `fix-ts2564-all.mjs` | Broader pass of the same TS2564 fix across all DTO and entity files | Committed prior to removal |
 
 All fixes from these scripts are already committed to the codebase. The scripts themselves were removed once verified. If you need to perform a similar mass codebase transformation in the future, create a new migration script under `scripts/` (not the repo root), run it, commit the result, and remove the script in the same PR.
+
+## Backend dependency check
+
+Checked against backend source. `@elastic/elasticsearch` is used by `@nestjs/elasticsearch`, and `@nestjs/platform-socket.io` provides the socket.io adapter for the notifications gateway. Both are used indirectly, so neither is removed.

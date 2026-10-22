@@ -1,4 +1,8 @@
+import { Logger } from '@nestjs/common';
+
 import { AppDataSource } from '../data-source';
+
+const logger = new Logger('Migrations');
 
 interface MigrationRecord {
   id: number;
@@ -15,8 +19,8 @@ async function validateMigrations() {
 
   const allMigrations = AppDataSource.migrations;
 
-  console.log(`Registered migrations: ${allMigrations.length}`);
-  console.log(`Executed migrations:   ${executedMigrations.length}`);
+  logger.log(`Registered migrations: ${allMigrations.length}`);
+  logger.log(`Executed migrations:   ${executedMigrations.length}`);
 
   // Check for timestamp ordering issues
   const timestamps = allMigrations.map((m: { name?: string }) => {
@@ -26,7 +30,7 @@ async function validateMigrations() {
 
   for (let i = 1; i < timestamps.length; i++) {
     if (timestamps[i] <= timestamps[i - 1]) {
-      console.error(`Timestamp ordering error between migration ${i - 1} and ${i}`);
+      logger.error(`Timestamp ordering error between migration ${i - 1} and ${i}`);
       process.exit(1);
     }
   }
@@ -35,17 +39,17 @@ async function validateMigrations() {
   const seen = new Set<number>();
   for (const ts of timestamps) {
     if (seen.has(ts)) {
-      console.error(`Duplicate migration timestamp detected: ${ts}`);
+      logger.error(`Duplicate migration timestamp detected: ${ts}`);
       process.exit(1);
     }
     seen.add(ts);
   }
 
-  console.log('Migration validation passed');
+  logger.log('Migration validation passed');
   await AppDataSource.destroy();
 }
 
 validateMigrations().catch((err) => {
-  console.error('Validation error:', err);
+  logger.error('Validation error:', err);
   process.exit(1);
 });

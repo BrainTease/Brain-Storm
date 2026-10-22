@@ -1,9 +1,15 @@
 import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { DisputeStatus, DisputeType } from './dispute.entity';
+import {
+  DisputeStatus,
+  DisputeType,
+  CreateDispute,
+  ResolveDispute,
+  DisputeQuery,
+} from '@brain-storm/types';
 import { PaginationDto } from '../common/dto/pagination.dto';
 
-export class CreateDisputeDto {
+export class CreateDisputeDto implements CreateDispute {
   @ApiProperty({ enum: DisputeType })
   @IsEnum(DisputeType)
   type!: DisputeType;
@@ -23,7 +29,7 @@ export class CreateDisputeDto {
   targetEntityType?: string;
 }
 
-export class ResolveDisputeDto {
+export class ResolveDisputeDto implements ResolveDispute {
   @ApiProperty({ enum: DisputeStatus, description: 'Must be resolved or closed' })
   @IsEnum(DisputeStatus)
   status!: DisputeStatus;
@@ -44,7 +50,7 @@ export class SuspendUserDto {
   until?: string;
 }
 
-export class DisputeQueryDto extends PaginationDto {
+export class DisputeQueryDto extends PaginationDto implements DisputeQuery {
   @ApiPropertyOptional({ enum: DisputeStatus, description: 'Filter by status' })
   @IsOptional()
   @IsEnum(DisputeStatus)

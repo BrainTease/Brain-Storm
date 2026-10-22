@@ -1,12 +1,13 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+
+import { Spinner } from '@/components/ui/Spinner';
 import { Course } from '@/hooks/useCourseSearch';
 import { useRovingFocus } from '@/hooks/useRovingFocus';
-import { CourseCard } from './CourseCard';
+
 import { CourseCardSkeleton } from './CourseCardSkeleton';
-import { CompareCheckbox } from './CompareCheckbox';
-import { Spinner } from '@/components/ui/Spinner';
+import { CourseGridItem } from './CourseGridItem';
 
 const SKELETON_COUNT = 6;
 
@@ -48,16 +49,7 @@ export function CourseGrid({
     return () => observer.disconnect();
   }, [hasMore, isLoadingMore, onLoadMore]);
 
-  if (error) {
-    return (
-      <div
-        className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700 dark:border-red-700 dark:bg-red-900/20"
-        role="alert"
-      >
-        Error: {error.message}
-      </div>
-    );
-  }
+  if (error) return <CourseGridError message={error.message} />;
 
   return (
     <>
@@ -88,30 +80,47 @@ export function CourseGrid({
               </li>
             ))
           : courses.map((course, index) => (
-              <li key={course.id}>
-                <CourseCard
-                  id={course.id}
-                  title={course.title}
-                  description={course.description ?? ''}
-                  instructor={course.instructor ?? ''}
-                  rating={course.rating ?? 0}
-                  reviewCount={course.reviewCount}
-                  level={course.level}
-                  durationHours={course.durationHours ?? 0}
-                  price={course.price}
-                  imageUrl={course.imageUrl}
-                  enrollmentCount={course.enrollments}
-                  category={course.category}
-                  linkFocusProps={getItemProps(index)}
-                  compareControl={<CompareCheckbox course={course} />}
-                />
-              </li>
+              <CourseGridItem
+                key={course.id}
+                course={course}
+                index={index}
+                getItemProps={getItemProps}
+              />
             ))}
       </ul>
 
       {/* Sentinel drives infinite scroll for pointer users. */}
       {hasMore && <div ref={sentinelRef} aria-hidden="true" className="h-px" />}
 
+      <CourseGridFooter
+        isLoading={isLoading}
+        isLoadingMore={isLoadingMore}
+        hasMore={hasMore}
+        hasCourses={courses.length > 0}
+        onLoadMore={onLoadMore}
+      />
+    </>
+  );
+}
+
+interface CourseGridFooterProps {
+  isLoading: boolean;
+  isLoadingMore: boolean;
+  hasMore: boolean;
+  hasCourses: boolean;
+  onLoadMore: () => void;
+}
+
+/** Load-more status, keyboard fallback to infinite scroll, and end-of-list note. */
+function CourseGridFooter({
+  isLoading,
+  isLoadingMore,
+  hasMore,
+  hasCourses,
+  onLoadMore,
+}: CourseGridFooterProps) {
+  return (
+    <>
       {isLoadingMore && (
         <div className="flex justify-center py-8" role="status" aria-live="polite">
           <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
@@ -134,11 +143,23 @@ export function CourseGrid({
         </div>
       )}
 
-      {!isLoading && !hasMore && courses.length > 0 && (
+      {!isLoading && !hasMore && hasCourses && (
         <div className="text-center py-8 text-gray-500 dark:text-gray-400">
           You&apos;ve reached the end of the list.
         </div>
       )}
     </>
+  );
+}
+
+/** Surfaces a failed course query as an alert for assistive technology. */
+function CourseGridError({ message }: { message: string }) {
+  return (
+    <div
+      className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700 dark:border-red-700 dark:bg-red-900/20"
+      role="alert"
+    >
+      Error: {message}
+    </div>
   );
 }

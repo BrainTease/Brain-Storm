@@ -9,7 +9,7 @@ import { Credential } from './credential.entity';
 import { PdfBuilderService } from '../common/services/pdf-builder.service';
 
 @Injectable()
-export class CertificatePdfService {
+export class CertificateRenderer {
   constructor(private readonly pdfBuilder: PdfBuilderService) {}
 
   generateCertificatePdf(credential: Credential): Buffer {

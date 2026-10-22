@@ -26,11 +26,11 @@ export default () => ({
 
   // ── Database ───────────────────────────────────────────────────────────────
   database: {
-    host: process.env.DATABASE_HOST!,
+    host: process.env.DATABASE_HOST || '',
     port: parseInt(process.env.DATABASE_PORT || '5432', 10),
-    username: process.env.DATABASE_USER!,
-    password: process.env.DATABASE_PASSWORD!,
-    name: process.env.DATABASE_NAME!,
+    username: process.env.DATABASE_USER || '',
+    password: process.env.DATABASE_PASSWORD || '',
+    name: process.env.DATABASE_NAME || '',
   },
 
   // Database connection-pool settings
@@ -42,19 +42,21 @@ export default () => ({
   },
 
   // ── JWT ────────────────────────────────────────────────────────────────────
+  // No default secret is provided: JWT_SECRET must be supplied via the
+  // environment (validated in validation.schema.ts). Never commit a fallback.
   jwt: {
-    secret: process.env.JWT_SECRET!,
+    secret: process.env.JWT_SECRET || '',
   },
 
   // ── Redis ──────────────────────────────────────────────────────────────────
   redis: {
-    url: process.env.REDIS_URL!,
+    url: process.env.REDIS_URL || '',
   },
 
   // ── Stellar ────────────────────────────────────────────────────────────────
   stellar: {
     network: process.env.STELLAR_NETWORK as 'testnet' | 'mainnet',
-    secretKey: process.env.STELLAR_SECRET_KEY!,
+    secretKey: process.env.STELLAR_SECRET_KEY || '',
     horizonUrl: process.env.STELLAR_HORIZON_URL || getStellarNetworkConfig((process.env.STELLAR_NETWORK as 'testnet' | 'mainnet') || 'testnet').horizonUrl,
     sorobanRpcUrl: process.env.SOROBAN_RPC_URL || getStellarNetworkConfig((process.env.STELLAR_NETWORK as 'testnet' | 'mainnet') || 'testnet').sorobanRpcUrl,
     contractId: process.env.SOROBAN_CONTRACT_ID || '',
@@ -66,19 +68,19 @@ export default () => ({
 
   // ── Mail ───────────────────────────────────────────────────────────────────
   mail: {
-    host: process.env.EMAIL_HOST!,
+    host: process.env.EMAIL_HOST || '',
     port: parseInt(process.env.EMAIL_PORT || '587', 10),
     secure: process.env.EMAIL_SECURE === 'true',
-    user: process.env.EMAIL_USER!,
-    pass: process.env.EMAIL_PASS!,
+    user: process.env.EMAIL_USER || '',
+    pass: process.env.EMAIL_PASS || '',
     from: process.env.EMAIL_FROM || '"Brain Storm" <no-reply@brainstorm.app>',
     enabled: process.env.EMAIL_ENABLED === 'true',
   },
 
   // ── Google OAuth ───────────────────────────────────────────────────────────
   google: {
-    clientId: process.env.GOOGLE_CLIENT_ID,
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    clientId: process.env.GOOGLE_CLIENT_ID || '',
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
     callbackUrl: process.env.GOOGLE_CALLBACK_URL || 'http://localhost:3000/auth/google/callback',
   },
 

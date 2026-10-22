@@ -1,63 +1,41 @@
 import { test, expect } from '@playwright/test';
-
-/**
- * Generates a unique email/username per test run so tests don't collide.
- */
-function uniqueUser() {
-  const ts = Date.now();
-  return {
-    username: `testuser_${ts}`,
-    email: `testuser_${ts}@example.com`,
-    password: 'Test@1234!',
-  };
-}
+import { CoursesPage, EnrollmentPage, LoginPage, RegisterPage, uniqueUser } from './page-objects';
 
 test.describe('Critical user journey: register → enroll → complete lesson', () => {
   test('register → login → browse courses → enroll → view lesson → mark complete', async ({
     page,
   }) => {
-    const user = uniqueUser();
+    const user = uniqueUser('testuser');
 
     // ── 1. Register ──────────────────────────────────────────────────────────
-    await page.goto('/auth/register');
-    await page.getByLabel(/username/i).fill(user.username);
-    await page.getByLabel(/email/i).fill(user.email);
-    await page.getByLabel(/^password$/i).fill(user.password);
-    await page.getByRole('button', { name: /register|sign up|create account/i }).click();
+    await new RegisterPage(page).register(user);
 
     // After registration the app should redirect to login or dashboard
     await expect(page).toHaveURL(/login|dashboard|courses/);
 
     // ── 2. Login ─────────────────────────────────────────────────────────────
     // If redirected to login, fill credentials; otherwise already authenticated
-    if (page.url().includes('login')) {
-      await page.getByLabel(/email/i).fill(user.email);
-      await page.getByLabel(/^password$/i).fill(user.password);
-      await page.getByRole('button', { name: /log in|sign in/i }).click();
+    if (await new LoginPage(page).loginIfRedirected(user)) {
       await expect(page).not.toHaveURL(/login/);
     }
 
     // ── 3. Browse courses ────────────────────────────────────────────────────
-    await page.goto('/courses');
-    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    const courses = new CoursesPage(page);
+    await courses.goto();
+    await expect(courses.heading).toBeVisible();
 
     // Pick the first course
-    const firstCourseLink = page
-      .getByRole('link', { name: /view course|intro to stellar/i })
-      .first();
-    await expect(firstCourseLink).toBeVisible();
-    await firstCourseLink.click();
+    await expect(courses.viewCourseLink).toBeVisible();
+    await courses.viewCourseLink.click();
 
     // ── 4. Enroll ────────────────────────────────────────────────────────────
     await expect(page).toHaveURL(/courses\/\d+|courses\/.+/);
-    const enrollBtn = page.getByRole('button', { name: /enroll/i });
-    await expect(enrollBtn).toBeVisible();
-    await enrollBtn.click();
+    const enrollment = new EnrollmentPage(page);
+    await expect(enrollment.enrollButton).toBeVisible();
+    await enrollment.enroll();
 
     // Confirm enrollment feedback
-    await expect(page.getByText(/enrolled|you are enrolled|enrollment confirmed/i)).toBeVisible({
-      timeout: 8_000,
-    });
+    await expect(enrollment.enrolledConfirmation).toBeVisible({ timeout: 8_000 });
 
     // ── 5. View first lesson ─────────────────────────────────────────────────
     const lessonLink = page.getByRole('link', { name: /lesson|start|begin/i }).first();

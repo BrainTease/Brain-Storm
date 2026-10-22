@@ -5,10 +5,13 @@
 //! Cross-contract call conventions used across `contracts/`: [docs/contract-interfaces.md § Cross-Contract Call Conventions](../../../docs/contract-interfaces.md#cross-contract-call-conventions).
 //! Rationale for this crate's existence and how it relates to other contracts: [ADR-007](../../../docs/adr/ADR-007-shared-crate-for-common-code.md).
 
+#[cfg(test)]
+extern crate std;
+
 pub mod access;
 pub mod admin;
-pub mod access;
 pub mod constants;
+pub mod error;
 pub mod errors;
 pub mod events;
 pub mod math;
@@ -19,6 +22,9 @@ pub mod pausable;
 pub mod reentrancy;
 pub mod upgrade;
 pub mod validation;
+
+#[cfg(any(test, feature = "testutils"))]
+pub mod test_helpers;
 
 // Re-export commonly used items
 pub use constants::{BASIS_POINTS_DENOMINATOR, PRECISION_SCALE_12};

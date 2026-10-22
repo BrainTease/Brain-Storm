@@ -1,6 +1,7 @@
-import { describe, it, expect, beforeAll } from 'vitest';
 import fs from 'fs';
 import path from 'path';
+
+import { describe, it, expect, beforeAll } from 'vitest';
 
 describe('globals.css - CSS cleanup', () => {
   let cssContent: string;
@@ -19,8 +20,8 @@ describe('globals.css - CSS cleanup', () => {
     expect(cssContent).toContain('.skip-link');
   });
 
-  it('contains sr-only utility for accessibility', () => {
-    expect(cssContent).toContain('.sr-only');
+  it('relies on Tailwind’s built-in sr-only utility instead of a duplicate rule (#1286)', () => {
+    expect(cssContent).not.toMatch(/^\.sr-only\s*\{/m);
   });
 
   it('contains focus-visible styling', () => {

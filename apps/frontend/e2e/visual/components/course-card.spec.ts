@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { CoursesPage } from '../../page-objects';
 
 /**
  * Visual regression tests for Course Card component
@@ -7,12 +8,12 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Course Card - Visual Regression', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/courses');
+    await new CoursesPage(page).goto();
     await page.waitForLoadState('networkidle');
   });
 
   test('course card light mode', async ({ page }) => {
-    const courseCard = page.locator('[data-testid="course-card"]').first();
+    const courseCard = new CoursesPage(page).courseCard.first();
     if (await courseCard.isVisible()) {
       await expect(courseCard).toHaveScreenshot('course-card-light.png');
     }
@@ -25,14 +26,14 @@ test.describe('Course Card - Visual Regression', () => {
       await page.waitForTimeout(500);
     }
 
-    const courseCard = page.locator('[data-testid="course-card"]').first();
+    const courseCard = new CoursesPage(page).courseCard.first();
     if (await courseCard.isVisible()) {
       await expect(courseCard).toHaveScreenshot('course-card-dark.png');
     }
   });
 
   test('course card hover state', async ({ page }) => {
-    const courseCard = page.locator('[data-testid="course-card"]').first();
+    const courseCard = new CoursesPage(page).courseCard.first();
     if (await courseCard.isVisible()) {
       await courseCard.hover();
       await page.waitForTimeout(300); // Wait for hover transition
@@ -41,7 +42,7 @@ test.describe('Course Card - Visual Regression', () => {
   });
 
   test('course card enrolled state', async ({ page }) => {
-    const enrolledCard = page.locator('[data-testid="course-card"][data-enrolled="true"]').first();
+    const enrolledCard = new CoursesPage(page).enrolledCourseCard.first();
     if (await enrolledCard.isVisible()) {
       await expect(enrolledCard).toHaveScreenshot('course-card-enrolled.png');
     }
@@ -52,7 +53,7 @@ test.describe('Course Card - Visual Regression', () => {
     await page.reload();
     await page.waitForLoadState('networkidle');
 
-    const courseCard = page.locator('[data-testid="course-card"]').first();
+    const courseCard = new CoursesPage(page).courseCard.first();
     if (await courseCard.isVisible()) {
       await expect(courseCard).toHaveScreenshot('course-card-mobile.png');
     }

@@ -1,5 +1,5 @@
 import { Module, Global } from '@nestjs/common';
-import { DIContainer, ServiceLocator } from './di.container';
+import { DIContainer } from './di.container';
 
 /**
  * Dependency Injection Module
@@ -7,8 +7,8 @@ import { DIContainer, ServiceLocator } from './di.container';
  */
 @Global()
 @Module({
-  providers: [DIContainer, ServiceLocator],
-  exports: [DIContainer, ServiceLocator],
+  providers: [DIContainer],
+  exports: [DIContainer],
 })
 export class DIModule {}
 
@@ -18,6 +18,6 @@ export class DIModule {}
 export const DI_MODULE_CONFIG = {
   isGlobal: true,
   imports: [],
-  providers: [DIContainer, ServiceLocator],
-  exports: [DIContainer, ServiceLocator],
+  providers: [DIContainer],
+  exports: [DIContainer],
 };

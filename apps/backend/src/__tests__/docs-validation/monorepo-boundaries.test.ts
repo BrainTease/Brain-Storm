@@ -2,8 +2,12 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 describe('Monorepo Package Boundaries ADR', () => {
-  const adrDir = path.join(process.cwd(), 'docs', 'adr');
-  const rootReadmePath = path.join(process.cwd(), 'README.md');
+  // The repository root is five levels above apps/backend/src/__tests__/docs-validation;
+  // resolving it from the test file keeps the assertions independent of the directory
+  // jest is run from.
+  const repoRoot = path.resolve(__dirname, '../../../../..');
+  const adrDir = path.join(repoRoot, 'docs', 'adr');
+  const rootReadmePath = path.join(repoRoot, 'README.md');
   const packages = [
     'packages/api',
     'packages/app',
@@ -16,7 +20,10 @@ describe('Monorepo Package Boundaries ADR', () => {
   const getAdrContent = (): string => {
     const files = fs.readdirSync(adrDir);
     const pattern = /package|monorepo|boundary|architecture/i;
-    const boundariesAdr = files.find((f) => pattern.test(f) && f.endsWith('.md'));
+    // Prefer the monorepo (npm package) boundaries ADR; fall back to any match.
+    const boundariesAdr =
+      files.find((f) => /monorepo.*package|package.*boundar/i.test(f)) ||
+      files.find((f) => pattern.test(f) && f.endsWith('.md'));
     return fs.readFileSync(path.join(adrDir, boundariesAdr || ''), 'utf-8');
   };
 
@@ -68,18 +75,23 @@ describe('Monorepo Package Boundaries ADR', () => {
   describe('Package Structure and Lint Config', () => {
     it('should have all packages with package.json', () => {
       packages.forEach((pkg) => {
-        const pkgPath = path.join(process.cwd(), pkg);
+        const pkgPath = path.join(repoRoot, pkg);
         const pkgJsonPath = path.join(pkgPath, 'package.json');
         expect(fs.existsSync(pkgJsonPath)).toBe(true);
       });
     });
 
     it('should have boundary enforcement configured', () => {
-      const eslintPath = path.join(process.cwd(), '.eslintrc.json');
-      const nxPath = path.join(process.cwd(), 'nx.json');
-      const exists = fs.existsSync(eslintPath) || fs.existsSync(nxPath);
+      const eslintPaths = [
+        path.join(repoRoot, '.eslintrc.json'),
+        path.join(repoRoot, '.eslintrc.js'),
+        path.join(repoRoot, '.eslintrc.cjs'),
+      ];
+      const nxPath = path.join(repoRoot, 'nx.json');
+      const eslintPath = eslintPaths.find((p) => fs.existsSync(p));
+      const exists = Boolean(eslintPath) || fs.existsSync(nxPath);
       expect(exists).toBe(true);
-      if (fs.existsSync(eslintPath)) {
+      if (eslintPath) {
         const config = fs.readFileSync(eslintPath, 'utf-8');
         expect(config).toMatch(/boundary|import.*constraint/i);
       }

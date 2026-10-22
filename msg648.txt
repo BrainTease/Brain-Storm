@@ -1,0 +1,29 @@
+feat(#648): implement job posting and application system
+
+- Create apps/backend/src/jobs/job.entity.ts
+  - Job entity: title, description, category, requiredSkills (array), budgetMin/Max,
+    status (open/closed/expired/filled), expiresAt, isDeleted, instructor relation
+  - JobApplication entity: jobId, applicantId, coverLetter, status, reviewNote
+  - Indexes: (status, expiresAt), (jobId, applicantId unique), (applicantId, status)
+- Create apps/backend/src/jobs/dto/index.ts
+  - CreateJobDto, UpdateJobDto, CreateApplicationDto, UpdateApplicationStatusDto, JobQueryDto
+- Create apps/backend/src/jobs/jobs.service.ts
+  - createJob(): create with ownerId, emit job.created event
+  - findAll(): paginated with search (ILike), category, status filters
+  - update() / remove(): ownership-gated
+  - apply(): validates open status, prevents self-apply, rejects duplicates
+  - getApplicationsForJob(): poster-only
+  - getMyApplications(): applicant's own applications
+  - updateApplicationStatus(): poster-only, emits status_changed, marks job FILLED on accept
+  - withdraw(): applicant can withdraw pending/reviewed applications
+  - getMatchingJobs(): skill intersection scoring, sorted by score desc
+  - expireOldJobs(): @Cron(EVERY_HOUR) — marks expired jobs, emits job.expired event
+- Create apps/backend/src/jobs/jobs.controller.ts
+  - GET /jobs, POST /jobs, PATCH /jobs/:id, DELETE /jobs/:id
+  - GET /jobs/recommendations (auth required)
+  - POST /jobs/:id/apply, GET /jobs/:id/applications
+  - GET /jobs/applications/mine, PATCH /jobs/applications/:id/status
+  - PATCH /jobs/applications/:id/withdraw
+- Create apps/backend/src/jobs/jobs.module.ts
+
+Closes #648

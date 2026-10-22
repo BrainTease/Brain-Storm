@@ -31,10 +31,17 @@ We use the [MADR (Markdown Any Decision Records)](https://adr.github.io/madr/) t
 | [ADR-008](./ADR-008-registry-integration-separation.md)        | `registry` and `integration` Are Different Kinds of Crates             | Accepted |
 | [ADR-009](./ADR-009-credential-nft-decomposition.md)           | Separate `certificate`, `credential_metadata`, and `nft` Contracts     | Accepted |
 | [ADR-0001](./0001-contract-module-boundaries.md)               | Soroban Contract Module Boundaries and Cross-Contract Call Conventions | Accepted |
+| [ADR-010](./ADR-010-backend-module-boundaries.md)              | Backend Module Boundaries for `apps/backend`                           | Proposed |
+| [ADR-011](./ADR-011-contract-shared-conventions.md)            | Shared Contract Error, Storage, and Constant Conventions               | Proposed |
+| [ADR-012](./ADR-012-monorepo-package-boundaries.md)            | Monorepo Package Boundaries and Import Rules (`packages/`)             | Accepted |
 
 ## Contract Module Boundaries
 
 ADR-006 through ADR-009 document why `contracts/` is split into 19 separate Soroban crates instead of one monolith, including the verified on-chain cross-contract call graph. Start with [ADR-006](./ADR-006-contract-per-domain-architecture.md) for the overall rationale and call graph, then the others for specific boundary decisions. See also [docs/contract-interfaces.md](../contract-interfaces.md) for the full public interface of every contract and the cross-contract call conventions used across the codebase.
+
+## Monorepo Package Boundaries
+
+[ADR-012](./ADR-012-monorepo-package-boundaries.md) covers the npm workspace under `packages/` and `apps/`: what each package is responsible for, the one-way import rules between layers, the distinction between the `packages/mobile` SDK and the `packages/mobile-app` Expo application, and the workspace registration that keeps the lock file in sync with the declared dependency graph.
 
 ## Creating New ADRs
 

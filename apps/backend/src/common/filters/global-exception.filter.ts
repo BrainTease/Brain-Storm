@@ -1,3 +1,4 @@
+import { env } from '../../config/env';
 import {
   ExceptionFilter,
   Catch,
@@ -101,7 +102,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     } else if (exception instanceof Error) {
       this.logger.error(`Unhandled exception: ${exception.message}`, exception.stack);
       // Do not leak internal error messages in production
-      message = process.env.NODE_ENV === 'production' ? 'Internal server error' : exception.message;
+      message = env.isProduction ? 'Internal server error' : exception.message;
     } else {
       this.logger.error('Unknown non-Error exception thrown', JSON.stringify(exception));
     }

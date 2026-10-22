@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { CoursesPage, EnrollmentPage } from './page-objects';
 
 test.describe('Visual Regression Tests', () => {
   test.beforeEach(async ({ page }) => {
@@ -13,9 +14,10 @@ test.describe('Visual Regression Tests', () => {
   });
 
   test('course card should match baseline', async ({ page }) => {
-    await page.goto('http://localhost:3001/courses');
-    await page.waitForSelector('[data-testid="course-card"]');
-    const courseCard = page.locator('[data-testid="course-card"]').first();
+    const courses = new CoursesPage(page);
+    await courses.goto();
+    const courseCard = courses.courseCard.first();
+    await courseCard.waitFor();
     await expect(courseCard).toHaveScreenshot('course-card.png');
   });
 
@@ -26,11 +28,11 @@ test.describe('Visual Regression Tests', () => {
   });
 
   test('enrollment modal should match baseline', async ({ page }) => {
-    await page.goto('http://localhost:3001/courses/1');
-    await page.click('[data-testid="enroll-button"]');
-    await page.waitForSelector('[data-testid="enrollment-modal"]');
-    const modal = page.locator('[data-testid="enrollment-modal"]');
-    await expect(modal).toHaveScreenshot('enrollment-modal.png');
+    const enrollment = new EnrollmentPage(page);
+    await enrollment.goto(1);
+    await enrollment.enrollButtonByTestId.click();
+    await enrollment.enrollmentModal.waitFor();
+    await expect(enrollment.enrollmentModal).toHaveScreenshot('enrollment-modal.png');
   });
 
   test('dashboard should match baseline', async ({ page }) => {

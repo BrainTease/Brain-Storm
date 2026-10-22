@@ -1,9 +1,14 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
+import { CoursesPage, EnrollmentPage } from '../../page-objects';
 
 /**
  * Visual regression tests for Modal components
  * Tests different modal types and states
  */
+
+function enrollmentOrDialog(page: Page) {
+  return new EnrollmentPage(page).enrollmentModal.or(page.locator('[role="dialog"]')).first();
+}
 
 test.describe('Modals - Visual Regression', () => {
   test.beforeEach(async ({ page }) => {
@@ -12,16 +17,17 @@ test.describe('Modals - Visual Regression', () => {
   });
 
   test('enrollment modal light mode', async ({ page }) => {
-    await page.goto('/courses');
+    const courses = new CoursesPage(page);
+    await courses.goto();
     await page.waitForLoadState('networkidle');
 
-    const enrollButton = page.locator('[data-testid="enroll-button"]').first();
+    const enrollButton = new EnrollmentPage(page).enrollButtonByTestId.first();
     if (await enrollButton.isVisible()) {
       await enrollButton.click();
-      await page.waitForSelector('[data-testid="enrollment-modal"], [role="dialog"]');
+      const modal = enrollmentOrDialog(page);
+      await modal.waitFor();
       await page.waitForTimeout(300); // Wait for animation
 
-      const modal = page.locator('[data-testid="enrollment-modal"], [role="dialog"]').first();
       await expect(modal).toHaveScreenshot('modal-enrollment-light.png');
     }
   });
@@ -33,16 +39,17 @@ test.describe('Modals - Visual Regression', () => {
       await page.waitForTimeout(500);
     }
 
-    await page.goto('/courses');
+    const courses = new CoursesPage(page);
+    await courses.goto();
     await page.waitForLoadState('networkidle');
 
-    const enrollButton = page.locator('[data-testid="enroll-button"]').first();
+    const enrollButton = new EnrollmentPage(page).enrollButtonByTestId.first();
     if (await enrollButton.isVisible()) {
       await enrollButton.click();
-      await page.waitForSelector('[data-testid="enrollment-modal"], [role="dialog"]');
+      const modal = enrollmentOrDialog(page);
+      await modal.waitFor();
       await page.waitForTimeout(300);
 
-      const modal = page.locator('[data-testid="enrollment-modal"], [role="dialog"]').first();
       await expect(modal).toHaveScreenshot('modal-enrollment-dark.png');
     }
   });
@@ -62,10 +69,11 @@ test.describe('Modals - Visual Regression', () => {
   });
 
   test('modal backdrop blur', async ({ page }) => {
-    await page.goto('/courses');
+    const courses = new CoursesPage(page);
+    await courses.goto();
     await page.waitForLoadState('networkidle');
 
-    const enrollButton = page.locator('[data-testid="enroll-button"]').first();
+    const enrollButton = new EnrollmentPage(page).enrollButtonByTestId.first();
     if (await enrollButton.isVisible()) {
       await enrollButton.click();
       await page.waitForSelector('[role="dialog"]');
@@ -80,10 +88,11 @@ test.describe('Modals - Visual Regression', () => {
 
   test('modal mobile responsive', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
-    await page.goto('/courses');
+    const courses = new CoursesPage(page);
+    await courses.goto();
     await page.waitForLoadState('networkidle');
 
-    const enrollButton = page.locator('[data-testid="enroll-button"]').first();
+    const enrollButton = new EnrollmentPage(page).enrollButtonByTestId.first();
     if (await enrollButton.isVisible()) {
       await enrollButton.click();
       await page.waitForSelector('[role="dialog"]');

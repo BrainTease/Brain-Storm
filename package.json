@@ -4,11 +4,14 @@
   "private": true,
   "description": "Brain-Storm - Blockchain Education Platform on Stellar",
   "workspaces": [
-    "packages/types",
-    "packages/sdk",
-    "apps/frontend",
     "apps/backend",
-    "packages/api"
+    "apps/frontend",
+    "packages/api",
+    "packages/app",
+    "packages/mobile",
+    "packages/mobile-app",
+    "packages/sdk",
+    "packages/types"
   ],
   "scripts": {
     "dev:frontend": "npm run dev --workspace=apps/frontend",
@@ -27,7 +30,12 @@
     "test:load": "./scripts/load-test.sh",
     "test:load:marketplace": "k6 run scripts/load-tests/marketplace-purchase.js",
     "test:mutation": "stryker run",
+    "test:mutation:backend": "stryker run --configFile apps/backend/stryker.conf.js",
     "test:mutation:report": "stryker run --reporters html",
+    "audit": "npm audit --audit-level=high",
+    "audit:all": "npm audit --audit-level=high --workspaces --include-workspace-root",
+    "audit:packages": "npm run audit --workspaces --if-present",
+    "lint:staged": "lint-staged",
     "prepare": "husky install"
   },
   "engines": {
@@ -39,15 +47,39 @@
     "@stryker-mutator/core": "^9.6.1",
     "@stryker-mutator/jest-runner": "^9.6.1",
     "@stryker-mutator/typescript-checker": "^9.6.1",
-    "husky": "^9.0.0"
+    "eslint": "^8.57.1",
+    "husky": "^9.0.0",
+    "lint-staged": "^15.2.10",
+    "prettier": "^3.3.3"
   },
   "dependencies": {},
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": [
+      "eslint --fix --max-warnings=0 --no-error-on-unmatched-pattern",
+      "prettier --write"
+    ],
+    "*.{json,md}": [
+      "prettier --write"
+    ]
+  },
   "overrides": {
     "tar": "^7.5.22",
     "@mapbox/node-pre-gyp": "^2.0.3",
     "tmp": "^0.2.3",
     "picomatch": "^4.0.7",
     "image-size": "^2.0.4",
-    "undici": "^6.28.0"
+    "undici": "^6.28.0",
+    "cross-spawn": "^7.0.6",
+    "braces": "^3.0.3",
+    "micromatch": "^4.0.8",
+    "semver": "^7.6.3",
+    "esbuild": "^0.25.0",
+    "path-to-regexp": "^8.2.0",
+    "body-parser": "^1.20.3",
+    "cookie": "^0.7.2",
+    "express": "^4.21.2",
+    "send": "^0.19.0",
+    "serve-static": "^1.16.2",
+    "ws": "^8.18.0"
   }
 }

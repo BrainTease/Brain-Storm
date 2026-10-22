@@ -14,7 +14,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { CredentialsService } from './credentials.service';
-import { CertificatePdfService } from './certificate-pdf.service';
+import { CertificateRenderer } from './certificate-pdf.service';
 
 @ApiTags('credentials')
 @ApiBearerAuth()
@@ -23,7 +23,7 @@ import { CertificatePdfService } from './certificate-pdf.service';
 export class CredentialsController {
   constructor(
     private credentialsService: CredentialsService,
-    private certificatePdfService: CertificatePdfService
+    private certificatePdfService: CertificateRenderer
   ) {}
 
   @Get(':id/pdf')

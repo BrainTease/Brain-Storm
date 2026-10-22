@@ -12,6 +12,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { AuditService } from '../audit/audit.service';
 import { UsersService } from '../users/users.service';
+import { AccountService } from '../users/account.service';
 import { CreateDisputeDto, ResolveDisputeDto, SuspendUserDto, DisputeQueryDto } from './admin.dto';
 import { AuditAction } from '../audit/audit-log.entity';
 import { Dispute, DisputeStatus } from './dispute.entity';
@@ -23,13 +24,14 @@ export class AdminService {
   constructor(
     private readonly auditService: AuditService,
     private readonly usersService: UsersService,
+    private readonly accountService: AccountService,
     private readonly disputeResolutionService: DisputeResolutionService
   ) {}
 
   // ── User management ───────────────────────────────────────────────────────
 
   async banUser(targetId: string, isBanned: boolean, adminId: string) {
-    const user = await this.usersService.banUser(targetId, isBanned);
+    const user = await this.accountService.banUser(targetId, isBanned);
     await this.auditService.log(
       isBanned ? AuditAction.USER_BANNED : 'admin.user_unbanned',
       adminId,
@@ -53,7 +55,7 @@ export class AdminService {
   }
 
   async changeRole(targetId: string, role: string, adminId: string) {
-    const user = await this.usersService.changeRole(targetId, role);
+    const user = await this.accountService.changeRole(targetId, role);
     await this.auditService.log(AuditAction.ROLE_CHANGED, adminId, true, {
       targetUserId: targetId,
       newRole: role,

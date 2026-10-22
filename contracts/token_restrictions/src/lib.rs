@@ -3,7 +3,7 @@ use soroban_sdk::{
     contract, contractimpl, contracttype, symbol_short, Address, Env, Symbol,
 };
 
-use brain_storm_shared::access;
+use brain_storm_shared::{access, validation};
 
 #[contracttype]
 pub enum DataKey {
@@ -132,7 +132,7 @@ impl TokenRestrictionsContract {
         amount: i128,
     ) {
         from.require_auth();
-        assert!(amount > 0, "Amount must be positive");
+        validation::require_positive_amount(amount);
 
         env.storage()
             .instance()

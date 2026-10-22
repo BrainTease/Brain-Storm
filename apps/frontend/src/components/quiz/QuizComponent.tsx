@@ -1,10 +1,12 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Button } from '@/components/ui/Button';
+
 import { Badge } from '@/components/ui/Badge';
-import { ProgressBar } from '@/components/ui/ProgressBar';
+import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { ProgressBar } from '@/components/ui/ProgressBar';
+import { formatDuration } from '@/lib/format';
 
 /* ─────────────────────────── Types ─────────────────────────── */
 
@@ -81,14 +83,6 @@ function calcScore(questions: QuizQuestion[], answers: Record<string, string>) {
     }
   }
   return { earned, total, pct: total > 0 ? Math.round((earned / total) * 100) : 0 };
-}
-
-function formatTime(seconds: number) {
-  const m = Math.floor(seconds / 60)
-    .toString()
-    .padStart(2, '0');
-  const s = (seconds % 60).toString().padStart(2, '0');
-  return `${m}:${s}`;
 }
 
 /* ─────────────────────────── Component ─────────────────────────── */
@@ -220,7 +214,7 @@ export function QuizComponent({ quiz, onComplete }: Props) {
           {quiz.timeLimitSeconds && (
             <li>
               ⏱️ Time limit:{' '}
-              <span className="font-medium">{formatTime(quiz.timeLimitSeconds)}</span>
+              <span className="font-medium">{formatDuration(quiz.timeLimitSeconds)}</span>
             </li>
           )}
           {quiz.passingScore !== undefined && (
@@ -254,9 +248,9 @@ export function QuizComponent({ quiz, onComplete }: Props) {
           {quiz.timeLimitSeconds ? (
             <span
               className={`font-mono font-medium text-sm ${timeLeft <= 30 ? 'text-red-500 animate-pulse' : 'text-gray-700 dark:text-gray-300'}`}
-              aria-label={`Time remaining: ${formatTime(timeLeft)}`}
+              aria-label={`Time remaining: ${formatDuration(timeLeft)}`}
             >
-              ⏱️ {formatTime(timeLeft)}
+              ⏱️ {formatDuration(timeLeft)}
             </span>
           ) : null}
           <Badge variant="default">
@@ -392,7 +386,7 @@ export function QuizComponent({ quiz, onComplete }: Props) {
           </div>
           <div className="bg-gray-50 dark:bg-gray-700/40 rounded-lg p-3">
             <p className="text-2xl font-bold text-gray-900 dark:text-white">
-              {formatTime(result.durationSeconds)}
+              {formatDuration(result.durationSeconds)}
             </p>
             <p className="text-gray-500 dark:text-gray-400 text-xs">time taken</p>
           </div>

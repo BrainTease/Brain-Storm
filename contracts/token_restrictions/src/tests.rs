@@ -279,5 +279,4 @@ mod tests {
         let result = client.can_transfer_amount(env.clone(), from, to, &10000);
         assert!(result, "No transfer limit should allow any amount");
     }
-]
 }

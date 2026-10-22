@@ -139,7 +139,7 @@ export function VerificationCodeInput({
         ))}
       </div>
       {error && (
-        <p id="verification-code-error" role="alert" className="text-xs text-red-600 text-center">
+        <p id="verification-code-error" role="alert" className="text-xs text-red-700 text-center">
           {error}
         </p>
       )}

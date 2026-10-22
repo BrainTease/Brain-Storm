@@ -22,6 +22,10 @@ export interface IntegrityReport {
   valid: boolean;
 }
 
+/**
+ * Single place where audit events are written. Admin mutations are logged automatically by
+ * AdminAuditInterceptor; any other write path calls `log` here so every change emits one event.
+ */
 @Injectable()
 export class AuditService {
   constructor(

@@ -15,6 +15,7 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UsersService } from './users.service';
+import { AccountService } from './account.service';
 import {
   ApiBearerAuth,
   ApiTags,
@@ -32,7 +33,10 @@ import { Roles } from '../auth/roles.decorator';
 @Controller('admin/users')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class AdminUsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly accountService: AccountService,
+  ) {}
 
   @Get()
   @Roles('admin')
@@ -105,7 +109,7 @@ export class AdminUsersController {
   @ApiResponse({ status: 403, description: 'Forbidden - admin role required' })
   @ApiResponse({ status: 404, description: 'User not found' })
   changeRole(@Param('id') id: string, @Body('role') role: string) {
-    return this.usersService.changeRole(id, role);
+    return this.accountService.changeRole(id, role);
   }
 
   @Patch(':id/ban')
@@ -120,7 +124,7 @@ export class AdminUsersController {
   @ApiResponse({ status: 403, description: 'Forbidden - admin role required' })
   @ApiResponse({ status: 404, description: 'User not found' })
   banUser(@Param('id') id: string, @Body('isBanned') isBanned: boolean) {
-    return this.usersService.banUser(id, isBanned);
+    return this.accountService.banUser(id, isBanned);
   }
 
   @Delete(':id')
@@ -135,6 +139,6 @@ export class AdminUsersController {
   @ApiResponse({ status: 403, description: 'Forbidden - admin role required' })
   @ApiResponse({ status: 404, description: 'User not found' })
   deleteUser(@Param('id') id: string) {
-    return this.usersService.softDelete(id);
+    return this.accountService.softDelete(id);
   }
 }

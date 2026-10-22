@@ -7,6 +7,7 @@ import { StellarIndexerService } from './stellar-indexer.service';
 import { StellarTransactionLog } from './stellar-transaction-log.entity';
 import { SorobanRpcClientService } from './soroban-rpc-client.service';
 import { StellarClientFactory } from './stellar-client.factory';
+import { StellarSdkService } from './stellar-sdk.service';
 import { TransactionBuilderService } from './transaction-builder.service';
 import { ContractEventDispatcher } from './event-handlers/contract-event.dispatcher';
 import { AnalyticsEventHandler } from './event-handlers/analytics-event.handler';
@@ -26,6 +27,7 @@ import { LoggerModule } from '../common/logger/logger.module';
   ],
   providers: [
     StellarClientFactory,
+    StellarSdkService,
     SorobanRpcClientService,
     TransactionBuilderService,
     StellarService,

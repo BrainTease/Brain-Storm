@@ -18,6 +18,12 @@ pub const LEVEL_THRESHOLDS: [i128; 5] = [0, 100, 400, 900, 1600];
 // ── Authorized-caller helpers ─────────────────────────────────────────────────
 
 /// Returns true if `caller` is the stored admin or an authorized caller.
+///
+/// # Invariants Enforced
+///
+/// - **Dual-Role Support**: Accepts both the admin and any address in the authorized callers set.
+/// - **No Auth Requirement**: This is a pure predicate; it does not require authorization.
+/// - **Fail-Closed for Missing Admin**: Panics if the admin slot is uninitialized.
 pub fn is_authorized(env: &Env, caller: &Address) -> bool {
     if access::is_admin(env, caller, &DataKey::Admin) {
         return true;
@@ -29,6 +35,14 @@ pub fn is_authorized(env: &Env, caller: &Address) -> bool {
 }
 
 /// Registers `caller` as an authorized score updater (admin-only).
+///
+/// # Invariants Enforced
+///
+/// - **Admin-Only**: Only the stored admin may grant authorization.
+/// - **Authorization Requirement**: The admin must provide cryptographic proof via `require_auth()`.
+/// - **Idempotent**: Calling multiple times with the same `caller` has the same effect as calling once.
+/// - **Event Emission**: Emits `EVT_AUTH_ADD` to allow external systems to track authorization changes.
+/// - **Atomic Update**: Authorization is written to storage in a single operation; no partial states.
 pub fn add_authorized_caller(env: &Env, admin: &Address, caller: &Address) {
     admin.require_auth();
     assert_admin(env, admin);
@@ -40,6 +54,14 @@ pub fn add_authorized_caller(env: &Env, admin: &Address, caller: &Address) {
 }
 
 /// Removes an authorized caller (admin-only).
+///
+/// # Invariants Enforced
+///
+/// - **Admin-Only**: Only the stored admin may revoke authorization.
+/// - **Authorization Requirement**: The admin must provide cryptographic proof via `require_auth()`.
+/// - **Idempotent**: Calling multiple times with the same `caller` has the same effect as calling once.
+/// - **Event Emission**: Emits `EVT_AUTH_RM` to allow external systems to track authorization changes.
+/// - **Atomic Update**: Authorization is removed from storage in a single operation.
 pub fn remove_authorized_caller(env: &Env, admin: &Address, caller: &Address) {
     admin.require_auth();
     assert_admin(env, admin);
@@ -53,6 +75,16 @@ pub fn remove_authorized_caller(env: &Env, admin: &Address, caller: &Address) {
 // ── Slashing ──────────────────────────────────────────────────────────────────
 
 /// Slash `amount` from a user's reputation.  Emits `EVT_SLASH`.
+///
+/// # Invariants Enforced
+///
+/// - **Authorized-Only**: Only the admin or an authorized caller may slash a user's reputation.
+/// - **Authorization Requirement**: The caller must provide cryptographic proof via `require_auth()`.
+/// - **Non-Negative Final Score**: Score is clamped to zero; slashing cannot produce a negative score.
+/// - **Level Recalculation**: User's level is recalculated based on the new score using LEVEL_THRESHOLDS.
+/// - **Timestamp Update**: The reputation record's `last_updated` timestamp is refreshed.
+/// - **Event Emission**: Emits `EVT_SLASH` with the user address, amount, and reason for auditability.
+///
 /// Requires caller to be admin or authorized.
 pub fn slash(env: &Env, caller: &Address, user: &Address, amount: i128, reason: Symbol) {
     caller.require_auth();
@@ -86,6 +118,14 @@ pub fn slash(env: &Env, caller: &Address, user: &Address, amount: i128, reason: 
 
 // ── Score helpers ─────────────────────────────────────────────────────────────
 
+/// Calculates the reputation level from a score.
+///
+/// # Invariants Enforced
+///
+/// - **Deterministic**: The same score always produces the same level.
+/// - **Monotonic**: Higher scores always produce higher or equal levels.
+/// - **Bounded**: Levels are always in the range [1, 5] per LEVEL_THRESHOLDS.
+/// - **Threshold-Based**: Levels are determined by the [0, 100, 400, 900, 1600] thresholds.
 pub fn calculate_level(score: i128) -> u32 {
     for (i, &threshold) in LEVEL_THRESHOLDS.iter().enumerate().rev() {
         if score >= threshold {
@@ -97,6 +137,15 @@ pub fn calculate_level(score: i128) -> u32 {
 
 // ── Decay ─────────────────────────────────────────────────────────────────────
 
+/// Applies reputation decay based on elapsed time (admin-configurable).
+///
+/// # Invariants Enforced
+///
+/// - **Config-Driven**: Decay is only applied if enabled in the DecayConfig.
+/// - **Interval-Based**: Decay is computed in periods of `decay_interval` ledger sequences.
+/// - **Non-Positive Rate**: Only non-positive decay rates should be used (enforced by config).
+/// - **Clamped to Zero**: Decayed scores cannot go below zero.
+/// - **Timestamp Update**: On decay, the record's `last_updated` is refreshed.
 pub fn apply_decay_internal(env: &Env, rep: &mut ReputationRecord, current_ledger: u32) {
     let config: DecayConfig = env
         .storage()
@@ -121,6 +170,11 @@ pub fn apply_decay_internal(env: &Env, rep: &mut ReputationRecord, current_ledge
 
 // ── Internal assertion ────────────────────────────────────────────────────────
 
+/// Internal helper that asserts the caller is the stored admin.
+///
+/// # Invariants
+///
+/// - **Admin-Only**: Panics with `"Only admin can perform this action"` if the caller is not the admin.
 fn assert_admin(env: &Env, caller: &Address) {
     assert!(
         access::is_admin(env, caller, &DataKey::Admin),

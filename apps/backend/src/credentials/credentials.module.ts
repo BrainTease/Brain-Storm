@@ -8,7 +8,7 @@ import { BadgeAwardService } from './badge-award.service';
 import { StellarModule } from '../stellar/stellar.module';
 import { KycModule } from '../kyc/kyc.module';
 import { CoursesModule } from '../courses/courses.module';
-import { CertificatePdfService } from './certificate-pdf.service';
+import { CertificateRenderer } from './certificate-pdf.service';
 import { UsersModule } from '../users/users.module';
 import { RepositoriesModule } from '../repositories/repositories.module';
 
@@ -21,7 +21,7 @@ import { RepositoriesModule } from '../repositories/repositories.module';
     UsersModule,
     RepositoriesModule,
   ],
-  providers: [CredentialsService, CertificatePdfService, BadgeAwardService],
+  providers: [CredentialsService, CertificateRenderer, BadgeAwardService],
   controllers: [CredentialsController, PublicCredentialVerificationController],
   exports: [CredentialsService, BadgeAwardService],
 })

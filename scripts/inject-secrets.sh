@@ -2,6 +2,11 @@
 # inject-secrets.sh — Pull secrets from AWS Secrets Manager at container startup
 # and export them as environment variables for the process that follows.
 #
+# SECURITY NOTE: This script must never contain literal credentials. All secret
+# values are fetched at runtime from AWS Secrets Manager. Never commit secrets,
+# tokens, passwords, or keys to this repository — see issue #1372. Secret values
+# are never logged; only variable names are emitted to stderr.
+#
 # Usage:
 #   source scripts/inject-secrets.sh [environment]
 #   # or as a container entrypoint wrapper:
@@ -25,6 +30,18 @@ AWS_REGION="${AWS_REGION:-us-east-1}"
 
 log() { echo "[inject-secrets] $(date -u +%H:%M:%SZ) $*" >&2; }
 
+# Validate that required environment variables are set and non-empty.
+require_env() {
+  local name="$1"
+  if [[ -z "${!name:-}" ]]; then
+    log "ERROR: Required environment variable $name is not set"
+    return 1
+  fi
+}
+
+require_env AWS_REGION
+require_env ENVIRONMENT
+
 fetch_secret() {
   local secret_name="$1"
   local export_as="$2"
@@ -39,7 +56,13 @@ fetch_secret() {
     return 1
   }
 
+  if [[ -z "$value" || "$value" == "None" ]]; then
+    log "ERROR: Secret $secret_name is empty or missing"
+    return 1
+  fi
+
   export "$export_as"="$value"
+  # Log only the variable name — never the secret value.
   log "Injected: $export_as (from $secret_name)"
 }
 

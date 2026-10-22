@@ -1,3 +1,4 @@
+import { MAX_PAGE_LIMIT } from '../common/dto/pagination.dto';
 import { Controller, Get, Query, Res, UseGuards, Request, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
 import { Response } from 'express';
@@ -39,7 +40,7 @@ export class AuditController {
       action,
       startDate: startDate ? new Date(startDate) : undefined,
       endDate: endDate ? new Date(endDate) : undefined,
-      limit: limit ? parseInt(limit, 10) : 100,
+      limit: limit ? Math.min(parseInt(limit, 10), MAX_PAGE_LIMIT) : 100,
       offset: offset ? parseInt(offset, 10) : 0,
     });
   }

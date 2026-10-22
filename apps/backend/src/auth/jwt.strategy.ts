@@ -1,3 +1,4 @@
+import { Role } from '../common/enums/role.enum';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
@@ -35,6 +36,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
 
     const user = await this.usersService.findById(payload.sub);
-    return { id: payload.sub, email: payload.email, role: user?.role || 'student' };
+    return { id: payload.sub, email: payload.email, role: user?.role || Role.STUDENT };
   }
 }

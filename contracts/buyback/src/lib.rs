@@ -1,70 +1,10 @@
 #![no_std]
-use soroban_sdk::{
-    contract, contractimpl, contracttype, symbol_short, Address, BytesN, Env, Symbol, Vec,
-};
+use soroban_sdk::{contract, contractimpl, Address, BytesN, Env, Symbol, Vec};
 
-use brain_storm_shared::{access, math};
+mod types;
+pub use types::*;
 
-// =============================================================================
-// Storage keys
-// =============================================================================
-
-#[contracttype]
-pub enum DataKey {
-    Admin,
-    TokenContract,
-    OracleContract,
-    DexContract,
-    BuybackConfig,
-    BuybackHistory(u32),
-    BuybackHistoryCount,
-    LastBuybackLedger,
-    TotalBuybackAmount,
-    BuybackReserve,
-}
-
-// =============================================================================
-// Types
-// =============================================================================
-
-#[contracttype]
-#[derive(Clone)]
-pub struct BuybackConfig {
-    pub enabled: bool,
-    pub price_threshold: i128,
-    pub max_buyback_amount: i128,
-    pub min_reserve_balance: i128,
-    pub buyback_interval: u32,
-    pub dex_pool_id: BytesN<32>,
-}
-
-#[contracttype]
-#[derive(Clone)]
-pub struct BuybackRecord {
-    pub timestamp: u64,
-    pub ledger: u32,
-    pub bst_price: i128,
-    pub amount_bought: i128,
-    pub xlm_spent: i128,
-    pub trigger_reason: Symbol,
-}
-
-#[contracttype]
-#[derive(Clone)]
-pub struct BuybackAnalytics {
-    pub total_buybacks: u32,
-    pub total_bst_bought: i128,
-    pub total_xlm_spent: i128,
-    pub average_price: i128,
-    pub last_buyback_timestamp: u64,
-}
-
-// =============================================================================
-// Events
-// =============================================================================
-
-const BUYBACK_EXECUTED: Symbol = symbol_short!("buyback");
-const CONFIG_UPDATED: Symbol = symbol_short!("config_up");
+use brain_storm_shared::{access, oracle, validation};
 
 // =============================================================================
 // Contract
@@ -258,7 +198,7 @@ impl BuybackContract {
 
     pub fn add_to_reserve(env: Env, from: Address, amount: i128) {
         from.require_auth();
-        assert!(amount > 0, "Amount must be positive");
+        validation::require_positive_amount(amount);
 
         let mut reserve_balance: i128 = env
             .storage()
@@ -381,19 +321,13 @@ impl BuybackContract {
     }
 
     fn get_bst_price(env: &Env) -> i128 {
-        let oracle_contract: Address = env
-            .storage()
-            .instance()
-            .get(&DataKey::OracleContract)
-            .unwrap();
         // Simulate an oracle price sample and enforce staleness before use.
-        let price = oracle_mod::oracle::Price {
+        let price = oracle::Price {
             value: 2000,
             timestamp: env.ledger().timestamp(),
             source: soroban_sdk::String::from_str(env, "feed"),
         };
-        oracle_mod::oracle::validate_oracle_price(&price, env.ledger().timestamp(), 100)
-            .unwrap_or(2000)
+        oracle::validate_oracle_price(&price, env.ledger().timestamp(), 100).unwrap_or(2000)
     }
 
     fn execute_buyback_via_dex(env: Env, xlm_amount: i128, bst_price: i128, trigger_reason: Symbol) {

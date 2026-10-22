@@ -63,7 +63,7 @@ pub fn calculate_bps(amount: i128, bps: i128) -> Result<i128, SharedError> {
     if amount < 0 {
         return Err(SharedError::InvalidAmount);
     }
-    if bps < 0 || bps > BASIS_POINTS_DENOMINATOR {
+    if !( 0..=BASIS_POINTS_DENOMINATOR).contains(&bps) {
         return Err(SharedError::InvalidInput);
     }
     if bps == 0 {
@@ -81,7 +81,7 @@ pub fn calculate_bps(amount: i128, bps: i128) -> Result<i128, SharedError> {
 
 /// Check if a value is within bounds
 pub fn is_within_bounds(value: i128, min: i128, max: i128) -> bool {
-    value >= min && value <= max
+    (min..=max).contains(&value)
 }
 
 /// Clamp a value between min and max

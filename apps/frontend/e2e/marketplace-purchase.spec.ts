@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { mockWallet, TEST_WALLET } from './fixtures/wallet-mock';
+import { CoursesPage } from './page-objects';
 
 /**
  * Issue #845 — Marketplace Purchase Flow E2E Tests
@@ -138,30 +139,26 @@ test.describe('Marketplace Purchase Flow', () => {
 
   // ── 1. Happy Path ────────────────────────────────────────────────────────────
   test('happy path: browse → preview → purchase → success confirmation', async ({ page }) => {
+    const courses = new CoursesPage(page);
+
     // Step 1 — Visit the course catalogue / marketplace
-    await page.goto('/courses');
-    await expect(page.getByRole('heading', { name: /courses|browse|marketplace/i })).toBeVisible({
-      timeout: 10_000,
-    });
+    await courses.goto();
+    await expect(courses.catalogueHeading).toBeVisible({ timeout: 10_000 });
 
     // Step 2 — At least one course card is visible
-    const courseCards = page.locator('[data-testid="course-card"], .course-card, article').first();
-    await expect(courseCards).toBeVisible({ timeout: 8_000 });
+    await expect(courses.courseCardsLoose.first()).toBeVisible({ timeout: 8_000 });
 
     // Step 3 — Open course preview / detail modal
-    const previewBtn = page
-      .getByRole('button', { name: /preview|details|view course/i })
-      .or(page.getByRole('link', { name: /introduction to stellar/i }))
+    const previewBtn = courses
+      .previewButton()
+      .or(courses.courseLink(/introduction to stellar/i))
       .first();
     await expect(previewBtn).toBeVisible({ timeout: 5_000 });
     await previewBtn.click();
 
     // Step 4 — Enroll / purchase button visible in modal or detail page
-    const purchaseBtn = page
-      .getByRole('button', { name: /enroll|purchase|buy|get course/i })
-      .first();
-    await expect(purchaseBtn).toBeVisible({ timeout: 8_000 });
-    await purchaseBtn.click();
+    await expect(courses.purchaseButton).toBeVisible({ timeout: 8_000 });
+    await courses.purchaseButton.click();
 
     // Step 5 — Wallet / payment confirmation dialog
     const confirmBtn = page.getByRole('button', { name: /confirm|pay|approve|proceed/i }).first();
@@ -209,14 +206,11 @@ test.describe('Marketplace Purchase Flow', () => {
       })
     );
 
-    await page.goto('/courses');
-    await expect(page.getByRole('heading', { name: /courses|browse|marketplace/i })).toBeVisible({
-      timeout: 10_000,
-    });
+    const courses = new CoursesPage(page);
+    await courses.goto();
+    await expect(courses.catalogueHeading).toBeVisible({ timeout: 10_000 });
 
-    const purchaseBtn = page
-      .getByRole('button', { name: /enroll|purchase|buy|get course/i })
-      .first();
+    const purchaseBtn = courses.purchaseButton;
 
     // If the button is visible, click it and expect the error
     if (await purchaseBtn.isVisible({ timeout: 5_000 }).catch(() => false)) {
@@ -277,14 +271,11 @@ test.describe('Marketplace Purchase Flow', () => {
       })
     );
 
-    await page.goto('/courses');
-    await expect(page.getByRole('heading', { name: /courses|browse|marketplace/i })).toBeVisible({
-      timeout: 10_000,
-    });
+    const courses = new CoursesPage(page);
+    await courses.goto();
+    await expect(courses.catalogueHeading).toBeVisible({ timeout: 10_000 });
 
-    const purchaseBtn = page
-      .getByRole('button', { name: /enroll|purchase|buy|get course/i })
-      .first();
+    const purchaseBtn = courses.purchaseButton;
 
     if (await purchaseBtn.isVisible({ timeout: 5_000 }).catch(() => false)) {
       await purchaseBtn.click();
@@ -321,14 +312,11 @@ test.describe('Marketplace Purchase Flow', () => {
       })
     );
 
-    await page.goto('/courses');
-    await expect(page.getByRole('heading', { name: /courses|browse|marketplace/i })).toBeVisible({
-      timeout: 10_000,
-    });
+    const courses = new CoursesPage(page);
+    await courses.goto();
+    await expect(courses.catalogueHeading).toBeVisible({ timeout: 10_000 });
 
-    const purchaseBtn = page
-      .getByRole('button', { name: /enroll|purchase|buy|get course/i })
-      .first();
+    const purchaseBtn = courses.purchaseButton;
 
     if (await purchaseBtn.isVisible({ timeout: 5_000 }).catch(() => false)) {
       await purchaseBtn.click();
@@ -359,11 +347,12 @@ test.describe('Marketplace Purchase Flow', () => {
       delete (window as any).freighter;
     });
 
-    await page.goto('/courses');
+    const courses = new CoursesPage(page);
+    await courses.goto();
 
     // Attempt to trigger wallet connection through the purchase flow
-    const purchaseBtn = page
-      .getByRole('button', { name: /enroll|purchase|buy|get course|connect wallet/i })
+    const purchaseBtn = courses.purchaseButton
+      .or(page.getByRole('button', { name: /connect wallet/i }))
       .first();
 
     if (await purchaseBtn.isVisible({ timeout: 5_000 }).catch(() => false)) {
@@ -378,14 +367,13 @@ test.describe('Marketplace Purchase Flow', () => {
 
   // ── 6. Cart / Modal State Persistence ────────────────────────────────────────
   test('persists cart item when modal is closed and reopened', async ({ page }) => {
-    await page.goto('/courses');
-    await expect(page.getByRole('heading', { name: /courses|browse|marketplace/i })).toBeVisible({
-      timeout: 10_000,
-    });
+    const courses = new CoursesPage(page);
+    await courses.goto();
+    await expect(courses.catalogueHeading).toBeVisible({ timeout: 10_000 });
 
-    const previewBtn = page
-      .getByRole('button', { name: /preview|details|view course/i })
-      .or(page.getByRole('link', { name: /introduction to stellar/i }))
+    const previewBtn = courses
+      .previewButton()
+      .or(courses.courseLink(/introduction to stellar/i))
       .first();
 
     if (await previewBtn.isVisible({ timeout: 5_000 }).catch(() => false)) {

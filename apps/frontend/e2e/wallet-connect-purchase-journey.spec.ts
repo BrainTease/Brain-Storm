@@ -20,6 +20,7 @@
 
 import { test, expect, type Page } from '@playwright/test';
 import { mockWallet, TEST_WALLET } from './fixtures/wallet-mock';
+import { CoursesPage, EnrollmentPage } from './page-objects';
 
 // ─── Shared fixture data ──────────────────────────────────────────────────────
 
@@ -209,36 +210,31 @@ test.describe('Wallet-connect → browse → purchase journey (#1020)', () => {
     ).toBeVisible({ timeout: 8_000 });
 
     // ── Step 2: Navigate to marketplace / course catalogue ─────────────────
-    await page.goto('/courses');
-    await expect(
-      page.getByRole('heading', { name: /courses|browse|marketplace|catalogue/i }),
-    ).toBeVisible({ timeout: 10_000 });
+    const courses = new CoursesPage(page);
+    await courses.goto();
+    await expect(courses.catalogueHeading).toBeVisible({ timeout: 10_000 });
 
     // ── Step 3: At least one course card is rendered ────────────────────────
-    const firstCard = page
-      .locator('[data-testid="course-card"], .course-card, article')
+    const firstCard = courses.courseCardsLoose
       .or(page.getByText(/introduction to stellar/i))
       .first();
     await expect(firstCard).toBeVisible({ timeout: 8_000 });
 
     // ── Step 4: Open course detail page / modal ─────────────────────────────
-    const detailTrigger = page
-      .getByRole('link', { name: /introduction to stellar/i })
-      .or(page.getByRole('button', { name: /view|details|preview/i }).first());
-    
+    const detailTrigger = courses
+      .courseLink(/introduction to stellar/i)
+      .or(courses.previewButton(/view|details|preview/i).first());
+
     if (await detailTrigger.isVisible({ timeout: 3_000 }).catch(() => false)) {
       await detailTrigger.click();
     } else {
       // Navigate directly to the course detail page
-      await page.goto('/courses/course-stellar-intro');
+      await new EnrollmentPage(page).goto('course-stellar-intro');
     }
 
     // ── Step 5: Trigger purchase / enroll flow ──────────────────────────────
-    const purchaseBtn = page
-      .getByRole('button', { name: /enroll|purchase|buy now|get course|start course/i })
-      .first();
-    await expect(purchaseBtn).toBeVisible({ timeout: 10_000 });
-    await purchaseBtn.click();
+    await expect(courses.purchaseButton).toBeVisible({ timeout: 10_000 });
+    await courses.purchaseButton.click();
 
     // ── Step 6: Wallet payment confirmation ─────────────────────────────────
     // The app may show a modal, a stepper, or navigate to a checkout page.
@@ -302,14 +298,11 @@ test.describe('Wallet-connect → browse → purchase journey (#1020)', () => {
       }),
     );
 
-    await page.goto('/courses');
-    await expect(
-      page.getByRole('heading', { name: /courses|browse|marketplace/i }),
-    ).toBeVisible({ timeout: 10_000 });
+    const courses = new CoursesPage(page);
+    await courses.goto();
+    await expect(courses.catalogueHeading).toBeVisible({ timeout: 10_000 });
 
-    const purchaseBtn = page
-      .getByRole('button', { name: /enroll|purchase|buy now|get course/i })
-      .first();
+    const purchaseBtn = courses.purchaseButton;
 
     if (await purchaseBtn.isVisible({ timeout: 5_000 }).catch(() => false)) {
       await purchaseBtn.click();
@@ -352,14 +345,11 @@ test.describe('Wallet-connect → browse → purchase journey (#1020)', () => {
       };
     }, { pk: TEST_WALLET.publicKey });
 
-    await page.goto('/courses');
-    await expect(
-      page.getByRole('heading', { name: /courses|browse|marketplace/i }),
-    ).toBeVisible({ timeout: 10_000 });
+    const courses = new CoursesPage(page);
+    await courses.goto();
+    await expect(courses.catalogueHeading).toBeVisible({ timeout: 10_000 });
 
-    const purchaseBtn = page
-      .getByRole('button', { name: /enroll|purchase|buy now|get course/i })
-      .first();
+    const purchaseBtn = courses.purchaseButton;
 
     if (await purchaseBtn.isVisible({ timeout: 5_000 }).catch(() => false)) {
       await purchaseBtn.click();
@@ -392,14 +382,11 @@ test.describe('Wallet-connect → browse → purchase journey (#1020)', () => {
       }),
     );
 
-    await page.goto('/courses');
-    await expect(
-      page.getByRole('heading', { name: /courses|browse|marketplace/i }),
-    ).toBeVisible({ timeout: 10_000 });
+    const courses = new CoursesPage(page);
+    await courses.goto();
+    await expect(courses.catalogueHeading).toBeVisible({ timeout: 10_000 });
 
-    const purchaseBtn = page
-      .getByRole('button', { name: /enroll|purchase|buy now|get course/i })
-      .first();
+    const purchaseBtn = courses.purchaseButton;
 
     if (await purchaseBtn.isVisible({ timeout: 5_000 }).catch(() => false)) {
       await purchaseBtn.click();

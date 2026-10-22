@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { useAuthStore } from '@/store/auth.store';
+
+import { useAuth } from '@/hooks/useAuth';
 
 export type NotificationType =
   | 'enrollment'
@@ -89,7 +90,7 @@ function savePreferences(prefs: NotificationPreferences): void {
 }
 
 export function useNotifications() {
-  const token = useAuthStore((s) => s.token);
+  const { token } = useAuth();
   const socketRef = useRef<Socket | null>(null);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [preferences, setPreferencesState] = useState<NotificationPreferences>(loadPreferences);

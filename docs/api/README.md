@@ -44,7 +44,7 @@ cp apps/backend/openapi.json docs/api/dist/openapi.json
 cp docs/api/swagger-ui.html docs/api/dist/index.html
 ```
 
-This requires the backend to be able to bootstrap (a reachable PostgreSQL instance per your `.env` — see [docs/development-setup.md](../development-setup.md)), since `main.ts` boots the full Nest application before serializing its route/DTO metadata to `openapi.json`. Open `docs/api/dist/index.html` in a browser to view it via Swagger UI, or run the backend normally and visit `http://localhost:3000/api/docs`.
+This requires the backend to be able to bootstrap (a reachable PostgreSQL instance per your `.env` — see [docs/contributing/setup.md](../contributing/setup.md)), since `main.ts` boots the full Nest application before serializing its route/DTO metadata to `openapi.json`. Open `docs/api/dist/index.html` in a browser to view it via Swagger UI, or run the backend normally and visit `http://localhost:3000/api/docs`.
 
 See also [docs/api/DEPLOYMENT.md](./DEPLOYMENT.md) for publishing the generated spec to GitHub Pages.
 
@@ -741,4 +741,4 @@ Grouped by top-level domain (the first path segment under `apps/backend/src/`). 
 
 - [docs/api/DEPLOYMENT.md](./DEPLOYMENT.md) — publishing the generated OpenAPI spec to GitHub Pages
 - [docs/api/swagger-ui.html](./swagger-ui.html) — static Swagger UI shell used for the published spec
-- [docs/development-setup.md](../development-setup.md) — running the backend locally so `/api/docs` is reachable
+- [docs/contributing/setup.md](../contributing/setup.md) — running the backend locally so `/api/docs` is reachable

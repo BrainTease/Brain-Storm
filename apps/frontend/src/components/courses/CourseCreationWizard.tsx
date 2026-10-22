@@ -103,6 +103,7 @@ function SortableModule({
         <button
           type="button"
           onClick={() => onRemove(mod.id)}
+          aria-label="Remove module"
           className="text-red-400 hover:text-red-600 text-sm px-2"
         >
           ✕
@@ -125,6 +126,7 @@ function SortableModule({
               <button
                 type="button"
                 onClick={() => onRemoveLesson(mod.id, lesson.id)}
+                aria-label="Remove lesson"
                 className="text-red-400 hover:text-red-600 text-xs px-1"
               >
                 ✕

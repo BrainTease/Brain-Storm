@@ -44,6 +44,7 @@ export const validationSchema = Joi.object({
   DB_IDLE_TIMEOUT: Joi.number().integer().min(0).default(10000),
 
   // ── JWT ────────────────────────────────────────────────────────────────────
+  // No literal default: secrets must be supplied via the environment only.
   JWT_SECRET: Joi.string().min(16).required(),
 
   // ── Redis ──────────────────────────────────────────────────────────────────
@@ -51,6 +52,7 @@ export const validationSchema = Joi.object({
 
   // ── Stellar ────────────────────────────────────────────────────────────────
   STELLAR_NETWORK: Joi.string().valid('testnet', 'mainnet').default('testnet'),
+  // No literal default: the signing key must come from the environment only.
   STELLAR_SECRET_KEY: Joi.string().required(),
   STELLAR_HORIZON_URL: Joi.string().uri().default('https://horizon-testnet.stellar.org'),
   SOROBAN_RPC_URL: Joi.string().uri().default('https://soroban-testnet.stellar.org'),
@@ -65,6 +67,7 @@ export const validationSchema = Joi.object({
   EMAIL_PORT: Joi.number().default(587),
   EMAIL_SECURE: Joi.boolean().default(false),
   EMAIL_USER: Joi.string().required(),
+  // No literal default: mail credentials must come from the environment only.
   EMAIL_PASS: Joi.string().required(),
   EMAIL_FROM: Joi.string().default('"Brain Storm" <no-reply@brainstorm.app>'),
   EMAIL_ENABLED: Joi.boolean().default(false),
@@ -78,8 +81,9 @@ export const validationSchema = Joi.object({
   CORS_MAX_AGE: Joi.number().integer().min(0).default(86400),
 
   // ── Google OAuth (optional) ────────────────────────────────────────────────
-  GOOGLE_CLIENT_ID: Joi.string().optional(),
-  GOOGLE_CLIENT_SECRET: Joi.string().optional(),
+  // Optional secrets: no literal defaults, empty values are allowed.
+  GOOGLE_CLIENT_ID: Joi.string().allow('').optional(),
+  GOOGLE_CLIENT_SECRET: Joi.string().allow('').optional(),
   GOOGLE_CALLBACK_URL: Joi.string().uri().default('http://localhost:3000/auth/google/callback'),
 
   // ── Throttle ───────────────────────────────────────────────────────────────
@@ -87,27 +91,32 @@ export const validationSchema = Joi.object({
   THROTTLE_LIMIT: Joi.number().default(100),
 
   // ── KYC ────────────────────────────────────────────────────────────────────
-  KYC_PROVIDER_API_KEY: Joi.string().allow('').default(''),
+  // Secret-shaped: optional, no literal default.
+  KYC_PROVIDER_API_KEY: Joi.string().allow('').optional(),
 
   // ── AWS ────────────────────────────────────────────────────────────────────
   AWS_REGION: Joi.string().default('us-east-1'),
-  AWS_ACCESS_KEY_ID: Joi.string().allow('').default(''),
-  AWS_SECRET_ACCESS_KEY: Joi.string().allow('').default(''),
+  // Secret-shaped: optional, no literal default.
+  AWS_ACCESS_KEY_ID: Joi.string().allow('').optional(),
+  AWS_SECRET_ACCESS_KEY: Joi.string().allow('').optional(),
 
   // ── Moderation ─────────────────────────────────────────────────────────────
   MODERATION_TOXICITY_THRESHOLD: Joi.number().min(0).max(1).default(0.7),
 
   // ── Elasticsearch ──────────────────────────────────────────────────────────
   ELASTICSEARCH_NODE: Joi.string().uri().default('http://localhost:9200'),
-  ELASTICSEARCH_API_KEY: Joi.string().allow('').default(''),
+  // Secret-shaped: optional, no literal default.
+  ELASTICSEARCH_API_KEY: Joi.string().allow('').optional(),
 
   // ── Stripe ─────────────────────────────────────────────────────────────────
-  STRIPE_SECRET_KEY: Joi.string().allow('').default(''),
-  STRIPE_WEBHOOK_SECRET: Joi.string().allow('').default(''),
-  STRIPE_PUBLISHABLE_KEY: Joi.string().allow('').default(''),
+  // Secret-shaped: optional, no literal defaults.
+  STRIPE_SECRET_KEY: Joi.string().allow('').optional(),
+  STRIPE_WEBHOOK_SECRET: Joi.string().allow('').optional(),
+  STRIPE_PUBLISHABLE_KEY: Joi.string().allow('').optional(),
 
   // ── Sentry / Observability ─────────────────────────────────────────────────
   // SENTRY_DSN is optional so the app can start without it in local dev.
+  // No literal default: the DSN may embed a public key and must not be committed.
   SENTRY_DSN: Joi.string().uri().allow('').optional(),
   // GIT_COMMIT_SHA is injected by CI/CD pipelines; falls back to 'unknown'.
   GIT_COMMIT_SHA: Joi.string().allow('').optional(),
@@ -122,7 +131,8 @@ export const validationSchema = Joi.object({
   RATE_LIMIT_INSTRUCTOR: Joi.number().default(5000),
   RATE_LIMIT_STUDENT: Joi.number().default(1000),
   RATE_LIMIT_GUEST: Joi.number().default(100),
-  RATE_LIMIT_ALLOWLIST: Joi.string().allow('').default(''),
+  // Optional, no literal default (may contain internal identifiers).
+  RATE_LIMIT_ALLOWLIST: Joi.string().allow('').optional(),
 
   // ── Audit ──────────────────────────────────────────────────────────────────
   AUDIT_RETENTION_DAYS: Joi.number().integer().min(1).default(365),

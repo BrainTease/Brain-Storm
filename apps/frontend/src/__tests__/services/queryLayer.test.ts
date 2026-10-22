@@ -1,5 +1,4 @@
-import { renderHook, act, waitFor } from '@testing-library/react';
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
 /**
  * Query Layer Tests - Testing data fetching abstraction with caching and retry logic
@@ -46,6 +45,9 @@ function createQueryCache() {
   };
 }
 
+// Shared cache used across calls to the mocked query layer
+const queryCache = createQueryCache();
+
 // Mock async query function
 async function mockQueryFn<T>(
   queryKey: string,
@@ -53,7 +55,7 @@ async function mockQueryFn<T>(
   options: QueryOptions = {}
 ): Promise<QueryResult<T>> {
   const { retries = 3, cacheTime = 5000, onSuccess, onError } = options;
-  const cache = createQueryCache();
+  const cache = queryCache;
   let data: T | null = null;
   let error: Error | null = null;
   let isLoading = true;
@@ -106,6 +108,11 @@ async function mockQueryFn<T>(
 describe('Query Layer - Data Fetching Abstraction', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    queryCache.clear();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   describe('Caching', () => {
@@ -113,7 +120,7 @@ describe('Query Layer - Data Fetching Abstraction', () => {
       const mockFn = vi.fn().mockResolvedValueOnce({ id: 1, name: 'Test' });
 
       const result1 = await mockQueryFn('test-key', mockFn, { cacheTime: 5000 });
-      const result2 = await mockQueryFn('test-key', mockFn, { cacheTime: 5000 });
+      await mockQueryFn('test-key', mockFn, { cacheTime: 5000 });
 
       expect(mockFn).toHaveBeenCalledTimes(1);
       expect(result1.data).toEqual({ id: 1, name: 'Test' });
@@ -129,7 +136,7 @@ describe('Query Layer - Data Fetching Abstraction', () => {
       // Advance time past cache TTL
       vi.advanceTimersByTime(1500);
 
-      const result2 = await mockQueryFn('test-key', mockFn, { cacheTime: 1000 });
+      await mockQueryFn('test-key', mockFn, { cacheTime: 1000 });
       // Should call again since cache expired
       expect(mockFn).toHaveBeenCalledTimes(2);
 
@@ -144,7 +151,7 @@ describe('Query Layer - Data Fetching Abstraction', () => {
 
       // Refetch should clear cache and call again
       result1.refetch();
-      const result2 = await mockQueryFn('test-key', mockFn);
+      await mockQueryFn('test-key', mockFn);
 
       expect(mockFn).toHaveBeenCalledTimes(2);
     });
@@ -152,12 +159,15 @@ describe('Query Layer - Data Fetching Abstraction', () => {
 
   describe('Retry Logic', () => {
     it('should retry failed queries', async () => {
+      vi.useFakeTimers();
       const mockFn = vi
         .fn()
         .mockRejectedValueOnce(new Error('Network error'))
         .mockResolvedValueOnce({ id: 1 });
 
-      const result = await mockQueryFn('test-key', mockFn, { retries: 3 });
+      const promise = mockQueryFn('test-key', mockFn, { retries: 3 });
+      await vi.runAllTimersAsync();
+      const result = await promise;
 
       expect(mockFn).toHaveBeenCalledTimes(2);
       expect(result.data).toEqual({ id: 1 });
@@ -165,9 +175,12 @@ describe('Query Layer - Data Fetching Abstraction', () => {
     });
 
     it('should fail after max retries exceeded', async () => {
+      vi.useFakeTimers();
       const mockFn = vi.fn().mockRejectedValue(new Error('Network error'));
 
-      const result = await mockQueryFn('test-key', mockFn, { retries: 2 });
+      const promise = mockQueryFn('test-key', mockFn, { retries: 2 });
+      await vi.runAllTimersAsync();
+      const result = await promise;
 
       expect(mockFn).toHaveBeenCalledTimes(2);
       expect(result.error).toBeDefined();
@@ -194,6 +207,7 @@ describe('Query Layer - Data Fetching Abstraction', () => {
 
   describe('State Management', () => {
     it('should set loading state during fetch', async () => {
+      vi.useFakeTimers();
       const mockFn = vi
         .fn()
         .mockImplementation(
@@ -201,6 +215,7 @@ describe('Query Layer - Data Fetching Abstraction', () => {
         );
 
       const promise = mockQueryFn('test-key', mockFn);
+      await vi.runAllTimersAsync();
       const result = await promise;
 
       expect(result.isLoading).toBe(false);
@@ -222,7 +237,7 @@ describe('Query Layer - Data Fetching Abstraction', () => {
       const mockSuccess = vi.fn();
       const mockFn = vi.fn().mockResolvedValue({ id: 1, name: 'Test' });
 
-      const result = await mockQueryFn('test-key', mockFn, { onSuccess: mockSuccess });
+      await mockQueryFn('test-key', mockFn, { onSuccess: mockSuccess });
 
       expect(mockSuccess).toHaveBeenCalledWith({ id: 1, name: 'Test' });
     });
@@ -299,7 +314,7 @@ describe('Query Layer - Data Fetching Abstraction', () => {
 
       vi.advanceTimersByTime(1500);
 
-      const result2 = await mockQueryFn('test-key', mockFn, { cacheTime: 1000 });
+      await mockQueryFn('test-key', mockFn, { cacheTime: 1000 });
       // After TTL expires, data should be stale
 
       vi.useRealTimers();

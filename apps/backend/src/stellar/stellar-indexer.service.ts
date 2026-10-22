@@ -1,3 +1,4 @@
+import { env } from '../config/env';
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit, Inject } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
@@ -106,7 +107,7 @@ export class StellarIndexerService implements OnModuleInit, OnModuleDestroy {
       const lastLedger = (await this.cacheManager.get<number>(LAST_LEDGER_KEY)) ?? 0;
 
       // Cold-start: skip to latest ledger unless INDEXER_CATCHUP is set
-      const catchup = process.env.INDEXER_CATCHUP === 'true';
+      const catchup = env.indexerCatchup;
       const startLedger = lastLedger || (catchup ? undefined : await this.fetchLatestLedger());
 
       const contractIds = [this.analyticsContractId, this.tokenContractId].filter(Boolean);

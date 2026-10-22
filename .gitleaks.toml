@@ -1,21 +1,115 @@
-[allowlist]
-  description = "Global gitleaks allowlist"
-  paths = [
-    '''\.github/workflows/.*''',
-    '''docs/.*''',
-    '''packages/mobile/src/__mocks__/.*''',
-    '''packages/mobile/src/__tests__/.*''',
-    '''apps/frontend/src/__tests__/.*''',
-    '''contracts/.*/tests/.*''',
-  ]
+# Gitleaks configuration for the repository.
+# Used by CI and local scans to detect committed secrets.
+# Docs: https://github.com/gitleaks/gitleaks
+
+title = "gitleaks config"
+
+[extend]
+# Use the default gitleaks rules as a baseline, then add project-specific rules below.
+useDefault = true
+
+# ---------------------------------------------------------------------------
+# Project-specific rules
+# ---------------------------------------------------------------------------
 
 [[rules]]
-  id = "test-secret-placeholder"
-  description = "Allow test/placeholder secrets in test files"
-  regex = '''(?i)(test|mock|fake|placeholder|dummy)(secret|key|token|password)'''
-  paths = [
-    '''\.test\..*''',
-    '''\.spec\..*''',
-    '''__tests__/.*''',
-    '''\.github/workflows/.*''',
-  ]
+id = "aws-access-key-id"
+description = "AWS Access Key ID"
+regex = '''\b(A3T[A-Z0-9]|AKIA|AGPA|AIDA|AROA|AIPA|ANPA|ANVA|ASIA)[A-Z0-9]{16}\b'''
+keywords = ["AKIA", "AGPA", "AIDA", "AROA", "AIPA", "ANPA", "ANVA", "ASIA", "A3T"]
+
+[[rules]]
+id = "aws-secret-access-key"
+description = "AWS Secret Access Key"
+regex = '''(?i)aws(.{0,20})?(secret|private)?(.{0,20})?(key|token|secret)['"]?\s*[:=]\s*['"]?([A-Za-z0-9/+=]{40})['"]?'''
+secretGroup = 4
+keywords = ["aws", "secret", "access"]
+
+[[rules]]
+id = "jwt-secret"
+description = "JWT signing secret"
+regex = '''(?i)(jwt|jws|token)[_-]?(secret|key|signing[_-]?key)['"]?\s*[:=]\s*['"]?([A-Za-z0-9_\-+/=]{16,})['"]?'''
+secretGroup = 2
+keywords = ["jwt", "jws", "signing"]
+
+[[rules]]
+id = "stellar-secret-key"
+description = "Stellar secret key (seed)"
+# Stellar secret seeds start with 'S' and are 56 base32 characters.
+regex = '''\bS[A-Z2-7]{55}\b'''
+keywords = ["S"]
+
+[[rules]]
+id = "stripe-secret-key"
+description = "Stripe secret / restricted API key"
+regex = '''\b(sk|rk)_(live|test)_[0-9a-zA-Z]{16,}\b'''
+keywords = ["sk_live", "sk_test", "rk_live", "rk_test"]
+
+[[rules]]
+id = "stripe-publishable-key"
+description = "Stripe publishable key (informational; usually safe but flagged for review)"
+regex = '''\bpk_(live|test)_[0-9a-zA-Z]{16,}\b'''
+keywords = ["pk_live", "pk_test"]
+
+[[rules]]
+id = "generic-api-key"
+description = "Generic API key / secret assignment"
+regex = '''(?i)(api[_-]?key|apikey|secret[_-]?key|access[_-]?token|auth[_-]?token|client[_-]?secret|private[_-]?key)['"]?\s*[:=]\s*['"]?([A-Za-z0-9_\-+/=]{16,})['"]?'''
+secretGroup = 2
+keywords = [
+  "api_key", "apikey", "api-key",
+  "secret_key", "secret-key",
+  "access_token", "access-token",
+  "auth_token", "auth-token",
+  "client_secret", "client-secret",
+  "private_key", "private-key",
+]
+
+# ---------------------------------------------------------------------------
+# Allowlists
+# ---------------------------------------------------------------------------
+
+[allowlist]
+description = "Global allowlist for test fixtures, placeholders, and known-safe values"
+# Paths that commonly contain non-production fixtures or documentation examples.
+paths = [
+  '''(^|/)node_modules/''',
+  '''(^|/)vendor/''',
+  '''(^|/)dist/''',
+  '''(^|/)build/''',
+  '''(^|/)\.git/''',
+  '''(^|/)testdata/''',
+  '''(^|/)fixtures?/''',
+  '''(^|/)__fixtures__/''',
+  '''(^|/)__mocks__/''',
+  '''(^|/)examples?/''',
+  '''(^|/)docs?/''',
+  '''\.(md|mdx|txt)$''',
+  '''\.(lock|sum)$''',
+  '''(^|/)package-lock\.json$''',
+  '''(^|/)yarn\.lock$''',
+  '''(^|/)pnpm-lock\.yaml$''',
+  '''(^|/)go\.sum$''',
+  '''(^|/)Cargo\.lock$''',
+  '''(^|/)\.env\.example$''',
+  '''(^|/)\.env\.sample$''',
+  '''(^|/)\.env\.template$''',
+]
+
+# Regexes matching placeholder / example values that should never be flagged.
+regexes = [
+  '''(?i)(example|sample|placeholder|dummy|fake|test|changeme|change[_-]?me|your[_-]?(key|secret|token)|xxx+|redacted|todo|fixme)''',
+  '''(?i)sk_(test|live)_x{8,}''',
+  '''(?i)pk_(test|live)_x{8,}''',
+  '''(?i)AKIA[0]{16}''',
+  '''(?i)AKIAIOSFODNN7EXAMPLE''',
+  '''(?i)wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY''',
+  '''\bS[A-Z2-7]{0,54}EXAMPLE[A-Z2-7]*\b''',
+  '''(?i)eyJ[A-Za-z0-9_-]*\.eyJ[A-Za-z0-9_-]*\.[A-Za-z0-9_-]*''',
+  '''\$\{[A-Z0-9_]+\}''',
+  '''\{\{[^}]+\}\}''',
+  '''<[A-Z0-9_]+>''',
+]
+
+# Specific known-safe commits or fingerprints can be added here if needed.
+commits = []

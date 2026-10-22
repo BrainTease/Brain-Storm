@@ -21,7 +21,8 @@
 
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Horizon, SorobanRpc, Networks } from '@stellar/stellar-sdk';
+import type { Horizon, SorobanRpc } from '@stellar/stellar-sdk';
+import { StellarSdkService } from './stellar-sdk.service';
 
 @Injectable()
 export class StellarClientFactory {
@@ -32,9 +33,12 @@ export class StellarClientFactory {
   private networkPassphrase: string;
   private isTestnet: boolean;
 
-  constructor(private configService: ConfigService) {
+  constructor(
+    private configService: ConfigService,
+    private sdk: StellarSdkService = new StellarSdkService(),
+  ) {
     this.isTestnet = this.configService.get<string>('stellar.network') !== 'mainnet';
-    this.networkPassphrase = this.isTestnet ? Networks.TESTNET : Networks.PUBLIC;
+    this.networkPassphrase = this.isTestnet ? this.sdk.networks.TESTNET : this.sdk.networks.PUBLIC;
     this.logger.log(`Stellar Client Factory initialized for ${this.isTestnet ? 'testnet' : 'mainnet'}`);
   }
 
@@ -51,7 +55,7 @@ export class StellarClientFactory {
       ? 'https://horizon-testnet.stellar.org'
       : 'https://horizon.stellar.org';
 
-    this.horizonClient = new Horizon.Server(horizonUrl);
+    this.horizonClient = this.sdk.createHorizonServer(horizonUrl);
     this.logger.log(`Horizon client created: ${horizonUrl}`);
 
     return this.horizonClient;
@@ -71,7 +75,7 @@ export class StellarClientFactory {
       throw new Error('stellar.sorobanRpcUrl not configured');
     }
 
-    this.sorobanClient = new SorobanRpc.Server(rpcUrl);
+    this.sorobanClient = this.sdk.createSorobanServer(rpcUrl);
     this.logger.log(`Soroban RPC client created: ${rpcUrl}`);
 
     return this.sorobanClient;

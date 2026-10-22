@@ -1,9 +1,12 @@
+import type { NotificationChannel } from './notification-channel.interface';
 import { Injectable, Logger } from '@nestjs/common';
 import { NotificationType } from './notification.entity';
 import { NotificationsGateway } from './notifications.gateway';
 
 @Injectable()
-export class PushNotifierService {
+export class PushNotifierService implements NotificationChannel {
+  readonly channel = 'push' as const;
+
   private readonly logger = new Logger(PushNotifierService.name);
 
   constructor(private readonly gateway: NotificationsGateway) {}

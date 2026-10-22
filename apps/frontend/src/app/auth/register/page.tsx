@@ -1,14 +1,16 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import api from '@/lib/api';
-import { useAuthStore, type AuthUser } from '@/store/auth.store';
-import { Input } from '@/components/ui/Input';
+import { useRouter } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+
 import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { useAuth } from '@/hooks/useAuth';
+import api from '@/lib/api';
+import type { AuthUser } from '@/store/auth.store';
 
 const schema = z
   .object({
@@ -25,7 +27,7 @@ type FormData = z.infer<typeof schema>;
 
 export default function RegisterPage() {
   const router = useRouter();
-  const login = useAuthStore((s) => s.login);
+  const { login } = useAuth();
 
   const {
     register,
@@ -38,7 +40,6 @@ export default function RegisterPage() {
       email: data.email,
       password: data.password,
     });
-    localStorage.setItem('access_token', res.data.access_token);
     login(res.data.access_token, res.data.user);
     router.push(`/auth/verify-email?email=${encodeURIComponent(data.email)}`);
   };

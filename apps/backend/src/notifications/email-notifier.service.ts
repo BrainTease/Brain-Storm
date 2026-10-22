@@ -1,3 +1,4 @@
+import type { NotificationChannel } from './notification-channel.interface';
 import { Injectable, Logger } from '@nestjs/common';
 import { NotificationType } from './notification.entity';
 import { MailService } from '../mail/mail.service';
@@ -30,7 +31,9 @@ const EMAIL_TEMPLATES: Record<
 };
 
 @Injectable()
-export class EmailNotifierService {
+export class EmailNotifierService implements NotificationChannel {
+  readonly channel = 'email' as const;
+
   private readonly logger = new Logger(EmailNotifierService.name);
 
   constructor(private readonly mailService: MailService) {}

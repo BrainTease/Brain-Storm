@@ -1,8 +1,7 @@
-import { Injectable, NestMiddleware, TooManyRequestsException, Logger } from '@nestjs/common';
-import { Request, Response, NextFunction } from 'express';
-import { Inject } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Injectable, NestMiddleware, Logger, Inject } from '@nestjs/common';
 import { Cache } from 'cache-manager';
+import { Request, Response, NextFunction } from 'express';
 
 /**
  * Rate Limiting Middleware – Issue #982
@@ -61,10 +60,17 @@ export class RateLimitMiddleware implements NestMiddleware {
       // Check if exceeded
       if (count > config.limit) {
         this.logger.warn(`Rate limit exceeded for ${key}: ${count}/${config.limit}`);
+        // #1288: same envelope as GlobalExceptionFilter ({ code, message, details, ... })
+        // so clients handle rate-limit errors like every other API error.
+        const retryAfter = Math.ceil(config.windowMs / 1000);
         return res.status(429).json({
-          statusCode: 429,
+          code: 'TOO_MANY_REQUESTS',
           message: config.message || 'Too many requests, please try again later.',
-          retryAfter: Math.ceil(config.windowMs / 1000),
+          details: { retryAfter },
+          statusCode: 429,
+          retryAfter,
+          timestamp: new Date().toISOString(),
+          path: req.originalUrl ?? req.url,
         });
       }
 
@@ -85,8 +91,8 @@ export class RateLimitMiddleware implements NestMiddleware {
    * Prioritizes account ID if available (authenticated user), falls back to IP
    */
   private getDefaultKey(req: Request, options: RateLimitOptions): string {
-    if (options.useAccountId && (req as any).user?.id) {
-      return `ratelimit:account:${(req as any).user.id}`;
+    if (options.useAccountId && (req as Request & { user?: { id: string } }).user?.id) {
+      return `ratelimit:account:${(req as Request & { user: { id: string } }).user.id}`;
     }
 
     const ip = this.getClientIp(req);

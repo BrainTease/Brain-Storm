@@ -1,11 +1,11 @@
 'use client';
 
-import React from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import React from 'react';
+
 import { ThreadDetail } from '@/components/forum/ThreadDetail';
+import { useAuth } from '@/hooks/useAuth';
 import { useForumPost } from '@/hooks/useForum';
-import { useAuthStore } from '@/store/auth.store';
 
 interface ThreadDetailPageProps {
   params: { id: string; postId: string };
@@ -15,8 +15,7 @@ interface ThreadDetailPageProps {
  * Individual thread/post detail page with full discussion
  */
 export default function ThreadDetailPage({ params }: ThreadDetailPageProps) {
-  const router = useRouter();
-  const user = useAuthStore((s) => s.user);
+  const { user } = useAuth();
   const { post, isLoading, error, mutate } = useForumPost(params.postId);
 
   if (isLoading) {

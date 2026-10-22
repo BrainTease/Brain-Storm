@@ -1,3 +1,4 @@
+import { Role } from '../common/enums/role.enum';
 import { Injectable, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { CoursesService } from './courses.service';
 import { BusinessLogicService } from '../common/services/business-logic.service';
@@ -19,7 +20,7 @@ export class CoursesBusinessService extends BusinessLogicService {
    */
   async createCourse(userId: string, userRole: string, dto: CreateCourseDto) {
     // Only admins and instructors can create courses
-    if (!['admin', 'instructor'].includes(userRole)) {
+    if (![Role.ADMIN, Role.INSTRUCTOR].includes(userRole as Role)) {
       throw new ForbiddenException('Only admins and instructors can create courses');
     }
 

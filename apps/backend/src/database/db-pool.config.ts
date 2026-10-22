@@ -1,3 +1,4 @@
+import { env } from '../config/env';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 
 export interface PoolConfig {
@@ -20,10 +21,10 @@ export interface PoolConfig {
  * defaults defined in the schema.
  */
 export const getPoolConfig = (): PoolConfig => ({
-  max: parseInt(process.env.DB_POOL_MAX || '20', 10),
-  min: parseInt(process.env.DB_POOL_MIN || '5', 10),
-  acquireTimeout: parseInt(process.env.DB_ACQUIRE_TIMEOUT || '30000', 10),
-  idleTimeout: parseInt(process.env.DB_IDLE_TIMEOUT || '10000', 10),
+  max: env.dbPoolMax,
+  min: env.dbPoolMin,
+  acquireTimeout: env.dbAcquireTimeout,
+  idleTimeout: env.dbIdleTimeout,
 });
 
 export const createDataSourceOptions = (poolConfig: PoolConfig): Partial<TypeOrmModuleOptions> => ({

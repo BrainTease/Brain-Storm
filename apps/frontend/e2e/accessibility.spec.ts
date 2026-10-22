@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { injectAxe, checkA11y } from 'axe-playwright';
+import { CoursesPage, LoginPage, RegisterPage } from './page-objects';
 
 test.describe('Accessibility Tests - WCAG 2.1 AA Compliance', () => {
   test.beforeEach(async ({ page }) => {
@@ -90,14 +91,14 @@ test.describe('Accessibility Tests - WCAG 2.1 AA Compliance', () => {
 
   test.describe('Courses Page', () => {
     test('should have no accessibility violations', async ({ page }) => {
-      await page.goto('/courses');
+      await new CoursesPage(page).goto();
       await checkA11y(page, null, {
         detailedReport: true,
       });
     });
 
     test('should have proper list structure', async ({ page }) => {
-      await page.goto('/courses');
+      await new CoursesPage(page).goto();
       const lists = await page.locator('ul, ol').all();
       expect(lists.length).toBeGreaterThan(0);
 
@@ -108,7 +109,7 @@ test.describe('Accessibility Tests - WCAG 2.1 AA Compliance', () => {
     });
 
     test('should have accessible course cards', async ({ page }) => {
-      await page.goto('/courses');
+      await new CoursesPage(page).goto();
       const cards = await page.locator('[role="article"], .course-card').all();
 
       for (const card of cards) {
@@ -203,7 +204,7 @@ test.describe('Accessibility Tests - WCAG 2.1 AA Compliance', () => {
     });
 
     test('should have proper form labels', async ({ page }) => {
-      await page.goto('/auth/login');
+      await new LoginPage(page).goto();
       const inputs = await page.locator('input').all();
 
       for (const input of inputs) {
@@ -245,7 +246,7 @@ test.describe('Accessibility Tests - WCAG 2.1 AA Compliance', () => {
 
   test.describe('Form Accessibility', () => {
     test('should have accessible form inputs', async ({ page }) => {
-      await page.goto('/auth/register');
+      await new RegisterPage(page).goto();
       const form = await page.locator('form').first();
 
       if (form) {
@@ -267,7 +268,7 @@ test.describe('Accessibility Tests - WCAG 2.1 AA Compliance', () => {
     });
 
     test('should show error messages accessibly', async ({ page }) => {
-      await page.goto('/auth/register');
+      await new RegisterPage(page).goto();
       const form = await page.locator('form').first();
 
       if (form) {

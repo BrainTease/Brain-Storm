@@ -4,7 +4,7 @@ Entry point for `docs/`. Start here, then follow the links below by topic.
 
 ## Getting Started
 
-- **[development-setup.md](./development-setup.md)** — set up `contracts/`, `apps/backend`, `apps/frontend`, and `packages/*` locally, from a clean checkout to a running stack. Covers workspace linking/build order for every `packages/*` directory.
+- **[contributing/setup.md](./contributing/setup.md)** — set up `contracts/`, `apps/backend`, `apps/frontend`, and `packages/*` locally, from a clean checkout to a running stack. Covers workspace linking/build order for every `packages/*` directory.
 - [developer-onboarding.md](./developer-onboarding.md) — broader onboarding: project structure, dev workflow, debugging tips, FAQ.
 - [contributor-onboarding.md](./contributor-onboarding.md) — contribution process and PR checklist.
 - [troubleshooting-guide.md](./troubleshooting-guide.md) — general troubleshooting beyond local setup.
@@ -60,4 +60,4 @@ Implementation summaries and PR description drafts from earlier development phas
 
 ---
 
-New to the repo? Read [development-setup.md](./development-setup.md) first, then [architecture.md](./architecture.md), then [adr/README.md](./adr/README.md) for the reasoning behind the current structure.
+New to the repo? Read [contributing/setup.md](./contributing/setup.md) first, then [architecture.md](./architecture.md), then [adr/README.md](./adr/README.md) for the reasoning behind the current structure.

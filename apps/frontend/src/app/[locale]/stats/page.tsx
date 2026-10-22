@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+
 import {
   useProtocolMetrics,
   useProtocolSummary,
@@ -9,6 +10,7 @@ import {
   type MetricPoint,
 } from '@/hooks/useProtocolMetrics';
 import { formatMonthDay } from '@/lib/date-utils';
+import { formatShortNumber } from '@/lib/format';
 
 const INTERVALS: { value: MetricInterval; label: string }[] = [
   { value: 'hour', label: 'Hourly' },
@@ -261,7 +263,7 @@ function BarChart({ series, unit }: { series: MetricPoint[]; unit?: string }) {
           return (
             <div key={point.id} className="flex flex-col items-center gap-1 w-10">
               <span className="text-[10px] tabular-nums text-gray-500 dark:text-gray-400">
-                {point.value > 0 ? formatShort(point.value) : ''}
+                {point.value > 0 ? formatShortNumber(point.value) : ''}
               </span>
               <div
                 title={`${label}: ${point.value}${unit ? ' ' + unit : ''}${point.dimension ? ' (' + point.dimension + ')' : ''}`}
@@ -307,10 +309,4 @@ function ErrorBanner({ message }: { message: string }) {
       Failed to load data: {message}
     </div>
   );
-}
-
-function formatShort(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k`;
-  return n.toFixed(n % 1 === 0 ? 0 : 2);
 }

@@ -22,10 +22,25 @@ export interface ApiSuccess<T> {
   data: T;
 }
 
+/**
+ * Coarse classification of a failed request, so callers can branch on the
+ * failure type without inspecting raw HTTP status codes.
+ */
+export type ApiErrorKind =
+  | 'unauthorized' // 401
+  | 'forbidden' // 403
+  | 'not_found' // 404
+  | 'conflict' // 409
+  | 'validation' // other 4xx
+  | 'server' // 5xx
+  | 'network' // no response received
+  | 'unknown';
+
 export interface ApiError {
   ok: false;
   error: {
     message: string;
+    kind: ApiErrorKind;
     /** HTTP status code, if the server responded */
     status?: number;
     /** Raw response body, when available */
@@ -78,6 +93,18 @@ function extractRaw(err: unknown): unknown {
   return toAxiosLike(err)?.response?.data;
 }
 
+/** Maps an HTTP status (or its absence) onto an {@link ApiErrorKind}. */
+export function classifyStatus(status: number | undefined): ApiErrorKind {
+  if (status === undefined) return 'network';
+  if (status === 401) return 'unauthorized';
+  if (status === 403) return 'forbidden';
+  if (status === 404) return 'not_found';
+  if (status === 409) return 'conflict';
+  if (status >= 500) return 'server';
+  if (status >= 400) return 'validation';
+  return 'unknown';
+}
+
 async function wrap<T>(promise: Promise<{ data: T }>): Promise<ApiResult<T>> {
   try {
     const response = await promise;
@@ -87,6 +114,7 @@ async function wrap<T>(promise: Promise<{ data: T }>): Promise<ApiResult<T>> {
       ok: false,
       error: {
         message: extractMessage(err),
+        kind: classifyStatus(extractStatus(err)),
         status: extractStatus(err),
         raw: extractRaw(err),
       },

@@ -1,0 +1,17 @@
+feat(#635): add cross-contract credential NFT linkage
+
+- Create contracts/credential_metadata/src/linkage.rs
+  - CredentialNftLink: credential_id, nft_id, nft_contract, linked_at
+  - LinkageKey enum: CredentialNft, NftCredential, NftContract
+  - issue_and_mint_nft(): cross-contract call to NFT mint_course_nft, atomic rollback on failure
+  - unlink(): remove both directions of the link
+  - Getters: get_credential_nft_link, get_nft_credential (reverse lookup), is_linked
+  - nft_contract_client stub (contractclient trait for cross-contract call)
+  - 4 unit tests covering not-linked state and unlink panic
+- Update contracts/credential_metadata/src/lib.rs
+  - Expose linkage module with pub use
+  - initialize_with_nft(): init + set NFT contract in one call
+  - issue_with_nft(): store metadata + atomically call NFT contract; failure rolls back both
+  - get_credential_link(), get_nft_credential_id(), credential_is_linked() getters
+
+Closes #635

@@ -1,11 +1,26 @@
 'use client';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
-import { StarRating } from './StarRating';
+import { Controller, useForm } from 'react-hook-form';
+import { z } from 'zod';
+
 import { Button } from '@/components/ui/Button';
 import { reviewsApi } from '@/lib/reviewsApi';
 
+import { StarRating } from './StarRating';
+
 const MAX_CHARS = 1000;
 const COUNTER_THRESHOLD = 900;
+
+export const reviewSchema = z.object({
+  rating: z.number().int().min(1, 'Please select a rating').max(5),
+  text: z
+    .string()
+    .refine((value) => value.trim().length > 0, 'Please write a review')
+    .max(MAX_CHARS, `Review must be ${MAX_CHARS} characters or fewer`),
+});
+
+type ReviewFormData = z.infer<typeof reviewSchema>;
 
 interface ReviewFormProps {
   courseId: string;
@@ -13,27 +28,31 @@ interface ReviewFormProps {
 }
 
 export function ReviewForm({ courseId, onSuccess }: ReviewFormProps) {
-  const [rating, setRating] = useState(0);
-  const [text, setText] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [apiError, setApiError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
+  const {
+    register,
+    control,
+    handleSubmit,
+    watch,
+    formState: { errors, isSubmitting },
+  } = useForm<ReviewFormData>({
+    resolver: zodResolver(reviewSchema),
+    defaultValues: { rating: 0, text: '' },
+  });
+
+  const text = watch('text') ?? '';
   const remaining = MAX_CHARS - text.length;
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!rating || !text.trim()) return;
-    setLoading(true);
-    setError(null);
+  async function onSubmit(data: ReviewFormData) {
+    setApiError(null);
     try {
-      await reviewsApi.submitReview(courseId, rating, text);
+      await reviewsApi.submitReview(courseId, data.rating, data.text);
       setSuccess(true);
       onSuccess();
     } catch {
-      setError('Failed to submit review. Please try again.');
-    } finally {
-      setLoading(false);
+      setApiError('Failed to submit review. Please try again.');
     }
   }
 
@@ -42,10 +61,15 @@ export function ReviewForm({ courseId, onSuccess }: ReviewFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
       <div>
         <label className="block text-sm font-medium mb-1">Your Rating</label>
-        <StarRating value={rating} onRatingChange={setRating} />
+        <Controller
+          name="rating"
+          control={control}
+          render={({ field }) => <StarRating value={field.value} onRatingChange={field.onChange} />}
+        />
+        {errors.rating && <p className="text-red-600 text-sm mt-1">{errors.rating.message}</p>}
       </div>
       <div>
         <label className="block text-sm font-medium mb-1">Your Review</label>
@@ -53,19 +77,19 @@ export function ReviewForm({ courseId, onSuccess }: ReviewFormProps) {
           className="w-full border rounded-lg p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
           rows={4}
           maxLength={MAX_CHARS}
-          value={text}
-          onChange={(e) => setText(e.target.value)}
+          {...register('text')}
           placeholder="Share your experience with this course..."
         />
+        {errors.text && <p className="text-red-600 text-sm mt-1">{errors.text.message}</p>}
         {text.length >= COUNTER_THRESHOLD && (
           <p className={`text-xs mt-1 ${remaining <= 50 ? 'text-red-500' : 'text-gray-500'}`}>
             {remaining} characters remaining
           </p>
         )}
       </div>
-      {error && <p className="text-red-600 text-sm">{error}</p>}
-      <Button type="submit" disabled={loading || !rating || !text.trim()}>
-        {loading ? 'Submitting…' : 'Submit Review'}
+      {apiError && <p className="text-red-600 text-sm">{apiError}</p>}
+      <Button type="submit" disabled={isSubmitting}>
+        {isSubmitting ? 'Submitting…' : 'Submit Review'}
       </Button>
     </form>
   );

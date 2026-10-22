@@ -123,7 +123,7 @@ impl ScholarshipFundContract {
 
     pub fn apply_for_scholarship(env: Env, student: Address, amount_requested: i128) -> u64 {
         student.require_auth();
-        assert!(amount_requested > 0, "Amount must be positive");
+        brain_storm_shared::validation::require_positive_amount(amount_requested);
 
         let app_id: u64 = env
             .storage()

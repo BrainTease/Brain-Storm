@@ -1,3 +1,4 @@
+import { env } from './config/env';
 /**
  * OpenTelemetry SDK initialiser — must be imported before any other module.
  * Provides distributed tracing with context propagation across HTTP and async
@@ -20,16 +21,16 @@ import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentation
 import { TraceIdRatioBasedSampler } from '@opentelemetry/sdk-trace-base';
 import { W3CTraceContextPropagator } from '@opentelemetry/core';
 
-const isProd = process.env.NODE_ENV === 'production';
+const isProd = env.isProduction;
 
 const sdk = new NodeSDK({
   resource: new Resource({
-    [SemanticResourceAttributes.SERVICE_NAME]: process.env.OTEL_SERVICE_NAME ?? 'brain-storm-api',
-    [SemanticResourceAttributes.SERVICE_VERSION]: process.env.GIT_COMMIT_SHA ?? 'unknown',
-    [SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT]: process.env.NODE_ENV ?? 'development',
+    [SemanticResourceAttributes.SERVICE_NAME]: env.otelServiceName,
+    [SemanticResourceAttributes.SERVICE_VERSION]: env.gitCommitSha,
+    [SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT]: env.nodeEnv,
   }),
   traceExporter: new OTLPTraceExporter({
-    url: `${process.env.OTEL_EXPORTER_OTLP_ENDPOINT ?? 'http://localhost:4318'}/v1/traces`,
+    url: `${env.otelEndpoint}/v1/traces`,
   }),
   instrumentations: [
     getNodeAutoInstrumentations({
@@ -39,7 +40,7 @@ const sdk = new NodeSDK({
     }),
   ],
   sampler: new TraceIdRatioBasedSampler(
-    isProd ? parseFloat(process.env.OTEL_TRACES_SAMPLER_ARG ?? '0.1') : 1.0
+    isProd ? env.otelTracesSampler : 1.0
   ),
   textMapPropagator: new W3CTraceContextPropagator(),
 });

@@ -171,20 +171,25 @@ Key patterns:
 ### Frontend — E2E Test (Playwright)
 
 ```typescript
-// apps/frontend/e2e/user-journey.spec.ts
-test('register → enroll → complete lesson', async ({ page }) => {
-  await page.goto('/auth/register');
-  await page.getByLabel(/email/i).fill('user@example.com');
-  await page.getByLabel(/^password$/i).fill('Test@1234!');
-  await page.getByRole('button', { name: /register/i }).click();
-  await expect(page).toHaveURL(/dashboard|courses/);
+// apps/frontend/e2e/course-enrollment.spec.ts
+import { CoursesPage, EnrollmentPage, registerAndLogin, uniqueUser } from './page-objects';
+
+test('enroll in available course', async ({ page }) => {
+  await registerAndLogin(page, uniqueUser('enrolltest'));
+
+  const courses = new CoursesPage(page);
+  await courses.goto();
+  await courses.enrollInFirstCourse();
+
+  await expect(new EnrollmentPage(page).enrolledConfirmation).toBeVisible();
 });
 ```
 
 Key patterns:
 
-- Use role-based locators (`getByRole`, `getByLabel`) — they are resilient to markup changes.
-- Generate unique users per test run (`Date.now()`) to avoid collisions.
+- Interact with login, register, courses and enrollment pages only through the page objects in `apps/frontend/e2e/page-objects/`. `e2e/page-object-usage.spec.ts` fails if a spec uses those routes or selectors directly.
+- Page objects use role-based locators (`getByRole`, `getByLabel`). These hold up when markup changes.
+- Generate unique users per test run with `uniqueUser(prefix)` to avoid collisions.
 - Set `baseURL` in `playwright.config.ts` so tests are environment-agnostic.
 
 ### Contracts — Unit + Fuzz Test (Rust/Soroban)

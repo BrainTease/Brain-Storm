@@ -20,8 +20,10 @@ Welcome to the **Brain-Storm** monorepo! This guide walks you through setting up
 4. [Environment Variables Reference](#environment-variables-reference)
    - [Backend Variables (`apps/backend`)](#backend-variables-appsbackend)
    - [Frontend Variables (`apps/frontend`)](#frontend-variables-appsfrontend)
-5. [Workspace Scripts Reference](#workspace-scripts-reference)
-6. [Troubleshooting & Common Issues](#troubleshooting--common-issues)
+5. [Testnet Account Funding](#testnet-account-funding)
+6. [Shortcuts](#shortcuts)
+7. [Workspace Scripts Reference](#workspace-scripts-reference)
+8. [Troubleshooting & Common Issues](#troubleshooting--common-issues)
 
 ---
 
@@ -181,6 +183,49 @@ Open your browser:
 
 ---
 
+## Testnet Account Funding
+
+1. Generate a keypair for the backend admin account:
+
+   ```bash
+   stellar keys generate --network testnet dev-account
+   stellar keys address dev-account   # prints your public key
+   stellar keys show dev-account      # prints your secret key (starts with S)
+   ```
+
+2. Fund it via Friendbot, or use the [Stellar Laboratory account creator](https://laboratory.stellar.org/#account-creator?network=testnet):
+
+   ```bash
+   curl "https://friendbot.stellar.org?addr=$(stellar keys address dev-account)"
+   ```
+
+3. Copy the secret key into `STELLAR_SECRET_KEY` in `.env`.
+
+Testnet accounts are reset periodically. To re-fund the account configured in `.env`, run `./scripts/fund-testnet.sh`. It reads `STELLAR_SECRET_KEY`, derives the public key, and calls Friendbot.
+
+When `STELLAR_NETWORK=testnet`, the backend exposes `POST /v1/stellar/fund-testnet` with a JSON body `{ "publicKey": "G..." }`. It returns 400 when `STELLAR_NETWORK=mainnet`.
+
+## Shortcuts
+
+### Make targets
+
+```bash
+make setup   # install deps + build contracts
+make dev     # start backend & frontend concurrently
+make test    # run all tests
+make build   # production build
+make lint    # lint all workspaces
+make clean   # remove build artifacts
+```
+
+### Automated first-time setup
+
+```bash
+./scripts/setup.sh
+```
+
+The script checks prerequisites, copies `.env`, installs dependencies, builds contracts, and starts Docker services.
+
 ## Environment Variables Reference
 
 ### Backend Variables (`apps/backend`)
@@ -280,3 +325,33 @@ These variables configure the Next.js client application (prefixed with `NEXT_PU
 ### 4. Port Conflict on 3000 or 3001
 
 **Fix:** If port 3000 is occupied, set `PORT=3005` in `.env` for backend, and update `NEXT_PUBLIC_API_URL=http://localhost:3005`.
+
+### 5. `ECONNREFUSED 127.0.0.1:5432` (PostgreSQL)
+
+- Check that PostgreSQL is running: `docker ps` or `pg_isready`.
+- Verify `DATABASE_HOST`, `DATABASE_PORT`, `DATABASE_USERNAME`, and `DATABASE_PASSWORD` in `.env`.
+- With Docker: `docker compose up -d postgres`.
+
+### 6. `ECONNREFUSED 127.0.0.1:6379` (Redis)
+
+- Check that Redis is running: `docker ps` or `redis-cli ping`.
+- With Docker: `docker compose up -d redis`.
+- Verify `REDIS_HOST` and `REDIS_PORT` in `.env`.
+
+### 7. `Account not found` (Stellar) or `insufficient funds` on deploy
+
+- Fund the testnet account (see [Testnet Account Funding](#testnet-account-funding)).
+
+### 8. `JWT_SECRET is not defined`
+
+- Make sure `.env` exists and contains `JWT_SECRET`.
+- Generate one with `openssl rand -hex 32`.
+
+### 9. `nest: command not found`
+
+- Run `npm install` from the repo root first.
+- Or run `npx nest start --watch` inside `apps/backend`.
+
+### 10. `cargo audit` fails in CI
+
+- Run `cargo update` to refresh `Cargo.lock`, then re-run.

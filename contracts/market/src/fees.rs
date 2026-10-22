@@ -2,23 +2,25 @@
 
 use soroban_sdk::{symbol_short, Address, Env, Symbol};
 
-use brain_storm_shared::access;
+use brain_storm_shared::events::emit_contract_event;
 
-use crate::DataKey;
+use crate::{storage, DataKey};
 
 pub const MAX_FEE_BPS: u32 = 1_000; // 10 %
 
 /// Divisor for basis-point calculations (10 000 bps = 100 %).
 pub const BPS_DENOMINATOR: i128 = 10_000;
+const EVT_DOMAIN: Symbol = symbol_short!("market");
 const EVT_FEE_SET: Symbol = symbol_short!("fee_set");
 const EVT_FEE_DIST: Symbol = symbol_short!("fee_dist");
 
 /// Configure the protocol fee in basis points (admin-only).
 pub fn set_fee_bps(env: &Env, admin: &Address, fee_bps: u32) {
-    access::require_admin(env, admin, &DataKey::Admin);
+    admin.require_auth();
+    storage::assert_admin_addr(env, admin);
     assert!(fee_bps <= MAX_FEE_BPS, "Fee exceeds max (1000 bps)");
     env.storage().instance().set(&DataKey::FeeBps, &fee_bps);
-    env.events().publish((EVT_FEE_SET,), fee_bps);
+    emit_contract_event(env, EVT_DOMAIN, EVT_FEE_SET, fee_bps);
 }
 
 pub fn get_fee_bps(env: &Env) -> u32 {
@@ -30,12 +32,9 @@ pub fn get_fee_bps(env: &Env) -> u32 {
 
 /// Configure the treasury address (admin-only).
 pub fn set_treasury(env: &Env, admin: &Address, treasury: Address) {
-    access::require_admin(env, admin, &DataKey::Admin);
+    admin.require_auth();
+    storage::assert_admin_addr(env, admin);
     env.storage().instance().set(&DataKey::Treasury, &treasury);
-}
-
-pub fn get_treasury(env: &Env) -> Option<Address> {
-    env.storage().instance().get(&DataKey::Treasury)
 }
 
 /// Compute fee and net amount. Returns `(fee, net)`.
@@ -63,5 +62,5 @@ pub fn accrue_fee(env: &Env, fee: i128) {
     env.storage()
         .persistent()
         .set(&DataKey::TreasuryBalance, &(balance + fee));
-    env.events().publish((EVT_FEE_DIST,), (treasury, fee));
+    emit_contract_event(env, EVT_DOMAIN, EVT_FEE_DIST, (treasury, fee));
 }

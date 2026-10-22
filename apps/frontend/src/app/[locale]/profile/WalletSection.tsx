@@ -1,10 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import api from '@/lib/api';
+import { useEffect, useState } from 'react';
+
 import { Button } from '@/components/ui/Button';
 import { formatTokenBalance } from '@/components/ui/TokenBalance';
+import { useFreighterDetection } from '@/hooks/useFreighterDetection';
+import api from '@/lib/api';
 
 interface Props {
   userId: string;
@@ -13,6 +15,7 @@ interface Props {
   onUnlinked: () => void;
 }
 
+// eslint-disable-next-line max-lines-per-function -- profile wallet card; split in a follow-up
 export default function WalletSection({ userId, stellarPublicKey, onLinked, onUnlinked }: Props) {
   const t = useTranslations('wallet');
   const [bstBalance, setBstBalance] = useState<string | null>(null);
@@ -20,6 +23,7 @@ export default function WalletSection({ userId, stellarPublicKey, onLinked, onUn
   const [freighterMissing, setFreighterMissing] = useState(false);
   const [funding, setFunding] = useState(false);
   const [fundMessage, setFundMessage] = useState<string | null>(null);
+  const { detectFreighter, getPublicKey, signMessage } = useFreighterDetection();
 
   useEffect(() => {
     if (stellarPublicKey) {
@@ -39,23 +43,22 @@ export default function WalletSection({ userId, stellarPublicKey, onLinked, onUn
     setLoading(true);
     setFreighterMissing(false);
     try {
-      const freighter = await import('@stellar/freighter-api');
-      const { isConnected } = await freighter.isConnected();
-      if (!isConnected) {
+      const detection = await detectFreighter();
+      if (detection.status === 'missing') {
         setFreighterMissing(true);
         setLoading(false);
         return;
       }
 
       // Get public key from Freighter
-      const { publicKey } = await freighter.getPublicKey();
+      const publicKey = await getPublicKey();
 
       // Request challenge from backend
       const challengeResponse = await api.post('/auth/stellar-challenge', { publicKey });
       const { challenge, message } = challengeResponse.data;
 
       // Sign the challenge with Freighter
-      const { signedMessage } = await freighter.signMessage(message, { address: publicKey });
+      const signedMessage = await signMessage(message, publicKey);
 
       // Verify signature with backend
       await api.post('/auth/stellar-verify', {

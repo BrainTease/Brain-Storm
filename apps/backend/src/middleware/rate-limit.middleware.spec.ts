@@ -1,11 +1,13 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { RateLimitMiddleware, RateLimitPresets } from './rate-limit.middleware';
+/* eslint-disable max-lines-per-function */
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Test, TestingModule } from '@nestjs/testing';
 import { Request, Response } from 'express';
+
+import { RateLimitMiddleware, RateLimitOptions, RateLimitPresets } from './rate-limit.middleware';
 
 describe('RateLimitMiddleware', () => {
   let middleware: RateLimitMiddleware;
-  let mockCache: any;
+  let mockCache: Record<string, jest.Mock>;
 
   beforeEach(async () => {
     // Create a mock cache
@@ -96,6 +98,40 @@ describe('RateLimitMiddleware', () => {
           statusCode: 429,
         })
       );
+    });
+
+    it('returns the standard error envelope on 429 (#1288)', async () => {
+      const options = { limit: 1, windowMs: 60000 };
+      const mw = middleware.createMiddleware(options as RateLimitOptions);
+      const req = {
+        ip: '1.2.3.4',
+        headers: {},
+        originalUrl: '/v1/x',
+        url: '/x',
+      } as unknown as Request;
+      const res = {
+        status: jest.fn().mockReturnThis(),
+        json: jest.fn(),
+        setHeader: jest.fn(),
+      };
+      mockCache.get.mockResolvedValueOnce(5);
+
+      await mw(req, res as unknown as Response, jest.fn());
+
+      const body = res.json.mock.calls[0][0] as Record<string, unknown> & {
+        timestamp: string;
+        message: string;
+      };
+      expect(body).toEqual(
+        expect.objectContaining({
+          code: 'TOO_MANY_REQUESTS',
+          details: { retryAfter: 60 },
+          statusCode: 429,
+          path: '/v1/x',
+        })
+      );
+      expect(typeof body.message).toBe('string');
+      expect(() => new Date(body.timestamp)).not.toThrow();
     });
 
     it('should extract client IP from X-Forwarded-For header', async () => {

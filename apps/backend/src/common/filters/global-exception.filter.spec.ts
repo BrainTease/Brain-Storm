@@ -1,5 +1,6 @@
-import { HttpStatus, Logger } from '@nestjs/common';
-import { GlobalExceptionFilter } from './global-exception.filter';
+/* eslint-disable max-lines-per-function */
+import { ArgumentsHost, HttpStatus, Logger } from '@nestjs/common';
+
 import {
   AppError,
   ErrorCode,
@@ -12,13 +13,23 @@ import {
   DatabaseError,
 } from '../errors/app.error';
 
+import { GlobalExceptionFilter } from './global-exception.filter';
+
+interface ErrorBody {
+  code: string;
+  message: string;
+  details: Record<string, unknown>;
+  timestamp: string;
+}
+
 function buildHost(statusMock: jest.Mock, jsonMock: jest.Mock) {
   statusMock.mockReturnValue({ json: jsonMock });
   return {
     switchToHttp: jest.fn().mockReturnValue({
       getResponse: jest.fn().mockReturnValue({ status: statusMock, json: jsonMock }),
+      getRequest: jest.fn().mockReturnValue({ url: '/v1/test' }),
     }),
-  } as any;
+  } as unknown as ArgumentsHost;
 }
 
 function run(exception: unknown) {
@@ -26,7 +37,7 @@ function run(exception: unknown) {
   const json = jest.fn();
   const status = jest.fn();
   filter.catch(exception, buildHost(status, json));
-  return { status: status.mock.calls[0][0] as number, body: json.mock.calls[0][0] as any };
+  return { status: status.mock.calls[0][0] as number, body: json.mock.calls[0][0] as ErrorBody };
 }
 
 describe('GlobalExceptionFilter', () => {

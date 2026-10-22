@@ -78,22 +78,43 @@ pub enum SharedError {
 impl SharedError {
     /// Check if the error is a validation error
     pub fn is_validation_error(&self) -> bool {
-        matches!(self, SharedError::InvalidInput | SharedError::InvalidAmount | SharedError::InvalidAddress | SharedError::InvalidDuration | SharedError::InvalidState | SharedError::InvalidAsset)
+        matches!(
+            self,
+            SharedError::InvalidInput
+                | SharedError::InvalidAmount
+                | SharedError::InvalidAddress
+                | SharedError::InvalidDuration
+                | SharedError::InvalidState
+                | SharedError::InvalidAsset
+        )
     }
 
     /// Check if the error is an existence error
     pub fn is_existence_error(&self) -> bool {
-        matches!(self, SharedError::NotFound | SharedError::AlreadyExists | SharedError::UnexpectedState)
+        matches!(
+            self,
+            SharedError::NotFound | SharedError::AlreadyExists | SharedError::UnexpectedState
+        )
     }
 
     /// Check if the error is a balance error
     pub fn is_balance_error(&self) -> bool {
-        matches!(self, SharedError::InsufficientBalance | SharedError::InsufficientFunds | SharedError::BalanceLimitExceeded)
+        matches!(
+            self,
+            SharedError::InsufficientBalance
+                | SharedError::InsufficientFunds
+                | SharedError::BalanceLimitExceeded
+        )
     }
 
     /// Check if the error is a system error
     pub fn is_system_error(&self) -> bool {
-        matches!(self, SharedError::InternalError | SharedError::NotInitialized | SharedError::AlreadyInitialized)
+        matches!(
+            self,
+            SharedError::InternalError
+                | SharedError::NotInitialized
+                | SharedError::AlreadyInitialized
+        )
     }
 
     /// Get the error code as a string

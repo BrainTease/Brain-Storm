@@ -61,6 +61,13 @@ pub const MIN_PERSISTENT_ENTRY_TTL: u32 = 1_000;
 /// Used in ledger operation setup. Equivalent to ~27 minutes on Stellar testnet.
 pub const MAX_ENTRY_TTL: u32 = 100_000;
 
+/// TTL threshold at which a persistent entry is refreshed by `extend_ttl`.
+pub const STORAGE_TTL_THRESHOLD: u32 = 100;
+
+/// TTL an entry is extended to once it falls below
+/// [`STORAGE_TTL_THRESHOLD`].
+pub const STORAGE_TTL_EXTEND_TO: u32 = 500;
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -77,7 +84,17 @@ mod tests {
 
     #[test]
     fn test_ledger_ttl_constants() {
-        assert!(MIN_TEMP_ENTRY_TTL <= MAX_ENTRY_TTL);
-        assert!(MIN_PERSISTENT_ENTRY_TTL <= MAX_ENTRY_TTL);
+        // Const assertions: the TTL bounds are compile-time constants, so a
+        // runtime `assert!` would trip `clippy::assertions_on_constants`.
+        const _: () = assert!(MIN_TEMP_ENTRY_TTL <= MAX_ENTRY_TTL);
+        const _: () = assert!(MIN_PERSISTENT_ENTRY_TTL <= MAX_ENTRY_TTL);
+    }
+
+    #[test]
+    fn test_storage_ttl_constants() {
+        // The threshold is the remaining TTL that triggers an extension, the
+        // extension target is the TTL the entry is bumped to.
+        const _: () = assert!(STORAGE_TTL_THRESHOLD < STORAGE_TTL_EXTEND_TO);
+        const _: () = assert!(STORAGE_TTL_EXTEND_TO <= MAX_ENTRY_TTL);
     }
 }

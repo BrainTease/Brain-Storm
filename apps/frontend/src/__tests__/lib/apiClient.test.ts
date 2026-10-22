@@ -222,3 +222,75 @@ describe('apiClient', () => {
     });
   });
 });
+
+// ── Error kind mapping (issue #1266) ──────────────────────────────────────────
+
+describe('apiClient error kind mapping', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('maps a 401 response to kind "unauthorized"', async () => {
+    mockApi.get.mockRejectedValueOnce(makeAxiosError(401, 'Session expired'));
+
+    const result = await apiClient.get('/users/me');
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.kind).toBe('unauthorized');
+      expect(result.error.status).toBe(401);
+      expect(result.error.message).toBe('Session expired');
+    }
+  });
+
+  it('maps a 404 response to kind "not_found"', async () => {
+    mockApi.get.mockRejectedValueOnce(makeAxiosError(404, 'Course not found'));
+
+    const result = await apiClient.get('/courses/missing');
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.kind).toBe('not_found');
+      expect(result.error.status).toBe(404);
+    }
+  });
+
+  it('maps a 500 response to kind "server"', async () => {
+    mockApi.post.mockRejectedValueOnce(makeAxiosError(500, 'Internal Server Error'));
+
+    const result = await apiClient.post('/enrollments', { courseId: '1' });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.kind).toBe('server');
+      expect(result.error.status).toBe(500);
+    }
+  });
+
+  it('maps 403 and 409 to their dedicated kinds and other 4xx to "validation"', async () => {
+    mockApi.delete
+      .mockRejectedValueOnce(makeAxiosError(403, 'Forbidden'))
+      .mockRejectedValueOnce(makeAxiosError(409, 'Already enrolled'))
+      .mockRejectedValueOnce(makeAxiosError(422, 'Invalid payload'));
+
+    const forbidden = await apiClient.delete('/courses/1');
+    const conflict = await apiClient.delete('/courses/1');
+    const validation = await apiClient.delete('/courses/1');
+
+    expect(forbidden.ok ? undefined : forbidden.error.kind).toBe('forbidden');
+    expect(conflict.ok ? undefined : conflict.error.kind).toBe('conflict');
+    expect(validation.ok ? undefined : validation.error.kind).toBe('validation');
+  });
+
+  it('maps a request with no response to kind "network" and no status', async () => {
+    mockApi.get.mockRejectedValueOnce(new Error('Network Error'));
+
+    const result = await apiClient.get('/courses');
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.kind).toBe('network');
+      expect(result.error.status).toBeUndefined();
+    }
+  });
+});

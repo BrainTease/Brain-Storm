@@ -1,18 +1,52 @@
+import { cleanup, render, screen, fireEvent, within } from '@testing-library/react';
+import type { AnchorHTMLAttributes, ComponentProps } from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, within } from '@testing-library/react';
+
 import { CourseGrid } from '@/components/courses/CourseGrid';
-import { useCompareStore } from '@/store/compare.store';
 import type { Course } from '@/hooks/useCourseSearch';
+import { useCompareStore } from '@/store/compare.store';
 
 vi.mock('next/link', async () => {
   const { forwardRef } = await import('react');
   return {
-    default: forwardRef<HTMLAnchorElement, any>(({ href, children, ...props }, ref) => (
+    default: forwardRef<
+      HTMLAnchorElement,
+      AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }
+    >(({ href, children, ...props }, ref) => (
       <a href={href} ref={ref} {...props}>
         {children}
       </a>
     )),
   };
+});
+
+const cardRenders = vi.hoisted(() => ({ count: 0 }));
+
+vi.mock('@/components/courses/CourseCard', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/components/courses/CourseCard')>();
+  const { createElement } = await import('react');
+  return {
+    ...actual,
+    CourseCard: (props: ComponentProps<typeof actual.CourseCard>) => {
+      cardRenders.count++;
+      return createElement(actual.CourseCard, props);
+    },
+  };
+});
+
+// jsdom does not implement matchMedia; the skeleton/spinner primitives query it.
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: (query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  }),
 });
 
 vi.stubGlobal(
@@ -39,6 +73,7 @@ const defaultProps = {
 };
 
 beforeEach(() => {
+  cleanup();
   useCompareStore.setState({ selected: [] });
   vi.clearAllMocks();
 });
@@ -65,7 +100,8 @@ describe('CourseGrid accessibility', () => {
   it('marks the list busy and announces loading while results are pending', () => {
     render(<CourseGrid {...defaultProps} courses={[]} total={0} isLoading />);
     expect(screen.getByRole('list', { name: 'Courses' })).toHaveAttribute('aria-busy', 'true');
-    expect(screen.getByRole('status')).toHaveTextContent('Loading courses…');
+    // Skeleton cards also expose role=status, so target the announced text.
+    expect(screen.getByText('Loading courses…')).toHaveAttribute('role', 'status');
   });
 
   it('describes the available keyboard shortcuts', () => {
@@ -161,5 +197,21 @@ describe('CourseGrid comparison controls', () => {
       name: 'Compare Intro to Stellar — comparison list is full',
     });
     expect(checkbox).toBeDisabled();
+  });
+});
+
+describe('CourseGrid render performance', () => {
+  beforeEach(() => {
+    cardRenders.count = 0;
+  });
+
+  it('does not re-render course cards when unrelated grid props change (#1287)', () => {
+    const { rerender } = render(<CourseGrid {...defaultProps} />);
+    const initialRenders = cardRenders.count;
+    expect(initialRenders).toBe(courses.length);
+
+    rerender(<CourseGrid {...defaultProps} onLoadMore={vi.fn()} />);
+
+    expect(cardRenders.count).toBe(initialRenders);
   });
 });
