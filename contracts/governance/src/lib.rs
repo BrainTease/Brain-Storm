@@ -12,6 +12,9 @@ pub mod voting;
 
 pub use types::*;
 
+use crate::validation_helpers::{
+    assert_valid_quorum_percentage, assert_valid_voting_period, DEFAULT_QUORUM_PERCENTAGE,
+};
 use voting::{
     VotingStrategy, VoteSupport,
     GovernanceKey, VotingProposal, VoteRecord,
@@ -48,16 +51,22 @@ impl GovernanceContract {
             "Already initialized"
         );
         admin.require_auth();
-        // Cache the instance storage handle — avoids a separate borrow for
-        // each of the six `set` calls below (gas opt #1321).
-        let inst = env.storage().instance();
-        inst.set(&DataKey::Admin, &admin);
-        inst.set(&DataKey::TokenContract, &token_contract);
-        inst.set(&DataKey::NextProposalId, &1_u64);
+        assert_valid_quorum_percentage(DEFAULT_QUORUM_PERCENTAGE);
+        env.storage().instance().set(&DataKey::Admin, &admin);
+        env.storage()
+            .instance()
+            .set(&DataKey::TokenContract, &token_contract);
+        env.storage().instance().set(&DataKey::NextProposalId, &1_u64);
         // Defaults
-        inst.set(&GovernanceKey::VotingDelay, &0_u32);
-        inst.set(&GovernanceKey::TimelockDuration, &10_u32);
-        inst.set(&GovernanceKey::QuorumPercentage, &20_i128);
+        env.storage()
+            .instance()
+            .set(&GovernanceKey::VotingDelay, &0_u32);
+        env.storage()
+            .instance()
+            .set(&GovernanceKey::TimelockDuration, &10_u32);
+        env.storage()
+            .instance()
+            .set(&GovernanceKey::QuorumPercentage, &DEFAULT_QUORUM_PERCENTAGE);
     }
 
     pub fn get_admin(env: Env) -> Address {
@@ -86,11 +95,10 @@ impl GovernanceContract {
 
     pub fn set_quorum_percentage(env: Env, admin: Address, percentage: i128) {
         access::require_admin(&env, &admin, &DataKey::Admin);
-        assert!(percentage > 0 && percentage <= 100, "Quorum must be 1-100");
-        // Cache the instance storage handle — avoids a re-borrow after the
-        // require_admin call above (gas opt #1321).
-        let inst = env.storage().instance();
-        inst.set(&GovernanceKey::QuorumPercentage, &percentage);
+        assert_valid_quorum_percentage(percentage);
+        env.storage()
+            .instance()
+            .set(&GovernanceKey::QuorumPercentage, &percentage);
     }
 
     pub fn set_total_supply_snapshot(env: Env, admin: Address, supply: i128) {
@@ -115,6 +123,7 @@ impl GovernanceContract {
         strategy: u32,
         timelock_delay: u32,
     ) -> u64 {
+        assert_valid_voting_period(env.ledger().sequence(), voting_end_ledger);
         let strat = match strategy {
             1 => VotingStrategy::Quadratic,
             2 => VotingStrategy::Flat,
@@ -215,11 +224,11 @@ impl GovernanceContract {
     }
 
     pub fn vote(env: Env, voter: Address, proposal_id: u64, support: bool) {
-        legacy::vote()
+        legacy::vote(env, voter, proposal_id, support)
     }
 
     pub fn execute_proposal(env: Env, proposal_id: u64) {
-        legacy::execute_proposal()
+        legacy::execute_proposal(env, proposal_id)
     }
 
     pub fn get_proposal(env: Env, proposal_id: u64) -> Option<ProposalRecord> {
@@ -274,7 +283,7 @@ impl GovernanceContract {
     }
 
     pub fn vote_upgrade(env: Env, voter: Address, upgrade_id: u64, support: bool) {
-        legacy::vote_upgrade()
+        legacy::vote_upgrade(env, voter, upgrade_id, support)
     }
 
     /// Approve a passed upgrade proposal. **Stored admin only** (issue #1169):
@@ -282,11 +291,11 @@ impl GovernanceContract {
     /// but the function previously took no caller at all, so anyone could flip
     /// `approved` on a proposal that had merely finished voting.
     pub fn approve_upgrade(env: Env, admin: Address, upgrade_id: u64) {
-        legacy::approve_upgrade()
+        legacy::approve_upgrade(env, admin, upgrade_id)
     }
 
     pub fn execute_upgrade(env: Env, upgrade_id: u64) {
-        legacy::execute_upgrade()
+        legacy::execute_upgrade(env, upgrade_id)
     }
 
     pub fn get_upgrade_proposal(env: Env, upgrade_id: u64) -> Option<UpgradeProposalRecord> {

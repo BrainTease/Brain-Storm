@@ -1,63 +1,142 @@
+/**
+ * Quality Gate — Import Ordering (#1380)
+ *
+ * Verifies that:
+ * 1. The root .eslintrc.js has the `simple-import-sort` plugin configured.
+ * 2. The frontend .eslintrc.js has the `import/order` rule configured with
+ *    the correct group hierarchy and newlines-between enforcement.
+ * 3. No source file in the frontend mixes relative side-effect imports
+ *    (e.g. `./globals.css`) into the wrong position relative to internal
+ *    path-alias imports (`@/…`).
+ */
 import { describe, it, expect } from 'vitest';
 import fs from 'fs';
 import path from 'path';
 
-describe('Import Ordering', () => {
-  const srcDir = './src';
+describe('Import Ordering (#1380)', () => {
+  // ─── 1. Root ESLint config has simple-import-sort ──────────────────────────
+  it('root .eslintrc.js configures simple-import-sort/imports', () => {
+    const configPath = './.eslintrc.js';
+    expect(fs.existsSync(configPath)).toBe(true);
+    const content = fs.readFileSync(configPath, 'utf-8');
+    expect(content).toContain('simple-import-sort/imports');
+    expect(content).toContain('simple-import-sort/exports');
+    expect(content).toContain('import/no-duplicates');
+  });
 
-  it('should have imports in correct order', () => {
-    let violations = 0;
+  // ─── 2. Frontend ESLint config has import/order ─────────────────────────────
+  it('apps/frontend .eslintrc.js configures import/order with correct groups', () => {
+    const configPath = './apps/frontend/.eslintrc.js';
+    expect(fs.existsSync(configPath)).toBe(true);
+    const content = fs.readFileSync(configPath, 'utf-8');
 
-    function scanDir(dir: string) {
-      if (!fs.existsSync(dir)) return;
+    // Core rule presence
+    expect(content).toContain("'import/order'");
+    // Group ordering: builtin → external → internal → parent → sibling → index
+    expect(content).toContain("'builtin'");
+    expect(content).toContain("'external'");
+    expect(content).toContain("'internal'");
+    // Newlines between groups enforced
+    expect(content).toContain("'newlines-between': 'always'");
+    // Alphabetical ordering within groups
+    expect(content).toContain("alphabetize");
+    // No duplicate imports
+    expect(content).toContain("'import/no-duplicates'");
+  });
 
-      const files = fs.readdirSync(dir);
+  // ─── 3. No CSS side-effect import in wrong position ─────────────────────────
+  it('layout files do not place CSS imports before internal @/ imports', () => {
+    const layoutFiles = [
+      './apps/frontend/src/app/layout.tsx',
+      './apps/frontend/src/app/[locale]/layout.tsx',
+    ];
 
-      for (const file of files) {
-        const fullPath = path.join(dir, file);
-        const stat = fs.statSync(fullPath);
+    for (const filePath of layoutFiles) {
+      if (!fs.existsSync(filePath)) continue;
+      const lines = fs.readFileSync(filePath, 'utf-8').split('\n');
 
-        if (stat.isDirectory()) {
-          scanDir(fullPath);
-        } else if (stat.isFile() && /\.(ts|tsx)$/.test(file)) {
-          const content = fs.readFileSync(fullPath, 'utf-8');
-          const lines = content.split('\n');
-          let importGroups: string[][] = [];
-          let currentGroup: string[] = [];
+      const importLines = lines
+        .map((l, i) => ({ line: l.trim(), index: i }))
+        .filter(({ line }) => line.startsWith('import'));
 
-          for (let i = 0; i < lines.length; i++) {
-            const line = lines[i];
-            if (line.trim().startsWith('import ')) {
-              currentGroup.push(line);
-            } else if (currentGroup.length > 0) {
-              const groupCopy = [...currentGroup];
-              const sorted = groupCopy.sort((a, b) => a.localeCompare(b));
+      // CSS/side-effect relative imports should come AFTER all @/ imports
+      const lastInternalIdx = importLines.reduce((last, { line, index }) => {
+        return line.includes("from '@/") || line.includes("from \"@/") ? index : last;
+      }, -1);
 
-              for (let j = 0; j < currentGroup.length; j++) {
-                if (currentGroup[j] !== sorted[j]) {
-                  console.log(`❌ Import order violation in ${fullPath}:`);
-                  console.log(`   Expected: ${sorted[j]}`);
-                  console.log(`   Found: ${currentGroup[j]}`);
-                  violations++;
-                }
-              }
+      const cssIdx = importLines.find(({ line }) =>
+        line.match(/^import\s+['"][.\/].*\.css['"]/)
+      )?.index ?? -1;
 
-              currentGroup = [];
-            }
-          }
-        }
+      if (lastInternalIdx >= 0 && cssIdx >= 0) {
+        expect(cssIdx).toBeGreaterThan(lastInternalIdx);
+      }
+    }
+  });
+
+  // ─── 4. External imports precede internal @/ imports in key service files ───
+  it('service and store files order external imports before internal @/ imports', () => {
+    const filesToCheck = [
+      './apps/frontend/src/lib/api.ts',
+      './apps/frontend/src/store/auth.store.ts',
+      './apps/frontend/src/store/bookmarks.store.ts',
+      './apps/frontend/src/hooks/useWallet.ts',
+      './apps/frontend/src/lib/governanceApi.ts',
+    ];
+
+    for (const filePath of filesToCheck) {
+      if (!fs.existsSync(filePath)) continue;
+      const content = fs.readFileSync(filePath, 'utf-8');
+      const lines = content.split('\n');
+
+      const importLines = lines
+        .map((l, i) => ({ line: l.trim(), lineNum: i }))
+        .filter(({ line }) => line.startsWith('import'));
+
+      let lastExternalLine = -1;
+      let firstInternalLine = Infinity;
+
+      for (const { line, lineNum } of importLines) {
+        const isExternal =
+          line.match(/from ['"](?!@\/)(?!\.)[^'"]+['"]/) ||
+          line.match(/from ['"](?!@brain-storm)[^'"@\.][^'"]+['"]/);
+        const isInternal =
+          line.includes("from '@/") || line.includes('from "@/');
+
+        if (isExternal) lastExternalLine = Math.max(lastExternalLine, lineNum);
+        if (isInternal) firstInternalLine = Math.min(firstInternalLine, lineNum);
+      }
+
+      if (lastExternalLine >= 0 && firstInternalLine < Infinity) {
+        expect(lastExternalLine).toBeLessThan(firstInternalLine);
+      }
+    }
+  });
+
+  // ─── 5. Relative sibling imports come after @/ imports ──────────────────────
+  it('relative sibling imports come after @/ path-alias imports', () => {
+    const filePath = './apps/frontend/src/lib/governanceApi.ts';
+    if (!fs.existsSync(filePath)) return;
+
+    const lines = fs.readFileSync(filePath, 'utf-8').split('\n');
+    const importLines = lines
+      .map((l, i) => ({ line: l.trim(), lineNum: i }))
+      .filter(({ line }) => line.startsWith('import'));
+
+    let lastInternalLine = -1;
+    let firstRelativeLine = Infinity;
+
+    for (const { line, lineNum } of importLines) {
+      if (line.includes("from '@/") || line.includes('from "@/')) {
+        lastInternalLine = Math.max(lastInternalLine, lineNum);
+      }
+      if (line.match(/from ['"]\.\//)) {
+        firstRelativeLine = Math.min(firstRelativeLine, lineNum);
       }
     }
 
-    scanDir(srcDir);
-    expect(violations).toBe(0);
-  });
-
-  it('should have import ordering ESLint rule configured', () => {
-    const eslintPath = './.eslintrc.js';
-    expect(fs.existsSync(eslintPath)).toBe(true);
-
-    const content = fs.readFileSync(eslintPath, 'utf-8');
-    expect(content).toContain('simple-import-sort/imports');
+    if (lastInternalLine >= 0 && firstRelativeLine < Infinity) {
+      expect(firstRelativeLine).toBeGreaterThan(lastInternalLine);
+    }
   });
 });

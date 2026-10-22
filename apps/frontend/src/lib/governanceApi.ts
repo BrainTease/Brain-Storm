@@ -5,8 +5,9 @@
  * Callers check `.ok` before using `.data`.
  */
 
-import apiClient, { type ApiResult } from './apiClient';
 import type { Proposal, Vote } from '@/store/governanceStore';
+
+import apiClient, { type ApiResult } from './apiClient';
 
 const GOVERNANCE_BASE = '/governance';
 

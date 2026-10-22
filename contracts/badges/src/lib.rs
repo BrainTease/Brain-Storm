@@ -174,10 +174,6 @@ impl BadgesContract {
 
     pub fn burn_badge(env: Env, admin: Address, id: u64) {
         access::require_admin(&env, &admin, &DataKey::Admin);
-        assert!(
-            !env.storage().persistent().get::<DataKey, bool>(&DataKey::BurnedBadge(id)).unwrap_or(false),
-            "Badge already burned"
-        );
 
         let badge: BadgeRecord = env
             .storage()
@@ -194,8 +190,6 @@ impl BadgesContract {
             }
         }
 
-        // Mark as burned and remove badge record
-        env.storage().persistent().set(&DataKey::BurnedBadge(id), &true);
         env.storage().persistent().remove(&DataKey::Badge(id));
 
         env.events().publish((BURN, symbol_short!("id")), (id, badge.owner));

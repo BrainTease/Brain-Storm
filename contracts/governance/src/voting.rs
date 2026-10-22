@@ -10,6 +10,7 @@
 //   - Event emission for every state transition
 // =============================================================================
 use soroban_sdk::{contracttype, symbol_short, Address, Env, String, Symbol};
+use crate::validation_helpers::assert_valid_voting_period;
 #[cfg(test)]
 use brain_storm_shared::constants::{MAX_ENTRY_TTL, MIN_PERSISTENT_ENTRY_TTL, MIN_TEMP_ENTRY_TTL};
 
@@ -140,10 +141,7 @@ pub fn create_proposal(
     proposer.require_auth();
 
     let current = env.ledger().sequence();
-    assert!(
-        voting_end_ledger > current,
-        "Voting end must be in the future"
-    );
+    assert_valid_voting_period(current, voting_end_ledger);
     assert!(
         execution_timelock_ledger >= voting_end_ledger,
         "Timelock must be >= voting end"

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useApiQuery } from '@/hooks/useApiQuery';
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
 
@@ -53,15 +53,17 @@ export function useProtocolMetrics({
   to,
   dimension,
 }: UseProtocolMetricsOptions): UseProtocolMetricsReturn {
-  const [series, setSeries] = useState<MetricPoint[]>([]);
-  const [lastAggregatedAt, setLastAggregatedAt] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
+  const { data, isLoading, error, refresh } = useApiQuery<TimeSeriesResult>(
+    [
+      'protocol-metrics',
+      'time-series',
+      metric,
+      interval,
+      from ?? null,
+      to ?? null,
+      dimension ?? null,
+    ],
+    async () => {
       const params = new URLSearchParams({ metric, interval });
       if (from) params.set('from', from);
       if (to) params.set('to', to);
@@ -69,21 +71,17 @@ export function useProtocolMetrics({
 
       const res = await fetch(`${API}/v1/protocol-metrics/time-series?${params}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data: TimeSeriesResult = await res.json();
-      setSeries(data.series);
-      setLastAggregatedAt(data.lastAggregatedAt);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to load metrics');
-    } finally {
-      setLoading(false);
+      return res.json();
     }
-  }, [metric, interval, from, to, dimension]);
+  );
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  return { series, lastAggregatedAt, loading, error, refresh: fetchData };
+  return {
+    series: data?.series ?? [],
+    lastAggregatedAt: data?.lastAggregatedAt ?? null,
+    loading: isLoading,
+    error,
+    refresh,
+  };
 }
 
 interface UseProtocolSummaryReturn {
@@ -94,27 +92,14 @@ interface UseProtocolSummaryReturn {
 }
 
 export function useProtocolSummary(): UseProtocolSummaryReturn {
-  const [summary, setSummary] = useState<ProtocolSummary | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
+  const { data, isLoading, error, refresh } = useApiQuery<ProtocolSummary>(
+    ['protocol-metrics', 'summary'],
+    async () => {
       const res = await fetch(`${API}/v1/protocol-metrics/summary`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      setSummary(await res.json());
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to load summary');
-    } finally {
-      setLoading(false);
+      return res.json();
     }
-  }, []);
+  );
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  return { summary, loading, error, refresh: fetchData };
+  return { summary: data, loading: isLoading, error, refresh };
 }
