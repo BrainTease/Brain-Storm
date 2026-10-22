@@ -29,6 +29,16 @@ impl TokenContract {
     ) -> Result<(), TokenError> {
         admin.require_auth();
 
+        // Guard against double-initialization (issue #1318).
+        // If the admin key already exists the contract has already been set up.
+        if env
+            .storage()
+            .instance()
+            .has(&Symbol::new(&env, "admin"))
+        {
+            return Err(TokenError::Unauthorized);
+        }
+
         // Check initial supply is valid
         if initial_supply <= 0 {
             return Err(TokenError::InvalidAmount);
