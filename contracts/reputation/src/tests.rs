@@ -678,4 +678,330 @@ mod tests {
         assert_eq!(client.get_reputation(&user), 0);
         assert_eq!(client.get_total_reputation(), -400);
     }
+
+    // ── Property-based tests using proptest ──────────────────────────────────
+
+    mod properties {
+        use super::*;
+        use proptest::prelude::*;
+
+        // ── Monotonicity invariants ──────────────────────────────────────
+
+        /// Invariant: Positive reputation updates never decrease score
+        proptest! {
+            #[test]
+            fn prop_positive_update_increases_score(score_change in 1i128..10000i128) {
+                let (env, client, admin) = setup();
+                let user = Address::generate(&env);
+
+                // Start with zero
+                let initial = client.get_reputation(&user);
+                assert_eq!(initial, 0);
+
+                // Apply positive update
+                client.update_reputation(&admin, &user, &score_change, &symbol_short!("test"), &None);
+                let after = client.get_reputation(&user);
+
+                // Verify monotonicity
+                prop_assert!(after >= initial);
+                prop_assert_eq!(after, initial + score_change);
+            }
+        }
+
+        /// Invariant: Negative updates never increase score (except via clamping to 0)
+        proptest! {
+            #[test]
+            fn prop_negative_update_decreases_score(
+                initial_score in 100i128..10000i128,
+                decrease in 1i128..200i128
+            ) {
+                let (env, client, admin) = setup();
+                let user = Address::generate(&env);
+
+                // Set up initial score
+                client.update_reputation(&admin, &user, &initial_score, &symbol_short!("setup"), &None);
+                let before = client.get_reputation(&user);
+
+                // Apply negative update
+                client.update_reputation(&admin, &user, &(-decrease), &symbol_short!("test"), &None);
+                let after = client.get_reputation(&user);
+
+                // Verify monotonicity: score should not increase
+                prop_assert!(after <= before);
+            }
+        }
+
+        /// Invariant: Score accumulation is commutative (order-independent for additions)
+        proptest! {
+            #[test]
+            fn prop_accumulation_commutative(
+                update1 in 1i128..5000i128,
+                update2 in 1i128..5000i128
+            ) {
+                let (env, client, admin) = setup();
+
+                // Path 1: update1 then update2
+                let user1 = Address::generate(&env);
+                client.update_reputation(&admin, &user1, &update1, &symbol_short!("a"), &None);
+                client.update_reputation(&admin, &user1, &update2, &symbol_short!("b"), &None);
+                let result1 = client.get_reputation(&user1);
+
+                // Path 2: update2 then update1
+                let user2 = Address::generate(&env);
+                client.update_reputation(&admin, &user2, &update2, &symbol_short!("b"), &None);
+                client.update_reputation(&admin, &user2, &update1, &symbol_short!("a"), &None);
+                let result2 = client.get_reputation(&user2);
+
+                // Both should yield the same score
+                prop_assert_eq!(result1, result2);
+                prop_assert_eq!(result1, update1 + update2);
+            }
+        }
+
+        /// Invariant: Slashing never increases score
+        proptest! {
+            #[test]
+            fn prop_slash_never_increases(
+                initial_score in 100i128..5000i128,
+                slash_amount in 1i128..500i128
+            ) {
+                let (env, client, admin) = setup();
+                let user = Address::generate(&env);
+
+                client.update_reputation(&admin, &user, &initial_score, &symbol_short!("setup"), &None);
+                let before = client.get_reputation(&user);
+
+                client.slash(&admin, &user, &slash_amount, &symbol_short!("test"));
+                let after = client.get_reputation(&user);
+
+                prop_assert!(after <= before);
+            }
+        }
+
+        // ── Bounds invariants ────────────────────────────────────────────
+
+        /// Invariant: Score is always >= 0 (clamped lower bound)
+        proptest! {
+            #[test]
+            fn prop_score_never_negative(score_change in -10000i128..10000i128) {
+                let (env, client, admin) = setup();
+                let user = Address::generate(&env);
+
+                client.update_reputation(&admin, &user, &score_change, &symbol_short!("test"), &None);
+                let score = client.get_reputation(&user);
+
+                prop_assert!(score >= 0);
+            }
+        }
+
+        /// Invariant: Level is always in [1, 5] (valid range based on thresholds)
+        proptest! {
+            #[test]
+            fn prop_level_in_valid_range(score_change in -10000i128..100000i128) {
+                let (env, client, admin) = setup();
+                let user = Address::generate(&env);
+
+                client.update_reputation(&admin, &user, &score_change, &symbol_short!("test"), &None);
+                let level = client.get_reputation_level(&user);
+
+                prop_assert!(level >= 1);
+                prop_assert!(level <= 5);
+            }
+        }
+
+        /// Invariant: Level is monotonically non-decreasing with score
+        proptest! {
+            #[test]
+            fn prop_level_monotonic(
+                initial_score in 0i128..1000i128,
+                increase in 1i128..5000i128
+            ) {
+                let (env, client, admin) = setup();
+                let user = Address::generate(&env);
+
+                client.update_reputation(&admin, &user, &initial_score, &symbol_short!("setup"), &None);
+                let level1 = client.get_reputation_level(&user);
+
+                client.update_reputation(&admin, &user, &increase, &symbol_short!("more"), &None);
+                let level2 = client.get_reputation_level(&user);
+
+                prop_assert!(level2 >= level1);
+            }
+        }
+
+        /// Invariant: Threshold boundaries are correct
+        proptest! {
+            #[test]
+            fn prop_threshold_boundaries_exact(threshold in [100i128, 400, 900, 1600].iter().copied()) {
+                let (env, client, admin) = setup();
+
+                // Just below threshold → level is one lower
+                let user_below = Address::generate(&env);
+                client.update_reputation(&admin, &user_below, &(threshold - 1), &symbol_short!("test"), &None);
+                let level_below = client.get_reputation_level(&user_below);
+
+                // At threshold → level is one higher
+                let user_at = Address::generate(&env);
+                client.update_reputation(&admin, &user_at, &threshold, &symbol_short!("test"), &None);
+                let level_at = client.get_reputation_level(&user_at);
+
+                prop_assert_eq!(level_at, level_below + 1);
+            }
+        }
+
+        /// Invariant: Slash clamped at zero (never goes negative)
+        proptest! {
+            #[test]
+            fn prop_slash_clamped_at_zero(
+                initial_score in 1i128..1000i128,
+                slash_amount in 1i128..100000i128
+            ) {
+                let (env, client, admin) = setup();
+                let user = Address::generate(&env);
+
+                client.update_reputation(&admin, &user, &initial_score, &symbol_short!("setup"), &None);
+                client.slash(&admin, &user, &slash_amount, &symbol_short!("test"));
+                let final_score = client.get_reputation(&user);
+
+                prop_assert!(final_score >= 0);
+                if slash_amount >= initial_score {
+                    prop_assert_eq!(final_score, 0);
+                } else {
+                    prop_assert_eq!(final_score, initial_score - slash_amount);
+                }
+            }
+        }
+
+        /// Invariant: Negative update clamped at zero
+        proptest! {
+            #[test]
+            fn prop_negative_update_clamped(
+                initial_score in 1i128..1000i128,
+                negative_change in -100000i128..=-1i128
+            ) {
+                let (env, client, admin) = setup();
+                let user = Address::generate(&env);
+
+                client.update_reputation(&admin, &user, &initial_score, &symbol_short!("setup"), &None);
+                client.update_reputation(&admin, &user, &negative_change, &symbol_short!("test"), &None);
+                let final_score = client.get_reputation(&user);
+
+                prop_assert!(final_score >= 0);
+                let expected = (initial_score + negative_change).max(0);
+                prop_assert_eq!(final_score, expected);
+            }
+        }
+
+        // ── Decay invariants ─────────────────────────────────────────────
+
+        /// Invariant: Decay with enabled=false has no effect
+        proptest! {
+            #[test]
+            fn prop_decay_disabled_no_change(score in 100i128..10000i128) {
+                let (env, client, admin) = setup();
+                let user = Address::generate(&env);
+
+                // Disable decay
+                client.set_decay_config(&admin, &false, &0, &1000);
+
+                client.update_reputation(&admin, &user, &score, &symbol_short!("setup"), &None);
+                let before = client.get_reputation(&user);
+
+                // Advance ledger by multiple intervals
+                env.ledger().with_mut(|l| l.sequence_number += 5000);
+
+                let after = client.get_reputation(&user);
+
+                prop_assert_eq!(after, before);
+            }
+        }
+
+        /// Invariant: Decay before interval threshold has no effect
+        proptest! {
+            #[test]
+            fn prop_decay_before_interval(score in 100i128..10000i128) {
+                let (env, client, admin) = setup();
+                let user = Address::generate(&env);
+
+                // Default: interval=1000
+                client.update_reputation(&admin, &user, &score, &symbol_short!("setup"), &None);
+                let before = client.get_reputation(&user);
+
+                // Advance by less than one interval
+                env.ledger().with_mut(|l| l.sequence_number += 500);
+
+                let after = client.get_reputation(&user);
+
+                prop_assert_eq!(after, before);
+            }
+        }
+
+        /// Invariant: Decay never increases score (decay_rate <= 0)
+        proptest! {
+            #[test]
+            fn prop_decay_never_increases(
+                score in 100i128..10000i128,
+                decay_rate in -1000i128..=0i128,
+                periods_elapsed in 1u32..=100
+            ) {
+                let (env, client, admin) = setup();
+                let user = Address::generate(&env);
+
+                // Set decay with rate <= 0
+                client.set_decay_config(&admin, &true, &decay_rate, &1);
+
+                client.update_reputation(&admin, &user, &score, &symbol_short!("setup"), &None);
+                let before = client.get_reputation(&user);
+
+                // Advance by multiple periods
+                env.ledger().with_mut(|l| l.sequence_number += periods_elapsed);
+
+                let after = client.get_reputation(&user);
+
+                // With decay_rate <= 0, score should never increase
+                prop_assert!(after <= before);
+            }
+        }
+
+        // ── Authorization invariants ────────────────────────────────────
+
+        /// Invariant: Only admin and authorized callers can update
+        proptest! {
+            #[test]
+            fn prop_only_authorized_can_update(score_change in 1i128..1000i128) {
+                let (env, client, admin) = setup();
+                let user = Address::generate(&env);
+                let unauthorized = Address::generate(&env);
+
+                // Unauthorized caller should panic
+                let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                    client.update_reputation(&unauthorized, &user, &score_change, &symbol_short!("test"), &None);
+                }));
+
+                prop_assert!(result.is_err(), "unauthorized caller should have panicked");
+            }
+        }
+
+        /// Invariant: Score never exceeds i128 max when accumulating
+        proptest! {
+            #[test]
+            fn prop_no_overflow_on_accumulation(
+                update1 in 1i128..i128::MAX / 3,
+                update2 in 1i128..i128::MAX / 3,
+                update3 in 1i128..i128::MAX / 3
+            ) {
+                let (env, client, admin) = setup();
+                let user = Address::generate(&env);
+
+                // Should not panic on overflow
+                client.update_reputation(&admin, &user, &update1, &symbol_short!("a"), &None);
+                client.update_reputation(&admin, &user, &update2, &symbol_short!("b"), &None);
+                client.update_reputation(&admin, &user, &update3, &symbol_short!("c"), &None);
+
+                let final_score = client.get_reputation(&user);
+                prop_assert!(final_score >= 0);
+                prop_assert_eq!(final_score, update1 + update2 + update3);
+            }
+        }
+    }
 }

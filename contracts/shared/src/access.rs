@@ -17,6 +17,14 @@
 //! access::require_admin(&env, &admin, &DataKey::Admin);
 //! ```
 //!
+//! # Invariants
+//!
+//! - **Authorization Requirement**: All access-control checks require cryptographic proof via `require_auth()`.
+//! - **Fail-Closed**: Unauthorized access attempts result in immediate panics; no partial state changes.
+//! - **Immutability of Slots**: Once an authority (admin, arbiter, owner) is stored, identity mismatches are fatal.
+//! - **Explicit Storage Keys**: The key for each authority slot is passed explicitly to prevent key collisions.
+//! - **Clear Error Messages**: Each function produces a distinct panic message that aids debugging.
+//!
 //! Panic messages are string literals rather than named constants on purpose:
 //! `assert!(cond, LITERAL)` compiles to a static-string panic, whereas
 //! `assert!(cond, "{}", SOME_CONST)` drags `core::fmt` into the contract wasm.
@@ -25,6 +33,11 @@
 use soroban_sdk::{Address, Env, IntoVal, Val};
 
 /// Reads the `Address` stored at `key` in instance storage.
+///
+/// # Invariants Enforced
+///
+/// - **Initialization Check**: Panics if the storage slot is uninitialized (empty).
+/// - **Deterministic Failure**: Uses a human-readable message to distinguish this error from others.
 ///
 /// Panics with `"Not initialized"` if the slot is empty, which is a clearer
 /// failure than the bare `.unwrap()` this replaces.
@@ -36,6 +49,12 @@ where
 }
 
 /// Returns whether `caller` is the admin stored at `admin_key`.
+///
+/// # Invariants Enforced
+///
+/// - **Pure Predicate**: This is a read-only check; no auth requirement, no side effects.
+/// - **Identity-Based**: Direct address comparison; no role inheritance or delegation.
+/// - **Initialization Check**: Panics if the admin slot is not yet initialized.
 ///
 /// Pure predicate: it neither requires auth nor panics on a mismatch. Use it to
 /// build a compound check; use [`require_admin`] to gate an entry point.
@@ -49,6 +68,14 @@ where
 }
 
 /// Requires that `caller` authorized this invocation and is the stored admin.
+///
+/// # Invariants Enforced
+///
+/// - **Authorization Requirement**: The caller must provide cryptographic proof via `require_auth()`.
+/// - **Identity Verification**: The caller's address must match the stored admin address exactly.
+/// - **Atomic Checks**: Both authorization and identity are verified together; partial success is impossible.
+/// - **Fail-Closed**: If either check fails, the contract halts immediately with a panic.
+/// - **Initialization Check**: Panics clearly if the admin slot is not yet initialized.
 ///
 /// Panics with `"Unauthorized: admin required"` otherwise.
 pub fn require_admin<K>(env: &Env, caller: &Address, admin_key: &K)
@@ -64,6 +91,13 @@ where
 
 /// Requires that `caller` authorized this invocation and is the address held in
 /// a non-admin authority slot — a dispute arbiter, an oracle, a fee collector.
+///
+/// # Invariants Enforced
+///
+/// - **Authorization Requirement**: The caller must provide cryptographic proof via `require_auth()`.
+/// - **Role Separation**: This checks a distinct role slot, not the admin role.
+/// - **Single-Role Assignment**: Only one address may hold the authority role at a time.
+/// - **Initialization Check**: Panics clearly if the authority slot is not yet initialized.
 ///
 /// Panics with `"Unauthorized: authority required"` otherwise.
 pub fn require_authority<K>(env: &Env, caller: &Address, authority_key: &K)
@@ -81,6 +115,13 @@ where
 /// admin or `permitted` — e.g. an escrow that both its payer and the admin may
 /// cancel.
 ///
+/// # Invariants Enforced
+///
+/// - **Authorization Requirement**: The caller must provide cryptographic proof via `require_auth()`.
+/// - **Dual-Approval Pattern**: Either the admin or the permitted address may proceed.
+/// - **No Implicit Roles**: Holding one role does not grant the other; checks are independent.
+/// - **Short-Circuit Evaluation**: Once one condition passes, no further checks occur.
+///
 /// Panics with `"Unauthorized: admin or permitted caller required"` otherwise.
 pub fn require_admin_or<K>(env: &Env, caller: &Address, admin_key: &K, permitted: &Address)
 where
@@ -94,6 +135,13 @@ where
 }
 
 /// Requires that `caller` authorized this invocation and owns the resource.
+///
+/// # Invariants Enforced
+///
+/// - **Authorization Requirement**: The caller must provide cryptographic proof via `require_auth()`.
+/// - **Ownership Verification**: The caller's address must match the resource owner's address exactly.
+/// - **No Admin Override**: This check does not grant the admin any special privileges; only the owner may pass.
+/// - **Per-Resource Check**: Ownership is verified for a specific resource, not globally.
 ///
 /// `owner` is read by the caller from whatever per-resource key the contract
 /// uses (`DataKey::NFTOwner(id)`, a listing's `seller`, ...), so this helper

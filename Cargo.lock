@@ -150,6 +150,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "brain-storm-escrow"
+version = "0.1.0"
+dependencies = [
+ "brain-storm-shared",
+ "soroban-sdk",
+]
+
+[[package]]
 name = "brain-storm-governance"
 version = "0.1.0"
 dependencies = [
@@ -1191,6 +1199,7 @@ name = "reputation"
 version = "0.1.0"
 dependencies = [
  "brain-storm-shared",
+ "proptest",
  "soroban-sdk",
 ]
 

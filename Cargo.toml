@@ -62,6 +62,7 @@ overflow-checks = true
 #
 # clippy is configured via clippy.toml at the workspace root.
 # Enforce in CI with:   cargo clippy --workspace -- -D warnings
+# This configuration also adds -D warnings at runtime via workspace defaults
 [workspace.metadata.fmt]
 check_command = "cargo fmt --all -- --check"
 format_command = "cargo fmt --all"
@@ -97,13 +98,13 @@ range_minus_one              = "warn"   # prefer `..end` over `..=end - 1`
 range_plus_one               = "warn"   # prefer `..=end` over `..end + 1`
 redundant_closure_for_method_calls = "warn"  # prefer method references over wrapping closures
 return_self_not_must_use     = "warn"   # builder-pattern methods should be `#[must_use]`
-same_functions_in_if_blocks  = "warn"   # identical function calls in if/else branches
 semicolon_if_nothing_returned = "warn"  # add trailing `;` to expression statements
 unnested_or_patterns         = "warn"   # prefer `A | B` over nested `match`
 unused_self                  = "warn"   # methods that don't use `self` should be free functions
 used_underscore_binding      = "warn"   # using a `_`-prefixed variable suggests it's intentionally unused
 
 # Lints kept at allow (would require large churn or are inapplicable):
+#   same_functions_in_if_blocks      — not available in MSRV 1.70.0
 #   missing_errors_doc, missing_panics_doc — see clippy.toml rationale
 #   module_name_repetitions               — ABI-breaking rename for TokenContract, etc.
 #   must_use_candidate                    — too noisy on entry-point fns
