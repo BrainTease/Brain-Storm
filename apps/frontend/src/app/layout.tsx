@@ -1,10 +1,12 @@
 import type { Metadata } from 'next';
 import dynamic from 'next/dynamic';
-import './globals.css';
+
+import { ThemeProvider } from '@/components/ThemeProvider';
 import NetworkStatus from '@/components/ui/NetworkStatus';
 import { TourProvider } from '@/components/ui/TourProvider';
-import { ThemeProvider } from '@/components/ThemeProvider';
 import { WalletProvider } from '@/lib/wallet';
+
+import './globals.css';
 
 const WalletButton = dynamic(
   () => import('@/components/wallet/WalletButton').then((m) => ({ default: m.WalletButton })),

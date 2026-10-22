@@ -1,3 +1,5 @@
+import { controlClass } from '@/components/ui/form/fieldStyles';
+
 interface SearchInputProps {
   value: string;
   onChange: (value: string) => void;
@@ -22,7 +24,7 @@ export function SearchInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full rounded-lg border border-gray-300 dark:border-gray-700 pl-10 pr-4 py-2.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className={controlClass({ className: 'pl-10' })}
         aria-describedby={`${id}-hint`}
       />
       <p id={`${id}-hint`} className="sr-only">

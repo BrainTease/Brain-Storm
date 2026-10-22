@@ -11,7 +11,8 @@ use crate::types::{
     DataKey, ProposalRecord, UpgradeProposalRecord, PROPOSAL_CREATED, PROPOSAL_EXECUTED,
     UPGRADE_APPROVED, UPGRADE_EXECUTED, UPGRADE_PROPOSED, VOTE_CAST,
 };
-use crate::validation_helpers::{assert_valid_voting_period, is_zero_address};
+use crate::validation_helpers::is_zero_address;
+use crate::voting::GovernanceKey;
 
 pub fn create_proposal(
     env: Env,

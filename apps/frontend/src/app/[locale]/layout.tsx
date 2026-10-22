@@ -2,13 +2,15 @@ import type { Metadata } from 'next';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { notFound } from 'next/navigation';
-import { routing, isRTLLocale } from '@/i18n/routing';
-import { ThemeProvider } from '@/components/ThemeProvider';
-import { WalletProvider } from '@/lib/wallet';
-import { Navbar } from '@/components/layout/Navbar';
-import { Footer } from '@/components/layout/Footer';
+
 import { GlobalShortcuts } from '@/components/GlobalShortcuts';
+import { ThemeProvider } from '@/components/ThemeProvider';
+import { Footer } from '@/components/layout/Footer';
+import { Navbar } from '@/components/layout/Navbar';
 import { Toaster } from '@/components/ui/Toaster';
+import { routing, isRTLLocale } from '@/i18n/routing';
+import { WalletProvider } from '@/lib/wallet';
+
 import '../globals.css';
 
 export const metadata: Metadata = {
