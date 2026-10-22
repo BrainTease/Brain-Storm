@@ -1,4 +1,5 @@
 #![no_std]
+#![allow(clippy::needless_pass_by_value)] // Soroban SDK types like Address are Copy
 use soroban_sdk::{
     contract, contractimpl, contracttype, symbol_short, Address, Env, Symbol,
 };

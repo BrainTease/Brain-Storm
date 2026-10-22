@@ -1,4 +1,5 @@
 #![no_std]
+#![allow(clippy::needless_pass_by_value)] // Soroban SDK types like Address are Copy
 use soroban_sdk::{
     contract, contractimpl, contracttype, symbol_short, Address, Env, Symbol, Vec,
 };
@@ -55,6 +56,14 @@ pub struct ReputationContract;
 
 #[contractimpl]
 impl ReputationContract {
+    /// Initialize the contract with an admin address.
+    ///
+    /// # Invariants Enforced
+    ///
+    /// - **Single Initialization**: Can only be called once; subsequent calls panic with "Already initialized".
+    /// - **Admin Authorization**: The admin must provide cryptographic proof via `require_auth()`.
+    /// - **Initial State**: Sets default decay config (enabled, rate=-1, interval=1000) and total reputation to 0.
+    /// - **Atomic Operation**: All state is initialized in a single operation; no partial states.
     pub fn initialize(env: Env, admin: Address) {
         assert!(!env.storage().instance().has(&DataKey::Admin), "Already initialized");
         admin.require_auth();
@@ -74,11 +83,25 @@ impl ReputationContract {
     // ── #657: Authorized-caller management ───────────────────────────────────
 
     /// Grant an address (e.g. Market or Escrow contract) permission to update scores.
+    ///
+    /// # Invariants Enforced
+    ///
+    /// - **Admin-Only**: Only the contract admin may grant authorization.
+    /// - **Authorization Requirement**: The admin must provide cryptographic proof via `require_auth()`.
+    /// - **Persistence**: Once granted, authorization persists until revoked.
+    /// - **Event Emission**: Emits an event for external systems to track authorization grants.
     pub fn add_authorized_caller(env: Env, admin: Address, caller: Address) {
         reputation::add_authorized_caller(&env, &admin, &caller);
     }
 
     /// Revoke a previously authorized caller.
+    ///
+    /// # Invariants Enforced
+    ///
+    /// - **Admin-Only**: Only the contract admin may revoke authorization.
+    /// - **Authorization Requirement**: The admin must provide cryptographic proof via `require_auth()`.
+    /// - **Idempotent**: Revoking a non-existent authorization has no effect.
+    /// - **Event Emission**: Emits an event for external systems to track authorization revocations.
     pub fn remove_authorized_caller(env: Env, admin: Address, caller: Address) {
         reputation::remove_authorized_caller(&env, &admin, &caller);
     }
@@ -90,6 +113,15 @@ impl ReputationContract {
     // ── #657: Slashing ───────────────────────────────────────────────────────
 
     /// Slash `amount` from `user`'s reputation (callable by admin or authorized callers).
+    ///
+    /// # Invariants Enforced
+    ///
+    /// - **Authorized-Only**: Only the admin or authorized callers may slash reputation.
+    /// - **Authorization Requirement**: The caller must provide cryptographic proof via `require_auth()`.
+    /// - **Non-Negative Final Score**: Score is clamped to zero; slashing cannot produce a negative score.
+    /// - **Level Recalculation**: User's level is recalculated based on the new score.
+    /// - **Timestamp Update**: The reputation record's `last_updated` is refreshed.
+    /// - **Event Emission**: Emits an event with the user, amount, and reason for auditability.
     pub fn slash(env: Env, caller: Address, user: Address, amount: i128, reason: Symbol) {
         reputation::slash(&env, &caller, &user, amount, reason);
     }
@@ -207,6 +239,14 @@ impl ReputationContract {
         }
     }
 
+    /// Set the decay configuration for reputation (admin-only).
+    ///
+    /// # Invariants Enforced
+    ///
+    /// - **Admin-Only**: Only the contract admin may modify decay configuration.
+    /// - **Authorization Requirement**: The admin must provide cryptographic proof via `require_auth()`.
+    /// - **Atomic Update**: The entire decay config is updated in a single operation.
+    /// - **Effect on Future Decays**: Changes take effect immediately but only apply to future decay calculations.
     pub fn set_decay_config(env: Env, admin: Address, enabled: bool, decay_rate: i128, decay_interval: u32) {
         access::require_admin(&env, &admin, &DataKey::Admin);
         env.storage().instance().set(&DataKey::DecayConfig, &DecayConfig { enabled, decay_rate, decay_interval });
