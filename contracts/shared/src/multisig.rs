@@ -106,7 +106,7 @@ pub fn get_threshold(env: &Env) -> u32 {
 }
 
 pub fn set_threshold(env: &Env, admin: Address, threshold: u32) {
-    admin.require_auth();
+    crate::access::require_admin(env, &admin, &crate::DataKey::Admin);
     assert!(threshold > 0, "Threshold must be at least 1");
     env.storage().instance().set(&MultiSigKey::Threshold, &threshold);
 }
@@ -182,6 +182,7 @@ mod tests {
         let admin = Address::generate(&env);
         let id = env.register_contract(None, TestContract);
         env.as_contract(&id, || {
+            env.storage().instance().set(&crate::DataKey::Admin, &admin);
             env.storage().instance().set(&MultiSigKey::NextProposalId, &1u64);
             env.storage().instance().set(&MultiSigKey::Threshold, &1u32);
         });

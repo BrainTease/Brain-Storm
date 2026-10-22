@@ -53,7 +53,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Only admin")]
+    #[should_panic(expected = "Unauthorized: admin required")]
     fn test_non_admin_cannot_add_curator() {
         let (env, client, _) = setup();
         let rando = Address::generate(&env);
@@ -293,7 +293,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Only admin")]
+    #[should_panic(expected = "Unauthorized: admin required")]
     fn test_non_admin_cannot_pause() {
         let (env, client, _) = setup();
         let rando = Address::generate(&env);
@@ -301,7 +301,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Only admin")]
+    #[should_panic(expected = "Unauthorized: admin required")]
     fn test_non_admin_cannot_unpause() {
         let (env, client, admin) = setup();
         client.pause(&admin);

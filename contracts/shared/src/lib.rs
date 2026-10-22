@@ -316,13 +316,11 @@ impl SharedContract {
     // -------------------------------------------------------------------------
 
     pub fn pause_contract(env: Env, admin: Address, auto_unpause_ledgers: u32) {
-        crate::access::require_admin(&env, &admin, &DataKey::Admin);
-        pausable::pause(&env, &admin, auto_unpause_ledgers);
+        pausable::pause(&env, &admin, &DataKey::Admin, auto_unpause_ledgers);
     }
 
     pub fn unpause_contract(env: Env, admin: Address) {
-        crate::access::require_admin(&env, &admin, &DataKey::Admin);
-        pausable::unpause(&env, &admin);
+        pausable::unpause(&env, &admin, &DataKey::Admin);
     }
 
     pub fn is_contract_paused(env: Env) -> bool {

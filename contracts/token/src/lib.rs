@@ -3,6 +3,7 @@ extern crate alloc;
 use alloc::format;
 
 use soroban_sdk::{contract, contractimpl, Address, Env, String, Symbol};
+use brain_storm_shared::admin::AdminManager;
 
 mod types;
 pub use types::*;
@@ -133,7 +134,7 @@ impl TokenContract {
         // Validate admin
         let stored_admin: Address = env.storage().instance().get(&Symbol::new(&env, "admin"))
             .ok_or(TokenError::Unauthorized)?;
-        if admin != stored_admin {
+        if !AdminManager::is_admin(&admin, &stored_admin) {
             return Err(TokenError::Unauthorized);
         }
 
@@ -188,7 +189,7 @@ impl TokenContract {
         // Validate admin
         let stored_admin: Address = env.storage().instance().get(&Symbol::new(&env, "admin"))
             .ok_or(TokenError::Unauthorized)?;
-        if admin != stored_admin {
+        if !AdminManager::is_admin(&admin, &stored_admin) {
             return Err(TokenError::Unauthorized);
         }
 

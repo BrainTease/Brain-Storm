@@ -171,7 +171,12 @@ impl CertificateContract {
     /// Transfer a certificate from `from` to `to`.
     /// Requires the certificate to have transferability enabled and not be revoked.
     pub fn transfer(env: Env, from: Address, to: Address, cert_id: u64) {
-        from.require_auth();
+        let mut cert: CertificateRecord = env
+            .storage()
+            .persistent()
+            .get(&DataKey::Certificate(cert_id))
+            .expect("Certificate not found");
+        access::require_owner(&from, &cert.owner);
 
         let transferable: bool = env
             .storage()
@@ -183,14 +188,6 @@ impl CertificateContract {
             !env.storage().persistent().has(&DataKey::Revocation(cert_id)),
             "Revoked certificate cannot be transferred"
         );
-
-        let mut cert: CertificateRecord = env
-            .storage()
-            .persistent()
-            .get(&DataKey::Certificate(cert_id))
-            .expect("Certificate not found");
-
-        assert!(cert.owner == from, "Caller is not the certificate owner");
 
         // Remove from sender's list
         let from_key = DataKey::OwnerCertificates(from.clone());

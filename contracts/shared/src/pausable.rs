@@ -1,4 +1,4 @@
-use soroban_sdk::{contracttype, symbol_short, Address, Env};
+use soroban_sdk::{contracttype, symbol_short, Address, Env, IntoVal, Val};
 
 #[contracttype]
 pub enum DataKey {
@@ -21,8 +21,11 @@ pub fn initialize_pausable(env: &Env) {
     }
 }
 
-pub fn pause(env: &Env, admin: &Address, auto_unpause_ledgers: u32) {
-    admin.require_auth();
+pub fn pause<K>(env: &Env, admin: &Address, admin_key: &K, auto_unpause_ledgers: u32)
+where
+    K: IntoVal<Env, Val>,
+{
+    crate::access::require_admin(env, admin, admin_key);
     
     let is_paused: bool = env
         .storage()
@@ -48,8 +51,11 @@ pub fn pause(env: &Env, admin: &Address, auto_unpause_ledgers: u32) {
     );
 }
 
-pub fn unpause(env: &Env, admin: &Address) {
-    admin.require_auth();
+pub fn unpause<K>(env: &Env, admin: &Address, admin_key: &K)
+where
+    K: IntoVal<Env, Val>,
+{
+    crate::access::require_admin(env, admin, admin_key);
 
     let is_paused: bool = env
         .storage()
