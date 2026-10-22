@@ -1,6 +1,6 @@
 #![cfg(test)]
 //! Additional tests for the badges contract covering:
-//! - burn_badge: happy path, non-admin panics, already-burned panics, not-found panics
+//! - burn_badge: happy path, non-admin panics, and not-found panics
 //! - transfer: always panics (soulbound)
 //! - get_badge_type: returns None for missing type
 //! - get_badge: returns None for nonexistent id
@@ -139,7 +139,7 @@ fn test_burn_nonexistent_badge_panics() {
 }
 
 #[test]
-#[should_panic(expected = "Badge already burned")]
+#[should_panic(expected = "Badge not found")]
 fn test_burn_same_badge_twice_panics() {
     let (env, client, admin) = setup();
     let (_, id) = create_type_and_mint(&env, &client, &admin);

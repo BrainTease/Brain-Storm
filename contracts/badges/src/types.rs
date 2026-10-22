@@ -16,7 +16,6 @@ pub enum DataKey {
     OwnerBadges(Address),                // owner → Vec<u64>
     NextId,                              // u64 counter
     BadgeType(Symbol),                   // type → BadgeTypeRecord
-    BurnedBadge(u64),                    // id → bool (burned flag)
 }
 
 // =============================================================================
