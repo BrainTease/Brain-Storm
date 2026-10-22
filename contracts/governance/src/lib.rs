@@ -12,6 +12,9 @@ pub mod voting;
 
 pub use types::*;
 
+use crate::validation_helpers::{
+    assert_valid_quorum_percentage, assert_valid_voting_period, DEFAULT_QUORUM_PERCENTAGE,
+};
 use voting::{
     VotingStrategy, VoteSupport,
     GovernanceKey, VotingProposal, VoteRecord,
@@ -48,6 +51,7 @@ impl GovernanceContract {
             "Already initialized"
         );
         admin.require_auth();
+        assert_valid_quorum_percentage(DEFAULT_QUORUM_PERCENTAGE);
         env.storage().instance().set(&DataKey::Admin, &admin);
         env.storage()
             .instance()
@@ -62,7 +66,7 @@ impl GovernanceContract {
             .set(&GovernanceKey::TimelockDuration, &10_u32);
         env.storage()
             .instance()
-            .set(&GovernanceKey::QuorumPercentage, &20_i128);
+            .set(&GovernanceKey::QuorumPercentage, &DEFAULT_QUORUM_PERCENTAGE);
     }
 
     pub fn get_admin(env: Env) -> Address {
@@ -89,7 +93,7 @@ impl GovernanceContract {
 
     pub fn set_quorum_percentage(env: Env, admin: Address, percentage: i128) {
         access::require_admin(&env, &admin, &DataKey::Admin);
-        assert!(percentage > 0 && percentage <= 100, "Quorum must be 1-100");
+        assert_valid_quorum_percentage(percentage);
         env.storage()
             .instance()
             .set(&GovernanceKey::QuorumPercentage, &percentage);
@@ -117,6 +121,7 @@ impl GovernanceContract {
         strategy: u32,
         timelock_delay: u32,
     ) -> u64 {
+        assert_valid_voting_period(env.ledger().sequence(), voting_end_ledger);
         let strat = match strategy {
             1 => VotingStrategy::Quadratic,
             2 => VotingStrategy::Flat,

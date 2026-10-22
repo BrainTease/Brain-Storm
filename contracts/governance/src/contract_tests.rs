@@ -53,6 +53,19 @@ fn test_initialize_sets_admin() {
 }
 
 #[test]
+fn test_initialize_sets_valid_default_quorum() {
+    let (env, client, _, _) = setup();
+    let proposer = Address::generate(&env);
+    let title = String::from_str(&env, "Test");
+    let desc = String::from_str(&env, "Test");
+    let end = env.ledger().sequence() + 1;
+
+    let id = client.create_advanced_proposal(&proposer, &title, &desc, &end, &0, &0);
+    let proposal = client.get_advanced_proposal(&id).unwrap();
+    assert_eq!(proposal.quorum_required, 200_000_000_000_000);
+}
+
+#[test]
 #[should_panic(expected = "Already initialized")]
 fn test_double_initialize_panics() {
     let (_, client, admin, token) = setup();
@@ -83,6 +96,54 @@ fn test_create_proposal_past_end_panics() {
     let title = String::from_str(&env, "Test");
     let desc = String::from_str(&env, "Test");
     client.create_proposal(&proposer, &title, &desc, &0_u32);
+}
+
+#[test]
+fn test_create_proposal_accepts_maximum_voting_period() {
+    let (env, client, _, _) = setup();
+    let proposer = Address::generate(&env);
+    let title = String::from_str(&env, "Test");
+    let desc = String::from_str(&env, "Test");
+    let end = env.ledger().sequence() + 100_000;
+
+    client.create_proposal(&proposer, &title, &desc, &end);
+}
+
+#[test]
+#[should_panic(expected = "Voting period must be 1-100000 ledgers")]
+fn test_create_proposal_rejects_voting_period_over_maximum() {
+    let (env, client, _, _) = setup();
+    let proposer = Address::generate(&env);
+    let title = String::from_str(&env, "Test");
+    let desc = String::from_str(&env, "Test");
+    let end = env.ledger().sequence() + 100_001;
+
+    client.create_proposal(&proposer, &title, &desc, &end);
+}
+
+#[test]
+#[should_panic(expected = "Voting period must be 1-100000 ledgers")]
+fn test_create_advanced_proposal_rejects_voting_period_over_maximum() {
+    let (env, client, _, _) = setup();
+    let proposer = Address::generate(&env);
+    let title = String::from_str(&env, "Test");
+    let desc = String::from_str(&env, "Test");
+    let end = env.ledger().sequence() + 100_001;
+
+    client.create_advanced_proposal(&proposer, &title, &desc, &end, &0, &0);
+}
+
+#[test]
+#[should_panic(expected = "Voting period must be 1-100000 ledgers")]
+fn test_propose_upgrade_rejects_voting_period_over_maximum() {
+    let (env, client, _, _) = setup();
+    let proposer = Address::generate(&env);
+    let contract_addr = Address::generate(&env);
+    let wasm_hash = symbol_short!("abc123");
+    let end = env.ledger().sequence() + 100_001;
+    let timelock = end + 1;
+
+    client.propose_upgrade(&proposer, &contract_addr, &wasm_hash, &end, &timelock);
 }
 
 #[test]
@@ -174,6 +235,13 @@ fn test_admin_set_quorum_percentage() {
 fn test_invalid_quorum_panics() {
     let (_, client, admin, _) = setup();
     client.set_quorum_percentage(&admin, &0_i128);
+}
+
+#[test]
+#[should_panic(expected = "Quorum must be 1-100")]
+fn test_negative_quorum_panics() {
+    let (_, client, admin, _) = setup();
+    client.set_quorum_percentage(&admin, &-1_i128);
 }
 
 #[test]

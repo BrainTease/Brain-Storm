@@ -1,8 +1,35 @@
-//! Upgrade-target validation helpers (issue #1169).
+//! Governance configuration and upgrade-target validation helpers.
 //!
 //! Split out of `lib.rs` (issue #1324).
 
 use soroban_sdk::{Address, String};
+
+// =============================================================================
+// Governance configuration validation
+// =============================================================================
+
+pub const DEFAULT_QUORUM_PERCENTAGE: i128 = 20;
+pub const MIN_QUORUM_PERCENTAGE: i128 = 1;
+pub const MAX_QUORUM_PERCENTAGE: i128 = 100;
+pub const MAX_VOTING_PERIOD_LEDGERS: u32 = 100_000;
+
+pub fn assert_valid_quorum_percentage(percentage: i128) {
+    assert!(
+        (MIN_QUORUM_PERCENTAGE..=MAX_QUORUM_PERCENTAGE).contains(&percentage),
+        "Quorum must be 1-100"
+    );
+}
+
+pub fn assert_valid_voting_period(current_ledger: u32, voting_end_ledger: u32) {
+    assert!(
+        voting_end_ledger > current_ledger,
+        "Voting end must be in future"
+    );
+    assert!(
+        voting_end_ledger - current_ledger <= MAX_VOTING_PERIOD_LEDGERS,
+        "Voting period must be 1-100000 ledgers"
+    );
+}
 
 // =============================================================================
 // Upgrade target validation (issue #1169)
@@ -23,4 +50,3 @@ pub fn is_zero_address(addr: &Address) -> bool {
     strkey == String::from_str(addr.env(), ZERO_CONTRACT_ADDRESS)
         || strkey == String::from_str(addr.env(), ZERO_ACCOUNT_ADDRESS)
 }
-

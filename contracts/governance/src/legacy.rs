@@ -11,7 +11,7 @@ use crate::types::{
     DataKey, ProposalRecord, UpgradeProposalRecord, PROPOSAL_CREATED, PROPOSAL_EXECUTED,
     UPGRADE_APPROVED, UPGRADE_EXECUTED, UPGRADE_PROPOSED, VOTE_CAST,
 };
-use crate::validation_helpers::is_zero_address;
+use crate::validation_helpers::{assert_valid_voting_period, is_zero_address};
 
 pub fn create_proposal(
     env: Env,
@@ -21,10 +21,7 @@ pub fn create_proposal(
     voting_end_ledger: u32,
 ) -> u64 {
     proposer.require_auth();
-    assert!(
-        voting_end_ledger > env.ledger().sequence(),
-        "Voting end must be in future"
-    );
+    assert_valid_voting_period(env.ledger().sequence(), voting_end_ledger);
 
     let id: u64 = env.storage().instance().get(&DataKey::NextProposalId).unwrap();
     let proposal = ProposalRecord {
@@ -226,7 +223,7 @@ pub fn propose_upgrade(
         "Contract address must not be zero"
     );
 
-    assert!(voting_end_ledger > env.ledger().sequence(), "Voting end must be in future");
+    assert_valid_voting_period(env.ledger().sequence(), voting_end_ledger);
     assert!(timelock_ledger > voting_end_ledger, "Timelock must be after voting");
 
     let id: u64 = env.storage().instance().get(&DataKey::NextProposalId).unwrap();
