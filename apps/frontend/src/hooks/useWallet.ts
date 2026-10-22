@@ -1,8 +1,9 @@
 'use client';
 
 import { useCallback, useMemo } from 'react';
-import { useWallet as useCoreWallet, type WalletContextValue } from '@/lib/wallet';
 import { BrainStormClient } from '@brain-storm/sdk';
+
+import { useWallet as useCoreWallet, type WalletContextValue } from '@/lib/wallet';
 
 const sdkClient = new BrainStormClient({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://api.brain-storm.com',
