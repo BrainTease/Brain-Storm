@@ -217,11 +217,11 @@ impl GovernanceContract {
     }
 
     pub fn vote(env: Env, voter: Address, proposal_id: u64, support: bool) {
-        legacy::vote()
+        legacy::vote(env, voter, proposal_id, support)
     }
 
     pub fn execute_proposal(env: Env, proposal_id: u64) {
-        legacy::execute_proposal()
+        legacy::execute_proposal(env, proposal_id)
     }
 
     pub fn get_proposal(env: Env, proposal_id: u64) -> Option<ProposalRecord> {
@@ -276,7 +276,7 @@ impl GovernanceContract {
     }
 
     pub fn vote_upgrade(env: Env, voter: Address, upgrade_id: u64, support: bool) {
-        legacy::vote_upgrade()
+        legacy::vote_upgrade(env, voter, upgrade_id, support)
     }
 
     /// Approve a passed upgrade proposal. **Stored admin only** (issue #1169):
@@ -284,11 +284,11 @@ impl GovernanceContract {
     /// but the function previously took no caller at all, so anyone could flip
     /// `approved` on a proposal that had merely finished voting.
     pub fn approve_upgrade(env: Env, admin: Address, upgrade_id: u64) {
-        legacy::approve_upgrade()
+        legacy::approve_upgrade(env, admin, upgrade_id)
     }
 
     pub fn execute_upgrade(env: Env, upgrade_id: u64) {
-        legacy::execute_upgrade()
+        legacy::execute_upgrade(env, upgrade_id)
     }
 
     pub fn get_upgrade_proposal(env: Env, upgrade_id: u64) -> Option<UpgradeProposalRecord> {
