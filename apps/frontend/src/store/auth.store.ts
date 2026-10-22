@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+
 import { isTokenExpired } from '@/lib/jwt';
 
 export interface AuthUser {

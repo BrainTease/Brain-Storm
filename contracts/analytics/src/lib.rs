@@ -295,7 +295,7 @@ impl AnalyticsContract {
     }
 
     pub fn update_aggregates(env: Env, admin: Address) {
-        queries::update_aggregates()
+        queries::update_aggregates(env, admin)
     }
 
     // -------------------------------------------------------------------------
@@ -375,8 +375,5 @@ impl AnalyticsContract {
 mod fuzz_tests;
 
 // Dedicated per-function tests for every public entry point (#1363).
-#[cfg(test)]
-mod contract_tests;
-
 #[cfg(test)]
 mod contract_tests;

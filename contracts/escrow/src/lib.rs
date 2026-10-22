@@ -1,6 +1,7 @@
 #![no_std]
-use soroban_sdk::{contract, contracttype, Address, Env, String, panic_with_error};
-use shared::{SharedError};
+use soroban_sdk::{contract, contractimpl, contracttype, Address, Env};
+
+use brain_storm_shared::SharedError;
 
 // Contract-specific error types
 #[contracttype]
@@ -9,7 +10,7 @@ pub enum EscrowError {
     // Shared errors are composed into the contract's error enum
     // by wrapping them in specific variants
     Shared(SharedError),
-    
+
     // Contract-specific errors
     EscrowNotFound = 100,
     EscrowAlreadyFunded = 101,
@@ -21,6 +22,7 @@ pub enum EscrowError {
     DeadlinePassed = 107,
     InvalidMilestoneIndex = 108,
     MilestoneCountMismatch = 109,
+    EscrowAlreadyExists = 110,
 }
 
 impl From<SharedError> for EscrowError {
@@ -51,7 +53,7 @@ impl EscrowContract {
 
         // Contract-specific logic
         let escrow_id = 1u64;
-        
+
         // Check if already exists
         if Self::escrow_exists(&env, escrow_id) {
             return Err(EscrowError::EscrowAlreadyExists);
@@ -69,7 +71,7 @@ impl EscrowContract {
         amount: i128,
     ) -> Result<(), EscrowError> {
         // Check if caller is authorized
-        if !Self::is_authorized(&env, escrow_id, caller) {
+        if !Self::is_authorized(&env, escrow_id, &caller) {
             return Err(SharedError::Unauthorized.into());
         }
 
@@ -89,7 +91,7 @@ impl EscrowContract {
         }
 
         // Check balance
-        if Self::get_balance(&env, caller) < amount {
+        if Self::get_balance(&env, &caller) < amount {
             return Err(SharedError::InsufficientBalance.into());
         }
 
@@ -104,7 +106,7 @@ impl EscrowContract {
         caller: Address,
     ) -> Result<(), EscrowError> {
         // Check if caller is authorized
-        if !Self::is_authorized(&env, escrow_id, caller) {
+        if !Self::is_authorized(&env, escrow_id, &caller) {
             return Err(SharedError::Unauthorized.into());
         }
 
@@ -128,12 +130,29 @@ impl EscrowContract {
     }
 
     /// Helper functions (stubs)
-    fn escrow_exists(_env: &Env, _id: u64) -> bool { true }
-    fn is_authorized(_env: &Env, _id: u64, _caller: Address) -> bool { true }
-    fn is_funded(_env: &Env, _id: u64) -> bool { false }
-    fn is_released(_env: &Env, _id: u64) -> bool { false }
-    fn get_balance(_env: &Env, _caller: Address) -> i128 { 1000 }
-    fn are_all_milestones_approved(_env: &Env, _id: u64) -> bool { true }
+    fn escrow_exists(_env: &Env, _id: u64) -> bool {
+        true
+    }
+
+    fn is_authorized(_env: &Env, _id: u64, _caller: &Address) -> bool {
+        true
+    }
+
+    fn is_funded(_env: &Env, _id: u64) -> bool {
+        false
+    }
+
+    fn is_released(_env: &Env, _id: u64) -> bool {
+        false
+    }
+
+    fn get_balance(_env: &Env, _caller: &Address) -> i128 {
+        1000
+    }
+
+    fn are_all_milestones_approved(_env: &Env, _id: u64) -> bool {
+        true
+    }
 }
 
 #[cfg(test)]

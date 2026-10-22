@@ -71,7 +71,6 @@
 //! the re-initialization test in `tests.rs`, and the approval-gate tests in
 //! `contracts/governance/src/lib.rs`.
 
-#![allow(unused)]
 use soroban_sdk::{contracttype, symbol_short, Address, BytesN, Env, Symbol};
 
 // =============================================================================

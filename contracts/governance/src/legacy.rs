@@ -12,6 +12,7 @@ use crate::types::{
     UPGRADE_APPROVED, UPGRADE_EXECUTED, UPGRADE_PROPOSED, VOTE_CAST,
 };
 use crate::validation_helpers::is_zero_address;
+use crate::voting::GovernanceKey;
 
 pub fn create_proposal(
     env: Env,
