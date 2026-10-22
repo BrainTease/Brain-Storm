@@ -48,21 +48,16 @@ impl GovernanceContract {
             "Already initialized"
         );
         admin.require_auth();
-        env.storage().instance().set(&DataKey::Admin, &admin);
-        env.storage()
-            .instance()
-            .set(&DataKey::TokenContract, &token_contract);
-        env.storage().instance().set(&DataKey::NextProposalId, &1_u64);
+        // Cache the instance storage handle — avoids a separate borrow for
+        // each of the six `set` calls below (gas opt #1321).
+        let inst = env.storage().instance();
+        inst.set(&DataKey::Admin, &admin);
+        inst.set(&DataKey::TokenContract, &token_contract);
+        inst.set(&DataKey::NextProposalId, &1_u64);
         // Defaults
-        env.storage()
-            .instance()
-            .set(&GovernanceKey::VotingDelay, &0_u32);
-        env.storage()
-            .instance()
-            .set(&GovernanceKey::TimelockDuration, &10_u32);
-        env.storage()
-            .instance()
-            .set(&GovernanceKey::QuorumPercentage, &20_i128);
+        inst.set(&GovernanceKey::VotingDelay, &0_u32);
+        inst.set(&GovernanceKey::TimelockDuration, &10_u32);
+        inst.set(&GovernanceKey::QuorumPercentage, &20_i128);
     }
 
     pub fn get_admin(env: Env) -> Address {
@@ -75,24 +70,27 @@ impl GovernanceContract {
 
     pub fn set_voting_delay(env: Env, admin: Address, delay: u32) {
         access::require_admin(&env, &admin, &DataKey::Admin);
-        env.storage()
-            .instance()
-            .set(&GovernanceKey::VotingDelay, &delay);
+        // Cache the instance storage handle — avoids a re-borrow after the
+        // require_admin call above (gas opt #1321).
+        let inst = env.storage().instance();
+        inst.set(&GovernanceKey::VotingDelay, &delay);
     }
 
     pub fn set_timelock_duration(env: Env, admin: Address, duration: u32) {
         access::require_admin(&env, &admin, &DataKey::Admin);
-        env.storage()
-            .instance()
-            .set(&GovernanceKey::TimelockDuration, &duration);
+        // Cache the instance storage handle — avoids a re-borrow after the
+        // require_admin call above (gas opt #1321).
+        let inst = env.storage().instance();
+        inst.set(&GovernanceKey::TimelockDuration, &duration);
     }
 
     pub fn set_quorum_percentage(env: Env, admin: Address, percentage: i128) {
         access::require_admin(&env, &admin, &DataKey::Admin);
         assert!(percentage > 0 && percentage <= 100, "Quorum must be 1-100");
-        env.storage()
-            .instance()
-            .set(&GovernanceKey::QuorumPercentage, &percentage);
+        // Cache the instance storage handle — avoids a re-borrow after the
+        // require_admin call above (gas opt #1321).
+        let inst = env.storage().instance();
+        inst.set(&GovernanceKey::QuorumPercentage, &percentage);
     }
 
     pub fn set_total_supply_snapshot(env: Env, admin: Address, supply: i128) {
