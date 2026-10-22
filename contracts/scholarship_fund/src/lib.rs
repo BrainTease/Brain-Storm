@@ -95,15 +95,13 @@ impl ScholarshipFundContract {
         donor.require_auth();
         assert!(amount > 0, "Donation must be positive");
 
-        let mut balance: i128 = env
-            .storage()
-            .instance()
-            .get(&DataKey::FundBalance)
-            .unwrap_or(0);
+        // Cache the instance storage handle once — avoids a repeated borrow
+        // for the two FundBalance reads inside this function (gas opt #1321).
+        let inst = env.storage().instance();
+
+        let mut balance: i128 = inst.get(&DataKey::FundBalance).unwrap_or(0);
         balance += amount;
-        env.storage()
-            .instance()
-            .set(&DataKey::FundBalance, &balance);
+        inst.set(&DataKey::FundBalance, &balance);
 
         let mut donor_total: i128 = env
             .storage()
@@ -211,17 +209,15 @@ impl ScholarshipFundContract {
             "Application not approved"
         );
 
-        let mut balance: i128 = env
-            .storage()
-            .instance()
-            .get(&DataKey::FundBalance)
-            .unwrap_or(0);
+        // Cache the instance storage handle — avoids re-borrowing for the
+        // FundBalance read and write below (gas opt #1321).
+        let inst = env.storage().instance();
+
+        let mut balance: i128 = inst.get(&DataKey::FundBalance).unwrap_or(0);
         assert!(balance >= app.amount_requested, "Insufficient fund balance");
 
         balance -= app.amount_requested;
-        env.storage()
-            .instance()
-            .set(&DataKey::FundBalance, &balance);
+        inst.set(&DataKey::FundBalance, &balance);
 
         app.status = ApplicationStatus::Distributed;
         env.storage()
@@ -293,16 +289,11 @@ impl ScholarshipFundContract {
 
     /// Returns a summary report of the fund's current state.
     pub fn get_fund_report(env: Env) -> FundReport {
-        let total_balance: i128 = env
-            .storage()
-            .instance()
-            .get(&DataKey::FundBalance)
-            .unwrap_or(0);
-        let total_applications: u64 = env
-            .storage()
-            .instance()
-            .get(&DataKey::ApplicationCount)
-            .unwrap_or(0);
+        // Cache the instance storage handle once — avoids a separate borrow for
+        // each of the two instance reads below (gas opt #1321).
+        let inst = env.storage().instance();
+        let total_balance: i128 = inst.get(&DataKey::FundBalance).unwrap_or(0);
+        let total_applications: u64 = inst.get(&DataKey::ApplicationCount).unwrap_or(0);
 
         let mut pending_count = 0_u64;
         let mut approved_count = 0_u64;

@@ -79,16 +79,18 @@ impl GovernanceContract {
 
     pub fn set_voting_delay(env: Env, admin: Address, delay: u32) {
         access::require_admin(&env, &admin, &DataKey::Admin);
-        env.storage()
-            .instance()
-            .set(&GovernanceKey::VotingDelay, &delay);
+        // Cache the instance storage handle — avoids a re-borrow after the
+        // require_admin call above (gas opt #1321).
+        let inst = env.storage().instance();
+        inst.set(&GovernanceKey::VotingDelay, &delay);
     }
 
     pub fn set_timelock_duration(env: Env, admin: Address, duration: u32) {
         access::require_admin(&env, &admin, &DataKey::Admin);
-        env.storage()
-            .instance()
-            .set(&GovernanceKey::TimelockDuration, &duration);
+        // Cache the instance storage handle — avoids a re-borrow after the
+        // require_admin call above (gas opt #1321).
+        let inst = env.storage().instance();
+        inst.set(&GovernanceKey::TimelockDuration, &duration);
     }
 
     pub fn set_quorum_percentage(env: Env, admin: Address, percentage: i128) {
