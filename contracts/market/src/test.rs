@@ -1,10 +1,35 @@
 #![cfg(test)]
 
 use soroban_sdk::{
+    contract, contractimpl,
     testutils::{Address as _, Ledger, LedgerInfo},
     Address, Env, String,
 };
-use crate::{MarketContract, MarketContractClient, MarketError};
+use crate::{MarketContract, MarketContractClient, MarketError, ProductStatus};
+
+#[contract]
+struct TestToken;
+
+#[contractimpl]
+impl TestToken {
+    pub fn transfer(_env: Env, _from: Address, _to: Address, amount: i128) {
+        assert!(amount > 0);
+    }
+}
+
+#[contract]
+struct FailingToken;
+
+#[contractimpl]
+impl FailingToken {
+    pub fn transfer(_env: Env, _from: Address, _to: Address, _amount: i128) {
+        panic!("token transfer failed");
+    }
+}
+
+fn test_token_address(env: &Env) -> Address {
+    env.register_contract(None, TestToken)
+}
 
 fn setup_test_environment(env: &Env) -> (MarketContractClient, Address, Address, Address) {
     env.mock_all_auths();
@@ -43,7 +68,7 @@ fn test_reentrancy_guard_prevents_attack() {
 
     // Seller lists a product
     let price = 1000_i128;
-    let token_address = Address::generate(&env);
+    let token_address = test_token_address(&env);
     let metadata = String::from_str(&env, "Test Product");
 
     let product_id = client.list_product(&seller, &price, &token_address, &metadata).unwrap();
@@ -65,7 +90,7 @@ fn test_reentrancy_lock_prevents_second_call() {
 
     // List product
     let price = 1000_i128;
-    let token_address = Address::generate(&env);
+    let token_address = test_token_address(&env);
     let metadata = String::from_str(&env, "Test Product 2");
 
     let product_id = client.list_product(&seller, &price, &token_address, &metadata).unwrap();
@@ -87,7 +112,7 @@ fn test_checks_effects_interactions_order() {
 
     // List product
     let price = 1000_i128;
-    let token_address = Address::generate(&env);
+    let token_address = test_token_address(&env);
     let metadata = String::from_str(&env, "Test Product 3");
 
     let product_id = client.list_product(&seller, &price, &token_address, &metadata).unwrap();
@@ -105,6 +130,30 @@ fn test_checks_effects_interactions_order() {
 }
 
 #[test]
+fn test_failed_token_transfer_leaves_purchase_state_unchanged() {
+    let env = Env::default();
+    let (client, _admin, seller, buyer, _attacker) = setup_test_environment(&env);
+    let token_address = env.register_contract(None, FailingToken);
+    let product_id = client
+        .list_product(
+            &seller,
+            &1000_i128,
+            &token_address,
+            &String::from_str(&env, "Failed transfer product"),
+        )
+        .unwrap();
+
+    assert!(client.try_purchase_product(&buyer, &product_id).is_err());
+
+    let product = client.get_product(&product_id).unwrap();
+    assert!(!product.sold);
+    let listing = client.get_listing(&product_id).unwrap();
+    assert_eq!(listing.status, ProductStatus::Available);
+    assert!(client.try_get_purchase(&product_id).is_err());
+    assert!(!client.is_locked());
+}
+
+#[test]
 fn test_lock_status_after_purchase() {
     let env = Env::default();
     let (client, admin, seller, buyer, attacker) = setup_test_environment(&env);
@@ -114,7 +163,7 @@ fn test_lock_status_after_purchase() {
 
     // List product
     let price = 1000_i128;
-    let token_address = Address::generate(&env);
+    let token_address = test_token_address(&env);
     let metadata = String::from_str(&env, "Test Product 4");
 
     let product_id = client.list_product(&seller, &price, &token_address, &metadata).unwrap();
@@ -137,7 +186,7 @@ fn test_cannot_purchase_own_product() {
 
     // Seller lists product
     let price = 1000_i128;
-    let token_address = Address::generate(&env);
+    let token_address = test_token_address(&env);
     let metadata = String::from_str(&env, "Test Product 5");
 
     let product_id = client.list_product(&seller, &price, &token_address, &metadata).unwrap();
@@ -166,7 +215,7 @@ fn test_cannot_purchase_sold_product() {
 
     // List product
     let price = 1000_i128;
-    let token_address = Address::generate(&env);
+    let token_address = test_token_address(&env);
     let metadata = String::from_str(&env, "Test Product 6");
 
     let product_id = client.list_product(&seller, &price, &token_address, &metadata).unwrap();
@@ -189,7 +238,7 @@ fn test_get_available_products() {
     // List multiple products
     for i in 0..3 {
         let price = 1000 * (i + 1);
-        let token_address = Address::generate(&env);
+        let token_address = test_token_address(&env);
         let metadata = String::from_str(&env, &format!("Product {}", i));
         client.list_product(&seller, &price, &token_address, &metadata).unwrap();
     }
@@ -215,7 +264,7 @@ fn test_get_purchases_by_buyer() {
     // List products
     for i in 0..2 {
         let price = 1000 * (i + 1);
-        let token_address = Address::generate(&env);
+        let token_address = test_token_address(&env);
         let metadata = String::from_str(&env, &format!("Product {}", i));
         client.list_product(&seller, &price, &token_address, &metadata).unwrap();
     }
@@ -247,7 +296,7 @@ fn test_malicious_reentrancy_attack_prevented() {
 
     // List product
     let price = 1000_i128;
-    let token_address = Address::generate(&env);
+    let token_address = test_token_address(&env);
     let metadata = String::from_str(&env, "Test Product 7");
 
     let product_id = client.list_product(&seller, &price, &token_address, &metadata).unwrap();

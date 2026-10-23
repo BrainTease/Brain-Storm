@@ -1,4 +1,4 @@
-use soroban_sdk::{Address, Env, Vec};
+use soroban_sdk::{symbol_short, Address, Env, IntoVal, Vec};
 
 use brain_storm_shared::events::emit_contract_event;
 
@@ -57,6 +57,17 @@ pub fn purchase_product(
             .persistent()
             .set(&DataKey::Listing(product_id), &listing);
     }
+
+    let _: () = env.invoke_contract(
+        &product.token_address,
+        &symbol_short!("transfer"),
+        soroban_sdk::vec![
+            env,
+            buyer.into_val(env),
+            product.seller.clone().into_val(env),
+            product.price.into_val(env)
+        ],
+    );
 
     storage::release_lock(env);
 
