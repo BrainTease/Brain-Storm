@@ -58,7 +58,6 @@ impl MarketContract {
     // ── Pausable (#663) ───────────────────────────────────────────────────────
 
     pub fn pause(env: Env, admin: Address) {
-        admin.require_auth();
         storage::assert_admin_addr(&env, &admin);
         assert!(!storage::is_paused_internal(&env), "Already paused");
         env.storage().instance().set(&DataKey::Paused, &true);
@@ -66,7 +65,6 @@ impl MarketContract {
     }
 
     pub fn unpause(env: Env, admin: Address) {
-        admin.require_auth();
         storage::assert_admin_addr(&env, &admin);
         assert!(storage::is_paused_internal(&env), "Not paused");
         env.storage().instance().set(&DataKey::Paused, &false);

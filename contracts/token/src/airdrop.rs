@@ -1,4 +1,5 @@
 use soroban_sdk::{contracttype, Address, Env, Symbol, Vec, symbol_short};
+use brain_storm_shared::access;
 
 #[contracttype]
 #[derive(Clone)]
@@ -32,7 +33,7 @@ pub fn create_airdrop(
     expiry_ledger: u32,
     merkle_root: [u8; 32],
 ) -> u32 {
-    admin.require_auth();
+    access::require_admin(env, admin, &Symbol::new(env, "admin"));
     assert!(total_amount > 0, "Total amount must be positive");
     assert!(expiry_ledger > env.ledger().sequence(), "Expiry must be in future");
 
@@ -120,7 +121,7 @@ pub fn claim_airdrop(
 }
 
 pub fn recover_unclaimed(env: &Env, admin: &Address, campaign_id: u32) -> i128 {
-    admin.require_auth();
+    access::require_admin(env, admin, &Symbol::new(env, "admin"));
 
     let campaign_key = DataKey::AirdropCampaign(campaign_id);
     let campaign: AirdropCampaign = env

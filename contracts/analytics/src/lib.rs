@@ -37,7 +37,7 @@ impl AnalyticsContract {
     pub fn set_admin(env: Env, new_admin: Address) {
         // The *current* admin authorizes the handover.
         let admin = access::read_authority(&env, &DataKey::Admin);
-        admin.require_auth();
+        access::require_admin(&env, &admin, &DataKey::Admin);
         env.storage().instance().set(&DataKey::Admin, &new_admin);
     }
 
@@ -95,14 +95,13 @@ impl AnalyticsContract {
         progress_pct: u32,
     ) {
         caller.require_auth();
-        let admin = access::read_authority(&env, &DataKey::Admin);
         let is_authorized: bool = env
             .storage()
             .instance()
             .get(&DataKey::AuthorizedCaller(caller.clone()))
             .unwrap_or(false);
         assert!(
-            caller == student || caller == admin || is_authorized,
+            caller == student || access::is_admin(&env, &caller, &DataKey::Admin) || is_authorized,
             "Unauthorized: must be student, admin, or authorized caller"
         );
         assert!(progress_pct <= PROGRESS_MAX, "Progress must be 0-100");

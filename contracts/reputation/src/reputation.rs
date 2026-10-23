@@ -44,8 +44,7 @@ pub fn is_authorized(env: &Env, caller: &Address) -> bool {
 /// - **Event Emission**: Emits `EVT_AUTH_ADD` to allow external systems to track authorization changes.
 /// - **Atomic Update**: Authorization is written to storage in a single operation; no partial states.
 pub fn add_authorized_caller(env: &Env, admin: &Address, caller: &Address) {
-    admin.require_auth();
-    assert_admin(env, admin);
+    access::require_admin(env, admin, &DataKey::Admin);
     env.storage()
         .instance()
         .set(&DataKey::AuthorizedCaller(caller.clone()), &true);
@@ -63,8 +62,7 @@ pub fn add_authorized_caller(env: &Env, admin: &Address, caller: &Address) {
 /// - **Event Emission**: Emits `EVT_AUTH_RM` to allow external systems to track authorization changes.
 /// - **Atomic Update**: Authorization is removed from storage in a single operation.
 pub fn remove_authorized_caller(env: &Env, admin: &Address, caller: &Address) {
-    admin.require_auth();
-    assert_admin(env, admin);
+    access::require_admin(env, admin, &DataKey::Admin);
     env.storage()
         .instance()
         .remove(&DataKey::AuthorizedCaller(caller.clone()));
@@ -168,16 +166,3 @@ pub fn apply_decay_internal(env: &Env, rep: &mut ReputationRecord, current_ledge
     }
 }
 
-// ── Internal assertion ────────────────────────────────────────────────────────
-
-/// Internal helper that asserts the caller is the stored admin.
-///
-/// # Invariants
-///
-/// - **Admin-Only**: Panics with `"Only admin can perform this action"` if the caller is not the admin.
-fn assert_admin(env: &Env, caller: &Address) {
-    assert!(
-        access::is_admin(env, caller, &DataKey::Admin),
-        "Only admin can perform this action"
-    );
-}

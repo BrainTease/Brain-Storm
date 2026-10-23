@@ -6,6 +6,7 @@ use soroban_sdk::{contracttype, Address, Env, Symbol, symbol_short};
 
 use soroban_sdk::{contracttype, Address, Env, Symbol, Vec, symbol_short};
 use brain_storm_shared::constants::{BASIS_POINTS_DENOMINATOR, PRECISION_SCALE_12};
+use brain_storm_shared::access;
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -324,7 +325,7 @@ pub fn get_delegatee_list(env: &Env, delegator: Address) -> Vec<Address> {
 
 /// Configure slashing (admin only). Call with `enabled = false` to disable.
 pub fn set_slash_config(env: &Env, admin: Address, slash_rate_bps: u32, slash_recipient: Address, enabled: bool) {
-    admin.require_auth();
+    access::require_admin(env, &admin, &Symbol::new(env, "admin"));
     assert!(slash_rate_bps <= BASIS_POINTS_DENOMINATOR as u32, "Slash rate must be <= 10_000 bps");
 
     env.storage().instance().set(&StakingKey::SlashConfig, &SlashConfig { slash_rate_bps, slash_recipient });
@@ -333,7 +334,7 @@ pub fn set_slash_config(env: &Env, admin: Address, slash_rate_bps: u32, slash_re
 
 /// Apply slash to a staker (admin only). Returns slashed amount.
 pub fn slash(env: &Env, admin: Address, staker: Address) -> i128 {
-    admin.require_auth();
+    access::require_admin(env, &admin, &Symbol::new(env, "admin"));
 
     let enabled: bool = env.storage().instance().get(&StakingKey::SlashEnabled).unwrap_or(false);
     assert!(enabled, "Slashing is not enabled");

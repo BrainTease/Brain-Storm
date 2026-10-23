@@ -44,11 +44,11 @@ impl RegistryContract {
     // ── Pausable (#663) ───────────────────────────────────────────────────────
 
     pub fn pause(env: Env, admin: Address) {
-        pausable::pause(&env, &admin, 100);
+        pausable::pause(&env, &admin, &DataKey::Admin, 100);
     }
 
     pub fn unpause(env: Env, admin: Address) {
-        pausable::unpause(&env, &admin);
+        pausable::unpause(&env, &admin, &DataKey::Admin);
     }
 
     pub fn is_paused(env: Env) -> bool {
@@ -58,14 +58,12 @@ impl RegistryContract {
     // ── Curator management (admin-only) ───────────────────────────────────────
 
     pub fn add_curator(env: Env, admin: Address, curator: Address) {
-        admin.require_auth();
         Self::assert_admin(&env, &admin);
         env.storage().instance().set(&DataKey::Curator(curator.clone()), &true);
         env.events().publish((EVT_CURATOR_ADD, symbol_short!("addr")), curator);
     }
 
     pub fn remove_curator(env: Env, admin: Address, curator: Address) {
-        admin.require_auth();
         Self::assert_admin(&env, &admin);
         env.storage().instance().remove(&DataKey::Curator(curator));
     }
@@ -347,7 +345,7 @@ impl RegistryContract {
     // ── Internal helpers ──────────────────────────────────────────────────────
 
     fn assert_admin(env: &Env, caller: &Address) {
-        assert!(access::is_admin(env, caller, &DataKey::Admin), "Only admin");
+        access::require_admin(env, caller, &DataKey::Admin);
     }
 
     fn assert_admin_or_curator(env: &Env, caller: &Address) {

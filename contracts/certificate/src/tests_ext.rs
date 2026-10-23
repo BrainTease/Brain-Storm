@@ -115,7 +115,7 @@ fn test_transfer_panics_when_revoked() {
 }
 
 #[test]
-#[should_panic(expected = "Caller is not the certificate owner")]
+#[should_panic(expected = "Unauthorized: owner required")]
 fn test_transfer_panics_when_not_owner() {
     let (env, client, admin) = setup();
     let (_, cert_id) = mint_one(&env, &client, &admin);

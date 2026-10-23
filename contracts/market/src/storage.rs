@@ -1,5 +1,7 @@
 use soroban_sdk::{contracttype, Address, Env, Vec};
 
+use brain_storm_shared::access;
+
 use crate::types::{Escrow, LockStatus, Product, Purchase};
 
 #[contracttype]
@@ -19,8 +21,7 @@ pub enum DataKey {
 }
 
 pub fn assert_admin_addr(env: &Env, caller: &Address) {
-    let admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-    assert!(*caller == admin, "Only admin");
+    access::require_admin(env, caller, &DataKey::Admin);
 }
 
 pub fn is_paused_internal(env: &Env) -> bool {

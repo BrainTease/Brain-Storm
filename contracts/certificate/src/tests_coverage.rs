@@ -249,7 +249,7 @@ fn test_count_certificates_increments() {
 // ── Transfer by non-owner ─────────────────────────────────────────────────────
 
 #[test]
-#[should_panic(expected = "Caller is not the certificate owner")]
+#[should_panic(expected = "Unauthorized: owner required")]
 fn test_transfer_by_non_owner_panics() {
     let (env, client, admin) = setup();
     let (_, cert_id) = mint_one(&env, &client, &admin);

@@ -16,7 +16,6 @@ const EVT_FEE_DIST: Symbol = symbol_short!("fee_dist");
 
 /// Configure the protocol fee in basis points (admin-only).
 pub fn set_fee_bps(env: &Env, admin: &Address, fee_bps: u32) {
-    admin.require_auth();
     storage::assert_admin_addr(env, admin);
     assert!(fee_bps <= MAX_FEE_BPS, "Fee exceeds max (1000 bps)");
     env.storage().instance().set(&DataKey::FeeBps, &fee_bps);
@@ -32,7 +31,6 @@ pub fn get_fee_bps(env: &Env) -> u32 {
 
 /// Configure the treasury address (admin-only).
 pub fn set_treasury(env: &Env, admin: &Address, treasury: Address) {
-    admin.require_auth();
     storage::assert_admin_addr(env, admin);
     env.storage().instance().set(&DataKey::Treasury, &treasury);
 }

@@ -1,5 +1,6 @@
 use soroban_sdk::{Address, Env, Vec};
 
+use brain_storm_shared::access;
 use brain_storm_shared::events::emit_contract_event;
 use brain_storm_shared::validation;
 
@@ -52,8 +53,7 @@ pub fn settle_escrow(env: &Env, caller: Address, escrow_id: u64) -> (i128, i128)
 
     assert!(escrow.status == EscrowStatus::Funded, "Escrow not funded");
 
-    let admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-    assert!(caller == escrow.payer || caller == admin, "Unauthorized");
+    access::require_admin_or(env, &caller, &DataKey::Admin, &escrow.payer);
 
     let fee_bps = fees::get_fee_bps(env);
     let (fee, net) = fees::compute_fee(escrow.amount, fee_bps);
@@ -75,7 +75,6 @@ pub fn settle_escrow(env: &Env, caller: Address, escrow_id: u64) -> (i128, i128)
 
 pub fn refund_escrow(env: &Env, admin: Address, escrow_id: u64) {
     storage::require_not_paused(env);
-    admin.require_auth();
     storage::assert_admin_addr(env, &admin);
 
     let mut escrow: Escrow = env
@@ -125,7 +124,6 @@ pub fn batch_settle_escrows(
     storage::require_not_paused(env);
     caller.require_auth();
 
-    let admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
     let fee_bps = fees::get_fee_bps(env);
     let escrows = storage::read_escrows_batch(env, &escrow_ids);
 
@@ -133,7 +131,7 @@ pub fn batch_settle_escrows(
     for maybe_escrow in escrows.iter() {
         let mut escrow = maybe_escrow.expect("Escrow not found");
         assert!(escrow.status == EscrowStatus::Funded, "Escrow not funded");
-        assert!(caller == escrow.payer || caller == admin, "Unauthorized");
+        access::require_admin_or(env, &caller, &DataKey::Admin, &escrow.payer);
 
         let (fee, net) = fees::compute_fee(escrow.amount, fee_bps);
         fees::accrue_fee(env, fee);
@@ -162,7 +160,6 @@ pub fn batch_settle_escrows(
 /// Refund multiple escrows in one transaction. Reads the whole batch first.
 pub fn batch_refund_escrows(env: &Env, admin: Address, escrow_ids: Vec<u64>) {
     storage::require_not_paused(env);
-    admin.require_auth();
     storage::assert_admin_addr(env, &admin);
 
     let escrows = storage::read_escrows_batch(env, &escrow_ids);

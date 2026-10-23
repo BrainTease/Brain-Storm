@@ -353,7 +353,7 @@ fn test_batch_refund_blocked_when_paused() {
 // ── Non-admin cannot refund ──────────────────────────────────────────────────
 
 #[test]
-#[should_panic(expected = "Only admin")]
+#[should_panic(expected = "Unauthorized: admin required")]
 fn test_non_admin_cannot_refund() {
     let (env, client, _) = setup();
     let payer = Address::generate(&env);
@@ -366,7 +366,7 @@ fn test_non_admin_cannot_refund() {
 // ── Non-admin cannot batch refund ────────────────────────────────────────────
 
 #[test]
-#[should_panic(expected = "Only admin")]
+#[should_panic(expected = "Unauthorized: admin required")]
 fn test_non_admin_cannot_batch_refund() {
     let (env, client, _) = setup();
     let payer = Address::generate(&env);
