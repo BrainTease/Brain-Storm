@@ -235,6 +235,15 @@ written to `test-results/rerun-report.json` and `test-results/rerun-report.md`.
 If any run fails, investigate it instead of adding a retry by default. Keep
 quarantined tests isolated and documented until the root cause is fixed.
 
+### Snapshot hygiene
+
+Jest and Vitest snapshot files and snapshot matchers are intentionally
+disallowed. Use structural, accessibility, and behavior assertions instead:
+
+```bash
+npm run test:snapshot:hygiene
+```
+
 See [docs/SETUP.md](docs/SETUP.md) for the full setup and local deployment guide, and [docs/API.md](docs/API.md) for the API reference.
 
 ## Architecture Decisions
