@@ -6,10 +6,9 @@
 use soroban_sdk::{symbol_short, vec, Address, Env, Symbol, Vec};
 
 use brain_storm_shared::access;
-use brain_storm_shared::constants::{
-    STORAGE_TTL_EXTEND_TO as TTL_EXTEND_TO, STORAGE_TTL_THRESHOLD as TTL_THRESHOLD,
-};
 use brain_storm_shared::pagination::paginate;
+use brain_storm_shared::ttl::bump_persistent;
+use brain_storm_shared::validation::validate_progress_threshold;
 
 use crate::types::{
     CompletionStats, DataKey, MilestoneRecord, ProgressRecord, TimeBasedStats, TopPerformer,
@@ -18,9 +17,7 @@ use crate::types::{
 pub fn get_progress(env: Env, student: Address, course_id: Symbol) -> Option<ProgressRecord> {
     let key = DataKey::Progress(student, course_id);
     let record = env.storage().persistent().get(&key)?;
-    env.storage()
-        .persistent()
-        .extend_ttl(&key, TTL_THRESHOLD, TTL_EXTEND_TO);
+    bump_persistent(&env, &key);
     Some(record)
 }
 
@@ -28,9 +25,7 @@ pub fn get_all_progress(env: Env, student: Address) -> Vec<ProgressRecord> {
     let index_key = DataKey::StudentCourses(student.clone());
     let courses: Vec<Symbol> = match env.storage().persistent().get(&index_key) {
         Some(c) => {
-            env.storage()
-                .persistent()
-                .extend_ttl(&index_key, TTL_THRESHOLD, TTL_EXTEND_TO);
+            bump_persistent(&env, &index_key);
             c
         }
         None => return vec![&env],
@@ -40,9 +35,7 @@ pub fn get_all_progress(env: Env, student: Address) -> Vec<ProgressRecord> {
     for course_id in courses.iter() {
         let key = DataKey::Progress(student.clone(), course_id.clone());
         if let Some(record) = env.storage().persistent().get::<DataKey, ProgressRecord>(&key) {
-            env.storage()
-                .persistent()
-                .extend_ttl(&key, TTL_THRESHOLD, TTL_EXTEND_TO);
+            bump_persistent(&env, &key);
             results.push_back(record);
         }
     }
@@ -57,9 +50,7 @@ pub fn get_milestone(
 ) -> Option<MilestoneRecord> {
     let key = DataKey::Milestone(student, course_id, milestone_pct);
     let record = env.storage().persistent().get(&key)?;
-    env.storage()
-        .persistent()
-        .extend_ttl(&key, TTL_THRESHOLD, TTL_EXTEND_TO);
+    bump_persistent(&env, &key);
     Some(record)
 }
 
@@ -67,9 +58,7 @@ pub fn get_achieved_milestones(env: Env, student: Address, course_id: Symbol) ->
     let key = DataKey::StudentMilestones(student, course_id);
     match env.storage().persistent().get(&key) {
         Some(milestones) => {
-            env.storage()
-                .persistent()
-                .extend_ttl(&key, TTL_THRESHOLD, TTL_EXTEND_TO);
+            bump_persistent(&env, &key);
             milestones
         }
         None => vec![&env],
@@ -160,9 +149,7 @@ pub fn get_students_by_course(env: Env, course_id: Symbol) -> Vec<Address> {
     let key = DataKey::CourseStudents(course_id);
     match env.storage().persistent().get(&key) {
         Some(students) => {
-            env.storage()
-                .persistent()
-                .extend_ttl(&key, TTL_THRESHOLD, TTL_EXTEND_TO);
+            bump_persistent(&env, &key);
             students
         }
         None => vec![&env],
@@ -175,9 +162,7 @@ pub fn get_course_progress(env: Env, course_id: Symbol) -> Vec<ProgressRecord> {
     for student in students.iter() {
         let key = DataKey::Progress(student.clone(), course_id.clone());
         if let Some(record) = env.storage().persistent().get::<DataKey, ProgressRecord>(&key) {
-            env.storage()
-                .persistent()
-                .extend_ttl(&key, TTL_THRESHOLD, TTL_EXTEND_TO);
+            bump_persistent(&env, &key);
             results.push_back(record);
         }
     }
@@ -246,10 +231,10 @@ pub fn get_progress_above_threshold(
     student: Address,
     min_progress_pct: u32,
 ) -> Vec<ProgressRecord> {
-    assert!(min_progress_pct <= PROGRESS_MAX, "Threshold must be 0-100");
+    validate_progress_threshold(min_progress_pct, PROGRESS_MAX);
     let all_progress = get_all_progress(env.clone(), student);
     let mut filtered = vec![&env];
-    
+
     for record in all_progress.iter() {
         if record.progress_pct >= min_progress_pct {
             filtered.push_back(record.clone());

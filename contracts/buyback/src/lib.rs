@@ -4,7 +4,7 @@ use soroban_sdk::{contract, contractimpl, Address, BytesN, Env, Symbol, Vec};
 mod types;
 pub use types::*;
 
-use brain_storm_shared::{access, oracle, validation};
+use brain_storm_shared::{access, oracle, reentrancy, validation};
 
 // =============================================================================
 // Contract
@@ -118,12 +118,18 @@ impl BuybackContract {
     // -------------------------------------------------------------------------
 
     pub fn check_and_execute_buyback(env: Env) {
+        // Reentrancy guard: this entrypoint may invoke external contracts (DEX
+        // swap / token transfer) and mutate reserve/history state. The guard is
+        // acquired before any external interaction and released on completion.
+        reentrancy::acquire(&env);
+
         let config: BuybackConfig = env
             .storage()
             .instance()
             .get(&DataKey::BuybackConfig)
             .unwrap();
         if !config.enabled {
+            reentrancy::release(&env);
             return;
         }
 
@@ -135,11 +141,13 @@ impl BuybackContract {
             .unwrap_or(0);
 
         if current_ledger - last_buyback < config.buyback_interval {
+            reentrancy::release(&env);
             return;
         }
 
         let bst_price = Self::get_bst_price(&env);
         if bst_price <= config.price_threshold {
+            reentrancy::release(&env);
             return;
         }
 
@@ -149,6 +157,7 @@ impl BuybackContract {
             .get(&DataKey::BuybackReserve)
             .unwrap_or(0);
         if reserve_balance <= config.min_reserve_balance {
+            reentrancy::release(&env);
             return;
         }
 
@@ -157,19 +166,26 @@ impl BuybackContract {
             Self::calculate_xlm_from_available(&config, available_for_buyback);
 
         if max_buyback_xlm <= 0 {
+            reentrancy::release(&env);
             return;
         }
 
         Self::execute_buyback_via_dex(
-            env,
+            env.clone(),
             max_buyback_xlm,
             bst_price,
             symbol_short!("price_thr"),
         );
+
+        reentrancy::release(&env);
     }
 
     pub fn manual_buyback(env: Env, admin: Address, max_xlm_amount: i128) {
         access::require_admin(&env, &admin, &DataKey::Admin);
+
+        // Reentrancy guard: same external-call/state-mutation path as the
+        // automated buyback. Acquired before any external interaction.
+        reentrancy::acquire(&env);
 
         let config: BuybackConfig = env
             .storage()
@@ -189,7 +205,9 @@ impl BuybackContract {
         );
 
         let bst_price = Self::get_bst_price(&env);
-        Self::execute_buyback_via_dex(env, max_xlm_amount, bst_price, symbol_short!("manual"));
+        Self::execute_buyback_via_dex(env.clone(), max_xlm_amount, bst_price, symbol_short!("manual"));
+
+        reentrancy::release(&env);
     }
 
     // -------------------------------------------------------------------------
@@ -341,6 +359,10 @@ impl BuybackContract {
         let estimated_bst_amount = Self::calculate_bst_from_xlm(xlm_amount, bst_price);
         let bst_to_buy = estimated_bst_amount.min(config.max_buyback_amount);
 
+        // --- Checks-Effects-Interactions ---
+        // All state effects are committed before any external interaction so a
+        // reentrant callback observes a fully consistent state. The reentrancy
+        // guard (held by the caller) additionally rejects nested entry.
         let mut reserve_balance: i128 = env
             .storage()
             .instance()
@@ -387,6 +409,9 @@ impl BuybackContract {
         env.storage()
             .instance()
             .set(&DataKey::LastBuybackLedger, &env.ledger().sequence());
+
+        // Interaction: external DEX swap / token transfer would occur here.
+        // State is already final, so a reentrant call cannot double-spend.
 
         env.events()
             .publish((BUYBACK_EXECUTED, symbol_short!("amount")), (bst_to_buy, xlm_amount));

@@ -6,6 +6,31 @@
 use soroban_sdk::{contracttype, symbol_short, Address, String, Symbol};
 
 // =============================================================================
+// Shared validation / constants
+// =============================================================================
+//
+// These mirror the rules enforced by `contracts/shared` so that the badges
+// contract can validate inputs without duplicating magic numbers. They are
+// intentionally kept as local constants (rather than pulled in at runtime) to
+// preserve the existing storage layout and avoid cross-contract calls.
+
+/// Maximum length (in bytes) allowed for a badge type symbol.
+pub const MAX_SYMBOL_LEN: u32 = 32;
+
+/// Maximum length (in bytes) allowed for a badge description string.
+pub const MAX_DESCRIPTION_LEN: u32 = 256;
+
+/// Returns `true` if `value` respects the shared symbol length rule.
+pub fn is_valid_symbol(value: &Symbol) -> bool {
+    value.len() <= MAX_SYMBOL_LEN
+}
+
+/// Returns `true` if `value` respects the shared string length rule.
+pub fn is_valid_description(value: &String) -> bool {
+    value.len() <= MAX_DESCRIPTION_LEN
+}
+
+// =============================================================================
 // Storage keys
 // =============================================================================
 

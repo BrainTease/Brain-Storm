@@ -20,6 +20,7 @@ pub mod oracle;
 pub mod pagination;
 pub mod pausable;
 pub mod reentrancy;
+pub mod ttl;
 pub mod upgrade;
 pub mod validation;
 
@@ -29,6 +30,11 @@ pub mod test_helpers;
 // Re-export commonly used items
 pub use constants::{BASIS_POINTS_DENOMINATOR, PRECISION_SCALE_12};
 pub use errors::SharedError;
+pub use reentrancy::{acquire_lock, is_locked, release_lock, with_guard};
+pub use ttl::{
+    bump_instance, bump_persistent, bump_temporary, extend_instance_ttl, extend_persistent_ttl,
+    extend_temporary_ttl,
+};
 
 #[cfg(feature = "contract")]
 use soroban_sdk::{contract, contractimpl, contracttype, symbol_short, Address, BytesN, Env, Symbol};

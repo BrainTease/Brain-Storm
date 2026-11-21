@@ -5,9 +5,12 @@
 
 use soroban_sdk::{contracttype, Address, Symbol};
 
-// Progress validation bounds
-pub const PROGRESS_MAX: u32 = 100;
-pub const PROGRESS_COMPLETE: u32 = 100;
+// Progress bounds and validation predicates are shared with the badges and
+// credential_metadata contracts (issue #1504). Re-exported here so existing
+// call sites (`crate::types::PROGRESS_MAX`, etc.) keep working unchanged.
+pub use shared::progress::{
+    is_complete as progress_is_complete, is_valid_progress, PROGRESS_COMPLETE, PROGRESS_MAX,
+};
 
 // Milestone percentages at which achievements are recorded
 pub const MILESTONE_25: u32 = 25;
