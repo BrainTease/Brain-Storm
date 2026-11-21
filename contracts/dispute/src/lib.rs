@@ -86,6 +86,7 @@ impl DisputeContract {
     pub fn set_arbiter(env: Env, admin: Address, arbiter: Address) {
         access::require_admin(&env, &admin, &DataKey::Admin);
         env.storage().instance().set(&DataKey::Arbiter, &arbiter);
+        emit_contract_event(&env, EVT_DOMAIN, symbol_short!("arb_set"), arbiter);
     }
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
@@ -187,7 +188,7 @@ impl DisputeContract {
             Outcome::FavourClaimant => (dispute.amount, 0i128),
             Outcome::FavourRespondent => (0i128, dispute.amount),
             Outcome::Split => {
-                let half = dispute.amount / 2;
+                let half = dispute.amount.checked_div(2).expect("math: i128 division overflow");
                 (half, dispute.amount - half)
             }
             Outcome::None => (0i128, 0i128),
