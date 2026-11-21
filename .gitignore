@@ -14,3 +14,9 @@ coverage/
 # TypeScript incremental build artifacts
 *.tsbuildinfo
 contracts/*/test_snapshots/
+
+# Stray developer artifacts (never commit these)
+msg*.txt
+clippy_output.txt
+do-commits.ps1
+*.ps1
