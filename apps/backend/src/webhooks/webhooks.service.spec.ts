@@ -1,6 +1,7 @@
 import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
+import { ConfigService } from '@nestjs/config';
 import { WebhooksService } from './webhooks.service';
 import { Webhook } from './webhook.entity';
 import { WebhookDelivery, DeliveryStatus } from './webhook-delivery.entity';
@@ -49,11 +50,14 @@ describe('WebhooksService', () => {
     mockWebhookRepo.createQueryBuilder.mockReturnValue(qb);
     mockDeliveryRepo.createQueryBuilder.mockReturnValue(qb);
 
+    const mockConfigService = { get: jest.fn().mockReturnValue(10000) };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         WebhooksService,
         { provide: getRepositoryToken(Webhook), useValue: mockWebhookRepo },
         { provide: getRepositoryToken(WebhookDelivery), useValue: mockDeliveryRepo },
+        { provide: ConfigService, useValue: mockConfigService },
       ],
     }).compile();
 

@@ -1,7 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { MobileDevice } from './mobile-device.entity';
+import { fetchWithRetry, FetchRetryOptions } from '../common/http/fetch-with-retry';
 
 interface PushMessage {
   title: string;
@@ -12,11 +14,19 @@ interface PushMessage {
 @Injectable()
 export class PushNotificationService {
   private readonly logger = new Logger(PushNotificationService.name);
+  private readonly fetchOptions: FetchRetryOptions;
 
   constructor(
     @InjectRepository(MobileDevice)
-    private deviceRepo: Repository<MobileDevice>
-  ) {}
+    private deviceRepo: Repository<MobileDevice>,
+    private readonly configService: ConfigService,
+  ) {
+    this.fetchOptions = {
+      timeoutMs: this.configService.get<number>('externalHttp.timeoutMs') ?? 10_000,
+      maxRetries: this.configService.get<number>('externalHttp.maxRetries') ?? 3,
+      retryBaseDelayMs: this.configService.get<number>('externalHttp.retryBaseDelayMs') ?? 1_000,
+    };
+  }
 
   async registerDevice(userId: string, token: string, platform: string) {
     const existing = await this.deviceRepo.findOne({ where: { userId, pushToken: token } });
@@ -37,20 +47,24 @@ export class PushNotificationService {
 
   private async sendPushToDevice(token: string, message: PushMessage) {
     try {
-      const response = await fetch('https://exp.host/--/api/v2/push/send', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      const response = await fetchWithRetry(
+        'https://exp.host/--/api/v2/push/send',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            to: token,
+            title: message.title,
+            body: message.body,
+            data: message.data,
+            sound: 'default',
+            priority: 'high',
+          }),
         },
-        body: JSON.stringify({
-          to: token,
-          title: message.title,
-          body: message.body,
-          data: message.data,
-          sound: 'default',
-          priority: 'high',
-        }),
-      });
+        this.fetchOptions,
+      );
 
       if (!response.ok) {
         this.logger.error(`Push notification failed: ${await response.text()}`);
