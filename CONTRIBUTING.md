@@ -221,6 +221,20 @@ cd apps/backend && npm test
 npm run lint
 ```
 
+### Flaky test reruns
+
+Run the frontend or backend unit suite 20 consecutive times to identify flakes:
+
+```bash
+npm run test:rerun:frontend
+npm run test:rerun:backend
+```
+
+Set `TEST_RERUN_COUNT` to override the default 20 runs. The rerun summary is
+written to `test-results/rerun-report.json` and `test-results/rerun-report.md`.
+If any run fails, investigate it instead of adding a retry by default. Keep
+quarantined tests isolated and documented until the root cause is fixed.
+
 See [docs/SETUP.md](docs/SETUP.md) for the full setup and local deployment guide, and [docs/API.md](docs/API.md) for the API reference.
 
 ## Architecture Decisions
