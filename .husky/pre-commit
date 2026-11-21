@@ -20,3 +20,24 @@ if [ -n "$RUST_FILES" ]; then
   cargo fmt --all -- --check || exit $?
   cargo clippy --all-targets --all-features -- -D warnings || exit $?
 fi
+
+# Secret scanning with Gitleaks (#1541).
+# Scans only the staged diff to keep the hook fast.
+# If gitleaks is not installed the check is skipped with a warning so
+# developers without the tool can still commit; CI always runs gitleaks
+# via the secret-scanning.yml workflow.
+if command -v gitleaks >/dev/null 2>&1; then
+  echo "Running gitleaks on staged diff..."
+  gitleaks protect --staged --config=.gitleaks.toml --redact --verbose || {
+    echo ""
+    echo "ERROR: gitleaks detected potential secrets in staged files."
+    echo "Review the output above, remove the secret, and commit again."
+    echo "If this is a false positive, add an allowlist entry to .gitleaks.toml."
+    exit 1
+  }
+else
+  echo "WARN: gitleaks not installed — secret scanning skipped locally."
+  echo "      Install from https://github.com/gitleaks/gitleaks/releases"
+  echo "      or run: brew install gitleaks"
+  echo "      CI will still scan via secret-scanning.yml."
+fi

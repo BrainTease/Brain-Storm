@@ -65,8 +65,8 @@ audit:
 	done
 
 cargo-audit:
-	@echo "==> Running cargo-audit on Rust contracts..."
-	cargo audit --deny warnings
+	@echo "==> Running cargo-audit and cargo-deny on Rust contracts..."
+	./scripts/rust-audit.sh
 
 export-openapi:
 	@echo "==> Exporting OpenAPI spec..."

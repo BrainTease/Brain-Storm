@@ -52,9 +52,15 @@ jobs:
         run: cargo clippy --all-targets -- -D warnings
         working-directory: contracts
 
+      - name: Install cargo-audit
+        run: cargo install cargo-audit --locked
+
       - name: cargo audit
         run: cargo audit --deny warnings
         working-directory: contracts
+
+      - name: Install cargo-deny
+        run: cargo install cargo-deny --locked
 
       - name: cargo deny
         run: cargo deny check
