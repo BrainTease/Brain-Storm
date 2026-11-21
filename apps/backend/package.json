@@ -5,6 +5,7 @@
   "scripts": {
     "start:dev": "nest start --watch",
     "build": "nest build",
+    "typecheck": "tsc --noEmit",
     "export:openapi": "EXPORT_OPENAPI=true node dist/main --export-openapi",
     "start:prod": "node dist/main",
     "lint": "eslint src --ext .ts",

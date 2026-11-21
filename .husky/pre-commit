@@ -3,12 +3,20 @@
 
 # Run lint-staged (ESLint + Prettier on staged JS/TS files).
 # Any lint error exits non-zero and blocks the commit locally.
-npx lint-staged
+npx lint-staged || exit $?
+
+# Ratchet TypeScript strictness and the no-unused-vars / no-explicit-any
+# budgets for the app(s) touched by this commit (#1532, #1533, #1534).
+STAGED_TS=$(git diff --cached --name-only --diff-filter=ACMR | grep -E "^(apps/frontend|apps/backend)/.*\.(ts|tsx|js|jsx)$" || true)
+if [ -n "$STAGED_TS" ]; then
+  echo "Checking quality budget for staged changes..."
+  node scripts/quality-budget.mjs --staged || exit $?
+fi
 
 # Check Rust files in contracts/
 RUST_FILES=$(git diff --cached --name-only --diff-filter=ACMR | grep "^contracts/.*\.rs$" || true)
 if [ -n "$RUST_FILES" ]; then
   echo "Checking Rust formatting and linting..."
-  cargo fmt --all -- --check
-  cargo clippy --all-targets --all-features -- -D warnings
+  cargo fmt --all -- --check || exit $?
+  cargo clippy --all-targets --all-features -- -D warnings || exit $?
 fi

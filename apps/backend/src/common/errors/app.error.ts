@@ -12,9 +12,9 @@ export enum ErrorCode {
 export class AppError extends Error {
   constructor(
     public code: ErrorCode,
-    public message: string,
+    public override message: string,
     public statusCode: number = 500,
-    public details?: Record<string, any>
+    public details?: Record<string, unknown>
   ) {
     super(message);
     this.name = 'AppError';
@@ -22,7 +22,7 @@ export class AppError extends Error {
 }
 
 export class ValidationError extends AppError {
-  constructor(message: string, details?: Record<string, any>) {
+  constructor(message: string, details?: Record<string, unknown>) {
     super(ErrorCode.VALIDATION_ERROR, message, 400, details);
     this.name = 'ValidationError';
   }
@@ -57,14 +57,14 @@ export class ConflictError extends AppError {
 }
 
 export class StellarError extends AppError {
-  constructor(message: string, details?: Record<string, any>) {
+  constructor(message: string, details?: Record<string, unknown>) {
     super(ErrorCode.STELLAR_ERROR, message, 500, details);
     this.name = 'StellarError';
   }
 }
 
 export class DatabaseError extends AppError {
-  constructor(message: string, details?: Record<string, any>) {
+  constructor(message: string, details?: Record<string, unknown>) {
     super(ErrorCode.DATABASE_ERROR, message, 500, details);
     this.name = 'DatabaseError';
   }

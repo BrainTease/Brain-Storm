@@ -1,10 +1,3 @@
-Looking at this task, I need to be careful here. The file provided is `apps/frontend/src/lib/dashboard/types.ts`, which contains dashboard-related types — not `AuthForms`. The step asks me to locate `AuthForms` and refactor it, but the file I'm given to edit is the dashboard types file.
-
-Since I can only return the content of the file I was given (the dashboard types file), and the change described doesn't actually apply to this file's content, I should preserve the file as-is. The `AuthForms` refactor would need to happen in the actual `AuthForms` file, which isn't the file provided here.
-
-Let me return the file unchanged, since none of the requested changes (splitting AuthForms, creating hooks, transforms, etc.) relate to the dashboard types module.
-
-```typescript
 /** Shared shapes for the learner dashboard. */
 
 export interface DashboardUser {
