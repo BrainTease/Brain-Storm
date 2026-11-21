@@ -67,6 +67,9 @@ impl GovernanceContract {
         env.storage()
             .instance()
             .set(&GovernanceKey::QuorumPercentage, &DEFAULT_QUORUM_PERCENTAGE);
+
+        env.events()
+            .publish((GOV_INITIALIZED,), (admin, token_contract));
     }
 
     pub fn get_admin(env: Env) -> Address {
@@ -83,6 +86,8 @@ impl GovernanceContract {
         // require_admin call above (gas opt #1321).
         let inst = env.storage().instance();
         inst.set(&GovernanceKey::VotingDelay, &delay);
+        env.events()
+            .publish((CONFIG_CHANGED,), (symbol_short!("v_delay"), admin, delay));
     }
 
     pub fn set_timelock_duration(env: Env, admin: Address, duration: u32) {
@@ -91,6 +96,8 @@ impl GovernanceContract {
         // require_admin call above (gas opt #1321).
         let inst = env.storage().instance();
         inst.set(&GovernanceKey::TimelockDuration, &duration);
+        env.events()
+            .publish((CONFIG_CHANGED,), (symbol_short!("t_lock"), admin, duration));
     }
 
     pub fn set_quorum_percentage(env: Env, admin: Address, percentage: i128) {
@@ -99,6 +106,8 @@ impl GovernanceContract {
         env.storage()
             .instance()
             .set(&GovernanceKey::QuorumPercentage, &percentage);
+        env.events()
+            .publish((CONFIG_CHANGED,), (symbol_short!("quorum"), admin, percentage));
     }
 
     pub fn set_total_supply_snapshot(env: Env, admin: Address, supply: i128) {
@@ -106,6 +115,8 @@ impl GovernanceContract {
         env.storage()
             .instance()
             .set(&GovernanceKey::TotalSupply, &supply);
+        env.events()
+            .publish((CONFIG_CHANGED,), (symbol_short!("supply"), admin, supply));
     }
 
     // -------------------------------------------------------------------------
