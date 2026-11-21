@@ -145,6 +145,9 @@ impl GrantsContract {
         env.storage()
             .persistent()
             .set(&DataKey::Grant(grant_id), &grant);
+        env.storage()
+            .persistent()
+            .extend_ttl(&DataKey::Grant(grant_id), TTL_THRESHOLD, TTL_EXTEND_TO);
 
         env.events().publish(
             (symbol_short!("grants"), symbol_short!("rejected")),
