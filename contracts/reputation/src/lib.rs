@@ -280,7 +280,7 @@ impl ReputationContract {
             .get(&DataKey::ReputationHistoryCount(user.clone()))
             .unwrap_or(0);
         let mut history = Vec::new(&env);
-        let end = (start_index + limit).min(count);
+        let end = start_index.saturating_add(limit).min(count);
         for i in start_index..end {
             if let Some(u) = env.storage().persistent().get(&DataKey::ReputationHistory(user.clone(), i)) {
                 history.push_back(u);

@@ -65,7 +65,8 @@ impl RegistryContract {
 
     pub fn remove_curator(env: Env, admin: Address, curator: Address) {
         Self::assert_admin(&env, &admin);
-        env.storage().instance().remove(&DataKey::Curator(curator));
+        env.storage().instance().remove(&DataKey::Curator(curator.clone()));
+        env.events().publish((EVT_CURATOR_RM, symbol_short!("addr")), curator);
     }
 
     pub fn is_curator(env: Env, addr: Address) -> bool {

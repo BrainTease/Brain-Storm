@@ -54,6 +54,16 @@ mod tests {
 
     #[test]
     #[should_panic(expected = "Unauthorized: admin required")]
+    fn test_non_admin_cannot_remove_curator() {
+        let (env, client, admin) = setup();
+        let curator = Address::generate(&env);
+        let rando = Address::generate(&env);
+        client.add_curator(&admin, &curator);
+        client.remove_curator(&rando, &curator);
+    }
+
+    #[test]
+    #[should_panic(expected = "Unauthorized: admin required")]
     fn test_non_admin_cannot_add_curator() {
         let (env, client, _) = setup();
         let rando = Address::generate(&env);

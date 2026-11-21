@@ -45,3 +45,4 @@ pub const EVT_SKILL_ADD: Symbol = symbol_short!("sk_add");
 pub const EVT_SKILL_RM: Symbol = symbol_short!("sk_rm");
 pub const EVT_SPEC_SET: Symbol = symbol_short!("sp_set");
 pub const EVT_CURATOR_ADD: Symbol = symbol_short!("cur_add");
+pub const EVT_CURATOR_RM: Symbol = symbol_short!("cur_rm");

@@ -29,17 +29,27 @@ pub fn get_fee_bps(env: &Env) -> u32 {
         .unwrap_or(0)
 }
 
+const EVT_TREASURY_SET: Symbol = symbol_short!("treas_set");
+
 /// Configure the treasury address (admin-only).
 pub fn set_treasury(env: &Env, admin: &Address, treasury: Address) {
     storage::assert_admin_addr(env, admin);
     env.storage().instance().set(&DataKey::Treasury, &treasury);
+    emit_contract_event(env, EVT_DOMAIN, EVT_TREASURY_SET, treasury);
 }
 
 /// Compute fee and net amount. Returns `(fee, net)`.
 /// Rounds fee down (truncation), net = amount - fee.
 pub fn compute_fee(amount: i128, fee_bps: u32) -> (i128, i128) {
-    let fee = amount * fee_bps as i128 / BPS_DENOMINATOR;
-    (fee, amount - fee)
+    let fee = amount
+        .checked_mul(fee_bps as i128)
+        .expect("math: fee multiplication overflow")
+        .checked_div(BPS_DENOMINATOR)
+        .expect("math: fee division overflow");
+    let net = amount
+        .checked_sub(fee)
+        .expect("math: net subtraction overflow");
+    (fee, net)
 }
 
 /// Accrue fee to the treasury balance in persistent storage.
@@ -57,8 +67,11 @@ pub fn accrue_fee(env: &Env, fee: i128) {
         .persistent()
         .get(&DataKey::TreasuryBalance)
         .unwrap_or(0);
+    let new_balance = balance
+        .checked_add(fee)
+        .expect("math: treasury balance overflow");
     env.storage()
         .persistent()
-        .set(&DataKey::TreasuryBalance, &(balance + fee));
+        .set(&DataKey::TreasuryBalance, &new_balance);
     emit_contract_event(env, EVT_DOMAIN, EVT_FEE_DIST, (treasury, fee));
 }

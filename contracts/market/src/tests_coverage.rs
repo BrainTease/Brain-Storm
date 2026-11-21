@@ -384,3 +384,61 @@ fn test_get_admin_returns_initialised_admin() {
     let (_, client, admin) = setup();
     assert_eq!(client.get_admin(), admin);
 }
+
+// ── Fees: auth checks ─────────────────────────────────────────────────────────
+
+#[test]
+#[should_panic(expected = "Unauthorized: admin required")]
+fn test_non_admin_cannot_set_fee_bps() {
+    let (env, client, _) = setup();
+    let rando = Address::generate(&env);
+    client.set_fee_bps(&rando, &100);
+}
+
+#[test]
+#[should_panic(expected = "Unauthorized: admin required")]
+fn test_non_admin_cannot_set_treasury() {
+    let (env, client, _) = setup();
+    let rando = Address::generate(&env);
+    let treasury = Address::generate(&env);
+    client.set_treasury(&rando, &treasury);
+}
+
+#[test]
+#[should_panic(expected = "Fee exceeds max")]
+fn test_fee_bps_exceeds_max_panics() {
+    let (_, client, admin) = setup();
+    client.set_fee_bps(&admin, &1001);
+}
+
+// ── Fees: computation ─────────────────────────────────────────────────────────
+
+#[test]
+fn test_fee_computation_zero_bps() {
+    let (env, client, admin) = setup();
+    let treasury = Address::generate(&env);
+    client.set_treasury(&admin, &treasury);
+    client.set_fee_bps(&admin, &0);
+
+    let payer = Address::generate(&env);
+    let payee = Address::generate(&env);
+    let id = client.fund_escrow(&payer, &payee, &1_000);
+    let (net, fee) = client.settle_escrow(&payer, &id);
+    assert_eq!(fee, 0);
+    assert_eq!(net, 1_000);
+}
+
+#[test]
+fn test_fee_computation_max_bps() {
+    let (env, client, admin) = setup();
+    let treasury = Address::generate(&env);
+    client.set_treasury(&admin, &treasury);
+    client.set_fee_bps(&admin, &1_000); // 10%
+
+    let payer = Address::generate(&env);
+    let payee = Address::generate(&env);
+    let id = client.fund_escrow(&payer, &payee, &1_000);
+    let (net, fee) = client.settle_escrow(&payer, &id);
+    assert_eq!(fee, 100);
+    assert_eq!(net, 900);
+}

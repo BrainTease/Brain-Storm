@@ -679,6 +679,35 @@ mod tests {
         assert_eq!(client.get_total_reputation(), -400);
     }
 
+    // ── Additional negative/auth coverage (#68) ─────────────────────────────
+
+    #[test]
+    #[should_panic(expected = "Unauthorized caller")]
+    fn test_non_authorized_cannot_apply_decay() {
+        let (env, client, _) = setup();
+        let rando = Address::generate(&env);
+        let user = Address::generate(&env);
+        client.apply_decay(&rando, &user);
+    }
+
+    #[test]
+    #[should_panic(expected = "Unauthorized: admin required")]
+    fn test_non_admin_cannot_set_decay_config() {
+        let (env, client, _) = setup();
+        let rando = Address::generate(&env);
+        client.set_decay_config(&rando, &false, &0, &1000);
+    }
+
+    #[test]
+    fn test_history_pagination_no_overflow_at_u32_max_limit() {
+        let (env, client, admin) = setup();
+        let user = Address::generate(&env);
+        client.update_reputation(&admin, &user, &100, &symbol_short!("course"), &None);
+        // start_index=0, limit=u32::MAX must not overflow — returns only the 1 entry
+        let history = client.get_reputation_history(&user, &0, &u32::MAX);
+        assert_eq!(history.len(), 1);
+    }
+
     // ── Property-based tests using proptest ──────────────────────────────────
 
     mod properties {
