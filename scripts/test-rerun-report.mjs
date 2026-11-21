@@ -18,11 +18,13 @@ let failures = 0;
 
 for (let run = 1; run <= runCount; run += 1) {
   const startedAt = Date.now();
-  const result = spawnSync(command[0], command.slice(1), {
+  const executable =
+    process.platform === 'win32' && command[0] === 'npm' ? 'npm.cmd' : command[0];
+  const result = spawnSync(executable, command.slice(1), {
     cwd: resolve(process.cwd()),
     env: process.env,
     encoding: 'utf8',
-    shell: process.platform === 'win32',
+    shell: false,
   });
 
   const passed = result.status === 0;
