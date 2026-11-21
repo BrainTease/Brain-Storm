@@ -169,4 +169,12 @@ export default () => ({
 
   // ── Export OpenAPI ────────────────────────────────────────────────────────
   exportOpenapi: process.env.EXPORT_OPENAPI === 'true',
+
+  // ── External HTTP calls ───────────────────────────────────────────────────
+  // Shared retry / timeout settings used by the fetch helper module.
+  externalHttp: {
+    timeoutMs: parseInt(process.env.EXTERNAL_HTTP_TIMEOUT_MS ?? '10000', 10),
+    maxRetries: parseInt(process.env.EXTERNAL_HTTP_MAX_RETRIES ?? '3', 10),
+    retryBaseDelayMs: parseInt(process.env.EXTERNAL_HTTP_RETRY_BASE_DELAY_MS ?? '1000', 10),
+  },
 });

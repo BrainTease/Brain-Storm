@@ -11,6 +11,9 @@ pub use types::*;
 
 use brain_storm_shared::pagination::{paginate, MAX_PAGE_SIZE};
 use brain_storm_shared::{access, validation};
+use brain_storm_shared::constants::{
+    STORAGE_TTL_EXTEND_TO as TTL_EXTEND_TO, STORAGE_TTL_THRESHOLD as TTL_THRESHOLD,
+};
 
 #[contract]
 pub struct NftContract;
@@ -93,6 +96,9 @@ impl NftContract {
             .instance()
             .set(&DataKey::AccessRights(nft_id, owner.clone()), &true);
 
+        // Extend instance TTL to keep contract data alive
+        env.storage().instance().extend_ttl(TTL_THRESHOLD, TTL_EXTEND_TO);
+
         env.events().publish(
             (symbol_short!("nft"), symbol_short!("minted")),
             (nft_id, course_id, owner, purchase_price),
@@ -147,6 +153,9 @@ impl NftContract {
             .instance()
             .set(&DataKey::AccessRights(nft_id, to.clone()), &true);
 
+        // Extend instance TTL
+        env.storage().instance().extend_ttl(TTL_THRESHOLD, TTL_EXTEND_TO);
+
         env.events().publish(
             (symbol_short!("nft"), symbol_short!("xfer")),
             (nft_id, from, to),
@@ -166,6 +175,8 @@ impl NftContract {
             .instance()
             .set(&DataKey::AccessRights(nft_id, holder.clone()), &true);
 
+        env.storage().instance().extend_ttl(TTL_THRESHOLD, TTL_EXTEND_TO);
+
         env.events().publish(
             (symbol_short!("nft"), symbol_short!("acc_grt")),
             (nft_id, holder),
@@ -184,6 +195,8 @@ impl NftContract {
         env.storage()
             .instance()
             .remove(&DataKey::AccessRights(nft_id, holder.clone()));
+
+        env.storage().instance().extend_ttl(TTL_THRESHOLD, TTL_EXTEND_TO);
 
         env.events().publish(
             (symbol_short!("nft"), symbol_short!("acc_rvk")),
@@ -287,6 +300,8 @@ impl NftContract {
         env.storage().instance().remove(&DataKey::NftOwner(nft_id));
         env.storage().instance().remove(&DataKey::NftMetadata(nft_id));
 
+        env.storage().instance().extend_ttl(TTL_THRESHOLD, TTL_EXTEND_TO);
+
         env.events().publish(
             (symbol_short!("nft"), symbol_short!("burned")),
             (nft_id, owner),
@@ -319,6 +334,8 @@ impl NftContract {
         };
         env.storage().instance().set(&DataKey::Listing(nft_id), &listing);
 
+        env.storage().instance().extend_ttl(TTL_THRESHOLD, TTL_EXTEND_TO);
+
         env.events().publish(
             (symbol_short!("nft"), symbol_short!("listed")),
             (nft_id, seller, price),
@@ -334,6 +351,8 @@ impl NftContract {
         access::require_owner(&seller, &listing.seller);
 
         env.storage().instance().remove(&DataKey::Listing(nft_id));
+
+        env.storage().instance().extend_ttl(TTL_THRESHOLD, TTL_EXTEND_TO);
 
         env.events().publish(
             (symbol_short!("nft"), symbol_short!("delisted")),
@@ -362,8 +381,12 @@ impl NftContract {
             .instance()
             .get(&DataKey::RoyaltyBasis(nft_id))
             .unwrap_or(0);
-        let royalty_amount = (listing.price * royalty_basis as i128) / 10000;
-        let seller_amount = listing.price - royalty_amount;
+        let royalty_amount = (listing.price
+            .checked_mul(royalty_basis as i128)
+            .expect("math: royalty multiplication overflow")) / 10000;
+        let seller_amount = listing.price
+            .checked_sub(royalty_amount)
+            .expect("math: seller amount underflow");
 
         env.events().publish(
             (symbol_short!("nft"), symbol_short!("sold")),

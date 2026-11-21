@@ -1,4 +1,5 @@
 import { Injectable, Logger, NotFoundException, OnModuleInit } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThanOrEqual, IsNull } from 'typeorm';
 import * as crypto from 'crypto';
@@ -16,11 +17,15 @@ const SECRET_GRACE_SECONDS = 86_400;
 @Injectable()
 export class WebhooksService implements OnModuleInit {
   private readonly logger = new Logger(WebhooksService.name);
+  private readonly deliveryTimeoutMs: number;
 
   constructor(
     @InjectRepository(Webhook) private webhookRepo: Repository<Webhook>,
-    @InjectRepository(WebhookDelivery) private deliveryRepo: Repository<WebhookDelivery>
-  ) {}
+    @InjectRepository(WebhookDelivery) private deliveryRepo: Repository<WebhookDelivery>,
+    private readonly configService: ConfigService,
+  ) {
+    this.deliveryTimeoutMs = this.configService.get<number>('externalHttp.timeoutMs') ?? 10_000;
+  }
 
   onModuleInit() {
     // Poll every 60 s for pending retries
@@ -300,7 +305,7 @@ export class WebhooksService implements OnModuleInit {
         }
       );
       req.on('error', reject);
-      req.setTimeout(10_000, () => {
+      req.setTimeout(this.deliveryTimeoutMs, () => {
         req.destroy();
         reject(new Error('Webhook delivery timeout'));
       });

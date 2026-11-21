@@ -2,18 +2,40 @@
 
 ## Unreleased
 
-### Remove dead backend utilities (#1486)
+### Standardize API response envelope and Swagger decorators (#57)
 
-- Deleted `src/common/utils/endpoint-audit.ts`, an orphaned utility that was
-  never imported and not exported from the utils barrel; updated the stale
-  reference in `src/UNUSED_ENDPOINTS.md`.
-- Audited `apps/backend` dependencies against source and the test suite. No
-  unused dependencies were found — the zero-import candidates
-  (`@elastic/elasticsearch`, `@nestjs/platform-socket.io`) are consumed
-  indirectly, and `helmet` is used by the security e2e suite. No dependency
-  changes.
-- No breaking API change: the removed utility was not part of any public
-  surface.
+- Added `@ApiProperty` / `@ApiPropertyOptional` decorators to every public
+  field of `ApiResponseDto` and the nested `PaginationMeta` class so the
+  generated OpenAPI spec fully describes the response envelope.
+- No structural change to the envelope shape — this is non-breaking.
+
+### Add graceful shutdown, health and readiness checks (#58)
+
+- `GracefulShutdownService` already implemented; fixed the unit test
+  (`graceful-shutdown.service.spec.ts`) which constructed the service without
+  the required `ConfigService` dependency.
+- Added tests covering `drainTimeoutMs` configuration, `onModuleDestroy`,
+  and `registerCleanup`.
+
+### Make retries/timeouts for external calls configurable (#59)
+
+- Added `src/common/http/fetch-with-retry.ts` — a shared helper that wraps
+  `fetch` with a per-request `AbortSignal` timeout and exponential-backoff
+  retries for transient errors (network errors and 429/5xx responses).
+- Three new env vars (validated in `validation.schema.ts`, mapped in
+  `configuration.ts`) control the shared defaults:
+  - `EXTERNAL_HTTP_TIMEOUT_MS` (default `10000`)
+  - `EXTERNAL_HTTP_MAX_RETRIES` (default `3`)
+  - `EXTERNAL_HTTP_RETRY_BASE_DELAY_MS` (default `1000`)
+- **Callers updated**: `SynapsKycProvider`, `PushNotificationService`, and
+  `WebhooksService` now read these values via `ConfigService` instead of
+  hard-coding them.
+- `SorobanRpcClientService` reads `externalHttp.maxRetries` and
+  `externalHttp.retryBaseDelayMs` from `ConfigService` instead of using
+  the module-level `MAX_RETRIES`/`BASE_DELAY_MS` constants.
+
+**No breaking API change.** All defaults match the previous hard-coded
+values so existing deployments without the new env vars behave identically.
 
 ### Route file split by resource (#973)
 

@@ -546,4 +546,83 @@ mod tests {
         );
         assert_eq!(client.get_royalty_info(&nft_id).unwrap().1, 10000);
     }
+
+    // ── Additional negative tests (issue #65) ────────────────────────────────
+
+    #[test]
+    #[should_panic(expected = "Unauthorized: owner required")]
+    fn test_list_nft_by_non_owner_panics() {
+        let (env, client, admin) = setup();
+        let owner = Address::generate(&env);
+        let rando = Address::generate(&env);
+        let nft_id = mint_nft(&env, &client, &admin, &owner);
+        client.list_nft(&rando, &nft_id, &500);
+    }
+
+    #[test]
+    #[should_panic(expected = "Unauthorized: owner required")]
+    fn test_delist_nft_by_non_seller_panics() {
+        let (env, client, admin) = setup();
+        let owner = Address::generate(&env);
+        let rando = Address::generate(&env);
+        let nft_id = mint_nft(&env, &client, &admin, &owner);
+        client.list_nft(&owner, &nft_id, &500);
+        client.delist_nft(&rando, &nft_id);
+    }
+
+    #[test]
+    #[should_panic(expected = "Unauthorized: owner required")]
+    fn test_revoke_access_by_non_owner_panics() {
+        let (env, client, admin) = setup();
+        let owner = Address::generate(&env);
+        let viewer = Address::generate(&env);
+        let rando = Address::generate(&env);
+        let nft_id = mint_nft(&env, &client, &admin, &owner);
+        client.grant_access(&owner, &nft_id, &viewer);
+        client.revoke_access(&rando, &nft_id, &viewer);
+    }
+
+    #[test]
+    #[should_panic(expected = "Unauthorized: owner required")]
+    fn test_burn_nft_by_non_owner_panics() {
+        let (env, client, admin) = setup();
+        let owner = Address::generate(&env);
+        let rando = Address::generate(&env);
+        let nft_id = mint_nft(&env, &client, &admin, &owner);
+        client.burn_nft(&rando, &nft_id);
+    }
+
+    #[test]
+    fn test_buy_nft_royalty_calculation() {
+        // royalty_basis = 500 (5%), price = 10000 → royalty = 500, seller = 9500
+        let (env, client, admin) = setup();
+        let owner = Address::generate(&env);
+        let buyer = Address::generate(&env);
+        let instructor = Address::generate(&env);
+        // mint with 500 bps royalty (5%)
+        let nft_id = client.mint_course_nft(
+            &admin,
+            &owner,
+            &symbol_short!("RUST101"),
+            &String::from_str(&env, "Rust Basics"),
+            &instructor,
+            &10000,
+            &500,
+        );
+        client.list_nft(&owner, &nft_id, &10000);
+        client.buy_nft(&buyer, &nft_id);
+        // After buy, ownership transferred to buyer
+        assert_eq!(client.get_nft_owner(&nft_id).unwrap(), buyer);
+        // Listing removed
+        assert!(client.get_listing(&nft_id).is_none());
+    }
+
+    #[test]
+    #[should_panic(expected = "Price must be positive")]
+    fn test_list_nft_negative_price_panics() {
+        let (env, client, admin) = setup();
+        let owner = Address::generate(&env);
+        let nft_id = mint_nft(&env, &client, &admin, &owner);
+        client.list_nft(&owner, &nft_id, &-1);
+    }
 }
