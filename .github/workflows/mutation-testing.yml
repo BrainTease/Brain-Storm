@@ -32,5 +32,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: mutation-report
-          path: reports/mutation
+          path: coverage/mutation
           if-no-files-found: ignore
