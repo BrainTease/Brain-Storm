@@ -10,7 +10,7 @@ This is a living document that should be updated as unused endpoints are identif
 
 ## Process Overview
 
-1. **Identification**: Use endpoint-audit utility and code search to identify candidates
+1. **Identification**: Use code search to identify candidates
 2. **Verification**: Confirm with frontend/mobile developers that endpoint isn't used
 3. **Testing**: Remove and run full test suite
 4. **Documentation**: Update CHANGELOG with removal

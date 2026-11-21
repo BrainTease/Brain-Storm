@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+### Remove dead backend utilities (#1486)
+
+- Deleted `src/common/utils/endpoint-audit.ts`, an orphaned utility that was
+  never imported and not exported from the utils barrel; updated the stale
+  reference in `src/UNUSED_ENDPOINTS.md`.
+- Audited `apps/backend` dependencies against source and the test suite. No
+  unused dependencies were found — the zero-import candidates
+  (`@elastic/elasticsearch`, `@nestjs/platform-socket.io`) are consumed
+  indirectly, and `helmet` is used by the security e2e suite. No dependency
+  changes.
+- No breaking API change: the removed utility was not part of any public
+  surface.
+
 ### Route file split by resource (#973)
 
 - Split `AdminController` into `AdminUserManagementController`
