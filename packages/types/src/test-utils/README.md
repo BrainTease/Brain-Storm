@@ -57,6 +57,40 @@ const payment = PaymentFactory.create({ userId, courseId, amount: 4999 });
 
 4. **Prefer factories over inline objects** — Replace inline test data like `{ id: '1', email: 'test@example.com' } as User` with `UserFactory.create({ id: '1', email: 'test@example.com' })`.
 
+## Deterministic time and randomness (`#1531`)
+
+`@brain-storm/types/test-utils` also exports framework-agnostic helpers so a
+suite never has to read the wall clock or call `Math.random` directly:
+
+```typescript
+import {
+  FakeClock,
+  SeededRandom,
+  installDeterminism,
+  withDeterminism,
+} from '@brain-storm/types/test-utils';
+
+const harness = installDeterminism({ now: '2024-01-01T00:00:00Z', seed: 42 });
+try {
+  harness.clock.advance(60_000); // deterministic time
+  const value = harness.random.int(1, 6); // deterministic randomness
+} finally {
+  harness.restore();
+}
+```
+
+| Helper | Purpose |
+|--------|---------|
+| `FakeClock` | Manually advanced clock (`now`, `advance`, `set`, `toDate`) |
+| `installFrozenDate` / `withFakeClock` | Freeze `Date` and `Date.now` |
+| `SeededRandom` | Seedable `next`, `int`, `bool`, `pick`, `shuffle`, `fork` |
+| `installSeededRandom` / `withSeededRandom` | Seed `Math.random` |
+| `installDeterminism` / `withDeterminism` | Both at once, with a single `restore()` |
+
+Playwright uses `apps/frontend/e2e/fixtures/determinism.ts`; Soroban contract
+tests use `contracts/integration/tests/determinism.rs`. See the "Deterministic
+tests" section of `CONTRIBUTING.md` for examples and commands.
+
 ## Adding New Factories
 
 To add a new factory:

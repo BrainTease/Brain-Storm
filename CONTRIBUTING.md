@@ -436,6 +436,105 @@ The following scripts were used once to migrate the codebase and have since been
 
 All fixes from these scripts are already committed to the codebase. The scripts themselves were removed once verified. If you need to perform a similar mass codebase transformation in the future, create a new migration script under `scripts/` (not the repo root), run it, commit the result, and remove the script in the same PR.
 
+## Deterministic tests: time, clocks and randomness
+
+Tests must not depend on the wall clock, the machine's timezone, or
+`Math.random`. Use the shared helpers in
+`packages/types/src/test-utils/determinism.ts` (exported as
+`@brain-storm/types/test-utils`) instead.
+
+### Vitest / Jest (Node)
+
+```ts
+import {
+  FakeClock,
+  SeededRandom,
+  installDeterminism,
+  withDeterminism,
+} from '@brain-storm/types/test-utils';
+
+it('expires after 15 minutes', () => {
+  const harness = installDeterminism({ now: '2024-01-01T00:00:00Z', seed: 42 });
+  try {
+    const token = createToken();
+    harness.clock.advance(15 * 60 * 1000 + 1);
+    expect(isExpired(token)).toBe(true);
+  } finally {
+    harness.restore(); // always restore, even if an assertion throws
+  }
+});
+
+it('uses seeded fixture data', () => {
+  const random = new SeededRandom(7);
+  const user = UserFactory.create({ id: `user-${random.int(1, 999)}` });
+  expect(user.id).toMatch(/^user-\d+$/);
+});
+```
+
+Prefer `withDeterminism({ ... }, () => { ... })` when the body is a single
+expression; it restores the globals in a `finally` block. `FakeClock` also
+works with the runner's own timers (`jest.setSystemTime(clock.now())`,
+`vi.setSystemTime(clock.toDate())`).
+
+### Playwright
+
+`apps/frontend/e2e/fixtures/determinism.ts` exports a `test` with a
+`deterministicPage` fixture that freezes `Date` and seeds `Math.random` before
+the first navigation:
+
+```ts
+import { expect, test, FIXED_TIME } from './fixtures/determinism';
+
+test('shows a stable deadline', async ({ deterministicPage }) => {
+  await deterministicPage.goto('/courses');
+  await expect(deterministicPage.getByTestId('deadline')).toHaveText(
+    FIXED_TIME.toISOString()
+  );
+});
+```
+
+For one-off cases use `freezeTime(page)` and `seedRandomness(page)` directly.
+
+### Rust / Soroban
+
+`contracts/integration/tests/determinism.rs` provides `DeterministicEnv`
+(fixed ledger timestamp/sequence plus a seeded `Lcg`) and `Lcg` itself.
+
+```rust
+let fixture = DeterministicEnv::new(DEFAULT_SEED);
+fixture.advance_time(60);
+assert_eq!(fixture.env.ledger().timestamp(), FIXED_TIMESTAMP + 60);
+```
+
+### Rules and commands
+
+- Never write `Date.now()`, `new Date()` or `Math.random()` in a test body
+  without installing a deterministic source first.
+- Use a different seed per test file (`new SeededRandom(SEED).fork('file')`) so
+  tests stay independent and can run in any order, but never `Date.now()` as a
+  seed.
+- Restore every installed global in `afterEach` or `finally`.
+
+```bash
+# Node helpers (frontend example)
+npm run test --workspace=apps/frontend -- src/__tests__/test-utils/determinism.test.ts
+
+# Shared Jest suite
+npm run test --workspace=packages/types
+
+# Playwright (requires a running app or the configured web server)
+cd apps/frontend && npx playwright test
+
+# Cargo
+cargo test -p brain-storm-integration --test determinism
+
+# Determinism check: the focused suite must pass 20 consecutive local runs
+cd apps/frontend
+for i in $(seq 1 20); do
+  npx vitest run src/__tests__/test-utils/determinism.test.ts || exit 1
+done
+```
+
 ## Backend dependency check
 
 Checked against backend source. `@elastic/elasticsearch` is used by `@nestjs/elasticsearch`, and `@nestjs/platform-socket.io` provides the socket.io adapter for the notifications gateway. Both are used indirectly, so neither is removed.

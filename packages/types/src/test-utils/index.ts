@@ -15,6 +15,8 @@
  *   const users = UserFactory.createMany(5);
  */
 
+export * from './determinism';
+
 // ---------------------------------------------------------------------------
 // Minimal deterministic pseudo-random helpers
 // (avoids a hard dependency on @faker-js/faker at the types package level
