@@ -8,11 +8,9 @@
 //! - Only parties can submit evidence
 //! - Once settled, no further state changes allowed
 
-use soroban_sdk::{
-    contract, contractimpl, contracttype, symbol_short, Address, BytesN, Env, Symbol,
-};
+use soroban_sdk::{contract, contractimpl, contracttype, Address, BytesN, Env};
 
-use brain_storm_shared::{access, events::emit_contract_event, validation};
+use brain_storm_shared::{access, events, validation};
 
 // ── Storage keys ──────────────────────────────────────────────────────────────
 
@@ -58,11 +56,13 @@ pub struct Dispute {
 }
 
 // ── Events ────────────────────────────────────────────────────────────────────
-const EVT_DOMAIN: Symbol = symbol_short!("dispute");
-const EVT_OPENED: Symbol = symbol_short!("opened");
-const EVT_EVIDENCE: Symbol = symbol_short!("evidence");
-const EVT_DECISION: Symbol = symbol_short!("decision");
-const EVT_SETTLED: Symbol = symbol_short!("settled");
+// Event topics are standardized via the shared events helpers; see
+// `brain_storm_shared::events` for the canonical domain/action schema.
+const EVT_DOMAIN: &str = "dispute";
+const EVT_OPENED: &str = "opened";
+const EVT_EVIDENCE: &str = "evidence";
+const EVT_DECISION: &str = "decision";
+const EVT_SETTLED: &str = "settled";
 
 #[contract]
 pub struct DisputeContract;
@@ -72,7 +72,7 @@ impl DisputeContract {
     // ── Init ──────────────────────────────────────────────────────────────────
 
     pub fn initialize(env: Env, admin: Address, arbiter: Address) {
-        assert!(!env.storage().instance().has(&DataKey::Admin), "Already initialized");
+        access::require_not_initialized(&env, &DataKey::Admin);
         admin.require_auth();
         env.storage().instance().set(&DataKey::Admin, &admin);
         env.storage().instance().set(&DataKey::Arbiter, &arbiter);
@@ -115,7 +115,7 @@ impl DisputeContract {
 
         env.storage().persistent().set(&DataKey::Dispute(id), &dispute);
         env.storage().instance().set(&DataKey::NextId, &(id + 1));
-        emit_contract_event(&env, EVT_DOMAIN, EVT_OPENED, (claimant.clone(), id, amount));
+        events::emit_contract_event(&env, EVT_DOMAIN, EVT_OPENED, (claimant.clone(), id, amount));
         id
     }
 
@@ -141,7 +141,7 @@ impl DisputeContract {
         dispute.evidence_hash = hash.clone();
         dispute.status = DisputeStatus::Evidence;
         env.storage().persistent().set(&DataKey::Dispute(dispute_id), &dispute);
-        emit_contract_event(&env, EVT_DOMAIN, EVT_EVIDENCE, (caller.clone(), dispute_id, hash));
+        events::emit_contract_event(&env, EVT_DOMAIN, EVT_EVIDENCE, (caller.clone(), dispute_id, hash));
     }
 
     /// Arbiter records their decision (moves to Decision phase).
@@ -167,7 +167,7 @@ impl DisputeContract {
         dispute.outcome = outcome.clone();
         dispute.status = DisputeStatus::Decision;
         env.storage().persistent().set(&DataKey::Dispute(dispute_id), &dispute);
-        emit_contract_event(&env, EVT_DOMAIN, EVT_DECISION, (arbiter.clone(), dispute_id, outcome));
+        events::emit_contract_event(&env, EVT_DOMAIN, EVT_DECISION, (arbiter.clone(), dispute_id, outcome));
     }
 
     /// Enforce settlement: compute payouts based on outcome, mark as Settled.
@@ -195,7 +195,7 @@ impl DisputeContract {
 
         dispute.status = DisputeStatus::Settled;
         env.storage().persistent().set(&DataKey::Dispute(dispute_id), &dispute);
-        emit_contract_event(
+        events::emit_contract_event(
             &env,
             EVT_DOMAIN,
             EVT_SETTLED,
@@ -249,12 +249,18 @@ mod tests {
         client.submit_evidence(&claimant, &id, &hash);
         client.record_decision(&arbiter, &id, &Outcome::FavourClaimant);
 
-        let events = env.events().all();
-        assert!(events.len() >= 3);
-        let last_event = events.get(events.len() - 1).unwrap();
+        let emitted = env.events().all();
+        assert!(emitted.len() >= 3);
+        let last_event = emitted.get(emitted.len() - 1).unwrap();
         let topics = last_event.1;
-        assert_eq!(soroban_sdk::Symbol::from_val(&env, &topics.get(0).unwrap()), symbol_short!("dispute"));
-        assert_eq!(soroban_sdk::Symbol::from_val(&env, &topics.get(1).unwrap()), symbol_short!("decision"));
+        assert_eq!(
+            soroban_sdk::Symbol::from_val(&env, &topics.get(0).unwrap()),
+            soroban_sdk::symbol_short!("dispute")
+        );
+        assert_eq!(
+            soroban_sdk::Symbol::from_val(&env, &topics.get(1).unwrap()),
+            soroban_sdk::symbol_short!("decision")
+        );
     }
 
     #[test]

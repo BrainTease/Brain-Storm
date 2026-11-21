@@ -3,7 +3,7 @@
 //! Split out of `lib.rs` (issue #1324). The `#[contractimpl]` entry points in
 //! `lib.rs` delegate here so the contract surface stays small.
 
-use soroban_sdk::{symbol_short, vec, Address, Env, IntoVal, String, Symbol};
+use soroban_sdk::{symbol_short, Address, Env, IntoVal, String, Symbol};
 
 use brain_storm_shared::access;
 

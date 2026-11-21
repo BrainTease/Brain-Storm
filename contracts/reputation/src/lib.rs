@@ -4,7 +4,7 @@ use soroban_sdk::{
     contract, contractimpl, contracttype, symbol_short, Address, Env, Symbol, Vec,
 };
 
-use brain_storm_shared::access;
+use brain_storm_shared::{access, events, upgrade};
 
 mod reputation;
 
@@ -50,6 +50,7 @@ pub struct DecayConfig {
 const REP_UPDATE: Symbol = symbol_short!("rep_upd");
 const REP_DECAY: Symbol = symbol_short!("rep_dcy");
 const REP_REWARD: Symbol = symbol_short!("rep_rwd");
+const REP_SLASH: Symbol = symbol_short!("rep_slsh");
 
 #[contract]
 pub struct ReputationContract;
@@ -65,15 +66,23 @@ impl ReputationContract {
     /// - **Initial State**: Sets default decay config (enabled, rate=-1, interval=1000) and total reputation to 0.
     /// - **Atomic Operation**: All state is initialized in a single operation; no partial states.
     pub fn initialize(env: Env, admin: Address) {
-        assert!(!env.storage().instance().has(&DataKey::Admin), "Already initialized");
-        admin.require_auth();
-        env.storage().instance().set(&DataKey::Admin, &admin);
+        upgrade::initialize(&env, &DataKey::Admin, &admin);
         env.storage().instance().set(&DataKey::DecayConfig, &DecayConfig {
             enabled: true,
             decay_rate: -1,
             decay_interval: 1000,
         });
         env.storage().instance().set(&DataKey::TotalReputation, &0_i128);
+    }
+
+    /// Return the current contract version (shared upgrade pattern).
+    pub fn version(env: Env) -> u32 {
+        upgrade::version(&env)
+    }
+
+    /// Upgrade the contract to a new version (admin-only, shared upgrade pattern).
+    pub fn upgrade(env: Env, admin: Address, new_version: u32) {
+        upgrade::upgrade(&env, &DataKey::Admin, &admin, new_version);
     }
 
     pub fn get_admin(env: Env) -> Address {
@@ -124,6 +133,7 @@ impl ReputationContract {
     /// - **Event Emission**: Emits an event with the user, amount, and reason for auditability.
     pub fn slash(env: Env, caller: Address, user: Address, amount: i128, reason: Symbol) {
         reputation::slash(&env, &caller, &user, amount, reason);
+        events::emit(&env, REP_SLASH, (user, amount, reason));
     }
 
     // ── Core scoring (authorized-caller gated) ───────────────────────────────
@@ -180,7 +190,7 @@ impl ReputationContract {
 
         Self::update_leaderboard(&env, user.clone());
 
-        env.events().publish((REP_UPDATE, symbol_short!("user")), (user, score_change, reason));
+        events::emit(&env, REP_UPDATE, (user, score_change, reason));
     }
 
     pub fn get_reputation(env: Env, user: Address) -> i128 {
@@ -235,7 +245,7 @@ impl ReputationContract {
             total = total.checked_add(decay_amount).expect("overflow");
             env.storage().instance().set(&DataKey::TotalReputation, &total);
 
-            env.events().publish((REP_DECAY, symbol_short!("user")), (user, decay_amount));
+            events::emit(&env, REP_DECAY, (user, decay_amount));
         }
     }
 
@@ -264,7 +274,7 @@ impl ReputationContract {
         user.require_auth();
         let level = reputation::calculate_level(Self::get_reputation(env.clone(), user.clone()));
         let reward_amount = (level as i128) * 10;
-        env.events().publish((REP_REWARD, symbol_short!("user")), (user, reward_amount));
+        events::emit(&env, REP_REWARD, (user, reward_amount));
     }
 
     pub fn verify_reputation_threshold(env: Env, user: Address, min_score: i128) -> bool {

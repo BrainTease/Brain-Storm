@@ -11,6 +11,9 @@ use brain_storm_shared::test_helpers::{generate_address, TestContext};
 use proptest::prelude::*;
 use soroban_sdk::{symbol_short, Env};
 
+/// Minimum liquidity permanently locked on the first deposit.
+const MINIMUM_LIQUIDITY: i128 = 1_000;
+
 fn setup() -> (Env, LiquidityPoolContractClient<'static>) {
     let TestContext { env, admin } = TestContext::new();
     let id = env.register_contract(None, LiquidityPoolContract);
@@ -58,7 +61,7 @@ proptest! {
         let provider = generate_address(&env);
 
         let minted = client.add_liquidity(&provider, &amount_a, &amount_b, &0, &0);
-        let expected = integer_sqrt(amount_a * amount_b) - 1_000;
+        let expected = integer_sqrt(amount_a * amount_b) - MINIMUM_LIQUIDITY;
 
         prop_assert!(minted > 0);
         prop_assert_eq!(minted, expected);
@@ -116,5 +119,81 @@ proptest! {
         prop_assert!(out_b > 0 && out_b <= amount);
         prop_assert_eq!(stats.reserve_a, amount - out_a);
         prop_assert_eq!(stats.reserve_b, amount - out_b);
+    }
+
+    /// Deposits never overflow and total liquidity is monotonic: adding
+    /// liquidity can only increase the pool's total supply.
+    #[test]
+    fn prop_deposits_never_overflow_and_total_is_monotonic(
+        first in arb_liquidity(),
+        second in arb_liquidity(),
+    ) {
+        let (env, client) = setup();
+        let provider_a = generate_address(&env);
+        let provider_b = generate_address(&env);
+
+        let minted_a = client.add_liquidity(&provider_a, &first, &first, &0, &0);
+        let total_after_first = client.get_total_liquidity();
+
+        let minted_b = client.add_liquidity(&provider_b, &second, &second, &0, &0);
+        let total_after_second = client.get_total_liquidity();
+
+        prop_assert!(minted_a > 0);
+        prop_assert!(minted_b > 0);
+        prop_assert_eq!(total_after_first, minted_a);
+        prop_assert_eq!(total_after_second, total_after_first + minted_b);
+        prop_assert!(total_after_second >= total_after_first);
+    }
+
+    /// Swaps conserve reserves: the sum of both reserves is unchanged by a
+    /// swap (only the fee, if any, is retained by the pool) and no overflow
+    /// occurs for in-range trades.
+    #[test]
+    fn prop_swap_conserves_reserves((bst_in, amount_in) in arb_trade()) {
+        let (env, client) = setup();
+        initialize_pool(&env, &client, 1_000_000);
+        let user = generate_address(&env);
+        let token = if bst_in { symbol_short!("bst") } else { symbol_short!("xlm") };
+
+        let before = client.get_pool_stats();
+        let amount_out = client.swap(&user, &token, &amount_in, &0);
+        let after = client.get_pool_stats();
+
+        // The pool retains the input minus the output, so the combined
+        // reserve total can only grow (fees) and never shrink.
+        let before_total = before.reserve_a + before.reserve_b;
+        let after_total = after.reserve_a + after.reserve_b;
+        prop_assert!(after_total >= before_total);
+        prop_assert_eq!(after_total - before_total, amount_in - amount_out);
+    }
+
+    /// Repeated swaps in both directions keep reserves positive and the
+    /// constant-product invariant non-decreasing across the whole sequence.
+    #[test]
+    fn prop_repeated_swaps_keep_invariant(
+        trades in prop::collection::vec(arb_trade(), 1..8),
+    ) {
+        let (env, client) = setup();
+        initialize_pool(&env, &client, 1_000_000);
+        let user = generate_address(&env);
+
+        let mut previous = client.get_pool_stats();
+        let mut previous_k = previous.reserve_a * previous.reserve_b;
+
+        for (bst_in, amount_in) in trades {
+            let token = if bst_in { symbol_short!("bst") } else { symbol_short!("xlm") };
+            let amount_out = client.swap(&user, &token, &amount_in, &0);
+            let current = client.get_pool_stats();
+
+            prop_assert!(amount_out > 0);
+            prop_assert!(current.reserve_a > 0);
+            prop_assert!(current.reserve_b > 0);
+
+            let current_k = current.reserve_a * current.reserve_b;
+            prop_assert!(current_k >= previous_k);
+
+            previous = current;
+            previous_k = current_k;
+        }
     }
 }

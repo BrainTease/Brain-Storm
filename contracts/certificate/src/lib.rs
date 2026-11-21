@@ -1,10 +1,10 @@
 #![no_std]
-use soroban_sdk::{contract, contractimpl, symbol_short, Address, Env, String, Symbol};
+use soroban_sdk::{contract, contractimpl, Address, Env, String, Symbol};
 
 mod types;
 pub use types::*;
 
-use brain_storm_shared::access;
+use brain_storm_shared::{access, events, upgrade};
 
 // =============================================================================
 // Contract
@@ -20,13 +20,14 @@ impl CertificateContract {
     // -------------------------------------------------------------------------
 
     pub fn initialize(env: Env, admin: Address) {
-        assert!(
-            !env.storage().instance().has(&DataKey::Admin),
-            "Already initialized"
-        );
-        admin.require_auth();
-        env.storage().instance().set(&DataKey::Admin, &admin);
+        upgrade::initialize(&env, &DataKey::Admin, &admin);
         env.storage().instance().set(&DataKey::NextId, &1_u64);
+    }
+
+    /// Upgrade the contract WASM to a new hash (admin only).
+    pub fn upgrade(env: Env, admin: Address, new_wasm_hash: soroban_sdk::BytesN<32>) {
+        access::require_admin(&env, &admin, &DataKey::Admin);
+        upgrade::upgrade(&env, &new_wasm_hash);
     }
 
     pub fn get_admin(env: Env) -> Address {
@@ -74,8 +75,7 @@ impl CertificateContract {
             .instance()
             .set(&DataKey::NextId, &(id + 1));
 
-        env.events()
-            .publish((MINT, symbol_short!("to"), recipient), (id, course_id));
+        events::emit_mint(&env, &recipient, id, &course_id);
 
         id
     }
@@ -135,8 +135,7 @@ impl CertificateContract {
             .persistent()
             .set(&DataKey::Revocation(cert_id), &revocation);
 
-        env.events()
-            .publish((REVOKE, symbol_short!("cert_id")), (cert_id, reason));
+        events::emit_revoke(&env, cert_id, &reason);
     }
 
     pub fn is_revoked(env: Env, cert_id: u64) -> bool {
@@ -219,8 +218,7 @@ impl CertificateContract {
             .persistent()
             .set(&DataKey::Certificate(cert_id), &cert);
 
-        env.events()
-            .publish((TRANSFER, symbol_short!("from"), from), (to, cert_id));
+        events::emit_transfer(&env, &from, &to, cert_id);
     }
 
     // -------------------------------------------------------------------------

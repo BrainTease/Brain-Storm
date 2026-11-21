@@ -503,3 +503,132 @@ fn test_partial_multisig_signer_cannot_schedule_upgrade() {
     });
     client.schedule_upgrade(&co_signer, &fake_hash(&env, 71), &10);
 }
+
+// ── Shared init / upgrade helpers (#1502) ────────────────────────────────────
+//
+// These exercise the reusable helpers in `crate::init` and `crate::upgrade`
+// that unify the initialization and upgrade patterns across contracts:
+// one-time init guard, version stamping, version checks and migration hooks.
+
+#[test]
+fn test_init_stamps_version() {
+    let (env, _, client) = setup();
+    assert_eq!(client.get_version(), crate::init::CONTRACT_VERSION);
+    let _ = env;
+}
+
+#[test]
+#[should_panic(expected = "Already initialized")]
+fn test_reinit_rejected() {
+    let (env, _, client) = setup();
+    let other = Address::generate(&env);
+    client.initialize(&other);
+}
+
+#[test]
+#[should_panic(expected = "Already initialized")]
+fn test_init_helper_rejects_second_call() {
+    let (env, id, admin) = setup_direct(true);
+    env.as_contract(&id, || {
+        crate::init::initialize(&env, &admin);
+    });
+}
+
+#[test]
+fn test_init_helper_sets_admin_and_version() {
+    let (env, id, admin) = setup_direct(true);
+    env.as_contract(&id, || {
+        crate::init::initialize(&env, &admin);
+        assert_eq!(crate::init::get_version(&env), crate::init::CONTRACT_VERSION);
+        assert_eq!(crate::init::get_admin(&env), Some(admin.clone()));
+    });
+}
+
+#[test]
+#[should_panic]
+fn test_init_helper_requires_admin_signature() {
+    // No `mock_all_auths`: initialization must be authorized by the admin.
+    let (env, id, admin) = setup_direct(false);
+    env.as_contract(&id, || {
+        crate::init::initialize(&env, &admin);
+    });
+}
+
+#[test]
+fn test_version_check_accepts_current_version() {
+    let (env, id, _) = setup_direct(true);
+    env.as_contract(&id, || {
+        let admin = Address::generate(&env);
+        crate::init::initialize(&env, &admin);
+        // Current version is compatible with itself.
+        crate::upgrade::check_version(&env, crate::init::CONTRACT_VERSION);
+    });
+}
+
+#[test]
+#[should_panic(expected = "Incompatible contract version")]
+fn test_version_check_rejects_newer_version() {
+    let (env, id, _) = setup_direct(true);
+    env.as_contract(&id, || {
+        let admin = Address::generate(&env);
+        crate::init::initialize(&env, &admin);
+        crate::upgrade::check_version(&env, crate::init::CONTRACT_VERSION + 1);
+    });
+}
+
+#[test]
+#[should_panic(expected = "Incompatible contract version")]
+fn test_version_check_rejects_older_version() {
+    let (env, id, _) = setup_direct(true);
+    env.as_contract(&id, || {
+        let admin = Address::generate(&env);
+        crate::init::initialize(&env, &admin);
+        crate::upgrade::check_version(&env, crate::init::CONTRACT_VERSION - 1);
+    });
+}
+
+#[test]
+fn test_migration_hook_invoked_on_upgrade() {
+    let (env, id, admin) = setup_direct(true);
+    env.as_contract(&id, || {
+        crate::init::initialize(&env, &admin);
+        // The migration hook runs once per upgrade and records the target
+        // version; it must be idempotent and safe to call directly.
+        crate::upgrade::migrate(&env, crate::init::CONTRACT_VERSION);
+        assert_eq!(crate::init::get_version(&env), crate::init::CONTRACT_VERSION);
+        // Running it again is a no-op (idempotent).
+        crate::upgrade::migrate(&env, crate::init::CONTRACT_VERSION);
+        assert_eq!(crate::init::get_version(&env), crate::init::CONTRACT_VERSION);
+    });
+}
+
+#[test]
+#[should_panic(expected = "Unauthorized: admin required")]
+fn test_migration_hook_requires_admin() {
+    let (env, id, admin) = setup_direct(true);
+    env.as_contract(&id, || {
+        crate::init::initialize(&env, &admin);
+        let attacker = Address::generate(&env);
+        crate::upgrade::migrate_as(&env, &attacker, crate::init::CONTRACT_VERSION);
+    });
+}
+
+#[test]
+fn test_migration_hook_accepts_admin() {
+    let (env, id, admin) = setup_direct(true);
+    env.as_contract(&id, || {
+        crate::init::initialize(&env, &admin);
+        crate::upgrade::migrate_as(&env, &admin, crate::init::CONTRACT_VERSION);
+        assert_eq!(crate::init::get_version(&env), crate::init::CONTRACT_VERSION);
+    });
+}
+
+#[test]
+fn test_upgrade_preserves_version_stamp() {
+    let (env, admin, client) = setup();
+    client.schedule_upgrade(&admin, &fake_hash(&env, 72), &10);
+    // Scheduling must not disturb the stamped version.
+    assert_eq!(client.get_version(), crate::init::CONTRACT_VERSION);
+    client.cancel_upgrade(&admin);
+    assert_eq!(client.get_version(), crate::init::CONTRACT_VERSION);
+}

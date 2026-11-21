@@ -12,6 +12,7 @@ extern crate std;
 use soroban_sdk::{contract, contractimpl, Address, Env, String, Vec};
 
 use brain_storm_shared::events::emit_contract_event;
+use brain_storm_shared::init::{ensure_not_initialized, set_initialized};
 
 mod fees;
 mod listing;
@@ -32,10 +33,7 @@ impl MarketContract {
     // ── Init / admin ──────────────────────────────────────────────────────────
 
     pub fn initialize(env: Env, admin: Address) -> Result<(), MarketError> {
-        assert!(
-            !env.storage().instance().has(&DataKey::Admin),
-            "Already initialized"
-        );
+        ensure_not_initialized(&env, &DataKey::Admin);
         admin.require_auth();
         env.storage().instance().set(&DataKey::Admin, &admin);
         env.storage().instance().set(&DataKey::Paused, &false);
@@ -48,6 +46,7 @@ impl MarketContract {
         env.storage()
             .instance()
             .set(&DataKey::ReentrancyLock, &LockStatus::Unlocked);
+        set_initialized(&env);
         Ok(())
     }
 
@@ -61,14 +60,14 @@ impl MarketContract {
         storage::assert_admin_addr(&env, &admin);
         assert!(!storage::is_paused_internal(&env), "Already paused");
         env.storage().instance().set(&DataKey::Paused, &true);
-        emit_contract_event(&env, EVT_DOMAIN, EVT_PAUSED, admin);
+        emit_contract_event(&env, EVT_DOMAIN, EVT_PAUSED, (admin,));
     }
 
     pub fn unpause(env: Env, admin: Address) {
         storage::assert_admin_addr(&env, &admin);
         assert!(storage::is_paused_internal(&env), "Not paused");
         env.storage().instance().set(&DataKey::Paused, &false);
-        emit_contract_event(&env, EVT_DOMAIN, EVT_UNPAUSED, admin);
+        emit_contract_event(&env, EVT_DOMAIN, EVT_UNPAUSED, (admin,));
     }
 
     pub fn is_paused(env: Env) -> bool {

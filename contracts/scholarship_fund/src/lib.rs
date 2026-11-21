@@ -12,11 +12,9 @@
 // - get_fund_balance/report/application/donor_total: Query functions used in tests
 // No dead code functions or feature-flagged code from earlier revisions found.
 
-use soroban_sdk::{
-    contract, contractimpl, contracttype, symbol_short, Address, Env, Symbol, Vec,
-};
+use soroban_sdk::{contract, contractimpl, contracttype, Address, Env, Vec};
 
-use brain_storm_shared::access;
+use brain_storm_shared::{access, events, init};
 
 #[contracttype]
 #[derive(Clone, PartialEq, Debug)]
@@ -64,23 +62,13 @@ pub struct FundReport {
     pub total_distributed: i128,
 }
 
-const DONATE: Symbol = symbol_short!("donate");
-const APPLY: Symbol = symbol_short!("apply");
-const APPROVE: Symbol = symbol_short!("appr");
-const DISTRIBUTE: Symbol = symbol_short!("dist");
-
 #[contract]
 pub struct ScholarshipFundContract;
 
 #[contractimpl]
 impl ScholarshipFundContract {
     pub fn initialize(env: Env, admin: Address) {
-        assert!(
-            !env.storage().instance().has(&DataKey::Admin),
-            "Already initialized"
-        );
-        admin.require_auth();
-        env.storage().instance().set(&DataKey::Admin, &admin);
+        init::initialize_admin(&env, &DataKey::Admin, &admin);
         env.storage()
             .instance()
             .set(&DataKey::FundBalance, &0_i128);
@@ -113,8 +101,7 @@ impl ScholarshipFundContract {
             .persistent()
             .set(&DataKey::DonorTotal(donor.clone()), &donor_total);
 
-        env.events()
-            .publish((DONATE, symbol_short!("fund")), (donor, amount));
+        events::donation(&env, &donor, amount);
     }
 
     // ---- Fund distribution ----
@@ -144,8 +131,7 @@ impl ScholarshipFundContract {
             .instance()
             .set(&DataKey::ApplicationCount, &(app_id + 1));
 
-        env.events()
-            .publish((APPLY, symbol_short!("stud")), (student, app_id));
+        events::application_submitted(&env, &student, app_id);
 
         app_id
     }
@@ -171,8 +157,7 @@ impl ScholarshipFundContract {
             .persistent()
             .set(&DataKey::Application(app_id), &app);
 
-        env.events()
-            .publish((APPROVE, symbol_short!("app")), app_id);
+        events::application_approved(&env, &admin, app_id);
     }
 
     pub fn reject_application(env: Env, admin: Address, app_id: u64) {
@@ -224,10 +209,7 @@ impl ScholarshipFundContract {
             .persistent()
             .set(&DataKey::Application(app_id), &app);
 
-        env.events().publish(
-            (DISTRIBUTE, symbol_short!("stud")),
-            (app.student, app.amount_requested),
-        );
+        events::scholarship_distributed(&env, &app.student, app_id, app.amount_requested);
     }
 
     // ---- Fund queries ----

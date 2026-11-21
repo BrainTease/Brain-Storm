@@ -1,10 +1,10 @@
 #![no_std]
-use soroban_sdk::{contract, contractimpl, Address, BytesN, Env, Symbol, Vec};
+use soroban_sdk::{contract, contractimpl, symbol_short, Address, BytesN, Env, Symbol, Vec};
 
 mod types;
 pub use types::*;
 
-use brain_storm_shared::{access, oracle, validation};
+use brain_storm_shared::{access, events, oracle, validation};
 
 // =============================================================================
 // Contract
@@ -27,12 +27,7 @@ impl BuybackContract {
         dex_contract: Address,
         dex_pool_id: BytesN<32>,
     ) {
-        assert!(
-            !env.storage().instance().has(&DataKey::Admin),
-            "Already initialized"
-        );
-        admin.require_auth();
-        env.storage().instance().set(&DataKey::Admin, &admin);
+        access::init_admin(&env, &admin, &DataKey::Admin);
         env.storage()
             .instance()
             .set(&DataKey::TokenContract, &token_contract);
@@ -105,8 +100,7 @@ impl BuybackContract {
         env.storage()
             .instance()
             .set(&DataKey::BuybackConfig, &config);
-        env.events()
-            .publish((CONFIG_UPDATED, symbol_short!("admin")), admin);
+        events::emit_config_updated(&env, &admin);
     }
 
     pub fn get_config(env: Env) -> BuybackConfig {
@@ -388,8 +382,7 @@ impl BuybackContract {
             .instance()
             .set(&DataKey::LastBuybackLedger, &env.ledger().sequence());
 
-        env.events()
-            .publish((BUYBACK_EXECUTED, symbol_short!("amount")), (bst_to_buy, xlm_amount));
+        events::emit_buyback_executed(&env, bst_to_buy, xlm_amount);
     }
 }
 

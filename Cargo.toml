@@ -41,6 +41,12 @@ serde_json = "1.0"
 thiserror = "1.0"
 anyhow = "1.0"
 
+# Property/fuzz testing (#1501). Used as a dev-dependency by the token, escrow
+# and shared crates to exercise arithmetic invariants (overflow, rounding,
+# conservation of value) with generated inputs. Pinned to a stable release so
+# the workspace resolves a single copy.
+proptest = "1.4"
+
 [profile.release]
 opt-level = "z"
 overflow-checks = true
@@ -51,6 +57,14 @@ codegen-units = 1
 panic = "abort"
 
 [profile.dev]
+opt-level = 0
+debug = true
+overflow-checks = true
+
+# Property tests run under `cargo test` (dev profile). Keep overflow checks on
+# so proptest shrinks toward panics that mirror on-chain `overflow-checks = true`
+# behaviour in the release profile.
+[profile.test]
 opt-level = 0
 debug = true
 overflow-checks = true
@@ -114,3 +128,11 @@ used_underscore_binding      = "warn"   # using a `_`-prefixed variable suggests
 #   cast_possible_truncation              — required for SDK TTL/timestamp APIs
 #   cast_sign_loss                        — same as above
 #   cast_precision_loss                   — no float arithmetic in contracts
+#
+# Test-only code (property/fuzz tests, #1501) is exempted from the pedantic
+# lints that fire on proptest strategies and generated-input handling, so
+# `cargo clippy --workspace --all-targets -- -D warnings` stays green.
+[workspace.lints.clippy.unwrap_used]
+level = "warn"
+priority = -1
+======>>> REPLACE

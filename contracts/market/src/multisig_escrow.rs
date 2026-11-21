@@ -133,3 +133,108 @@ pub fn timeout_ms_escrow(env: &Env, escrow_id: u64) -> bool {
 pub fn get_ms_escrow(env: &Env, escrow_id: u64) -> Option<MsEscrow> {
     env.storage().persistent().get(&MsKey::Escrow(escrow_id))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use soroban_sdk::testutils::Address as _;
+    use soroban_sdk::Env;
+
+    fn setup() -> (Env, Address, Address, Vec<Address>) {
+        let env = Env::default();
+        env.mock_all_auths();
+        let payer = Address::generate(&env);
+        let payee = Address::generate(&env);
+        let mut signers = Vec::new(&env);
+        signers.push_back(Address::generate(&env));
+        signers.push_back(Address::generate(&env));
+        signers.push_back(Address::generate(&env));
+        (env, payer, payee, signers)
+    }
+
+    #[test]
+    fn threshold_invariants_hold_for_valid_inputs() {
+        let (env, payer, payee, signers) = setup();
+        let n = signers.len();
+        for threshold in 1..=n {
+            let id = create_ms_escrow(&env, payer.clone(), payee.clone(), 100, signers.clone(), threshold, 100);
+            let escrow = get_ms_escrow(&env, id).unwrap();
+            assert!(escrow.threshold > 0);
+            assert!(escrow.threshold <= escrow.signers.len());
+            assert_eq!(escrow.approvals.len(), 0);
+            assert_eq!(escrow.status, MsEscrowStatus::Pending);
+        }
+    }
+
+    #[test]
+    #[should_panic(expected = "Invalid threshold")]
+    fn zero_threshold_rejected() {
+        let (env, payer, payee, signers) = setup();
+        create_ms_escrow(&env, payer, payee, 100, signers, 0, 100);
+    }
+
+    #[test]
+    #[should_panic(expected = "Invalid threshold")]
+    fn threshold_above_signers_rejected() {
+        let (env, payer, payee, signers) = setup();
+        let n = signers.len();
+        create_ms_escrow(&env, payer, payee, 100, signers, n + 1, 100);
+    }
+
+    #[test]
+    #[should_panic(expected = "Amount must be positive")]
+    fn non_positive_amount_rejected() {
+        let (env, payer, payee, signers) = setup();
+        create_ms_escrow(&env, payer, payee, 0, signers, 1, 100);
+    }
+
+    #[test]
+    fn conservation_of_funds_on_release() {
+        let (env, payer, payee, signers) = setup();
+        let amount: i128 = 1_000;
+        let id = create_ms_escrow(&env, payer.clone(), payee.clone(), amount, signers.clone(), 2, 100);
+        approve_ms_escrow(&env, id, signers.get(0).unwrap());
+        let mid = get_ms_escrow(&env, id).unwrap();
+        assert_eq!(mid.status, MsEscrowStatus::Pending);
+        assert_eq!(mid.amount, amount);
+        approve_ms_escrow(&env, id, signers.get(1).unwrap());
+        let done = get_ms_escrow(&env, id).unwrap();
+        assert_eq!(done.status, MsEscrowStatus::Released);
+        // Amount is conserved: escrow still holds exactly the original amount.
+        assert_eq!(done.amount, amount);
+        assert_eq!(done.payer, payer);
+        assert_eq!(done.payee, payee);
+    }
+
+    #[test]
+    fn no_overflow_on_large_amounts_and_timeouts() {
+        let (env, payer, payee, signers) = setup();
+        let amount = i128::MAX;
+        let id = create_ms_escrow(&env, payer, payee, amount, signers, 1, u32::MAX);
+        let escrow = get_ms_escrow(&env, id).unwrap();
+        assert_eq!(escrow.amount, amount);
+        assert!(escrow.expires_ledger >= env.ledger().sequence());
+    }
+
+    #[test]
+    fn duplicate_approval_rejected() {
+        let (env, payer, payee, signers) = setup();
+        let id = create_ms_escrow(&env, payer, payee, 100, signers.clone(), 3, 100);
+        let signer = signers.get(0).unwrap();
+        approve_ms_escrow(&env, id, signer.clone());
+        let res = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            approve_ms_escrow(&env, id, signer);
+        }));
+        assert!(res.is_err());
+    }
+
+    #[test]
+    fn timeout_requires_expiry() {
+        let (env, payer, payee, signers) = setup();
+        let id = create_ms_escrow(&env, payer, payee, 100, signers, 1, 100);
+        let res = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            timeout_ms_escrow(&env, id);
+        }));
+        assert!(res.is_err());
+    }
+}

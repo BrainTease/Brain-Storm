@@ -295,3 +295,83 @@ fn test_non_admin_cannot_create_vesting() {
     let start = env.ledger().sequence();
     client.create_vesting(&rando, &beneficiary, &1_000, &(start + 10), &(start + 100));
 }
+
+// =============================================================================
+// #73 — Shared event schema coverage
+// =============================================================================
+
+#[test]
+fn test_mint_emits_standard_event() {
+    let (env, admin, client) = setup();
+    let user = Address::generate(&env);
+    client.mint_reward(&admin, &user, &500);
+    let events = env.events().all();
+    assert!(!events.is_empty(), "mint must emit a standard event");
+}
+
+#[test]
+fn test_burn_emits_standard_event() {
+    let (env, admin, client) = setup();
+    let user = Address::generate(&env);
+    client.mint_reward(&admin, &user, &300);
+    let before = env.events().all().len();
+    client.burn(&user, &100);
+    assert!(
+        env.events().all().len() > before,
+        "burn must emit a standard event"
+    );
+}
+
+#[test]
+fn test_transfer_emits_standard_event() {
+    let (env, admin, client) = setup();
+    let a = Address::generate(&env);
+    let b = Address::generate(&env);
+    client.mint_reward(&admin, &a, &100);
+    let before = env.events().all().len();
+    client.transfer(&a, &b, &40);
+    assert!(
+        env.events().all().len() > before,
+        "transfer must emit a standard event"
+    );
+}
+
+#[test]
+fn test_approve_emits_standard_event() {
+    let (env, admin, client) = setup();
+    let owner = Address::generate(&env);
+    let spender = Address::generate(&env);
+    client.mint_reward(&admin, &owner, &100);
+    let before = env.events().all().len();
+    client.approve(&owner, &spender, &50);
+    assert!(
+        env.events().all().len() > before,
+        "approve must emit a standard event"
+    );
+}
+
+// =============================================================================
+// #76 — Unified init / upgrade entrypoints
+// =============================================================================
+
+#[test]
+fn test_initialize_sets_admin_once() {
+    let (env, admin, client) = setup();
+    let user = Address::generate(&env);
+    // Admin established by initialize can mint; a second init is rejected.
+    client.mint_reward(&admin, &user, &10);
+    assert_eq!(client.balance(&user), 10);
+    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        client.initialize(&admin);
+    }));
+    assert!(result.is_err(), "re-initialization must be rejected");
+}
+
+#[test]
+#[should_panic(expected = "Unauthorized: admin required")]
+fn test_upgrade_requires_admin() {
+    let (env, _admin, client) = setup();
+    let rando = Address::generate(&env);
+    let new_wasm = soroban_sdk::BytesN::from_array(&env, &[0u8; 32]);
+    client.upgrade(&rando, &new_wasm);
+}

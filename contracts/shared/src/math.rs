@@ -206,4 +206,200 @@ mod tests {
             Err(SharedError::ArithmeticOverflow)
         );
     }
+
+    // -----------------------------------------------------------------------
+    // Property-based tests
+    //
+    // These exercise the shared arithmetic used by token and escrow math on
+    // arbitrary inputs. The `Result`-returning helpers must never panic and
+    // must agree with the corresponding `i128` checked operations; the
+    // panicking helpers must only panic on genuine overflow (never on valid
+    // inputs). Fee math must stay within bounds and conserve value.
+    // -----------------------------------------------------------------------
+
+    use proptest::prelude::*;
+
+    proptest! {
+        // -- safe_add / safe_sub / safe_mul agree with checked ops ----------
+
+        #[test]
+        fn prop_safe_add_matches_checked(a in any::<i128>(), b in any::<i128>()) {
+            match a.checked_add(b) {
+                Some(expected) => prop_assert_eq!(safe_add(a, b), Ok(expected)),
+                None => prop_assert_eq!(safe_add(a, b), Err(SharedError::ArithmeticOverflow)),
+            }
+        }
+
+        #[test]
+        fn prop_safe_sub_matches_checked(a in any::<i128>(), b in any::<i128>()) {
+            match a.checked_sub(b) {
+                Some(expected) => prop_assert_eq!(safe_sub(a, b), Ok(expected)),
+                None => prop_assert_eq!(safe_sub(a, b), Err(SharedError::ArithmeticOverflow)),
+            }
+        }
+
+        #[test]
+        fn prop_safe_mul_matches_checked(a in any::<i128>(), b in any::<i128>()) {
+            match a.checked_mul(b) {
+                Some(expected) => prop_assert_eq!(safe_mul(a, b), Ok(expected)),
+                None => prop_assert_eq!(safe_mul(a, b), Err(SharedError::ArithmeticOverflow)),
+            }
+        }
+
+        #[test]
+        fn prop_safe_div_matches_checked(a in any::<i128>(), b in any::<i128>()) {
+            if b == 0 {
+                prop_assert_eq!(safe_div(a, b), Err(SharedError::InvalidInput));
+            } else {
+                // `checked_div` only fails on `i128::MIN / -1`.
+                match a.checked_div(b) {
+                    Some(expected) => prop_assert_eq!(safe_div(a, b), Ok(expected)),
+                    None => prop_assert_eq!(safe_div(a, b), Err(SharedError::OperationFailed)),
+                }
+            }
+        }
+
+        // -- checked helpers never panic on non-overflowing inputs ----------
+
+        #[test]
+        fn prop_checked_add_no_panic(a in any::<i128>(), b in any::<i128>()) {
+            if let Some(expected) = a.checked_add(b) {
+                prop_assert_eq!(checked_add_i128(a, b), expected);
+            }
+        }
+
+        #[test]
+        fn prop_checked_sub_no_panic(a in any::<i128>(), b in any::<i128>()) {
+            if let Some(expected) = a.checked_sub(b) {
+                prop_assert_eq!(checked_sub_i128(a, b), expected);
+            }
+        }
+
+        #[test]
+        fn prop_checked_mul_no_panic(a in any::<i128>(), b in any::<i128>()) {
+            if let Some(expected) = a.checked_mul(b) {
+                prop_assert_eq!(checked_mul_i128(a, b), expected);
+            }
+        }
+
+        #[test]
+        fn prop_checked_div_no_panic(a in any::<i128>(), b in any::<i128>()) {
+            if b != 0 {
+                if let Some(expected) = a.checked_div(b) {
+                    prop_assert_eq!(checked_div_i128(a, b), expected);
+                }
+            }
+        }
+
+        #[test]
+        fn prop_checked_add_u32_no_panic(a in any::<u32>(), b in any::<u32>()) {
+            if let Some(expected) = a.checked_add(b) {
+                prop_assert_eq!(checked_add_u32(a, b), expected);
+            }
+        }
+
+        #[test]
+        fn prop_checked_sub_u32_no_panic(a in any::<u32>(), b in any::<u32>()) {
+            if let Some(expected) = a.checked_sub(b) {
+                prop_assert_eq!(checked_sub_u32(a, b), expected);
+            }
+        }
+
+        // -- mul_div: no panic when the intermediate fits -------------------
+
+        #[test]
+        fn prop_mul_div_no_panic(
+            a in any::<i128>(),
+            b in any::<i128>(),
+            d in any::<i128>(),
+        ) {
+            if d != 0 {
+                if let Some(product) = a.checked_mul(b) {
+                    if let Some(expected) = product.checked_div(d) {
+                        prop_assert_eq!(checked_mul_div_i128(a, b, d), expected);
+                    }
+                }
+            }
+        }
+
+        // -- calculate_bps: bounds, rounding, and conservation --------------
+
+        #[test]
+        fn prop_calculate_bps_bounds(amount in 0i128..=i128::MAX, bps in 0i128..=BASIS_POINTS_DENOMINATOR) {
+            let fee = calculate_bps(amount, bps).expect("valid bps must not fail");
+            // Fee is non-negative and never exceeds the amount.
+            prop_assert!(fee >= 0);
+            prop_assert!(fee <= amount);
+            // Truncating division: fee * denominator <= amount * bps.
+            let lhs = fee.checked_mul(BASIS_POINTS_DENOMINATOR);
+            let rhs = amount.checked_mul(bps);
+            if let (Some(lhs), Some(rhs)) = (lhs, rhs) {
+                prop_assert!(lhs <= rhs);
+            }
+        }
+
+        #[test]
+        fn prop_calculate_bps_rounding_error_bounded(
+            amount in 0i128..=i128::MAX,
+            bps in 0i128..=BASIS_POINTS_DENOMINATOR,
+        ) {
+            let fee = calculate_bps(amount, bps).expect("valid bps must not fail");
+            // The truncation error is strictly less than one unit of the
+            // result, i.e. amount*bps - fee*denominator < denominator.
+            if let (Some(product), Some(scaled)) = (
+                amount.checked_mul(bps),
+                fee.checked_mul(BASIS_POINTS_DENOMINATOR),
+            ) {
+                let remainder = product - scaled;
+                prop_assert!(remainder >= 0);
+                prop_assert!(remainder < BASIS_POINTS_DENOMINATOR);
+            }
+        }
+
+        #[test]
+        fn prop_calculate_bps_conserves_value(
+            amount in 0i128..=i128::MAX,
+            bps in 0i128..=BASIS_POINTS_DENOMINATOR,
+        ) {
+            // Splitting an amount into fee + remainder must conserve the total.
+            let fee = calculate_bps(amount, bps).expect("valid bps must not fail");
+            let remainder = amount - fee;
+            prop_assert_eq!(fee + remainder, amount);
+            prop_assert!(remainder >= 0);
+        }
+
+        #[test]
+        fn prop_calculate_bps_rejects_out_of_range_bps(
+            amount in 0i128..=i128::MAX,
+            bps in (BASIS_POINTS_DENOMINATOR + 1)..=i128::MAX,
+        ) {
+            prop_assert_eq!(calculate_bps(amount, bps), Err(SharedError::InvalidInput));
+        }
+
+        #[test]
+        fn prop_calculate_bps_rejects_negative_amount(
+            amount in i128::MIN..0i128,
+            bps in 0i128..=BASIS_POINTS_DENOMINATOR,
+        ) {
+            prop_assert_eq!(calculate_bps(amount, bps), Err(SharedError::InvalidAmount));
+        }
+
+        // -- clamp / bounds invariants --------------------------------------
+
+        #[test]
+        fn prop_clamp_within_bounds(value in any::<i128>(), a in any::<i128>(), b in any::<i128>()) {
+            let (min, max) = if a <= b { (a, b) } else { (b, a) };
+            let clamped = clamp(value, min, max);
+            prop_assert!(is_within_bounds(clamped, min, max));
+            prop_assert!(clamped >= min);
+            prop_assert!(clamped <= max);
+        }
+
+        #[test]
+        fn prop_clamp_idempotent(value in any::<i128>(), a in any::<i128>(), b in any::<i128>()) {
+            let (min, max) = if a <= b { (a, b) } else { (b, a) };
+            let once = clamp(value, min, max);
+            prop_assert_eq!(clamp(once, min, max), once);
+        }
+    }
 }

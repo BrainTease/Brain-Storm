@@ -30,6 +30,13 @@ pub mod test_helpers;
 pub use constants::{BASIS_POINTS_DENOMINATOR, PRECISION_SCALE_12};
 pub use errors::SharedError;
 
+// Canonical event schema (issue #73): contract crates can
+// `use brain_storm_shared::events::*` to emit standardized events.
+pub use events::{
+    emit_event, ContractEvent, EventCategory, EventData, EventSchemaVersion, EventTopic,
+    EVENT_SCHEMA_VERSION,
+};
+
 #[cfg(feature = "contract")]
 use soroban_sdk::{contract, contractimpl, contracttype, symbol_short, Address, BytesN, Env, Symbol};
 #[cfg(not(feature = "contract"))]
@@ -127,8 +134,10 @@ impl SharedContract {
             .instance()
             .set(&DataKey::Role(target.clone()), &role);
 
-        env.events().publish(
-            (symbol_short!("rbac"), symbol_short!("role_asgn")),
+        events::emit_event(
+            &env,
+            events::EventCategory::Access,
+            symbol_short!("role_asgn"),
             (target, role),
         );
     }
@@ -194,8 +203,10 @@ impl SharedContract {
             env.storage().instance().set(&key, &callers);
         }
 
-        env.events().publish(
-            (symbol_short!("shared"), symbol_short!("auth_call")),
+        events::emit_event(
+            &env,
+            events::EventCategory::Access,
+            symbol_short!("auth_call"),
             (target_contract, caller),
         );
     }
@@ -246,8 +257,10 @@ impl SharedContract {
             .instance()
             .set(&DataKey::NextCallId, &(id + 1));
 
-        env.events().publish(
-            (symbol_short!("shared"), symbol_short!("call_init")),
+        events::emit_event(
+            &env,
+            events::EventCategory::CrossContract,
+            symbol_short!("call_init"),
             (id, target_contract, method),
         );
 
@@ -269,8 +282,10 @@ impl SharedContract {
             "Caller not authorized"
         );
 
-        env.events().publish(
-            (symbol_short!("shared"), symbol_short!("relay")),
+        events::emit_event(
+            &env,
+            events::EventCategory::CrossContract,
+            symbol_short!("relay"),
             (source_contract, event_topic),
         );
     }

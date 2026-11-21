@@ -77,20 +77,12 @@ mod invariant_tests {
 
     /// Sum `amount_bought` across all history records.
     fn sum_bst(history: &Vec<BuybackRecord>) -> i128 {
-        let mut total = 0_i128;
-        for r in history.iter() {
-            total += r.amount_bought;
-        }
-        total
+        history.iter().map(|r| r.amount_bought).sum()
     }
 
     /// Sum `xlm_spent` across all history records.
     fn sum_xlm(history: &Vec<BuybackRecord>) -> i128 {
-        let mut total = 0_i128;
-        for r in history.iter() {
-            total += r.xlm_spent;
-        }
-        total
+        history.iter().map(|r| r.xlm_spent).sum()
     }
 
     // =========================================================================
@@ -482,5 +474,79 @@ mod invariant_tests {
         assert_eq!(analytics.total_buybacks as usize, history.len() as usize);
         // INV-4
         assert!(reserve >= 0);
+    }
+
+    // =========================================================================
+    // INV-7: No overflow under large-but-valid inputs
+    //   Repeated large buybacks must not overflow the cumulative counters and
+    //   must keep INV-1/INV-2/INV-6 intact.
+    // =========================================================================
+
+    #[test]
+    fn inv7_no_overflow_with_large_buybacks() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let (client, admin, funder) = make_client(&env);
+
+        // Large reserve and large per-op amounts, still well within i128.
+        let per_op: i128 = 1_000_000_000_000_000; // 1e15
+        let ops: i128 = 100;
+        let initial_reserve: i128 = per_op * ops;
+
+        client.add_to_reserve(&funder, &initial_reserve);
+        for _ in 0..ops {
+            client.manual_buyback(&admin, &per_op);
+        }
+
+        let analytics = client.get_buyback_analytics();
+        let history = client.get_buyback_history(&0, &1_000);
+        let reserve_after = client.get_reserve_balance();
+
+        // INV-1: conservation still holds
+        assert_eq!(
+            initial_reserve,
+            analytics.total_xlm_spent + reserve_after,
+            "INV-1 violated under large inputs"
+        );
+        // INV-2: token accounting still holds
+        assert_eq!(
+            analytics.total_bst_bought,
+            sum_bst(&history),
+            "INV-2 violated under large inputs"
+        );
+        // INV-6c: XLM sum matches
+        assert_eq!(
+            analytics.total_xlm_spent,
+            sum_xlm(&history),
+            "INV-6c violated under large inputs"
+        );
+        // INV-4: reserve never negative
+        assert!(reserve_after >= 0, "INV-4 violated under large inputs");
+    }
+
+    // =========================================================================
+    // INV-8: Initialization / config consistency
+    //   After `initialize` + `update_config`, the enabled flag and limits are
+    //   reflected consistently and the reserve starts at zero.
+    // =========================================================================
+
+    #[test]
+    fn inv8_init_state_consistent() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let (client, _, _) = make_client(&env);
+
+        // Freshly initialized contract has an empty reserve.
+        assert_eq!(client.get_reserve_balance(), 0);
+
+        // No operations yet → analytics all zero.
+        let analytics = client.get_buyback_analytics();
+        assert_eq!(analytics.total_buybacks, 0);
+        assert_eq!(analytics.total_bst_bought, 0);
+        assert_eq!(analytics.total_xlm_spent, 0);
+
+        // History is empty.
+        let history = client.get_buyback_history(&0, &100);
+        assert_eq!(history.len(), 0);
     }
 }

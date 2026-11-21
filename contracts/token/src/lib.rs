@@ -6,6 +6,7 @@ use soroban_sdk::{contract, contractimpl, Address, Env, String, Symbol};
 use brain_storm_shared::constants::{
     STORAGE_TTL_EXTEND_TO as TTL_EXTEND_TO, STORAGE_TTL_THRESHOLD as TTL_THRESHOLD,
 };
+use brain_storm_shared::events as shared_events;
 
 mod types;
 pub use types::*;
@@ -119,13 +120,8 @@ impl TokenContract {
         env.storage().persistent().set(&to_key, &to_balance_obj);
         env.storage().persistent().extend_ttl(&to_key, TTL_THRESHOLD, TTL_EXTEND_TO);
 
-        // Update total supply (no change on transfer)
-
-        // Emit transfer event
-        env.events().publish(
-            (Symbol::new(&env, "transfer"),),
-            (from, to, amount),
-        );
+        // Emit transfer event via shared schema
+        shared_events::emit_transfer(&env, &from, &to, amount);
 
         Ok(())
     }
@@ -178,11 +174,8 @@ impl TokenContract {
         // Store updated state
         env.storage().instance().set(&Symbol::new(&env, "state"), &state);
 
-        // Emit mint event
-        env.events().publish(
-            (Symbol::new(&env, "mint"),),
-            (to, amount),
-        );
+        // Emit mint event via shared schema
+        shared_events::emit_mint(&env, &to, amount);
 
         Ok(())
     }
@@ -235,11 +228,8 @@ impl TokenContract {
         // Store updated state
         env.storage().instance().set(&Symbol::new(&env, "state"), &state);
 
-        // Emit burn event
-        env.events().publish(
-            (Symbol::new(&env, "burn"),),
-            (from, amount),
-        );
+        // Emit burn event via shared schema
+        shared_events::emit_burn(&env, &from, amount);
 
         Ok(())
     }
@@ -268,10 +258,7 @@ impl TokenContract {
         );
         env.storage().persistent().extend_ttl(&allowance_key, TTL_THRESHOLD, TTL_EXTEND_TO);
 
-        env.events().publish(
-            (Symbol::new(&env, "approve"),),
-            (owner, spender, amount),
-        );
+        shared_events::emit_approve(&env, &owner, &spender, amount);
 
         Ok(())
     }
@@ -330,10 +317,7 @@ impl TokenContract {
         env.storage().persistent().set(&to_bal_key, &to_balance_obj);
         env.storage().persistent().extend_ttl(&to_bal_key, TTL_THRESHOLD, TTL_EXTEND_TO);
 
-        env.events().publish(
-            (Symbol::new(&env, "transfer_from"),),
-            (spender, from, to, amount),
-        );
+        shared_events::emit_transfer_from(&env, &spender, &from, &to, amount);
 
         Ok(())
     }
@@ -371,7 +355,13 @@ impl TokenContract {
 
     /// Get balance as Balance struct
     pub fn get_balance_struct(env: Env, account: Address) -> Result<Balance, TokenError> {
-        Self::get_balance_struct_internal(&env, &account)
+        let key = Symbol::new(&env, &format!("balance_{:?}", account));
+        let balance: Balance = env.storage().persistent().get(&key)
+            .unwrap_or(Balance {
+                amount: 0,
+                last_updated: env.ledger().timestamp(),
+            });
+        Ok(balance)
     }
 
     // ============================================
@@ -389,16 +379,6 @@ impl TokenContract {
         Ok(balance.amount)
     }
 
-    /// Internal function to get Balance struct
-    fn get_balance_struct_internal(env: &Env, account: &Address) -> Result<Balance, TokenError> {
-        let key = Symbol::new(env, &format!("balance_{:?}", account));
-        let balance: Balance = env.storage().persistent().get(&key)
-            .unwrap_or(Balance {
-                amount: 0,
-                last_updated: env.ledger().timestamp(),
-            });
-        Ok(balance)
-    }
 }
 
 // ============================================

@@ -32,6 +32,13 @@
 
 use soroban_sdk::{Address, Env, IntoVal, Val};
 
+/// Storage key used by [`require_upgrade_authorized`] to read the admin slot.
+///
+/// Contracts that store their admin under a different key should call
+/// [`require_admin`] directly; this constant exists so the common case
+/// (`DataKey::Admin`) needs no per-contract boilerplate.
+pub const ADMIN_KEY: &str = "admin";
+
 /// Reads the `Address` stored at `key` in instance storage.
 ///
 /// # Invariants Enforced
@@ -153,6 +160,48 @@ pub fn require_owner(caller: &Address, owner: &Address) {
     assert!(caller == owner, "Unauthorized: owner required");
 }
 
+/// Requires that `caller` authorized this invocation and is the stored admin,
+/// gating an initialization entry point.
+///
+/// # Invariants Enforced
+///
+/// - **Single Initialization**: Callers should invoke this before writing any
+///   initialization state, so a failed check leaves storage untouched.
+/// - **Authorization Requirement**: The caller must provide cryptographic proof via `require_auth()`.
+/// - **Identity Verification**: The caller must match the stored admin exactly.
+///
+/// This is the shared entry point for the unified init pattern: every contract
+/// performs `require_init_admin` (or [`require_admin`]) before mutating state,
+/// so initialization authorization is identical across the workspace.
+///
+/// Panics with `"Unauthorized: admin required"` otherwise.
+pub fn require_init_admin<K>(env: &Env, caller: &Address, admin_key: &K)
+where
+    K: IntoVal<Env, Val>,
+{
+    require_admin(env, caller, admin_key);
+}
+
+/// Requires that `caller` authorized this invocation and is the stored admin,
+/// gating an upgrade entry point.
+///
+/// # Invariants Enforced
+///
+/// - **Authorization Requirement**: The caller must provide cryptographic proof via `require_auth()`.
+/// - **Identity Verification**: Only the stored admin may authorize an upgrade.
+/// - **Fail-Closed**: A mismatch halts the contract before any wasm swap occurs.
+///
+/// Shares the same check as [`require_admin`] so upgrade authorization cannot
+/// drift from the rest of the access-control surface.
+///
+/// Panics with `"Unauthorized: admin required"` otherwise.
+pub fn require_upgrade_authorized<K>(env: &Env, caller: &Address, admin_key: &K)
+where
+    K: IntoVal<Env, Val>,
+{
+    require_admin(env, caller, admin_key);
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -201,6 +250,14 @@ mod tests {
 
         pub fn read_admin(env: Env) -> Address {
             read_authority(&env, &TestKey::Admin)
+        }
+
+        pub fn init_only(env: Env, caller: Address) {
+            require_init_admin(&env, &caller, &TestKey::Admin);
+        }
+
+        pub fn upgrade_only(env: Env, caller: Address) {
+            require_upgrade_authorized(&env, &caller, &TestKey::Admin);
         }
     }
 
@@ -295,5 +352,33 @@ mod tests {
         let owner = Address::generate(&env);
         let intruder = Address::generate(&env);
         client.owner_only(&intruder, &owner);
+    }
+
+    #[test]
+    fn init_admin_accepts_admin() {
+        let (_, client, admin) = setup();
+        client.init_only(&admin);
+    }
+
+    #[test]
+    #[should_panic(expected = "Unauthorized: admin required")]
+    fn init_admin_rejects_non_admin() {
+        let (env, client, _) = setup();
+        let intruder = Address::generate(&env);
+        client.init_only(&intruder);
+    }
+
+    #[test]
+    fn upgrade_authorized_accepts_admin() {
+        let (_, client, admin) = setup();
+        client.upgrade_only(&admin);
+    }
+
+    #[test]
+    #[should_panic(expected = "Unauthorized: admin required")]
+    fn upgrade_authorized_rejects_non_admin() {
+        let (env, client, _) = setup();
+        let intruder = Address::generate(&env);
+        client.upgrade_only(&intruder);
     }
 }

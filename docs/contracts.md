@@ -49,6 +49,8 @@ Manages soulbound NFT certificates issued to students upon course completion.
 | ---------------- | -------------- | ------------------------------ |
 | `Symbol("mint")` | `Symbol("to")` | `(id: u64, course_id: Symbol)` |
 
+> See [Standardized Event Schema](#standardized-event-schema) for the shared topic/payload conventions.
+
 ### CLI Examples
 
 ```bash
@@ -103,6 +105,8 @@ Brain-Storm Token (BST) — SEP-0041 compatible token with instructor vesting.
 | -------------------- | ---------------- | -------------------------------------------- |
 | `Symbol("transfer")` | `Symbol("from")` | `(from: Address, to: Address, amount: i128)` |
 | `Symbol("mint")`     | `Symbol("to")`   | `(to: Address, amount: i128)`                |
+
+> See [Standardized Event Schema](#standardized-event-schema) for the shared topic/payload conventions.
 
 ### CLI Examples
 
@@ -159,6 +163,8 @@ Tracks per-student, per-course progress on-chain.
 | `Symbol("analytics")` | `Symbol("prog_upd")`  | `(student: Address, course_id: Symbol, progress_pct: u32)` |
 | `Symbol("analytics")` | `Symbol("completed")` | `(student: Address, course_id: Symbol)`                    |
 
+> See [Standardized Event Schema](#standardized-event-schema) for the shared topic/payload conventions.
+
 ### CLI Examples
 
 ```bash
@@ -199,6 +205,16 @@ On-chain proposal and voting for platform parameter changes.
 | `execute_proposal` | `proposal_id: u32`                                                              | —                   | Anyone (after voting ends) |
 | `get_proposal`     | `proposal_id: u32`                                                              | `Option<Proposal>`  | None                       |
 
+### Event Schema
+
+| Topic 1                | Topic 2              | Data                                                       |
+| ---------------------- | -------------------- | ---------------------------------------------------------- |
+| `Symbol("governance")` | `Symbol("proposal")` | `(proposal_id: u32, proposer: Address, voting_end: u32)`   |
+| `Symbol("governance")` | `Symbol("vote")`     | `(proposal_id: u32, voter: Address, support: bool)`        |
+| `Symbol("governance")` | `Symbol("executed")` | `(proposal_id: u32)`                                       |
+
+> See [Standardized Event Schema](#standardized-event-schema) for the shared topic/payload conventions.
+
 ### CLI Examples
 
 ```bash
@@ -225,6 +241,80 @@ stellar contract invoke \
   --proposal_id 1 \
   --support true
 ```
+
+---
+
+## Standardized Event Schema
+
+All contracts in `contracts/` emit events using a single, shared convention implemented in
+`contracts/shared` (`events` module). Consumers (backend listeners, indexers, dashboards) can
+therefore decode every event with one generic parser.
+
+### Topic Layout
+
+Every event has exactly **two topics**:
+
+| Topic | Value                                    | Purpose                                  |
+| ----- | ---------------------------------------- | ---------------------------------------- |
+| 1     | `Symbol(<contract>)`                     | Contract namespace, e.g. `"certificate"` |
+| 2     | `Symbol(<action>)`                       | Action name, e.g. `"mint"`, `"transfer"` |
+
+The payload is always a single `ScVal` tuple (a `Vec` of values) in the order documented per
+contract above. Payloads never contain nested maps, so they remain cheap to encode and stable
+to decode.
+
+### Namespaces and Actions
+
+| Contract    | Topic 1 (namespace) | Topic 2 (actions)                          |
+| ----------- | ------------------- | ------------------------------------------ |
+| Certificate | `"certificate"`     | `"mint"`                                   |
+| Token (BST) | `"token"`           | `"transfer"`, `"mint"`                     |
+| Analytics   | `"analytics"`       | `"prog_upd"`, `"completed"`                |
+| Governance  | `"governance"`      | `"proposal"`, `"vote"`, `"executed"`       |
+
+### Topic Changes (Migration Notes)
+
+The Certificate contract previously emitted `Symbol("mint")` as Topic 1 and `Symbol("to")` as
+Topic 2. It now follows the shared layout: Topic 1 is `Symbol("certificate")` and Topic 2 is
+`Symbol("mint")`. The payload `(id: u64, course_id: Symbol)` is unchanged.
+
+- **Off-chain listeners** that filtered on `Topic 1 == "mint"` must filter on
+  `Topic 1 == "certificate" && Topic 2 == "mint"`. The `contracts/shared` event helpers expose
+  the canonical symbols so clients can match on constants instead of string literals.
+- **On-chain storage is unaffected.** No event data is persisted in contract storage, so this
+  change requires no storage migration and is fully backward compatible at the state level.
+- Events emitted before the upgrade remain queryable on-chain; indexers should handle both the
+  legacy and the standardized topic layout during a transition window.
+
+### Unified Initialization and Upgrade Pattern
+
+All contracts now share the same initialization and upgrade entry points, provided by
+`contracts/shared` (`init` module):
+
+| Function             | Parameters                          | Auth        | Notes                                              |
+| -------------------- | ----------------------------------- | ----------- | -------------------------------------------------- |
+| `initialize`         | `admin: Address`                    | None (once) | Reverts with `AlreadyInitialized` on second call.  |
+| `upgrade`            | `admin: Address, new_wasm_hash: BytesN<32>` | Admin | Reverts with `NotInitialized` if not initialized. |
+| `version`            | —                                   | None        | Returns the contract's `u32` storage schema version. |
+
+Conventions:
+
+- `initialize` is idempotent-safe: it checks the stored admin key and panics with
+  `AlreadyInitialized` rather than overwriting state.
+- `upgrade` requires the stored admin's authorization and only swaps the WASM; it never
+  rewrites storage keys.
+- Each contract stores a `version: u32` under a dedicated key so future migrations can detect
+  the layout they are reading.
+
+### Storage Layout Compatibility
+
+The standardized init/upgrade pattern and event schema **do not change any existing storage
+keys or value layouts**. All previously written data (certificates, balances, vesting
+schedules, progress records, proposals) remains readable after upgrade. The only new storage
+entry is the `version` key, which is additive and ignored by older readers.
+
+If a future change does require a storage migration, bump the contract's `version` and add a
+`migrate` entry point; document the migration steps here before deploying.
 
 ---
 

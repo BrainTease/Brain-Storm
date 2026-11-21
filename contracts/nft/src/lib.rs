@@ -4,13 +4,13 @@
 #[macro_use]
 extern crate std;
 
-use soroban_sdk::{contract, contractimpl, symbol_short, Address, Env, String, Symbol, Vec};
+use soroban_sdk::{contract, contractimpl, Address, Env, String, Symbol, Vec};
 
 mod types;
 pub use types::*;
 
 use brain_storm_shared::pagination::{paginate, MAX_PAGE_SIZE};
-use brain_storm_shared::{access, validation};
+use brain_storm_shared::{access, events, init, validation};
 use brain_storm_shared::constants::{
     STORAGE_TTL_EXTEND_TO as TTL_EXTEND_TO, STORAGE_TTL_THRESHOLD as TTL_THRESHOLD,
 };
@@ -21,13 +21,22 @@ pub struct NftContract;
 #[contractimpl]
 impl NftContract {
     pub fn initialize(env: Env, admin: Address) {
-        assert!(
-            !env.storage().instance().has(&DataKey::Admin),
-            "Already initialized"
-        );
-        admin.require_auth();
-        env.storage().instance().set(&DataKey::Admin, &admin);
+        init::initialize_admin(&env, &DataKey::Admin, &admin);
         env.storage().instance().set(&DataKey::NextNftId, &0_u32);
+    }
+
+    /// Current contract version, bumped by [`Self::upgrade`].
+    pub fn version(env: Env) -> u32 {
+        init::version(&env)
+    }
+
+    /// Admin-gated upgrade hook (Issue #76).
+    ///
+    /// Storage layout is unchanged by upgrades; only the recorded version is
+    /// bumped so clients can detect a new deployment.
+    pub fn upgrade(env: Env, admin: Address, new_version: u32) {
+        access::require_admin(&env, &admin, &DataKey::Admin);
+        init::set_version(&env, new_version);
     }
 
     pub fn get_admin(env: Env) -> Address {
@@ -99,10 +108,7 @@ impl NftContract {
         // Extend instance TTL to keep contract data alive
         env.storage().instance().extend_ttl(TTL_THRESHOLD, TTL_EXTEND_TO);
 
-        env.events().publish(
-            (symbol_short!("nft"), symbol_short!("minted")),
-            (nft_id, course_id, owner, purchase_price),
-        );
+        events::nft_minted(&env, nft_id, &course_id, &owner, purchase_price);
 
         nft_id
     }
@@ -156,10 +162,7 @@ impl NftContract {
         // Extend instance TTL
         env.storage().instance().extend_ttl(TTL_THRESHOLD, TTL_EXTEND_TO);
 
-        env.events().publish(
-            (symbol_short!("nft"), symbol_short!("xfer")),
-            (nft_id, from, to),
-        );
+        events::nft_transferred(&env, nft_id, &from, &to);
     }
 
     pub fn grant_access(env: Env, nft_owner: Address, nft_id: u32, holder: Address) {
@@ -177,10 +180,7 @@ impl NftContract {
 
         env.storage().instance().extend_ttl(TTL_THRESHOLD, TTL_EXTEND_TO);
 
-        env.events().publish(
-            (symbol_short!("nft"), symbol_short!("acc_grt")),
-            (nft_id, holder),
-        );
+        events::nft_access_granted(&env, nft_id, &holder);
     }
 
     pub fn revoke_access(env: Env, nft_owner: Address, nft_id: u32, holder: Address) {
@@ -198,10 +198,7 @@ impl NftContract {
 
         env.storage().instance().extend_ttl(TTL_THRESHOLD, TTL_EXTEND_TO);
 
-        env.events().publish(
-            (symbol_short!("nft"), symbol_short!("acc_rvk")),
-            (nft_id, holder),
-        );
+        events::nft_access_revoked(&env, nft_id, &holder);
     }
 
     pub fn has_access(env: Env, nft_id: u32, holder: Address) -> bool {
@@ -302,10 +299,7 @@ impl NftContract {
 
         env.storage().instance().extend_ttl(TTL_THRESHOLD, TTL_EXTEND_TO);
 
-        env.events().publish(
-            (symbol_short!("nft"), symbol_short!("burned")),
-            (nft_id, owner),
-        );
+        events::nft_burned(&env, nft_id, &owner);
     }
 
     // -------------------------------------------------------------------------
@@ -336,10 +330,7 @@ impl NftContract {
 
         env.storage().instance().extend_ttl(TTL_THRESHOLD, TTL_EXTEND_TO);
 
-        env.events().publish(
-            (symbol_short!("nft"), symbol_short!("listed")),
-            (nft_id, seller, price),
-        );
+        events::nft_listed(&env, nft_id, &seller, price);
     }
 
     pub fn delist_nft(env: Env, seller: Address, nft_id: u32) {
@@ -354,10 +345,7 @@ impl NftContract {
 
         env.storage().instance().extend_ttl(TTL_THRESHOLD, TTL_EXTEND_TO);
 
-        env.events().publish(
-            (symbol_short!("nft"), symbol_short!("delisted")),
-            (nft_id, seller),
-        );
+        events::nft_delisted(&env, nft_id, &seller);
     }
 
     pub fn buy_nft(env: Env, buyer: Address, nft_id: u32) {
@@ -388,9 +376,13 @@ impl NftContract {
             .checked_sub(royalty_amount)
             .expect("math: seller amount underflow");
 
-        env.events().publish(
-            (symbol_short!("nft"), symbol_short!("sold")),
-            (nft_id, listing.seller, buyer, seller_amount, royalty_amount),
+        events::nft_sold(
+            &env,
+            nft_id,
+            &listing.seller,
+            &buyer,
+            seller_amount,
+            royalty_amount,
         );
     }
 
