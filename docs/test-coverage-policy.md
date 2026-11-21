@@ -10,6 +10,21 @@ The gate uses each workspace's existing coverage command and records the full
 reports as workflow artifacts. Additional per-metric thresholds configured by
 a workspace remain in force.
 
+Run the frontend and backend coverage gates together with:
+
+```bash
+npm run test:coverage:all
+```
+
+Mutation testing uses Stryker. The baseline is a minimum mutation score of 40:
+
+```bash
+npm run test:mutation
+```
+
+The mutation report is written to `coverage/mutation/`. Threshold failures are
+failures of the test suite, not a reason to lower the configured baseline.
+
 ## Baseline Remediation
 
 The current baseline must be established by the first CI run of this gate; no
