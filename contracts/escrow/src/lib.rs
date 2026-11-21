@@ -96,7 +96,7 @@ impl EscrowContract {
             funded: false,
             released: false,
         };
-        env.storage().instance().set(&DataKey::Escrow(id), &record);
+        env.storage().persistent().set(&DataKey::Escrow(id), &record);
         env.storage().instance().set(
             &DataKey::NextEscrowId,
             &id.checked_add(1).expect("escrow id overflow"),
@@ -124,7 +124,7 @@ impl EscrowContract {
 
         let mut record: EscrowRecord = match env
             .storage()
-            .instance()
+            .persistent()
             .get(&DataKey::Escrow(escrow_id))
         {
             Some(r) => r,
@@ -143,7 +143,7 @@ impl EscrowContract {
 
         record.funded = true;
         env.storage()
-            .instance()
+            .persistent()
             .set(&DataKey::Escrow(escrow_id), &record);
 
         env.events()
@@ -159,7 +159,7 @@ impl EscrowContract {
 
         let mut record: EscrowRecord = match env
             .storage()
-            .instance()
+            .persistent()
             .get(&DataKey::Escrow(escrow_id))
         {
             Some(r) => r,
@@ -178,7 +178,7 @@ impl EscrowContract {
 
         record.released = true;
         env.storage()
-            .instance()
+            .persistent()
             .set(&DataKey::Escrow(escrow_id), &record);
 
         env.events()
@@ -199,7 +199,7 @@ impl EscrowContract {
     }
 
     fn escrow_exists(env: &Env, id: u64) -> bool {
-        env.storage().instance().has(&DataKey::Escrow(id))
+        env.storage().persistent().has(&DataKey::Escrow(id))
     }
 
     fn get_balance(_env: &Env, _caller: &Address) -> i128 {

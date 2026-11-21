@@ -1,5 +1,7 @@
 use soroban_sdk::{contracterror, contracttype, symbol_short, Address, String, Symbol};
 
+use brain_storm_shared::errors::SharedError;
+
 #[contracterror]
 #[derive(Copy, Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
 #[repr(u32)]
@@ -8,20 +10,33 @@ pub enum MarketError {
     ReentrancyLocked = 1,
     /// Product not found
     ProductNotFound = 2,
-    /// Insufficient balance for purchase
+    /// Insufficient balance for purchase — use SharedError::InsufficientBalance where possible
     InsufficientBalance = 3,
-    /// Unauthorized action
+    /// Unauthorized action — use SharedError::Unauthorized where possible
     Unauthorized = 4,
-    /// Invalid product state
+    /// Invalid product state — use SharedError::InvalidState where possible
     InvalidProductState = 5,
     /// Purchase already completed
     AlreadyPurchased = 6,
     /// Call during reentrant attempt
     ReentrantCall = 7,
-    /// Payment failed
+    /// Payment failed — use SharedError::OperationFailed where possible
     PaymentFailed = 8,
     /// Royalty distribution failed
     RoyaltyDistributionFailed = 9,
+}
+
+impl From<SharedError> for MarketError {
+    fn from(e: SharedError) -> Self {
+        match e {
+            SharedError::Unauthorized => MarketError::Unauthorized,
+            SharedError::InsufficientBalance => MarketError::InsufficientBalance,
+            SharedError::InvalidState => MarketError::InvalidProductState,
+            SharedError::OperationFailed => MarketError::PaymentFailed,
+            // All other shared errors map to the closest available variant.
+            _ => MarketError::PaymentFailed,
+        }
+    }
 }
 
 #[contracttype]
