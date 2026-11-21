@@ -11,7 +11,7 @@ use crate::types::{
     DataKey, ProposalRecord, UpgradeProposalRecord, PROPOSAL_CREATED, PROPOSAL_EXECUTED,
     UPGRADE_APPROVED, UPGRADE_EXECUTED, UPGRADE_PROPOSED, VOTE_CAST,
 };
-use crate::validation_helpers::is_zero_address;
+use crate::validation_helpers::{assert_valid_voting_period, is_zero_address};
 use crate::voting::GovernanceKey;
 
 pub fn create_proposal(
@@ -42,7 +42,7 @@ pub fn create_proposal(
         .set(&DataKey::Proposal(id), &proposal);
     env.storage()
         .instance()
-        .set(&DataKey::NextProposalId, &(id + 1));
+        .set(&DataKey::NextProposalId, &id.checked_add(1).expect("NextProposalId overflow"));
 
     env.events()
         .publish((PROPOSAL_CREATED, symbol_short!("id")), id);
@@ -85,9 +85,12 @@ pub fn vote(env: Env, voter: Address, proposal_id: u64, support: bool) {
     env.storage().persistent().set(&vote_key, &support);
 
     if support {
-        proposal.votes_for += balance;
+        proposal.votes_for = proposal.votes_for.checked_add(balance).expect("vote tally overflow");
     } else {
-        proposal.votes_against += balance;
+        proposal.votes_against = proposal
+            .votes_against
+            .checked_add(balance)
+            .expect("vote tally overflow");
     }
     env.storage()
         .persistent()
@@ -170,7 +173,10 @@ pub fn get_vote_tally(env: Env, proposal_id: u64) -> (i128, i128, i128, bool) {
         .persistent()
         .get(&DataKey::Proposal(proposal_id))
         .expect("Proposal not found");
-    let total = proposal.votes_for + proposal.votes_against;
+    let total = proposal
+        .votes_for
+        .checked_add(proposal.votes_against)
+        .expect("tally overflow");
     let quorum_met = proposal.votes_for > proposal.votes_against && total > 0;
     (proposal.votes_for, proposal.votes_against, total, quorum_met)
 }
@@ -247,7 +253,7 @@ pub fn propose_upgrade(
         .set(&DataKey::UpgradeProposal(id), &upgrade);
     env.storage()
         .instance()
-        .set(&DataKey::NextProposalId, &(id + 1));
+        .set(&DataKey::NextProposalId, &id.checked_add(1).expect("NextProposalId overflow"));
 
     env.events().publish(
         (UPGRADE_PROPOSED, symbol_short!("id")),
@@ -284,7 +290,14 @@ pub fn vote_upgrade(env: Env, voter: Address, upgrade_id: u64, support: bool) {
     assert!(balance > 0, "No voting power");
 
     env.storage().persistent().set(&vote_key, &support);
-    if support { upgrade.votes_for += balance; } else { upgrade.votes_against += balance; }
+    if support {
+        upgrade.votes_for = upgrade.votes_for.checked_add(balance).expect("vote tally overflow");
+    } else {
+        upgrade.votes_against = upgrade
+            .votes_against
+            .checked_add(balance)
+            .expect("vote tally overflow");
+    }
     env.storage().persistent().set(&DataKey::UpgradeProposal(upgrade_id), &upgrade);
     env.events().publish((VOTE_CAST, symbol_short!("upg")), (upgrade_id, support));
 }

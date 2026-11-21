@@ -10,6 +10,8 @@
 //   - Event emission for every state transition
 // =============================================================================
 use soroban_sdk::{contracttype, symbol_short, Address, Env, String, Symbol};
+use brain_storm_shared::access;
+use crate::types::DataKey;
 use crate::validation_helpers::assert_valid_voting_period;
 #[cfg(test)]
 use brain_storm_shared::constants::{MAX_ENTRY_TTL, MIN_PERSISTENT_ENTRY_TTL, MIN_TEMP_ENTRY_TTL};
@@ -53,6 +55,8 @@ pub enum ProposalState {
 #[derive(Clone)]
 pub struct VotingProposal {
     pub id: u64,
+    /// Address that created the proposal (authorizes cancellation).
+    pub proposer: Address,
     pub title: String,
     pub description: String,
     /// Ledger at which voting becomes active (anti-spam delay).
@@ -181,6 +185,7 @@ pub fn create_proposal(
 
     let proposal = VotingProposal {
         id,
+        proposer: proposer.clone(),
         title,
         description,
         voting_start_ledger,
@@ -201,7 +206,7 @@ pub fn create_proposal(
         .set(&GovernanceKey::Proposal(id), &proposal);
     env.storage()
         .instance()
-        .set(&GovernanceKey::NextProposalId, &(id + 1));
+        .set(&GovernanceKey::NextProposalId, &id.checked_add(1).expect("NextProposalId overflow"));
 
     env.events()
         .publish((PROPOSAL_CREATED,), (id, proposer, quorum_required));
@@ -391,13 +396,15 @@ pub fn execute_proposal(env: &Env, proposal_id: u64) {
 
 /// Cancel a proposal (proposer or admin).
 pub fn cancel_proposal(env: &Env, canceller: Address, proposal_id: u64) {
-    canceller.require_auth();
-
     let mut proposal: VotingProposal = env
         .storage()
         .instance()
         .get(&GovernanceKey::Proposal(proposal_id))
         .expect("Proposal not found");
+
+    // Only the proposer or the stored admin may cancel. `require_admin_or`
+    // also enforces `require_auth` on the canceller.
+    access::require_admin_or(env, &canceller, &DataKey::Admin, &proposal.proposer);
 
     assert!(
         proposal.state == ProposalState::Pending || proposal.state == ProposalState::Active,

@@ -63,3 +63,7 @@ pub const PROPOSAL_EXECUTED: Symbol = symbol_short!("exec");
 pub const UPGRADE_PROPOSED: Symbol = symbol_short!("upg_prop");
 pub const UPGRADE_APPROVED: Symbol = symbol_short!("upg_appr");
 pub const UPGRADE_EXECUTED: Symbol = symbol_short!("upg_exec");
+/// Emitted when the contract is initialized with its admin + token.
+pub const GOV_INITIALIZED: Symbol = symbol_short!("gov_init");
+/// Emitted whenever an admin changes a governance configuration value.
+pub const CONFIG_CHANGED: Symbol = symbol_short!("gov_cfg");

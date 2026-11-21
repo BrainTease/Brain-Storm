@@ -3,8 +3,8 @@
 //! Split out of `lib.rs` (issue #1324).
 
 use super::*;
-use soroban_sdk::testutils::{Address as _, Ledger, LedgerInfo};
-use soroban_sdk::{symbol_short, Env};
+use soroban_sdk::testutils::{Address as _, Events, Ledger, LedgerInfo};
+use soroban_sdk::{symbol_short, Env, FromVal};
 
 fn set_ledger(env: &Env, seq: u32) {
     env.ledger().set(LedgerInfo {
@@ -418,7 +418,7 @@ fn test_propose_upgrade_timelock_before_voting_end_panics() {
 fn test_propose_upgrade_zero_contract_target_panics() {
     let (env, client, _, _) = setup();
     let proposer = Address::generate(&env);
-    let zero = Address::from_string(&String::from_str(&env, ZERO_CONTRACT_ADDRESS));
+    let zero = Address::from_string(&String::from_str(&env, crate::validation_helpers::ZERO_CONTRACT_ADDRESS));
     let wasm_hash = symbol_short!("abc123");
     let end = env.ledger().sequence() + 10;
     let timelock = end + 10;
@@ -430,7 +430,7 @@ fn test_propose_upgrade_zero_contract_target_panics() {
 fn test_propose_upgrade_zero_account_target_panics() {
     let (env, client, _, _) = setup();
     let proposer = Address::generate(&env);
-    let zero = Address::from_string(&String::from_str(&env, ZERO_ACCOUNT_ADDRESS));
+    let zero = Address::from_string(&String::from_str(&env, crate::validation_helpers::ZERO_ACCOUNT_ADDRESS));
     let wasm_hash = symbol_short!("abc123");
     let end = env.ledger().sequence() + 10;
     let timelock = end + 10;
@@ -569,4 +569,74 @@ fn test_non_admin_cannot_set_timelock_duration() {
 fn test_quorum_over_100_panics() {
     let (_, client, admin, _) = setup();
     client.set_quorum_percentage(&admin, &101_i128);
+}
+
+// ── Proposal cancellation authorization (issue #1488) ──────────────────────
+//
+// `cancel_proposal` must reject callers who are neither the proposal's proposer
+// nor the stored admin. Authorization is delegated to the shared
+// `access::require_admin_or` helper, which also enforces `require_auth`.
+
+#[test]
+#[should_panic(expected = "Unauthorized: admin or permitted caller required")]
+fn test_cancel_rejects_unauthorized_canceller() {
+    let (env, client, _admin, _) = setup();
+    let proposer = Address::generate(&env);
+    let title = String::from_str(&env, "P");
+    let desc = String::from_str(&env, "D");
+    let end = env.ledger().sequence() + 50;
+    let id = client.create_advanced_proposal(&proposer, &title, &desc, &end, &0, &0);
+    let rando = Address::generate(&env);
+    client.cancel_advanced_proposal(&rando, &id);
+}
+
+#[test]
+fn test_cancel_by_proposer_succeeds() {
+    let (env, client, _admin, _) = setup();
+    let proposer = Address::generate(&env);
+    let title = String::from_str(&env, "P");
+    let desc = String::from_str(&env, "D");
+    let end = env.ledger().sequence() + 50;
+    let id = client.create_advanced_proposal(&proposer, &title, &desc, &end, &0, &0);
+    client.cancel_advanced_proposal(&proposer, &id);
+    let proposal = client.get_advanced_proposal(&id).unwrap();
+    assert_eq!(proposal.state, crate::voting::ProposalState::Cancelled);
+}
+
+#[test]
+fn test_cancel_by_admin_succeeds() {
+    let (env, client, admin, _) = setup();
+    let proposer = Address::generate(&env);
+    let title = String::from_str(&env, "P");
+    let desc = String::from_str(&env, "D");
+    let end = env.ledger().sequence() + 50;
+    let id = client.create_advanced_proposal(&proposer, &title, &desc, &end, &0, &0);
+    client.cancel_advanced_proposal(&admin, &id);
+    let proposal = client.get_advanced_proposal(&id).unwrap();
+    assert_eq!(proposal.state, crate::voting::ProposalState::Cancelled);
+}
+
+// ── Config-change event emission (issue #1488) ─────────────────────────────
+
+#[test]
+fn test_config_change_emits_event() {
+    let (env, client, admin, _) = setup();
+    let before = env.events().all().len();
+    client.set_voting_delay(&admin, &7_u32);
+    let events = env.events().all();
+    assert_eq!(events.len(), before + 1);
+    let event = events.get(events.len() - 1).unwrap();
+    let topics = event.1;
+    let topic = soroban_sdk::Symbol::from_val(&env, &topics.get(0).unwrap());
+    assert_eq!(topic, CONFIG_CHANGED);
+}
+
+#[test]
+fn test_initialize_emits_event() {
+    let (env, _client, _admin, _) = setup();
+    let events = env.events().all();
+    assert!(!events.is_empty());
+    let event = events.get(0).unwrap();
+    let topic = soroban_sdk::Symbol::from_val(&env, &event.1.get(0).unwrap());
+    assert_eq!(topic, GOV_INITIALIZED);
 }
