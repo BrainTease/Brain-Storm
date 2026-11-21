@@ -1,0 +1,32 @@
+{
+  "$comment": "Incremental quality budget. Counts may only go down. Run `npm run quality:update` after removing violations, then review the diff.",
+  "baselineDate": "2026-11-21",
+  "trackedEslintRules": [
+    "@typescript-eslint/no-explicit-any",
+    "@typescript-eslint/no-unused-vars"
+  ],
+  "projects": {
+    "frontend": {
+      "directory": "apps/frontend",
+      "eslintTargets": ["src"],
+      "typecheck": {
+        "excludingModuleResolution": 446
+      },
+      "eslint": {
+        "@typescript-eslint/no-explicit-any": 71,
+        "@typescript-eslint/no-unused-vars": 78
+      }
+    },
+    "backend": {
+      "directory": "apps/backend",
+      "eslintTargets": ["src"],
+      "typecheck": {
+        "excludingModuleResolution": 359
+      },
+      "eslint": {
+        "@typescript-eslint/no-explicit-any": 708,
+        "@typescript-eslint/no-unused-vars": 124
+      }
+    }
+  }
+}

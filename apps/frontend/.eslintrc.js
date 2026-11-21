@@ -84,10 +84,8 @@ module.exports = {
         unusedExports: true,
         ignoreExports: [
           'src/app/**/{page,layout,loading,error,not-found,route,template}.{ts,tsx}',
-          'src/pages/**/*.{ts,tsx}',
           'src/middleware.ts',
           'next.config.js',
-          '.storybook/main.ts',
           'e2e/**/*.{ts,tsx}',
         ],
       },
