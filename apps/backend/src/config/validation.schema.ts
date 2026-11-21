@@ -147,4 +147,9 @@ export const validationSchema = Joi.object({
   APP_VERSION: Joi.string().optional(),
   GITHUB_REF: Joi.string().allow('').optional(),
   INDEXER_CATCHUP: Joi.boolean().default(false),
+
+  // ── External HTTP calls ───────────────────────────────────────────────────
+  EXTERNAL_HTTP_TIMEOUT_MS: Joi.number().integer().min(0).default(10000),
+  EXTERNAL_HTTP_MAX_RETRIES: Joi.number().integer().min(0).default(3),
+  EXTERNAL_HTTP_RETRY_BASE_DELAY_MS: Joi.number().integer().min(0).default(1000),
 });

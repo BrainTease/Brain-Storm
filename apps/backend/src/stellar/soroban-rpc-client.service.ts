@@ -38,9 +38,6 @@ import { decodeBigIntValue } from './soroban-xdr.utils';
 import { CircuitBreaker, CircuitBreakerFactory } from './circuit-breaker';
 import { StellarClientFactory } from './stellar-client.factory';
 
-const MAX_RETRIES = 3;
-const BASE_DELAY_MS = 1_000;
-
 @Injectable()
 export class SorobanRpcClientService implements OnModuleInit {
   private readonly logger = new Logger(SorobanRpcClientService.name);
@@ -52,6 +49,9 @@ export class SorobanRpcClientService implements OnModuleInit {
   readonly analyticsContractId: string;
   readonly tokenContractId: string;
   readonly contractId: string;
+
+  private readonly maxRetries: number;
+  private readonly retryBaseDelayMs: number;
 
   private circuitBreakerFactory = new CircuitBreakerFactory();
   private circuitBreakers = new Map<string, CircuitBreaker<any>>();
@@ -67,6 +67,9 @@ export class SorobanRpcClientService implements OnModuleInit {
     const rpcUrl =
       this.configService.get<string>('stellar.sorobanRpcUrl') ?? '';
     this.server = new rpc.Server(rpcUrl);
+
+    this.maxRetries = this.configService.get<number>('externalHttp.maxRetries') ?? 3;
+    this.retryBaseDelayMs = this.configService.get<number>('externalHttp.retryBaseDelayMs') ?? 1_000;
 
     this.logger.log('SorobanRpcClientService initialized using StellarClientFactory');
   }
@@ -239,8 +242,8 @@ export class SorobanRpcClientService implements OnModuleInit {
       return await fn();
     } catch (error: unknown) {
       const errMsg = error instanceof Error ? error.message : String(error);
-      if (attempt >= MAX_RETRIES) throw error;
-      const delay = BASE_DELAY_MS * Math.pow(2, attempt - 1);
+      if (attempt >= this.maxRetries) throw error;
+      const delay = this.retryBaseDelayMs * Math.pow(2, attempt - 1);
       this.logger.warn(`Soroban RPC attempt ${attempt} failed (${errMsg}), retrying in ${delay}ms`);
       await new Promise((r) => setTimeout(r, delay));
       return this.retryWithBackoff(fn, attempt + 1);
