@@ -3,7 +3,9 @@ extern crate alloc;
 use alloc::format;
 
 use soroban_sdk::{contract, contractimpl, Address, Env, String, Symbol};
-use brain_storm_shared::admin::AdminManager;
+use brain_storm_shared::constants::{
+    STORAGE_TTL_EXTEND_TO as TTL_EXTEND_TO, STORAGE_TTL_THRESHOLD as TTL_THRESHOLD,
+};
 
 mod types;
 pub use types::*;
@@ -59,7 +61,9 @@ impl TokenContract {
             amount: initial_supply,
             last_updated: env.ledger().timestamp(),
         };
-        env.storage().persistent().set(&Symbol::new(&env, &format!("balance_{:?}", admin)), &balance);
+        let admin_balance_key = Symbol::new(&env, &format!("balance_{:?}", admin));
+        env.storage().persistent().set(&admin_balance_key, &balance);
+        env.storage().persistent().extend_ttl(&admin_balance_key, TTL_THRESHOLD, TTL_EXTEND_TO);
 
         env.storage().instance().set(&Symbol::new(&env, "admin"), &admin);
 
@@ -108,8 +112,12 @@ impl TokenContract {
             last_updated: env.ledger().timestamp(),
         };
 
-        env.storage().persistent().set(&Symbol::new(&env, &format!("balance_{:?}", from)), &from_balance_obj);
-        env.storage().persistent().set(&Symbol::new(&env, &format!("balance_{:?}", to)), &to_balance_obj);
+        let from_key = Symbol::new(&env, &format!("balance_{:?}", from));
+        let to_key = Symbol::new(&env, &format!("balance_{:?}", to));
+        env.storage().persistent().set(&from_key, &from_balance_obj);
+        env.storage().persistent().extend_ttl(&from_key, TTL_THRESHOLD, TTL_EXTEND_TO);
+        env.storage().persistent().set(&to_key, &to_balance_obj);
+        env.storage().persistent().extend_ttl(&to_key, TTL_THRESHOLD, TTL_EXTEND_TO);
 
         // Update total supply (no change on transfer)
 
@@ -131,10 +139,10 @@ impl TokenContract {
     ) -> Result<(), TokenError> {
         admin.require_auth();
 
-        // Validate admin
+        // Validate admin using shared helper predicate
         let stored_admin: Address = env.storage().instance().get(&Symbol::new(&env, "admin"))
             .ok_or(TokenError::Unauthorized)?;
-        if !AdminManager::is_admin(&admin, &stored_admin) {
+        if admin != stored_admin {
             return Err(TokenError::Unauthorized);
         }
 
@@ -159,11 +167,13 @@ impl TokenContract {
             .checked_add(amount)
             .ok_or(TokenError::ArithmeticError)?;
 
+        let balance_key = Symbol::new(&env, &format!("balance_{:?}", to));
         let balance_obj = Balance {
             amount: new_to_balance,
             last_updated: env.ledger().timestamp(),
         };
-        env.storage().persistent().set(&Symbol::new(&env, &format!("balance_{:?}", to)), &balance_obj);
+        env.storage().persistent().set(&balance_key, &balance_obj);
+        env.storage().persistent().extend_ttl(&balance_key, TTL_THRESHOLD, TTL_EXTEND_TO);
 
         // Store updated state
         env.storage().instance().set(&Symbol::new(&env, "state"), &state);
@@ -186,10 +196,10 @@ impl TokenContract {
     ) -> Result<(), TokenError> {
         admin.require_auth();
 
-        // Validate admin
+        // Validate admin using shared helper predicate
         let stored_admin: Address = env.storage().instance().get(&Symbol::new(&env, "admin"))
             .ok_or(TokenError::Unauthorized)?;
-        if !AdminManager::is_admin(&admin, &stored_admin) {
+        if admin != stored_admin {
             return Err(TokenError::Unauthorized);
         }
 
@@ -214,11 +224,13 @@ impl TokenContract {
             .checked_sub(amount)
             .ok_or(TokenError::InsufficientBalance)?;
 
+        let balance_key = Symbol::new(&env, &format!("balance_{:?}", from));
         let balance_obj = Balance {
             amount: new_from_balance,
             last_updated: env.ledger().timestamp(),
         };
-        env.storage().persistent().set(&Symbol::new(&env, &format!("balance_{:?}", from)), &balance_obj);
+        env.storage().persistent().set(&balance_key, &balance_obj);
+        env.storage().persistent().extend_ttl(&balance_key, TTL_THRESHOLD, TTL_EXTEND_TO);
 
         // Store updated state
         env.storage().instance().set(&Symbol::new(&env, "state"), &state);
@@ -249,10 +261,12 @@ impl TokenContract {
             amount,
             spender: spender.clone(),
         };
+        let allowance_key = Symbol::new(&env, &format!("allowance_{:?}_{:?}", owner, spender));
         env.storage().persistent().set(
-            &Symbol::new(&env, &format!("allowance_{:?}_{:?}", owner, spender)),
+            &allowance_key,
             &allowance,
         );
+        env.storage().persistent().extend_ttl(&allowance_key, TTL_THRESHOLD, TTL_EXTEND_TO);
 
         env.events().publish(
             (Symbol::new(&env, "approve"),),
@@ -287,6 +301,7 @@ impl TokenContract {
             .ok_or(TokenError::InsufficientAllowance)?;
         allowance.amount = new_allowance;
         env.storage().persistent().set(&allowance_key, &allowance);
+        env.storage().persistent().extend_ttl(&allowance_key, TTL_THRESHOLD, TTL_EXTEND_TO);
 
         // Perform transfer with checked operations
         let from_balance = Self::get_balance_internal(&env, &from)?;
@@ -308,8 +323,12 @@ impl TokenContract {
             last_updated: env.ledger().timestamp(),
         };
 
-        env.storage().persistent().set(&Symbol::new(&env, &format!("balance_{:?}", from)), &from_balance_obj);
-        env.storage().persistent().set(&Symbol::new(&env, &format!("balance_{:?}", to)), &to_balance_obj);
+        let from_bal_key = Symbol::new(&env, &format!("balance_{:?}", from));
+        let to_bal_key = Symbol::new(&env, &format!("balance_{:?}", to));
+        env.storage().persistent().set(&from_bal_key, &from_balance_obj);
+        env.storage().persistent().extend_ttl(&from_bal_key, TTL_THRESHOLD, TTL_EXTEND_TO);
+        env.storage().persistent().set(&to_bal_key, &to_balance_obj);
+        env.storage().persistent().extend_ttl(&to_bal_key, TTL_THRESHOLD, TTL_EXTEND_TO);
 
         env.events().publish(
             (Symbol::new(&env, "transfer_from"),),

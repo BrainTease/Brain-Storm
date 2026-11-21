@@ -366,3 +366,82 @@ fn test_arithmetic_overflow_edge_case() {
     assert!(result.is_err());
     assert_eq!(result.unwrap_err().unwrap(), TokenError::InsufficientBalance);
 }
+
+// ============================================
+// # Negative / Auth Tests
+// ============================================
+
+#[test]
+fn test_burn_unauthorized_non_admin() {
+    let env = Env::default();
+    let (client, admin, user1, _user2) = setup_test_environment(&env);
+
+    // Transfer to user1 so they have a balance
+    client.transfer(&admin, &user1, &500);
+
+    // user1 is not the admin and cannot burn
+    let result = client.try_burn(&user1, &user1, &100);
+    assert!(result.is_err());
+    assert_eq!(result.unwrap_err().unwrap(), TokenError::Unauthorized);
+}
+
+#[test]
+fn test_burn_zero_amount_rejected() {
+    let env = Env::default();
+    let (client, admin, user1, _user2) = setup_test_environment(&env);
+
+    client.transfer(&admin, &user1, &500);
+    let result = client.try_burn(&admin, &user1, &0);
+    assert!(result.is_err());
+    assert_eq!(result.unwrap_err().unwrap(), TokenError::InvalidAmount);
+}
+
+#[test]
+fn test_burn_negative_amount_rejected() {
+    let env = Env::default();
+    let (client, admin, user1, _user2) = setup_test_environment(&env);
+
+    client.transfer(&admin, &user1, &500);
+    let result = client.try_burn(&admin, &user1, &-50);
+    assert!(result.is_err());
+    assert_eq!(result.unwrap_err().unwrap(), TokenError::InvalidAmount);
+}
+
+#[test]
+fn test_approve_zero_revokes_allowance() {
+    let env = Env::default();
+    let (client, _admin, user1, user2) = setup_test_environment(&env);
+
+    // Approve then revoke with zero
+    client.approve(&user1, &user2, &500);
+    client.approve(&user1, &user2, &0);
+    // allowance should now be 0
+    let allowance = client.allowance(&user1, &user2);
+    assert_eq!(allowance, 0);
+}
+
+#[test]
+fn test_transfer_from_zero_amount_rejected() {
+    let env = Env::default();
+    let (client, admin, user1, user2) = setup_test_environment(&env);
+
+    client.transfer(&admin, &user1, &500);
+    client.approve(&user1, &user2, &200);
+    let result = client.try_transfer_from(&user2, &user1, &admin, &0);
+    assert!(result.is_err());
+    assert_eq!(result.unwrap_err().unwrap(), TokenError::InvalidAmount);
+}
+
+#[test]
+fn test_total_supply_invariant_across_transfers() {
+    let env = Env::default();
+    let (client, admin, user1, user2) = setup_test_environment(&env);
+
+    let supply_before = client.total_supply();
+    client.transfer(&admin, &user1, &300);
+    client.transfer(&user1, &user2, &100);
+    let supply_after = client.total_supply();
+
+    // Transfers must not change total supply
+    assert_eq!(supply_before, supply_after);
+}
