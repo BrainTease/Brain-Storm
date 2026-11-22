@@ -38,6 +38,7 @@ const EVT_DOMAIN: Symbol = symbol_short!("royalty");
 const DISTRIBUTE: Symbol = symbol_short!("distribtd");
 const WITHDRAW: Symbol = symbol_short!("withdrawn");
 const SPLIT_SET: Symbol = symbol_short!("split_set");
+const INITIALIZED: Symbol = symbol_short!("init");
 
 #[contract]
 pub struct RoyaltyDistributionContract;
@@ -51,6 +52,7 @@ impl RoyaltyDistributionContract {
         );
         admin.require_auth();
         env.storage().instance().set(&DataKey::Admin, &admin);
+        events::emit_contract_event(&env, EVT_DOMAIN, INITIALIZED, (admin,));
     }
 
     pub fn set_royalty_split(
@@ -78,11 +80,11 @@ impl RoyaltyDistributionContract {
         env.storage().persistent().set(&split_key, &split);
         ttl::bump_persistent(&env, &split_key);
 
-        emit_contract_event(
+        events::emit_contract_event(
             &env,
             EVT_DOMAIN,
             SPLIT_SET,
-            (admin.clone(), course_id, (creator_pct, contributor_pct, platform_pct)),
+            (admin, course_id, (creator_pct, contributor_pct, platform_pct)),
         );
     }
 
@@ -224,11 +226,11 @@ impl RoyaltyDistributionContract {
             .instance()
             .set(&DataKey::PaymentCount, &(payment_id + 1));
 
-        emit_contract_event(
+        events::emit_contract_event(
             &env,
             EVT_DOMAIN,
             DISTRIBUTE,
-            (admin.clone(), course_id, total_amount),
+            (admin, course_id, total_amount),
         );
 
         reentrancy::exit(&env);
@@ -253,7 +255,7 @@ impl RoyaltyDistributionContract {
         env.storage().persistent().set(&balance_key, &0i128);
         ttl::bump_persistent(&env, &balance_key);
 
-        emit_contract_event(&env, EVT_DOMAIN, WITHDRAW, (recipient.clone(), balance, 0i128));
+        events::emit_contract_event(&env, EVT_DOMAIN, WITHDRAW, (recipient, balance, 0i128));
 
         reentrancy::exit(&env);
 

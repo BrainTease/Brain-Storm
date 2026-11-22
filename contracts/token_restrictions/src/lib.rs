@@ -3,7 +3,7 @@ use soroban_sdk::{
     contract, contractimpl, contracttype, symbol_short, Address, Env, Symbol,
 };
 
-use brain_storm_shared::{access, validation};
+use brain_storm_shared::{access, events, validation};
 
 #[contracttype]
 pub enum DataKey {
@@ -26,24 +26,13 @@ pub struct RestrictionLogEntry {
     pub timestamp: u64,
 }
 
-const WHITELIST_ADD: Symbol = symbol_short!("wl_add");
-const BLACKLIST_ADD: Symbol = symbol_short!("bl_add");
-const LIMIT_SET: Symbol = symbol_short!("limit");
-const APPROVAL_REQ: Symbol = symbol_short!("appr");
-const EMERGENCY: Symbol = symbol_short!("emrg");
-
 #[contract]
 pub struct TokenRestrictionsContract;
 
 #[contractimpl]
 impl TokenRestrictionsContract {
     pub fn initialize(env: Env, admin: Address) {
-        assert!(
-            !env.storage().instance().has(&DataKey::Admin),
-            "Already initialized"
-        );
-        admin.require_auth();
-        env.storage().instance().set(&DataKey::Admin, &admin);
+        access::initialize_admin(&env, &DataKey::Admin, &admin);
     }
 
     pub fn add_to_whitelist(env: Env, admin: Address, account: Address) {
@@ -53,8 +42,7 @@ impl TokenRestrictionsContract {
             .instance()
             .set(&DataKey::Whitelist(account.clone()), &true);
 
-        env.events()
-            .publish((WHITELIST_ADD, symbol_short!("addr")), account);
+        events::emit_whitelist_added(&env, &account);
     }
 
     pub fn remove_from_whitelist(env: Env, admin: Address, account: Address) {
@@ -64,8 +52,7 @@ impl TokenRestrictionsContract {
             .instance()
             .remove(&DataKey::Whitelist(account.clone()));
 
-        env.events()
-            .publish((WHITELIST_ADD, symbol_short!("rmv")), account);
+        events::emit_whitelist_removed(&env, &account);
     }
 
     pub fn is_whitelisted(env: Env, account: Address) -> bool {
@@ -82,8 +69,7 @@ impl TokenRestrictionsContract {
             .instance()
             .set(&DataKey::Blacklist(account.clone()), &true);
 
-        env.events()
-            .publish((BLACKLIST_ADD, symbol_short!("addr")), account);
+        events::emit_blacklist_added(&env, &account);
     }
 
     pub fn remove_from_blacklist(env: Env, admin: Address, account: Address) {
@@ -93,8 +79,7 @@ impl TokenRestrictionsContract {
             .instance()
             .remove(&DataKey::Blacklist(account.clone()));
 
-        env.events()
-            .publish((BLACKLIST_ADD, symbol_short!("rmv")), account);
+        events::emit_blacklist_removed(&env, &account);
     }
 
     pub fn is_blacklisted(env: Env, account: Address) -> bool {
@@ -112,8 +97,7 @@ impl TokenRestrictionsContract {
             .instance()
             .set(&DataKey::TransferLimit(account.clone()), &limit);
 
-        env.events()
-            .publish((LIMIT_SET, symbol_short!("addr")), (account, limit));
+        events::emit_transfer_limit_set(&env, &account, limit);
     }
 
     pub fn get_transfer_limit(env: Env, account: Address) -> i128 {
@@ -138,8 +122,7 @@ impl TokenRestrictionsContract {
             .instance()
             .set(&DataKey::PendingApprovals(from.clone(), to.clone()), &true);
 
-        env.events()
-            .publish((APPROVAL_REQ, symbol_short!("xfer")), (from, to, amount));
+        events::emit_transfer_approval_requested(&env, &from, &to, amount);
     }
 
     /// Admin approval to allow a transfer from `from` to `to`.
@@ -151,8 +134,7 @@ impl TokenRestrictionsContract {
             .instance()
             .remove(&DataKey::PendingApprovals(from.clone(), to.clone()));
 
-        env.events()
-            .publish((APPROVAL_REQ, symbol_short!("appr")), (from, to));
+        events::emit_transfer_approved(&env, &from, &to);
     }
 
     pub fn is_transfer_approved(env: Env, from: Address, to: Address) -> bool {
@@ -170,8 +152,7 @@ impl TokenRestrictionsContract {
             .set(&DataKey::EmergencyOverride, &true);
 
         Self::log_restriction_event(env.clone(), admin, symbol_short!("emrg_on"));
-        env.events()
-            .publish((EMERGENCY, symbol_short!("on")), env.ledger().timestamp());
+        events::emit_emergency_override_activated(&env);
     }
 
     pub fn deactivate_emergency_override(env: Env, admin: Address) {
@@ -182,8 +163,7 @@ impl TokenRestrictionsContract {
             .set(&DataKey::EmergencyOverride, &false);
 
         Self::log_restriction_event(env.clone(), admin, symbol_short!("emrg_off"));
-        env.events()
-            .publish((EMERGENCY, symbol_short!("off")), env.ledger().timestamp());
+        events::emit_emergency_override_deactivated(&env);
     }
 
     pub fn is_emergency_override_active(env: Env) -> bool {

@@ -1,7 +1,7 @@
 #![no_std]
 use soroban_sdk::{contract, contractimpl, contracttype, symbol_short, Address, Env, Symbol};
 
-use brain_storm_shared::SharedError;
+use brain_storm_shared::{emit_event, SharedError};
 
 // Contract-specific error types
 #[contracttype]
@@ -102,8 +102,7 @@ impl EscrowContract {
             &id.checked_add(1).expect("escrow id overflow"),
         );
 
-        env.events()
-            .publish((ESCROW_CREATED,), (id, client, agent, amount));
+        emit_event(&env, ESCROW_CREATED, (id, client, agent, amount));
 
         Ok(id)
     }
@@ -146,8 +145,7 @@ impl EscrowContract {
             .persistent()
             .set(&DataKey::Escrow(escrow_id), &record);
 
-        env.events()
-            .publish((ESCROW_FUNDED,), (escrow_id, caller, amount));
+        emit_event(&env, ESCROW_FUNDED, (escrow_id, caller, amount));
 
         Ok(())
     }
@@ -181,8 +179,7 @@ impl EscrowContract {
             .persistent()
             .set(&DataKey::Escrow(escrow_id), &record);
 
-        env.events()
-            .publish((ESCROW_RELEASED,), (escrow_id, caller));
+        emit_event(&env, ESCROW_RELEASED, (escrow_id, caller));
 
         Ok(())
     }

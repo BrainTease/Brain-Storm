@@ -82,6 +82,15 @@ pub enum UpgradeKey {
     PendingUpgrade,
     UpgradeHistory(u32),
     UpgradeHistoryCount,
+    /// One-time initialization marker (issue #76). Absent on contracts
+    /// initialized before this key existed, so `is_initialized` treats a
+    /// missing marker as "not initialized by the unified helper" and
+    /// `initialize_once` will set it on first use.
+    Initialized,
+    /// Stored contract version stamp (issue #76). Absent on legacy layouts;
+    /// `get_version` returns `0` in that case so callers can detect and
+    /// migrate.
+    Version,
 }
 
 // =============================================================================
@@ -243,4 +252,77 @@ pub fn get_upgrade_record(env: &Env, index: u32) -> Option<UpgradeRecord> {
     env.storage()
         .instance()
         .get(&UpgradeKey::UpgradeHistory(index))
+}
+
+// =============================================================================
+// Unified initialization / versioning (issue #76)
+// =============================================================================
+//
+// ## Migration notes
+//
+// These helpers add two *new* instance keys (`UpgradeKey::Initialized` and
+// `UpgradeKey::Version`) and never touch the existing keys above, so storage
+// layouts remain backward compatible:
+//
+// * Contracts already deployed keep working; `is_initialized` returns `false`
+//   and `get_version` returns `0` until `initialize_once` is called once.
+// * `initialize_once` is idempotent-safe: a second call panics with
+//   "Already initialized", matching the once-only guard used by
+//   `governance` and `credential_metadata`.
+// * `migrate` is the single hook for version bumps. It refuses to run before
+//   initialization and refuses to move backwards, so it can be called
+//   repeatedly (e.g. from an upgrade entry point) without side effects once
+//   the contract is current.
+
+/// Returns `true` once `initialize_once` has completed for this contract.
+pub fn is_initialized(env: &Env) -> bool {
+    env.storage()
+        .instance()
+        .get(&UpgradeKey::Initialized)
+        .unwrap_or(false)
+}
+
+/// One-time initialization guard (issue #76).
+///
+/// Sets the admin slot, stamps the initial version and marks the contract as
+/// initialized. Panics if the contract was already initialized, so the admin
+/// slot cannot be re-assigned through this path (see finding 4 above).
+pub fn initialize_once(env: &Env, admin: &Address, version: u32) {
+    assert!(!is_initialized(env), "Already initialized");
+
+    // Persist the admin under the shared `DataKey::Admin` slot so
+    // `access::require_admin` keeps working unchanged.
+    env.storage().instance().set(&crate::DataKey::Admin, admin);
+    env.storage().instance().set(&UpgradeKey::Version, &version);
+    env.storage().instance().set(&UpgradeKey::Initialized, &true);
+}
+
+/// Returns the stored contract version, or `0` for legacy (unstamped) layouts.
+pub fn get_version(env: &Env) -> u32 {
+    env.storage()
+        .instance()
+        .get(&UpgradeKey::Version)
+        .unwrap_or(0)
+}
+
+/// Asserts the stored version equals `expected`. Used by entry points that
+/// must not run against an unexpected storage layout.
+pub fn require_version(env: &Env, expected: u32) {
+    assert!(
+        get_version(env) == expected,
+        "Unexpected contract version"
+    );
+}
+
+/// Migration hook (issue #76): advances the stored version from `from` to
+/// `to`. Admin-only, requires initialization, and refuses to move backwards
+/// or skip the current version, so it is safe to call repeatedly.
+pub fn migrate(env: &Env, admin: &Address, from: u32, to: u32) {
+    crate::access::require_admin(env, admin, &crate::DataKey::Admin);
+    assert!(is_initialized(env), "Not initialized");
+    assert!(to > from, "Version must increase");
+
+    let current = get_version(env);
+    assert!(current == from, "Version mismatch");
+    env.storage().instance().set(&UpgradeKey::Version, &to);
 }

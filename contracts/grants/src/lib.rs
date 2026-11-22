@@ -1,12 +1,12 @@
 #![no_std]
 use soroban_sdk::{
-    contract, contractimpl, symbol_short, vec, Address, Env, IntoVal, String, Symbol, Vec,
+    contract, contractimpl, symbol_short, vec, Address, Env, IntoVal, String, Vec,
 };
 
 mod types;
 pub use types::*;
 
-use brain_storm_shared::{access, validation};
+use brain_storm_shared::{access, events, init, validation};
 use brain_storm_shared::constants::{
     STORAGE_TTL_EXTEND_TO as TTL_EXTEND_TO, STORAGE_TTL_THRESHOLD as TTL_THRESHOLD,
 };
@@ -25,10 +25,7 @@ impl GrantsContract {
     // -------------------------------------------------------------------------
 
     pub fn initialize(env: Env, admin: Address, token_contract: Address) {
-        assert!(
-            !env.storage().instance().has(&DataKey::Admin),
-            "Already initialized"
-        );
+        init::require_not_initialized(&env, &DataKey::Admin);
         admin.require_auth();
         env.storage().instance().set(&DataKey::Admin, &admin);
         env.storage()
@@ -92,8 +89,10 @@ impl GrantsContract {
             .instance()
             .set(&DataKey::NextGrantId, &(id + 1));
 
-        env.events().publish(
-            (symbol_short!("grants"), symbol_short!("applied")),
+        events::emit(
+            &env,
+            symbol_short!("grants"),
+            symbol_short!("applied"),
             (id, applicant, total_amount),
         );
 
@@ -124,8 +123,10 @@ impl GrantsContract {
             .persistent()
             .extend_ttl(&DataKey::Grant(grant_id), TTL_THRESHOLD, TTL_EXTEND_TO);
 
-        env.events().publish(
-            (symbol_short!("grants"), symbol_short!("approved")),
+        events::emit(
+            &env,
+            symbol_short!("grants"),
+            symbol_short!("approved"),
             (grant_id, grant.applicant),
         );
     }
@@ -149,8 +150,10 @@ impl GrantsContract {
             .persistent()
             .extend_ttl(&DataKey::Grant(grant_id), TTL_THRESHOLD, TTL_EXTEND_TO);
 
-        env.events().publish(
-            (symbol_short!("grants"), symbol_short!("rejected")),
+        events::emit(
+            &env,
+            symbol_short!("grants"),
+            symbol_short!("rejected"),
             (grant_id, grant.applicant),
         );
     }
@@ -193,8 +196,10 @@ impl GrantsContract {
             .persistent()
             .extend_ttl(&key, TTL_THRESHOLD, TTL_EXTEND_TO);
 
-        env.events().publish(
-            (symbol_short!("grants"), symbol_short!("milestone")),
+        events::emit(
+            &env,
+            symbol_short!("grants"),
+            symbol_short!("milestone"),
             (grant_id, milestone_idx, amount),
         );
     }
@@ -243,8 +248,10 @@ impl GrantsContract {
             ],
         );
 
-        env.events().publish(
-            (symbol_short!("grants"), symbol_short!("released")),
+        events::emit(
+            &env,
+            symbol_short!("grants"),
+            symbol_short!("released"),
             (grant_id, milestone_idx, milestone.amount),
         );
     }
@@ -289,8 +296,10 @@ impl GrantsContract {
             .persistent()
             .extend_ttl(&report_key, TTL_THRESHOLD, TTL_EXTEND_TO);
 
-        env.events().publish(
-            (symbol_short!("grants"), symbol_short!("report")),
+        events::emit(
+            &env,
+            symbol_short!("grants"),
+            symbol_short!("report"),
             (grant_id, reports.len()),
         );
     }

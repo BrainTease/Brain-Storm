@@ -13,9 +13,15 @@ pub struct LiquidityPoolContract;
 
 #[contractimpl]
 impl LiquidityPoolContract {
-    /// Initialize the liquidity pool (Issue #1002 - delegated to pool module)
+    /// Initialize the liquidity pool (Issue #1002 - delegated to pool module).
+    /// Uses the shared init pattern so re-initialization is rejected consistently.
     pub fn initialize(env: Env, admin: Address, bst_token: Address, fee_collector: Address) {
         pool::initialize(&env, admin, bst_token, fee_collector);
+    }
+
+    /// Upgrade the contract wasm (shared upgrade pattern).
+    pub fn upgrade(env: Env, admin: Address, new_wasm_hash: soroban_sdk::BytesN<32>) {
+        pool::upgrade(&env, admin, new_wasm_hash);
     }
 
     /// Add liquidity to the pool (delegated to pool module)

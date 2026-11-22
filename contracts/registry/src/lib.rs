@@ -14,9 +14,10 @@
 #[cfg(test)]
 extern crate std;
 
-use soroban_sdk::{contract, contractimpl, symbol_short, Address, Env, Symbol, Vec};
+use soroban_sdk::{contract, contractimpl, Address, Env, Symbol, Vec};
 
 use brain_storm_shared::access;
+use brain_storm_shared::events;
 use brain_storm_shared::pagination::{paginate, MAX_PAGE_SIZE};
 
 mod types;
@@ -31,9 +32,7 @@ impl RegistryContract {
     // ── Initialisation ────────────────────────────────────────────────────────
 
     pub fn initialize(env: Env, admin: Address) {
-        assert!(!env.storage().instance().has(&DataKey::Admin), "Already initialized");
-        admin.require_auth();
-        env.storage().instance().set(&DataKey::Admin, &admin);
+        access::initialize_admin(&env, &admin, &DataKey::Admin);
         pausable::initialize_pausable(&env);
     }
 
@@ -60,13 +59,13 @@ impl RegistryContract {
     pub fn add_curator(env: Env, admin: Address, curator: Address) {
         Self::assert_admin(&env, &admin);
         env.storage().instance().set(&DataKey::Curator(curator.clone()), &true);
-        env.events().publish((EVT_CURATOR_ADD, symbol_short!("addr")), curator);
+        events::emit_curator_added(&env, &curator);
     }
 
     pub fn remove_curator(env: Env, admin: Address, curator: Address) {
         Self::assert_admin(&env, &admin);
         env.storage().instance().remove(&DataKey::Curator(curator.clone()));
-        env.events().publish((EVT_CURATOR_RM, symbol_short!("addr")), curator);
+        events::emit_curator_removed(&env, &curator);
     }
 
     pub fn is_curator(env: Env, addr: Address) -> bool {
@@ -91,8 +90,7 @@ impl RegistryContract {
         env.storage()
             .persistent()
             .set(&DataKey::VerificationLevel(user.clone()), &level);
-        env.events()
-            .publish((EVT_VL_SET, symbol_short!("user")), (user, level_ord(&level)));
+        events::emit_verification_level_set(&env, &user, level_ord(&level));
     }
 
     pub fn get_verification_level(env: Env, user: Address) -> VerificationLevel {
@@ -133,8 +131,7 @@ impl RegistryContract {
             .persistent()
             .set(&DataKey::SkillExpiry(user.clone(), skill.clone()), &expiry_ts);
 
-        env.events()
-            .publish((EVT_SKILL_ADD, symbol_short!("user")), (user, skill, expiry_ts));
+        events::emit_certified_skill_added(&env, &user, &skill, expiry_ts);
     }
 
     /// Remove a certified skill from `user`. Blocked when paused.
@@ -162,8 +159,7 @@ impl RegistryContract {
             .persistent()
             .remove(&DataKey::SkillExpiry(user.clone(), skill.clone()));
 
-        env.events()
-            .publish((EVT_SKILL_RM, symbol_short!("user")), (user, skill));
+        events::emit_certified_skill_removed(&env, &user, &skill);
     }
 
     /// Returns skills that have not expired.
@@ -209,8 +205,7 @@ impl RegistryContract {
         env.storage()
             .persistent()
             .set(&DataKey::Specialisation(user.clone()), &specs);
-        env.events()
-            .publish((EVT_SPEC_SET, symbol_short!("user")), user);
+        events::emit_specialisations_set(&env, &user);
     }
 
     pub fn get_specialisations(env: Env, user: Address) -> Vec<Symbol> {
@@ -259,8 +254,7 @@ impl RegistryContract {
             env.storage()
                 .persistent()
                 .set(&DataKey::VerificationLevel(user.clone()), &level);
-            env.events()
-                .publish((EVT_VL_SET, symbol_short!("user")), (user, level_u32));
+            events::emit_verification_level_set(&env, &user, level_u32);
         }
     }
 

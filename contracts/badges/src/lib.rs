@@ -1,5 +1,5 @@
 #![no_std]
-use soroban_sdk::{contract, contractimpl, symbol_short, Address, Env, String, Symbol, Vec};
+use soroban_sdk::{contract, contractimpl, Address, Env, String, Symbol, Vec};
 
 mod types;
 pub use types::*;
@@ -20,13 +20,12 @@ impl BadgesContract {
     // -------------------------------------------------------------------------
 
     pub fn initialize(env: Env, admin: Address) {
-        assert!(
-            !env.storage().instance().has(&DataKey::Admin),
-            "Already initialized"
-        );
-        admin.require_auth();
-        env.storage().instance().set(&DataKey::Admin, &admin);
+        upgrade::initialize(&env, &DataKey::Admin, &admin);
         env.storage().instance().set(&DataKey::NextId, &1_u64);
+    }
+
+    pub fn upgrade(env: Env, admin: Address, new_wasm_hash: soroban_sdk::BytesN<32>) {
+        upgrade::upgrade(&env, &DataKey::Admin, &admin, new_wasm_hash);
     }
 
     pub fn get_admin(env: Env) -> Address {
@@ -123,8 +122,7 @@ impl BadgesContract {
             .instance()
             .set(&DataKey::NextId, &(id + 1));
 
-        env.events()
-            .publish((MINT, symbol_short!("to"), recipient), (id, badge_type));
+        events::emit_mint(&env, &recipient, id, &badge_type);
 
         id
     }
@@ -204,7 +202,7 @@ impl BadgesContract {
 
         env.storage().persistent().remove(&DataKey::Badge(id));
 
-        env.events().publish((BURN, symbol_short!("id")), (id, badge.owner));
+        events::emit_burn(&env, &badge.owner, id);
     }
 }
 

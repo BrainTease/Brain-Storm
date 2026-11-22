@@ -14,7 +14,7 @@
 mod fixture;
 use fixture::TestFixture;
 
-use soroban_sdk::{symbol_short, testutils::Address as _, Address};
+use soroban_sdk::{symbol_short, testutils::Address as _, Address, Env};
 use brain_storm_shared::Role;
 use brain_storm_token::{TokenContract, TokenContractClient};
 use brain_storm_grants::{GrantsContract, GrantsContractClient};
@@ -329,4 +329,79 @@ fn test_grants_token_flow_beneficiary_has_no_tokens_initially() {
         token.balance(&beneficiary) == 0,
         "beneficiary should not hold tokens initially"
     );
+}
+
+// =============================================================================
+// #1499 — Standardized event schema
+// =============================================================================
+
+/// Progress updates emit the standardized event topic and payload.
+#[test]
+fn test_progress_update_emits_standard_event() {
+    let f = TestFixture::new();
+    let course = symbol_short!("EVT101");
+
+    f.record_student_progress(&course, 40);
+
+    let events = f.env.events().all();
+    assert!(
+        !events.is_empty(),
+        "recording progress should emit at least one event"
+    );
+
+    // The standardized schema uses a single symbol topic per event kind.
+    let emitted = events.iter().any(|(_, topics, _)| {
+        topics
+            .iter()
+            .any(|t| t == soroban_sdk::Val::from(symbol_short!("progress")))
+    });
+    assert!(emitted, "progress event topic should be emitted");
+}
+
+/// Reward minting emits the standardized token event.
+#[test]
+fn test_mint_reward_emits_standard_event() {
+    let f = TestFixture::new();
+
+    f.mint_reward(25);
+
+    let events = f.env.events().all();
+    let emitted = events.iter().any(|(_, topics, _)| {
+        topics
+            .iter()
+            .any(|t| t == soroban_sdk::Val::from(symbol_short!("mint")))
+    });
+    assert!(emitted, "mint event topic should be emitted");
+}
+
+// =============================================================================
+// #1502 — Unified initialization / upgrade flow
+// =============================================================================
+
+/// Re-initializing an already initialized contract is rejected.
+#[test]
+#[should_panic]
+fn test_token_reinit_rejected() {
+    let f = TestFixture::new();
+    f.token.initialize(&f.admin);
+}
+
+/// Re-initializing the grants contract is rejected.
+#[test]
+#[should_panic]
+fn test_grants_reinit_rejected() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let admin = Address::generate(&env);
+    let token_id = env.register_contract(None, brain_storm_token::TokenContract);
+    let token = TokenContractClient::new(&env, &token_id);
+    token.initialize(&admin);
+
+    let grants_id = env.register_contract(None, brain_storm_grants::GrantsContract);
+    let grants = GrantsContractClient::new(&env, &grants_id);
+    grants.initialize(&admin, &token_id);
+
+    // Second initialization must fail.
+    grants.initialize(&admin, &token_id);
 }

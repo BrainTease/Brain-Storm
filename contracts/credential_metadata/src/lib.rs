@@ -3,7 +3,7 @@
 #[cfg(test)]
 extern crate std;
 
-use soroban_sdk::{contract, contractimpl, symbol_short, Address, Bytes, Env, String, Symbol};
+use soroban_sdk::{contract, contractimpl, Address, Bytes, Env, String};
 
 mod types;
 pub use types::*;
@@ -23,23 +23,18 @@ pub struct CredentialMetadataContract;
 #[contractimpl]
 impl CredentialMetadataContract {
     pub fn initialize(env: Env, admin: Address) {
-        assert!(
-            !env.storage().instance().has(&DataKey::Admin),
-            "Already initialized"
-        );
-        admin.require_auth();
-        env.storage().instance().set(&DataKey::Admin, &admin);
+        upgrade::initialize_admin(&env, &DataKey::Admin, &admin);
     }
 
     /// Initialise with NFT contract address for credential↔NFT linkage (Issue #635).
     pub fn initialize_with_nft(env: Env, admin: Address, nft_contract: Address) {
-        assert!(
-            !env.storage().instance().has(&DataKey::Admin),
-            "Already initialized"
-        );
-        admin.require_auth();
-        env.storage().instance().set(&DataKey::Admin, &admin);
+        upgrade::initialize_admin(&env, &DataKey::Admin, &admin);
         linkage::set_nft_contract(&env, nft_contract);
+    }
+
+    /// Upgrade the contract WASM (admin only) via the shared upgrade pattern.
+    pub fn upgrade(env: Env, admin: Address, new_wasm_hash: soroban_sdk::BytesN<32>) {
+        upgrade::upgrade(&env, &DataKey::Admin, &admin, new_wasm_hash);
     }
 
     /// Issue a credential AND atomically mint a linked NFT (Issue #635).
@@ -76,7 +71,7 @@ impl CredentialMetadataContract {
             ipfs_hash,
         };
         env.storage().persistent().set(&DataKey::Metadata(credential_id), &metadata);
-        env.events().publish((STORE, symbol_short!("cred")), credential_id);
+        events::emit_credential_stored(&env, credential_id);
 
         // Atomically mint linked NFT (rolls back everything on failure)
         linkage::issue_and_mint_nft(
@@ -131,8 +126,7 @@ impl CredentialMetadataContract {
             .persistent()
             .set(&DataKey::Metadata(credential_id), &metadata);
 
-        env.events()
-            .publish((STORE, symbol_short!("cred")), credential_id);
+        events::emit_credential_stored(&env, credential_id);
     }
 
     pub fn update_metadata(
@@ -177,8 +171,7 @@ impl CredentialMetadataContract {
             .persistent()
             .set(&DataKey::Metadata(credential_id), &metadata);
 
-        env.events()
-            .publish((UPDATE, symbol_short!("cred")), credential_id);
+        events::emit_credential_updated(&env, credential_id);
     }
 
     pub fn get_metadata(env: Env, credential_id: u64) -> Option<MetadataRecord> {
@@ -238,13 +231,11 @@ impl CredentialMetadataContract {
             .persistent()
             .set(&DataKey::Metadata(credential_id), &metadata);
 
-        env.events()
-            .publish((RENEW, symbol_short!("cred")), credential_id);
+        events::emit_credential_renewed(&env, credential_id);
     }
 
     pub fn emit_expiry_event(env: Env, credential_id: u64) {
-        env.events()
-            .publish((EXPIRE, symbol_short!("cred")), credential_id);
+        events::emit_credential_expired(&env, credential_id);
     }
 
     pub fn store_metadata_hash(env: Env, admin: Address, credential_id: u64, hash: Bytes) {
@@ -293,8 +284,7 @@ impl CredentialMetadataContract {
         env.storage()
             .persistent()
             .set(&DataKey::CompactMeta(credential_id), &record);
-        env.events()
-            .publish((STORE, symbol_short!("compact")), credential_id);
+        events::emit_compact_metadata_stored(&env, credential_id);
     }
 
     /// Retrieve the compact record for a credential, if present.
@@ -370,8 +360,7 @@ impl CredentialMetadataContract {
         env.storage()
             .persistent()
             .set(&DataKey::CompactMeta(credential_id), &compact);
-        env.events()
-            .publish((STORE, symbol_short!("migrated")), credential_id);
+        events::emit_compact_metadata_migrated(&env, credential_id);
     }
 
     pub fn get_metadata_history(

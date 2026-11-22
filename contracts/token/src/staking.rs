@@ -2,8 +2,6 @@
 //!
 //! Adds delegation and undelegation flows with epoch-based reward accrual,
 //! rounding-safe arithmetic, optional slashing hooks, and comprehensive events.
-use soroban_sdk::{contracttype, Address, Env, Symbol, symbol_short};
-
 use soroban_sdk::{contracttype, Address, Env, Symbol, Vec, symbol_short};
 use brain_storm_shared::constants::{BASIS_POINTS_DENOMINATOR, PRECISION_SCALE_12};
 use brain_storm_shared::access;
@@ -477,5 +475,155 @@ mod tests {
         // Large amount should not overflow with checked arithmetic
         stake(&env, staker.clone(), i128::MAX / 2, 1);
         assert!(get_total_staked(&env) > 0);
+    }
+
+    // ── Property / fuzz-style tests ───────────────────────────────────────────
+
+    /// Simple deterministic LCG so property tests are reproducible without
+    /// pulling in an external fuzzing dependency.
+    struct Lcg(u64);
+
+    impl Lcg {
+        fn new(seed: u64) -> Self {
+            Lcg(seed)
+        }
+
+        fn next_u64(&mut self) -> u64 {
+            // Numerical Recipes LCG constants.
+            self.0 = self.0.wrapping_mul(6_364_136_223_846_793_005).wrapping_add(1_442_695_040_888_963_407);
+            self.0
+        }
+
+        /// Uniform value in `[lo, hi]` (inclusive), requires `lo <= hi`.
+        fn range_i128(&mut self, lo: i128, hi: i128) -> i128 {
+            let span = (hi - lo) as u128 + 1;
+            lo + (self.next_u64() as u128 % span) as i128
+        }
+
+        fn range_u32(&mut self, lo: u32, hi: u32) -> u32 {
+            let span = (hi - lo) as u64 + 1;
+            lo + (self.next_u64() % span) as u32
+        }
+    }
+
+    /// Reward accrual must be monotonic: more elapsed epochs never yields
+    /// fewer pending rewards for the same stake.
+    #[test]
+    fn prop_rewards_monotonic_in_epochs() {
+        let mut rng = Lcg::new(0xA11CE);
+        for _ in 0..64 {
+            let (env, _, staker) = setup();
+            let amount = rng.range_i128(1, 1_000_000);
+            let lock = rng.range_u32(1, 20);
+            stake(&env, staker.clone(), amount, lock);
+
+            let mut prev = calculate_rewards(&env, &staker);
+            for _ in 0..5 {
+                advance_epoch(&env, 1);
+                let now = calculate_rewards(&env, &staker);
+                assert!(now >= prev, "rewards must not decrease as epochs advance");
+                prev = now;
+            }
+        }
+    }
+
+    /// Pending rewards are never negative and never exceed the total reward
+    /// pool implied by the accumulator (no over-distribution).
+    #[test]
+    fn prop_rewards_bounded_and_non_negative() {
+        let mut rng = Lcg::new(0xBEEF);
+        for _ in 0..64 {
+            let (env, _, staker) = setup();
+            let amount = rng.range_i128(1, 10_000_000);
+            stake(&env, staker.clone(), amount, 5);
+
+            advance_epoch(&env, rng.range_u32(0, 10));
+            let rewards = calculate_rewards(&env, &staker);
+            assert!(rewards >= 0, "rewards must be non-negative");
+
+            // Upper bound: amount * rpt / PRECISION_SCALE_12, since debt >= 0.
+            let rpt: i128 = env.storage().instance().get(&StakingKey::RewardPerToken).unwrap_or(0);
+            let upper = amount.checked_mul(rpt).expect("overflow").checked_div(PRECISION_SCALE_12).expect("div zero");
+            assert!(rewards <= upper, "rewards must not exceed accumulator bound");
+        }
+    }
+
+    /// Staked totals are conserved: total staked equals the sum of all
+    /// outstanding stake and delegation amounts at every step.
+    #[test]
+    fn prop_total_staked_conservation() {
+        let mut rng = Lcg::new(0xC0FFEE);
+        for _ in 0..32 {
+            let (env, _, _) = setup();
+            let mut expected: i128 = 0;
+
+            let staker = Address::generate(&env);
+            let amount = rng.range_i128(1, 1_000_000);
+            stake(&env, staker.clone(), amount, 3);
+            expected += amount;
+            assert_eq!(get_total_staked(&env), expected);
+
+            let delegator = Address::generate(&env);
+            let delegatee = Address::generate(&env);
+            let damount = rng.range_i128(1, 1_000_000);
+            delegate(&env, delegator.clone(), delegatee.clone(), damount);
+            expected += damount;
+            assert_eq!(get_total_staked(&env), expected);
+
+            advance_epoch(&env, rng.range_u32(0, 5));
+
+            let _ = undelegate(&env, delegator.clone(), delegatee.clone());
+            expected -= damount;
+            assert_eq!(get_total_staked(&env), expected);
+
+            let _ = withdraw(&env, staker.clone(), false);
+            expected -= amount;
+            assert_eq!(get_total_staked(&env), expected);
+            assert_eq!(expected, 0);
+        }
+    }
+
+    /// Slashing never underflows and never slashes more than the configured
+    /// basis-point rate of the staked amount.
+    #[test]
+    fn prop_slash_bounded() {
+        let mut rng = Lcg::new(0xDEADBEEF);
+        for _ in 0..64 {
+            let (env, admin, staker) = setup();
+            let recipient = Address::generate(&env);
+            let amount = rng.range_i128(1, 1_000_000);
+            let bps = rng.range_u32(0, BASIS_POINTS_DENOMINATOR as u32);
+
+            stake(&env, staker.clone(), amount, 2);
+            set_slash_config(&env, admin.clone(), bps, recipient, true);
+
+            let slashed = slash(&env, admin, staker.clone());
+            let expected = amount.checked_mul(bps as i128).expect("overflow") / BASIS_POINTS_DENOMINATOR;
+            assert_eq!(slashed, expected);
+            assert!(slashed >= 0 && slashed <= amount);
+
+            let record = get_stake(&env, staker).unwrap();
+            assert_eq!(record.amount, amount - slashed);
+            assert_eq!(get_total_staked(&env), amount - slashed);
+        }
+    }
+
+    /// Withdrawal never returns less than principal minus the maximum penalty,
+    /// and never overflows for large-but-valid stakes.
+    #[test]
+    fn prop_withdraw_never_underflows() {
+        let mut rng = Lcg::new(0x1234_5678);
+        for _ in 0..64 {
+            let (env, _, staker) = setup();
+            let amount = rng.range_i128(1, i128::MAX / 4);
+            let penalty_bps = rng.range_i128(0, BASIS_POINTS_DENOMINATOR);
+            env.storage().instance().set(&StakingKey::EarlyWithdrawalPenalty, &penalty_bps);
+
+            stake(&env, staker.clone(), amount, 10);
+            let net = withdraw(&env, staker.clone(), true);
+            let max_penalty = amount.checked_mul(penalty_bps).expect("overflow") / BASIS_POINTS_DENOMINATOR;
+            assert!(net >= amount - max_penalty, "net withdrawal below principal minus penalty");
+            assert_eq!(get_total_staked(&env), 0);
+        }
     }
 }

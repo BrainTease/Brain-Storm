@@ -1,5 +1,6 @@
 #![cfg(test)]
 use super::*;
+use proptest::prelude::*;
 use soroban_sdk::testutils::{Address as _, Events};
 use soroban_sdk::{Address, Env, FromVal};
 
@@ -209,4 +210,82 @@ fn test_release_escrow_emits_event() {
     let last = events.get(events.len() - 1).unwrap();
     let topic = soroban_sdk::Symbol::from_val(&env, &last.1.get(0).unwrap());
     assert_eq!(topic, ESCROW_RELEASED);
+}
+
+// ── property / fuzz tests ───────────────────────────────────────────────────
+
+proptest! {
+    #![proptest_config(ProptestConfig::with_cases(64))]
+
+    /// Any positive amount within the supported range can be escrowed and
+    /// fully funded, and funding conserves the deposited amount exactly.
+    #[test]
+    fn prop_fund_conserves_amount(amount in 1i128..=i128::MAX / 2) {
+        let (env, client) = setup();
+        let payer = Address::generate(&env);
+        let agent = Address::generate(&env);
+        let id = client.create_escrow(&payer, &agent, &amount).unwrap();
+        client.fund_escrow(&id, &payer, &amount).unwrap();
+        let escrow = client.get_escrow(&id).unwrap();
+        prop_assert_eq!(escrow.amount, amount);
+        prop_assert_eq!(escrow.funded_amount, amount);
+    }
+
+    /// Funding more than the escrowed amount must fail with InsufficientBalance
+    /// and must never mutate the stored escrow.
+    #[test]
+    fn prop_overfund_rejected(
+        amount in 1i128..=i128::MAX / 4,
+        extra in 1i128..=i128::MAX / 4,
+    ) {
+        let (env, client) = setup();
+        let payer = Address::generate(&env);
+        let agent = Address::generate(&env);
+        let id = client.create_escrow(&payer, &agent, &amount).unwrap();
+        let over = amount + extra;
+        let err = client.fund_escrow(&id, &payer, &over).unwrap_err();
+        prop_assert_eq!(err, EscrowError::Shared(SharedError::InsufficientBalance));
+        let escrow = client.get_escrow(&id).unwrap();
+        prop_assert_eq!(escrow.funded_amount, 0);
+    }
+
+    /// Zero and negative amounts are always rejected at creation.
+    #[test]
+    fn prop_non_positive_amount_rejected(amount in i128::MIN..=0) {
+        let (env, client) = setup();
+        let payer = Address::generate(&env);
+        let agent = Address::generate(&env);
+        let err = client.create_escrow(&payer, &agent, &amount).unwrap_err();
+        prop_assert_eq!(err, EscrowError::Shared(SharedError::InvalidAmount));
+    }
+
+    /// Releasing is idempotent in the sense that a second release always fails
+    /// and never double-pays; the escrow stays in the released state.
+    #[test]
+    fn prop_release_idempotent(amount in 1i128..=i128::MAX / 2) {
+        let (env, client) = setup();
+        let payer = Address::generate(&env);
+        let agent = Address::generate(&env);
+        let id = client.create_escrow(&payer, &agent, &amount).unwrap();
+        client.fund_escrow(&id, &payer, &amount).unwrap();
+        client.release_escrow(&id, &payer).unwrap();
+        let err = client.release_escrow(&id, &payer).unwrap_err();
+        prop_assert_eq!(err, EscrowError::EscrowAlreadyReleased);
+        let escrow = client.get_escrow(&id).unwrap();
+        prop_assert_eq!(escrow.funded_amount, amount);
+    }
+
+    /// Escrow ids are strictly increasing and never collide across creations.
+    #[test]
+    fn prop_ids_monotonic(count in 1usize..=16) {
+        let (env, client) = setup();
+        let mut last = 0u32;
+        for _ in 0..count {
+            let payer = Address::generate(&env);
+            let agent = Address::generate(&env);
+            let id = client.create_escrow(&payer, &agent, &100).unwrap();
+            prop_assert!(id > last);
+            last = id;
+        }
+    }
 }

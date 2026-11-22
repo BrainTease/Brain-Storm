@@ -1,5 +1,5 @@
 #![no_std]
-use soroban_sdk::{contract, contractimpl, symbol_short, vec, Address, Env, Symbol, Vec};
+use soroban_sdk::{contract, contractimpl, vec, Address, Env, Symbol, Vec};
 
 mod queries;
 mod types;
@@ -25,12 +25,7 @@ impl AnalyticsContract {
     // -------------------------------------------------------------------------
 
     pub fn initialize(env: Env, admin: Address) {
-        assert!(
-            !env.storage().instance().has(&DataKey::Admin),
-            "Already initialized"
-        );
-        admin.require_auth();
-        env.storage().instance().set(&DataKey::Admin, &admin);
+        access::initialize_admin(&env, &admin, &DataKey::Admin);
     }
 
     pub fn set_admin(env: Env, new_admin: Address) {
@@ -54,10 +49,7 @@ impl AnalyticsContract {
         env.storage()
             .instance()
             .set(&DataKey::AuthorizedCaller(caller.clone()), &true);
-        env.events().publish(
-            (symbol_short!("analytics"), symbol_short!("auth_add")),
-            caller,
-        );
+        events::emit_caller_authorized(&env, &caller);
     }
 
     /// Revoke a previously authorized caller.
@@ -66,10 +58,7 @@ impl AnalyticsContract {
         env.storage()
             .instance()
             .remove(&DataKey::AuthorizedCaller(caller.clone()));
-        env.events().publish(
-            (symbol_short!("analytics"), symbol_short!("auth_rm")),
-            caller,
-        );
+        events::emit_caller_revoked(&env, &caller);
     }
 
     /// Check whether an address is an authorized caller.
@@ -149,15 +138,9 @@ impl AnalyticsContract {
         Self::check_milestones(&env, &student, &course_id, progress_pct);
 
         // Emit events
-        env.events().publish(
-            (symbol_short!("analytics"), symbol_short!("prog_upd")),
-            (student.clone(), course_id.clone(), progress_pct),
-        );
+        events::emit_progress_updated(&env, &student, &course_id, progress_pct);
         if progress_pct == PROGRESS_COMPLETE {
-            env.events().publish(
-                (symbol_short!("analytics"), symbol_short!("completed")),
-                (student, course_id),
-            );
+            events::emit_course_completed(&env, &student, &course_id);
         }
     }
 
@@ -224,10 +207,7 @@ impl AnalyticsContract {
                 env.storage().persistent().set(&key, &record);
                 ttl::bump_persistent(&env, &key);
 
-                env.events().publish(
-                    (symbol_short!("analytics"), symbol_short!("milestone")),
-                    (student.clone(), course_id.clone(), milestone),
-                );
+                events::emit_milestone_achieved(env, student, course_id, milestone);
             }
         }
 

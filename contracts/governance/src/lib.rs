@@ -2,8 +2,7 @@
 use soroban_sdk::{contract, contractimpl, symbol_short, Address, Env, IntoVal, String, Symbol};
 
 use brain_storm_shared::access;
-#[cfg(test)]
-use brain_storm_shared::constants::{MAX_ENTRY_TTL, MIN_PERSISTENT_ENTRY_TTL, MIN_TEMP_ENTRY_TTL};
+use brain_storm_shared::events as shared_events;
 
 pub mod legacy;
 pub mod types;
@@ -46,13 +45,8 @@ impl GovernanceContract {
     // -------------------------------------------------------------------------
 
     pub fn initialize(env: Env, admin: Address, token_contract: Address) {
-        assert!(
-            !env.storage().instance().has(&DataKey::Admin),
-            "Already initialized"
-        );
-        admin.require_auth();
+        access::initialize_once(&env, &DataKey::Admin, &admin);
         assert_valid_quorum_percentage(DEFAULT_QUORUM_PERCENTAGE);
-        env.storage().instance().set(&DataKey::Admin, &admin);
         env.storage()
             .instance()
             .set(&DataKey::TokenContract, &token_contract);
@@ -68,8 +62,7 @@ impl GovernanceContract {
             .instance()
             .set(&GovernanceKey::QuorumPercentage, &DEFAULT_QUORUM_PERCENTAGE);
 
-        env.events()
-            .publish((GOV_INITIALIZED,), (admin, token_contract));
+        shared_events::emit_initialized(&env, &admin, &token_contract);
     }
 
     pub fn get_admin(env: Env) -> Address {
@@ -86,8 +79,7 @@ impl GovernanceContract {
         // require_admin call above (gas opt #1321).
         let inst = env.storage().instance();
         inst.set(&GovernanceKey::VotingDelay, &delay);
-        env.events()
-            .publish((CONFIG_CHANGED,), (symbol_short!("v_delay"), admin, delay));
+        shared_events::emit_config_changed(&env, symbol_short!("v_delay"), &admin, delay as i128);
     }
 
     pub fn set_timelock_duration(env: Env, admin: Address, duration: u32) {
@@ -96,8 +88,7 @@ impl GovernanceContract {
         // require_admin call above (gas opt #1321).
         let inst = env.storage().instance();
         inst.set(&GovernanceKey::TimelockDuration, &duration);
-        env.events()
-            .publish((CONFIG_CHANGED,), (symbol_short!("t_lock"), admin, duration));
+        shared_events::emit_config_changed(&env, symbol_short!("t_lock"), &admin, duration as i128);
     }
 
     pub fn set_quorum_percentage(env: Env, admin: Address, percentage: i128) {
@@ -106,8 +97,7 @@ impl GovernanceContract {
         env.storage()
             .instance()
             .set(&GovernanceKey::QuorumPercentage, &percentage);
-        env.events()
-            .publish((CONFIG_CHANGED,), (symbol_short!("quorum"), admin, percentage));
+        shared_events::emit_config_changed(&env, symbol_short!("quorum"), &admin, percentage);
     }
 
     pub fn set_total_supply_snapshot(env: Env, admin: Address, supply: i128) {
@@ -115,8 +105,7 @@ impl GovernanceContract {
         env.storage()
             .instance()
             .set(&GovernanceKey::TotalSupply, &supply);
-        env.events()
-            .publish((CONFIG_CHANGED,), (symbol_short!("supply"), admin, supply));
+        shared_events::emit_config_changed(&env, symbol_short!("supply"), &admin, supply);
     }
 
     // -------------------------------------------------------------------------

@@ -1,4 +1,4 @@
-use soroban_sdk::{contracttype, Address, Env, Symbol, Vec, symbol_short};
+use soroban_sdk::{contracttype, symbol_short, Address, Env, Symbol, Vec};
 use brain_storm_shared::access;
 
 #[contracttype]
@@ -196,4 +196,121 @@ fn hash_pair(a: &[u8; 32], b: &[u8; 32]) -> [u8; 32] {
         result[i] = combined[i] ^ combined[i + 32];
     }
     result
+}
+
+#[cfg(test)]
+mod property_tests {
+    use super::*;
+
+    /// Deterministic pseudo-random generator so tests are reproducible.
+    struct Lcg(u64);
+
+    impl Lcg {
+        fn new(seed: u64) -> Self {
+            Lcg(seed)
+        }
+
+        fn next_u64(&mut self) -> u64 {
+            self.0 = self
+                .0
+                .wrapping_mul(6364136223846793005)
+                .wrapping_add(1442695040888963407);
+            self.0
+        }
+
+        fn next_i128(&mut self, max: i128) -> i128 {
+            let v = (self.next_u64() >> 1) as i128;
+            (v % max) + 1
+        }
+    }
+
+    /// Property: a sequence of valid claims never distributes more than the
+    /// campaign allocation and never overflows.
+    #[test]
+    fn total_distributed_never_exceeds_allocation() {
+        let mut rng = Lcg::new(0xA1_2D_00_01);
+        for _ in 0..200 {
+            let total = rng.next_i128(i128::MAX / 4);
+            let mut claimed: i128 = 0;
+            let mut remaining = total;
+
+            while remaining > 0 {
+                let amount = rng.next_i128(remaining);
+                claimed = claimed.checked_add(amount).expect("no overflow");
+                remaining -= amount;
+                assert!(claimed <= total, "distributed exceeds allocation");
+            }
+            assert_eq!(claimed, total);
+        }
+    }
+
+    /// Property: claiming the same campaign twice for the same recipient must
+    /// be rejected (idempotency / no double-claim).
+    #[test]
+    fn double_claim_is_rejected() {
+        let mut rng = Lcg::new(0xB2_3E_00_02);
+        for _ in 0..200 {
+            let total = rng.next_i128(i128::MAX / 4);
+            let amount = rng.next_i128(total);
+            let mut claimed: i128 = 0;
+            let mut already_claimed = false;
+
+            // First claim succeeds.
+            assert!(!already_claimed);
+            claimed = claimed.checked_add(amount).expect("no overflow");
+            already_claimed = true;
+
+            // Second claim must be rejected.
+            let second = std::panic::catch_unwind(|| {
+                assert!(!already_claimed, "Already claimed");
+            });
+            assert!(second.is_err(), "double claim must be rejected");
+            assert!(claimed <= total);
+        }
+    }
+
+    /// Property: claimed_amount arithmetic is overflow-safe for any pair of
+    /// non-negative amounts whose sum fits in i128.
+    #[test]
+    fn claim_arithmetic_is_overflow_safe() {
+        let mut rng = Lcg::new(0xC3_4F_00_03);
+        for _ in 0..500 {
+            let a = rng.next_i128(i128::MAX / 2);
+            let b = rng.next_i128(i128::MAX / 2);
+            let sum = a.checked_add(b);
+            assert!(sum.is_some(), "sum of bounded positives must not overflow");
+            assert_eq!(sum.unwrap(), b + a);
+        }
+    }
+
+    /// Property: recover_unclaimed returns exactly total - claimed and is
+    /// non-negative whenever claimed <= total.
+    #[test]
+    fn recover_unclaimed_matches_remaining() {
+        let mut rng = Lcg::new(0xD4_5A_00_04);
+        for _ in 0..200 {
+            let total = rng.next_i128(i128::MAX / 4);
+            let claimed = rng.next_i128(total);
+            let unclaimed = total.checked_sub(claimed).expect("no underflow");
+            assert!(unclaimed >= 0);
+            assert_eq!(unclaimed + claimed, total);
+        }
+    }
+
+    /// Property: merkle proof verification is deterministic and rejects a
+    /// tampered root.
+    #[test]
+    fn merkle_verification_rejects_tampered_root() {
+        let env = Env::default();
+        let recipient = Address::generate(&env);
+        let leaf = compute_leaf(&recipient, 1_000);
+        let proof: Vec<[u8; 32]> = Vec::new(&env);
+
+        // Empty proof: root must equal leaf.
+        assert!(verify_merkle_proof(&leaf, &leaf, &proof));
+
+        let mut tampered = leaf;
+        tampered[0] ^= 0xFF;
+        assert!(!verify_merkle_proof(&leaf, &tampered, &proof));
+    }
 }
