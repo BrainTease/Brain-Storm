@@ -7,7 +7,7 @@
 //! - submit_evidence: only parties can submit, settled dispute panics
 
 use super::*;
-use soroban_sdk::{testutils::Address as _, BytesN, Env};
+use soroban_sdk::{symbol_short, testutils::Address as _, BytesN, Env};
 
 fn setup() -> (Env, DisputeContractClient<'static>, Address, Address) {
     let env = Env::default();
@@ -41,6 +41,26 @@ fn test_set_arbiter_updates_arbiter() {
     let new_arbiter = Address::generate(&env);
     client.set_arbiter(&admin, &new_arbiter);
     assert_eq!(client.get_arbiter(), new_arbiter);
+}
+
+#[test]
+fn test_set_arbiter_emits_event() {
+    let (env, client, admin, _) = setup();
+    let new_arbiter = Address::generate(&env);
+    let before = env.events().all().len();
+    client.set_arbiter(&admin, &new_arbiter);
+    let events = env.events().all();
+    assert_eq!(events.len(), before + 1);
+    let last = events.get(events.len() - 1).unwrap();
+    let topics = last.1;
+    assert_eq!(
+        soroban_sdk::Symbol::from_val(&env, &topics.get(0).unwrap()),
+        symbol_short!("dispute")
+    );
+    assert_eq!(
+        soroban_sdk::Symbol::from_val(&env, &topics.get(1).unwrap()),
+        symbol_short!("arb_set")
+    );
 }
 
 #[test]
