@@ -1,7 +1,7 @@
 // Fee Management Module (Issue #1002)
 // Handles fee collection and accounting
 
-use brain_storm_shared::access;
+use brain_storm_shared::{access, reentrancy, ttl};
 use soroban_sdk::{symbol_short, Address, Env};
 
 use crate::types::{DataKey, PoolConfig};
@@ -11,6 +11,8 @@ const EMERGENCY_DRAIN: soroban_sdk::Symbol = symbol_short!("emrg_drn");
 
 pub fn collect_fees(env: &Env, admin: Address) -> i128 {
     access::require_admin(env, &admin, &DataKey::Admin);
+
+    let _guard = reentrancy::ReentrancyGuard::new(env, &DataKey::ReentrancyGuard);
 
     let fees: i128 = env
         .storage()
@@ -28,6 +30,7 @@ pub fn collect_fees(env: &Env, admin: Address) -> i128 {
     env.storage()
         .instance()
         .set(&DataKey::AccumulatedFees, &0_i128);
+    ttl::bump_instance(env);
 
     env.events()
         .publish((FEE_COLLECTED, symbol_short!("to")), (fee_collector, fees));
@@ -44,6 +47,9 @@ pub fn get_accumulated_fees(env: &Env) -> i128 {
 
 pub fn emergency_drain(env: &Env, admin: Address) -> (i128, i128) {
     access::require_admin(env, &admin, &DataKey::Admin);
+
+    let _guard = reentrancy::ReentrancyGuard::new(env, &DataKey::ReentrancyGuard);
+
     assert!(
         !env.storage()
             .instance()
@@ -71,12 +77,14 @@ pub fn emergency_drain(env: &Env, admin: Address) -> (i128, i128) {
     env.storage()
         .instance()
         .set(&DataKey::EmergencyDrained, &true);
+    ttl::bump_instance(env);
 
     let mut config: PoolConfig = env.storage().instance().get(&DataKey::PoolConfig).unwrap();
     config.swap_enabled = false;
     config.add_liquidity_enabled = false;
     config.remove_liquidity_enabled = false;
     env.storage().instance().set(&DataKey::PoolConfig, &config);
+    ttl::bump_instance(env);
 
     env.events().publish(
         (EMERGENCY_DRAIN, symbol_short!("admin")),

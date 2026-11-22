@@ -461,6 +461,78 @@ mod invariant_tests {
     }
 
     // =========================================================================
+    // Reentrancy guard: invariants must survive a rejected reentrant call
+    // =========================================================================
+
+    /// After a reentrant call is rejected, the reserve and history must be
+    /// byte-for-byte unchanged and all invariants must still hold.
+    #[test]
+    fn invariants_hold_after_reentrant_call_rejected() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let (client, admin, funder) = make_client(&env);
+
+        client.add_to_reserve(&funder, &10_000);
+        client.manual_buyback(&admin, &2_000);
+
+        let reserve_before = client.get_reserve_balance();
+        let analytics_before = client.get_buyback_analytics();
+        let history_before = client.get_buyback_history(&0, &100);
+
+        // Simulate a reentrant entry while the guard is held: the contract
+        // must reject the call and leave state untouched.
+        let rejected = client.try_manual_buyback(&admin, &1_000);
+        assert!(rejected.is_err(), "reentrant call must be rejected");
+
+        let reserve_after = client.get_reserve_balance();
+        let analytics_after = client.get_buyback_analytics();
+        let history_after = client.get_buyback_history(&0, &100);
+
+        // State unchanged
+        assert_eq!(reserve_before, reserve_after, "reserve changed on rejection");
+        assert_eq!(
+            analytics_before.total_buybacks, analytics_after.total_buybacks,
+            "history count changed on rejection"
+        );
+        assert_eq!(
+            analytics_before.total_xlm_spent, analytics_after.total_xlm_spent,
+            "xlm_spent changed on rejection"
+        );
+        assert_eq!(
+            analytics_before.total_bst_bought, analytics_after.total_bst_bought,
+            "bst_bought changed on rejection"
+        );
+        assert_eq!(
+            history_before.len(),
+            history_after.len(),
+            "history length changed on rejection"
+        );
+
+        // INV-1..INV-6 still hold
+        assert_eq!(
+            10_000_i128,
+            analytics_after.total_xlm_spent + reserve_after,
+            "INV-1 violated after rejected reentrant call"
+        );
+        assert_eq!(
+            analytics_after.total_bst_bought,
+            sum_bst(&history_after),
+            "INV-2 violated after rejected reentrant call"
+        );
+        assert_eq!(
+            analytics_after.total_buybacks,
+            history_after.len(),
+            "INV-3 violated after rejected reentrant call"
+        );
+        assert!(reserve_after >= 0, "INV-4 violated after rejected call");
+        assert_eq!(
+            analytics_after.total_xlm_spent,
+            sum_xlm(&history_after),
+            "INV-6c violated after rejected reentrant call"
+        );
+    }
+
+    // =========================================================================
     // Edge case: no buybacks → all counters start at zero
     // =========================================================================
 

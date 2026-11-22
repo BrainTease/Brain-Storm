@@ -4,6 +4,8 @@
 use brain_storm_shared::math::{
     checked_add_i128, checked_mul_div_i128, checked_mul_i128, checked_sub_i128,
 };
+use brain_storm_shared::reentrancy::ReentrancyGuard;
+use brain_storm_shared::ttl;
 use soroban_sdk::{Address, Env};
 
 use crate::types::{DataKey, MiningConfig, PoolConfig, PoolStats};
@@ -68,6 +70,7 @@ pub fn add_liquidity(
     amount_a_min: i128,
     amount_b_min: i128,
 ) -> i128 {
+    let _guard = ReentrancyGuard::enter(env, &DataKey::ReentrancyGuard);
     provider.require_auth();
 
     let config: PoolConfig = env.storage().instance().get(&DataKey::PoolConfig).unwrap();
@@ -146,20 +149,22 @@ pub fn add_liquidity(
         &checked_add_i128(total_liquidity, liquidity_minted),
     );
 
+    let liquidity_key = DataKey::Liquidity(provider.clone());
     let user_liquidity: i128 = env
         .storage()
         .persistent()
-        .get(&DataKey::Liquidity(provider.clone()))
+        .get(&liquidity_key)
         .unwrap_or(0);
-    env.storage().persistent().set(
-        &DataKey::Liquidity(provider),
-        &checked_add_i128(user_liquidity, liquidity_minted),
-    );
+    env.storage()
+        .persistent()
+        .set(&liquidity_key, &checked_add_i128(user_liquidity, liquidity_minted));
+    ttl::extend_persistent_ttl(env, &liquidity_key);
 
     liquidity_minted
 }
 
 pub fn remove_liquidity(env: &Env, provider: Address, liquidity: i128) -> (i128, i128) {
+    let _guard = ReentrancyGuard::enter(env, &DataKey::ReentrancyGuard);
     provider.require_auth();
 
     let config: PoolConfig = env.storage().instance().get(&DataKey::PoolConfig).unwrap();
@@ -169,10 +174,11 @@ pub fn remove_liquidity(env: &Env, provider: Address, liquidity: i128) -> (i128,
     );
     assert!(liquidity > 0, "Liquidity must be positive");
 
+    let liquidity_key = DataKey::Liquidity(provider.clone());
     let user_liquidity: i128 = env
         .storage()
         .persistent()
-        .get(&DataKey::Liquidity(provider.clone()))
+        .get(&liquidity_key)
         .unwrap_or(0);
     assert!(user_liquidity >= liquidity, "Insufficient liquidity");
 
@@ -199,10 +205,10 @@ pub fn remove_liquidity(env: &Env, provider: Address, liquidity: i128) -> (i128,
 
     assert!(amount_a > 0 && amount_b > 0, "Insufficient amounts");
 
-    env.storage().persistent().set(
-        &DataKey::Liquidity(provider),
-        &checked_sub_i128(user_liquidity, liquidity),
-    );
+    env.storage()
+        .persistent()
+        .set(&liquidity_key, &checked_sub_i128(user_liquidity, liquidity));
+    ttl::extend_persistent_ttl(env, &liquidity_key);
     env.storage().instance().set(
         &DataKey::TotalLiquidity,
         &checked_sub_i128(total_liquidity, liquidity),
@@ -251,13 +257,16 @@ pub fn get_pool_stats(env: &Env) -> PoolStats {
 }
 
 pub fn get_user_liquidity(env: &Env, user: Address) -> i128 {
-    env.storage()
-        .persistent()
-        .get(&DataKey::Liquidity(user))
-        .unwrap_or(0)
+    let key = DataKey::Liquidity(user);
+    let value = env.storage().persistent().get(&key).unwrap_or(0);
+    if value != 0 {
+        ttl::extend_persistent_ttl(env, &key);
+    }
+    value
 }
 
 pub fn claim_mining_rewards(env: &Env, user: Address) -> i128 {
+    let _guard = ReentrancyGuard::enter(env, &DataKey::ReentrancyGuard);
     user.require_auth();
 
     let mining_config: MiningConfig = env
@@ -278,9 +287,9 @@ pub fn claim_mining_rewards(env: &Env, user: Address) -> i128 {
 
     let rewards = checked_mul_div_i128(user_liquidity, mining_config.reward_rate, 1_000_000);
 
-    env.storage()
-        .persistent()
-        .set(&DataKey::MiningRewards(user.clone()), &0_i128);
+    let rewards_key = DataKey::MiningRewards(user.clone());
+    env.storage().persistent().set(&rewards_key, &0_i128);
+    ttl::extend_persistent_ttl(env, &rewards_key);
 
     env.events().publish(
         (

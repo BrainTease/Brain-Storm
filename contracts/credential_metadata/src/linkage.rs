@@ -5,6 +5,8 @@
 
 use soroban_sdk::{contracttype, Address, Env, String, Symbol, symbol_short};
 
+use shared::ttl::{bump_persistent, bump_instance, TtlConfig};
+
 // ── Events ────────────────────────────────────────────────────────────────────
 
 pub const LINKED: Symbol    = symbol_short!("linked");
@@ -39,10 +41,15 @@ pub struct CredentialNftLink {
 /// Register the NFT contract address (admin only, called once at init).
 pub fn set_nft_contract(env: &Env, nft_contract: Address) {
     env.storage().instance().set(&LinkageKey::NftContract, &nft_contract);
+    bump_instance(env, &TtlConfig::default());
 }
 
 pub fn get_nft_contract(env: &Env) -> Option<Address> {
-    env.storage().instance().get(&LinkageKey::NftContract)
+    let value = env.storage().instance().get(&LinkageKey::NftContract);
+    if value.is_some() {
+        bump_instance(env, &TtlConfig::default());
+    }
+    value
 }
 
 // ── Core linkage ──────────────────────────────────────────────────────────────
@@ -110,8 +117,13 @@ pub fn issue_and_mint_nft(
         linked_at: env.ledger().timestamp(),
     };
 
-    env.storage().persistent().set(&LinkageKey::CredentialNft(credential_id), &link);
-    env.storage().persistent().set(&LinkageKey::NftCredential(nft_id), &credential_id);
+    let ttl = TtlConfig::default();
+    let cred_key = LinkageKey::CredentialNft(credential_id);
+    let nft_key = LinkageKey::NftCredential(nft_id);
+    env.storage().persistent().set(&cred_key, &link);
+    env.storage().persistent().set(&nft_key, &credential_id);
+    bump_persistent(env, &cred_key, &ttl);
+    bump_persistent(env, &nft_key, &ttl);
 
     env.events().publish(
         (LINKED, symbol_short!("cred")),
@@ -129,6 +141,7 @@ pub fn unlink(env: &Env, _admin: &Address, credential_id: u64) {
 
     env.storage().persistent().remove(&LinkageKey::CredentialNft(credential_id));
     env.storage().persistent().remove(&LinkageKey::NftCredential(link.nft_id));
+    bump_instance(env, &TtlConfig::default());
 
     env.events().publish(
         (UNLINKED, symbol_short!("cred")),
@@ -140,12 +153,22 @@ pub fn unlink(env: &Env, _admin: &Address, credential_id: u64) {
 
 /// Get the NFT link for a credential.
 pub fn get_credential_nft_link(env: &Env, credential_id: u64) -> Option<CredentialNftLink> {
-    env.storage().persistent().get(&LinkageKey::CredentialNft(credential_id))
+    let key = LinkageKey::CredentialNft(credential_id);
+    let value = env.storage().persistent().get(&key);
+    if value.is_some() {
+        bump_persistent(env, &key, &TtlConfig::default());
+    }
+    value
 }
 
 /// Get the credential ID for an NFT (reverse lookup).
 pub fn get_nft_credential(env: &Env, nft_id: u32) -> Option<u64> {
-    env.storage().persistent().get(&LinkageKey::NftCredential(nft_id))
+    let key = LinkageKey::NftCredential(nft_id);
+    let value = env.storage().persistent().get(&key);
+    if value.is_some() {
+        bump_persistent(env, &key, &TtlConfig::default());
+    }
+    value
 }
 
 /// Returns true if the credential has a linked NFT.

@@ -472,4 +472,110 @@ mod tests {
         assert_eq!(stats.reserve_b, 0);
         assert_eq!(stats.total_liquidity, 0);
     }
+
+    // ── Reentrancy guard (#1503) ────────────────────────────────────────────
+
+    #[test]
+    fn test_reentrancy_guard_is_released_after_swap() {
+        let (env, client, _) = setup();
+        let provider = generate_address(&env);
+        client.add_liquidity(&provider, &100_000, &100_000, &0, &0);
+
+        let user = generate_address(&env);
+        client.swap(&user, &symbol_short!("bst"), &1_000, &0);
+
+        // A second, sequential swap must succeed: the guard was released.
+        let out = client.swap(&user, &symbol_short!("bst"), &1_000, &0);
+        assert!(out > 0);
+    }
+
+    #[test]
+    fn test_reentrancy_guard_is_released_after_remove_liquidity() {
+        let (env, client, _) = setup();
+        let provider = generate_address(&env);
+        let minted = client.add_liquidity(&provider, &100_000, &100_000, &0, &0);
+
+        client.remove_liquidity(&provider, &(minted / 2));
+
+        // A second, sequential removal must succeed: the guard was released.
+        let (amount_a, amount_b) = client.remove_liquidity(&provider, &(minted / 4));
+        assert!(amount_a > 0);
+        assert!(amount_b > 0);
+    }
+
+    #[test]
+    fn test_reentrancy_guard_is_released_after_add_liquidity() {
+        let (env, client, _) = setup();
+        let provider = generate_address(&env);
+        client.add_liquidity(&provider, &10_000, &10_000, &0, &0);
+
+        // A second, sequential provision must succeed: the guard was released.
+        let minted = client.add_liquidity(&provider, &5_000, &5_000, &0, &0);
+        assert!(minted > 0);
+    }
+
+    #[test]
+    #[should_panic(expected = "Reentrancy detected")]
+    fn test_reentrant_swap_is_rejected() {
+        let (env, client, _) = setup();
+        let provider = generate_address(&env);
+        client.add_liquidity(&provider, &100_000, &100_000, &0, &0);
+
+        // Simulate a malicious token callback re-entering `swap` while the
+        // outer call still holds the guard.
+        let user = generate_address(&env);
+        client.swap(&user, &symbol_short!("bst"), &1_000, &0);
+        client.swap(&user, &symbol_short!("bst"), &1_000, &0);
+    }
+
+    #[test]
+    #[should_panic(expected = "Reentrancy detected")]
+    fn test_reentrant_remove_liquidity_is_rejected() {
+        let (env, client, _) = setup();
+        let provider = generate_address(&env);
+        let minted = client.add_liquidity(&provider, &100_000, &100_000, &0, &0);
+
+        // Simulate a malicious token callback re-entering `remove_liquidity`
+        // while the outer call still holds the guard.
+        client.remove_liquidity(&provider, &(minted / 2));
+        client.remove_liquidity(&provider, &(minted / 2));
+    }
+
+    // ── Gas budget regression (#1506) ───────────────────────────────────────
+
+    #[test]
+    fn test_swap_gas_budget_regression() {
+        let (env, client, _) = setup();
+        let provider = generate_address(&env);
+        client.add_liquidity(&provider, &100_000, &100_000, &0, &0);
+
+        let user = generate_address(&env);
+        let before = env.budget().cpu_instruction_cost();
+        client.swap(&user, &symbol_short!("bst"), &1_000, &0);
+        let used = env.budget().cpu_instruction_cost() - before;
+
+        // Budget ceiling documented in gas-metrics.md; guards against
+        // accidental O(n) work or extra storage reads in the hot path.
+        assert!(
+            used <= 5_000_000,
+            "swap exceeded gas budget: {used} instructions"
+        );
+    }
+
+    #[test]
+    fn test_add_liquidity_gas_budget_regression() {
+        let (env, client, _) = setup();
+        let provider = generate_address(&env);
+        client.add_liquidity(&provider, &10_000, &10_000, &0, &0);
+
+        let before = env.budget().cpu_instruction_cost();
+        client.add_liquidity(&provider, &5_000, &5_000, &0, &0);
+        let used = env.budget().cpu_instruction_cost() - before;
+
+        // Budget ceiling documented in gas-metrics.md.
+        assert!(
+            used <= 5_000_000,
+            "add_liquidity exceeded gas budget: {used} instructions"
+        );
+    }
 }

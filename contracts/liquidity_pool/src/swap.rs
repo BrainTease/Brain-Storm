@@ -5,6 +5,8 @@ use brain_storm_shared::math::{
     checked_add_i128, checked_add_u32, checked_div_i128, checked_mul_div_i128, checked_mul_i128,
     checked_sub_i128, checked_sub_u32,
 };
+use brain_storm_shared::reentrancy::{with_guard, ReentrancyGuardKey};
+use brain_storm_shared::ttl::{bump_persistent, TtlConfig};
 use soroban_sdk::{symbol_short, Address, Env, Symbol, Vec};
 
 use crate::types::{DataKey, PoolConfig, SwapRecord};
@@ -18,6 +20,19 @@ pub fn swap(
 ) -> i128 {
     user.require_auth();
 
+    // Guard the reserve mutation and token transfer path against reentrancy.
+    with_guard(env, ReentrancyGuardKey::Swap, || {
+        swap_inner(env, user, token_in, amount_in, amount_out_min)
+    })
+}
+
+fn swap_inner(
+    env: &Env,
+    user: Address,
+    token_in: Symbol,
+    amount_in: i128,
+    amount_out_min: i128,
+) -> i128 {
     let config: PoolConfig = env.storage().instance().get(&DataKey::PoolConfig).unwrap();
     assert!(config.swap_enabled, "Swapping is disabled");
     assert!(amount_in > 0, "Amount in must be positive");
@@ -118,9 +133,9 @@ pub fn swap(
         amount_out,
         fee,
     };
-    env.storage()
-        .instance()
-        .set(&DataKey::SwapHistory(history_count), &record);
+    let history_key = DataKey::SwapHistory(history_count);
+    env.storage().persistent().set(&history_key, &record);
+    bump_persistent(env, &history_key, &TtlConfig::default());
     env.storage().instance().set(
         &DataKey::SwapHistoryCount,
         &checked_add_u32(history_count, 1),
@@ -141,11 +156,13 @@ pub fn get_swap_history(env: &Env, start_index: u32, limit: u32) -> Vec<SwapReco
 
     let mut i = start_index;
     while i < end_index {
+        let history_key = DataKey::SwapHistory(i);
         if let Some(record) = env
             .storage()
-            .instance()
-            .get::<DataKey, SwapRecord>(&DataKey::SwapHistory(i))
+            .persistent()
+            .get::<DataKey, SwapRecord>(&history_key)
         {
+            bump_persistent(env, &history_key, &TtlConfig::default());
             history.push_back(record);
         }
         i = checked_add_u32(i, 1);

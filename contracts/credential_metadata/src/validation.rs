@@ -3,6 +3,7 @@
 
 use soroban_sdk::{Env, String};
 
+use brain_storm_shared::ttl as shared_ttl;
 use brain_storm_shared::validation as shared;
 
 use crate::DataKey;
@@ -14,19 +15,23 @@ pub fn metadata_exists(env: &Env, credential_id: u64) -> bool {
         .has(&DataKey::Metadata(credential_id))
 }
 
-/// Gets metadata if it exists, returns None otherwise
+/// Gets metadata if it exists, returns None otherwise.
+///
+/// Reads go through the shared TTL helpers (issue #79) so a live record's
+/// time-to-live is extended on access, keeping frequently read metadata from
+/// expiring out of persistent storage.
 pub fn get_metadata_checked(env: &Env, credential_id: u64) -> Option<crate::MetadataRecord> {
-    env.storage()
-        .persistent()
-        .get(&DataKey::Metadata(credential_id))
+    let key = DataKey::Metadata(credential_id);
+    let record: Option<crate::MetadataRecord> = env.storage().persistent().get(&key);
+    if record.is_some() {
+        shared_ttl::bump_persistent(env, &key);
+    }
+    record
 }
 
 /// Gets metadata, panics if not found
 pub fn get_metadata_or_panic(env: &Env, credential_id: u64) -> crate::MetadataRecord {
-    env.storage()
-        .persistent()
-        .get(&DataKey::Metadata(credential_id))
-        .expect("Credential metadata not found")
+    get_metadata_checked(env, credential_id).expect("Credential metadata not found")
 }
 
 /// Validates that a credential is eligible for renewal based on grace period
@@ -59,7 +64,10 @@ pub fn is_metadata_valid(env: &Env, credential_id: u64) -> bool {
             shared::is_valid_course_name(&record.course_name)
                 && shared::is_valid_grade(&record.grade)
                 && shared::is_non_empty_string(&record.ipfs_hash)
-                && record.expiry_timestamp >= record.completion_date
+                && shared::is_valid_timestamp_order(
+                    record.completion_date,
+                    record.expiry_timestamp,
+                )
         }
         None => false,
     }
@@ -74,6 +82,15 @@ pub fn validate_metadata_fields(course_name: &String, grade: &String, ipfs_hash:
     shared::require_valid_course_name(course_name);
     shared::require_valid_grade(grade);
     shared::require_non_empty_string(ipfs_hash);
+}
+
+/// Rejects a completion/expiry pair where the credential expires before it
+/// was completed (issue #78).
+///
+/// Delegates to the shared ordering rule so the write paths and
+/// [`is_metadata_valid`] can never disagree.
+pub fn validate_timestamp_order(completion_date: u64, expiry_timestamp: u64) {
+    shared::require_valid_timestamp_order(completion_date, expiry_timestamp);
 }
 
 /// Validates timestamp is in the future

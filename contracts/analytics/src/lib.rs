@@ -6,9 +6,8 @@ mod types;
 pub use types::*;
 
 use brain_storm_shared::access;
-use brain_storm_shared::constants::{
-    STORAGE_TTL_EXTEND_TO as TTL_EXTEND_TO, STORAGE_TTL_THRESHOLD as TTL_THRESHOLD,
-};
+use brain_storm_shared::ttl;
+use brain_storm_shared::validation;
 #[cfg(test)]
 use brain_storm_shared::constants::{MAX_ENTRY_TTL, MIN_PERSISTENT_ENTRY_TTL, MIN_TEMP_ENTRY_TTL};
 
@@ -104,7 +103,7 @@ impl AnalyticsContract {
             caller == student || access::is_admin(&env, &caller, &DataKey::Admin) || is_authorized,
             "Unauthorized: must be student, admin, or authorized caller"
         );
-        assert!(progress_pct <= PROGRESS_MAX, "Progress must be 0-100");
+        validation::require_progress_pct(&env, progress_pct);
 
         let record = ProgressRecord {
             student: student.clone(),
@@ -117,9 +116,7 @@ impl AnalyticsContract {
         // Write progress record to persistent storage
         let progress_key = DataKey::Progress(student.clone(), course_id.clone());
         env.storage().persistent().set(&progress_key, &record);
-        env.storage()
-            .persistent()
-            .extend_ttl(&progress_key, TTL_THRESHOLD, TTL_EXTEND_TO);
+        ttl::bump_persistent(&env, &progress_key);
 
         // Update secondary index: student → [course_ids]
         let index_key = DataKey::StudentCourses(student.clone());
@@ -133,9 +130,7 @@ impl AnalyticsContract {
             courses.push_back(course_id.clone());
             env.storage().persistent().set(&index_key, &courses);
         }
-        env.storage()
-            .persistent()
-            .extend_ttl(&index_key, TTL_THRESHOLD, TTL_EXTEND_TO);
+        ttl::bump_persistent(&env, &index_key);
 
         // Update reverse index: course → [students]
         let course_index_key = DataKey::CourseStudents(course_id.clone());
@@ -147,9 +142,7 @@ impl AnalyticsContract {
         if !students.contains(&student) {
             students.push_back(student.clone());
             env.storage().persistent().set(&course_index_key, &students);
-            env.storage()
-                .persistent()
-                .extend_ttl(&course_index_key, TTL_THRESHOLD, TTL_EXTEND_TO);
+            ttl::bump_persistent(&env, &course_index_key);
         }
 
         // Check and record milestone achievements
@@ -186,9 +179,7 @@ impl AnalyticsContract {
             if let Some(i) = pos {
                 courses.remove(i as u32);
                 env.storage().persistent().set(&index_key, &courses);
-                env.storage()
-                    .persistent()
-                    .extend_ttl(&index_key, TTL_THRESHOLD, TTL_EXTEND_TO);
+                ttl::bump_persistent(&env, &index_key);
             }
         }
     }
@@ -231,9 +222,7 @@ impl AnalyticsContract {
                 };
                 let key = DataKey::Milestone(student.clone(), course_id.clone(), milestone);
                 env.storage().persistent().set(&key, &record);
-                env.storage()
-                    .persistent()
-                    .extend_ttl(&key, TTL_THRESHOLD, TTL_EXTEND_TO);
+                ttl::bump_persistent(&env, &key);
 
                 env.events().publish(
                     (symbol_short!("analytics"), symbol_short!("milestone")),
@@ -243,9 +232,7 @@ impl AnalyticsContract {
         }
 
         env.storage().persistent().set(&milestone_key, &achieved);
-        env.storage()
-            .persistent()
-            .extend_ttl(&milestone_key, TTL_THRESHOLD, TTL_EXTEND_TO);
+        ttl::bump_persistent(&env, &milestone_key);
     }
 
     pub fn get_milestone(
