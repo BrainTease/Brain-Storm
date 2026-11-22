@@ -161,3 +161,31 @@ fn test_revoke_twice_panics() {
     client.revoke_certificate(&admin, &id, &reason);
     client.revoke_certificate(&admin, &id, &reason);
 }
+
+#[test]
+fn test_enable_transfer_emits_event() {
+    let (env, client, admin) = setup();
+    let owner = Address::generate(&env);
+    let course = symbol_short!("RUST101");
+    let url = String::from_str(&env, "https://example.com/cert");
+    let id = client.mint_certificate(&admin, &owner, &course, &url);
+    let before = env.events().all().len();
+    client.enable_transfer(&admin, &id);
+    let events = env.events().all();
+    assert_eq!(events.len(), before + 1);
+}
+
+#[test]
+#[should_panic(expected = "Revoked certificate cannot be transferred")]
+fn test_transfer_revoked_cert_panics() {
+    let (env, client, admin) = setup();
+    let owner = Address::generate(&env);
+    let recipient = Address::generate(&env);
+    let course = symbol_short!("RUST101");
+    let url = String::from_str(&env, "https://example.com/cert");
+    let reason = String::from_str(&env, "fraud");
+    let id = client.mint_certificate(&admin, &owner, &course, &url);
+    client.enable_transfer(&admin, &id);
+    client.revoke_certificate(&admin, &id, &reason);
+    client.transfer(&owner, &recipient, &id);
+}

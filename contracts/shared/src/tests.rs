@@ -261,3 +261,220 @@ fn test_non_admin_cannot_cancel_upgrade() {
     let rando = generate_address(&env);
     client.cancel_upgrade(&rando);
 }
+
+// =============================================================================
+// TTL / bump-extension helpers
+// =============================================================================
+
+mod ttl_helpers {
+    use super::*;
+    use crate::ttl::{self, DEFAULT_BUMP_AMOUNT, DEFAULT_THRESHOLD};
+
+    #[test]
+    fn test_bump_instance_extends_ttl() {
+        let TestContext { env, .. } = TestContext::new();
+        let contract_id = env.register_contract(None, SharedContract);
+        env.as_contract(&contract_id, || {
+            ttl::bump_instance(&env);
+            let ttl = env.storage().instance().get_ttl();
+            assert!(ttl >= DEFAULT_THRESHOLD);
+        });
+    }
+
+    #[test]
+    fn test_bump_instance_with_custom_values() {
+        let TestContext { env, .. } = TestContext::new();
+        let contract_id = env.register_contract(None, SharedContract);
+        env.as_contract(&contract_id, || {
+            ttl::bump_instance_with(&env, 100, 1_000);
+            let ttl = env.storage().instance().get_ttl();
+            assert!(ttl >= 100);
+        });
+    }
+
+    #[test]
+    fn test_bump_persistent_extends_ttl() {
+        let TestContext { env, .. } = TestContext::new();
+        let contract_id = env.register_contract(None, SharedContract);
+        let key = soroban_sdk::symbol_short!("pkey");
+        env.as_contract(&contract_id, || {
+            env.storage().persistent().set(&key, &42u32);
+            ttl::bump_persistent(&env, &key);
+            let ttl = env.storage().persistent().get_ttl(&key);
+            assert!(ttl >= DEFAULT_THRESHOLD);
+        });
+    }
+
+    #[test]
+    fn test_bump_persistent_with_custom_values() {
+        let TestContext { env, .. } = TestContext::new();
+        let contract_id = env.register_contract(None, SharedContract);
+        let key = soroban_sdk::symbol_short!("pkey2");
+        env.as_contract(&contract_id, || {
+            env.storage().persistent().set(&key, &7u32);
+            ttl::bump_persistent_with(&env, &key, 200, 2_000);
+            let ttl = env.storage().persistent().get_ttl(&key);
+            assert!(ttl >= 200);
+        });
+    }
+
+    #[test]
+    fn test_bump_temporary_extends_ttl() {
+        let TestContext { env, .. } = TestContext::new();
+        let contract_id = env.register_contract(None, SharedContract);
+        let key = soroban_sdk::symbol_short!("tkey");
+        env.as_contract(&contract_id, || {
+            env.storage().temporary().set(&key, &1u32);
+            ttl::bump_temporary(&env, &key);
+            let ttl = env.storage().temporary().get_ttl(&key);
+            assert!(ttl >= DEFAULT_THRESHOLD);
+        });
+    }
+
+    #[test]
+    fn test_bump_temporary_with_custom_values() {
+        let TestContext { env, .. } = TestContext::new();
+        let contract_id = env.register_contract(None, SharedContract);
+        let key = soroban_sdk::symbol_short!("tkey2");
+        env.as_contract(&contract_id, || {
+            env.storage().temporary().set(&key, &1u32);
+            ttl::bump_temporary_with(&env, &key, 50, 500);
+            let ttl = env.storage().temporary().get_ttl(&key);
+            assert!(ttl >= 50);
+        });
+    }
+
+    #[test]
+    fn test_bump_persistent_missing_entry_is_noop() {
+        let TestContext { env, .. } = TestContext::new();
+        let contract_id = env.register_contract(None, SharedContract);
+        let key = soroban_sdk::symbol_short!("absent");
+        env.as_contract(&contract_id, || {
+            // Must not panic when the entry does not exist.
+            ttl::bump_persistent(&env, &key);
+            assert!(!env.storage().persistent().has(&key));
+        });
+    }
+
+    #[test]
+    fn test_bump_temporary_missing_entry_is_noop() {
+        let TestContext { env, .. } = TestContext::new();
+        let contract_id = env.register_contract(None, SharedContract);
+        let key = soroban_sdk::symbol_short!("absent2");
+        env.as_contract(&contract_id, || {
+            ttl::bump_temporary(&env, &key);
+            assert!(!env.storage().temporary().has(&key));
+        });
+    }
+
+    #[test]
+    fn test_bump_persistent_fresh_entry_is_noop() {
+        let TestContext { env, .. } = TestContext::new();
+        let contract_id = env.register_contract(None, SharedContract);
+        let key = soroban_sdk::symbol_short!("fresh");
+        env.as_contract(&contract_id, || {
+            env.storage().persistent().set(&key, &1u32);
+            let before = env.storage().persistent().get_ttl(&key);
+            // A freshly written entry already has the maximum TTL, so the
+            // helper should leave it untouched.
+            ttl::bump_persistent(&env, &key);
+            let after = env.storage().persistent().get_ttl(&key);
+            assert_eq!(before, after);
+        });
+    }
+
+    #[test]
+    fn test_bump_instance_fresh_is_noop() {
+        let TestContext { env, .. } = TestContext::new();
+        let contract_id = env.register_contract(None, SharedContract);
+        env.as_contract(&contract_id, || {
+            let before = env.storage().instance().get_ttl();
+            ttl::bump_instance(&env);
+            let after = env.storage().instance().get_ttl();
+            assert_eq!(before, after);
+        });
+    }
+
+    #[test]
+    fn test_default_constants_are_sane() {
+        assert!(DEFAULT_THRESHOLD > 0);
+        assert!(DEFAULT_BUMP_AMOUNT >= DEFAULT_THRESHOLD);
+    }
+}
+
+// =============================================================================
+// Reentrancy guard
+// =============================================================================
+
+mod reentrancy_guard {
+    use super::*;
+    use crate::reentrancy::ReentrancyGuard;
+
+    #[test]
+    fn test_guard_acquire_and_release() {
+        let TestContext { env, .. } = TestContext::new();
+        let contract_id = env.register_contract(None, SharedContract);
+        env.as_contract(&contract_id, || {
+            let guard = ReentrancyGuard::new(&env);
+            assert!(!guard.is_locked());
+            guard.acquire();
+            assert!(guard.is_locked());
+            guard.release();
+            assert!(!guard.is_locked());
+        });
+    }
+
+    #[test]
+    fn test_guard_reentrant_acquire_panics() {
+        let TestContext { env, .. } = TestContext::new();
+        let contract_id = env.register_contract(None, SharedContract);
+        env.as_contract(&contract_id, || {
+            let guard = ReentrancyGuard::new(&env);
+            guard.acquire();
+            let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                guard.acquire();
+            }));
+            assert!(result.is_err());
+        });
+    }
+
+    #[test]
+    fn test_guard_release_without_acquire_is_noop() {
+        let TestContext { env, .. } = TestContext::new();
+        let contract_id = env.register_contract(None, SharedContract);
+        env.as_contract(&contract_id, || {
+            let guard = ReentrancyGuard::new(&env);
+            guard.release();
+            assert!(!guard.is_locked());
+        });
+    }
+
+    #[test]
+    fn test_guard_scope_releases_on_drop() {
+        let TestContext { env, .. } = TestContext::new();
+        let contract_id = env.register_contract(None, SharedContract);
+        env.as_contract(&contract_id, || {
+            let guard = ReentrancyGuard::new(&env);
+            {
+                let _scope = guard.enter();
+                assert!(guard.is_locked());
+            }
+            assert!(!guard.is_locked());
+        });
+    }
+
+    #[test]
+    fn test_guard_scope_releases_on_panic() {
+        let TestContext { env, .. } = TestContext::new();
+        let contract_id = env.register_contract(None, SharedContract);
+        env.as_contract(&contract_id, || {
+            let guard = ReentrancyGuard::new(&env);
+            let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                let _scope = guard.enter();
+                panic!("boom");
+            }));
+            assert!(result.is_err());
+            assert!(!guard.is_locked());
+        });
+    }
+}

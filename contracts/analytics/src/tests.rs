@@ -254,3 +254,92 @@ fn test_progress_record_exists_after_write() {
     client.record_progress(&student, &student, &course, &60);
     assert!(client.get_progress(&student, &course).is_some());
 }
+
+// ── Shared TTL helpers ────────────────────────────────────────────────────────
+
+#[test]
+fn test_progress_ttl_extended_on_write() {
+    // The shared TTL helper must bump the persistent entry's TTL on every write.
+    let (env, _admin, client) = setup_with_admin();
+    let student = Address::generate(&env);
+    let course = symbol_short!("TTL2");
+    client.record_progress(&student, &student, &course, &10);
+    let ttl_after_first = env.as_contract(&client.address, || {
+        env.storage()
+            .persistent()
+            .get_ttl(&DataKey::Progress(student.clone(), course.clone()))
+    });
+    assert!(ttl_after_first > 0);
+    client.record_progress(&student, &student, &course, &20);
+    let ttl_after_second = env.as_contract(&client.address, || {
+        env.storage()
+            .persistent()
+            .get_ttl(&DataKey::Progress(student.clone(), course.clone()))
+    });
+    assert!(ttl_after_second > 0);
+}
+
+#[test]
+fn test_instance_ttl_extended_on_write() {
+    // Shared instance-TTL helper keeps the contract instance alive.
+    let (env, _admin, client) = setup_with_admin();
+    let student = Address::generate(&env);
+    client.record_progress(&student, &student, &symbol_short!("TTL3"), &5);
+    let instance_ttl = env.as_contract(&client.address, || env.storage().instance().get_ttl());
+    assert!(instance_ttl > 0);
+}
+
+// ── Shared validation usage ───────────────────────────────────────────────────
+
+#[test]
+fn test_shared_validation_accepts_bounds() {
+    let (env, _admin, client) = setup_with_admin();
+    let student = Address::generate(&env);
+    for pct in [0u32, 1, 50, 99, 100] {
+        let course = symbol_short!("VAL");
+        client.record_progress(&student, &student, &course, &pct);
+        assert_eq!(client.get_progress(&student, &course).unwrap().progress_pct, pct);
+    }
+}
+
+#[test]
+#[should_panic(expected = "Progress must be 0-100")]
+fn test_shared_validation_rejects_out_of_bounds() {
+    let (env, _admin, client) = setup_with_admin();
+    let student = Address::generate(&env);
+    client.record_progress(&student, &student, &symbol_short!("BAD"), &101);
+}
+
+// ── Gas budget regression ─────────────────────────────────────────────────────
+
+#[test]
+fn test_gas_budget_record_and_get_progress() {
+    // Regression guard for documented gas budgets (see gas-metrics.md).
+    // Budgets are expressed in CPU instructions and must not regress.
+    const RECORD_PROGRESS_CPU_BUDGET: u64 = 2_500_000;
+    const GET_PROGRESS_CPU_BUDGET: u64 = 1_000_000;
+
+    let (env, _admin, client) = setup_with_admin();
+    let student = Address::generate(&env);
+    let course = symbol_short!("GAS");
+
+    env.budget().reset_unlimited();
+    client.record_progress(&student, &student, &course, &50);
+    let record_cpu = env.budget().cpu_instruction_cost();
+    assert!(
+        record_cpu <= RECORD_PROGRESS_CPU_BUDGET,
+        "record_progress exceeded CPU budget: {} > {}",
+        record_cpu,
+        RECORD_PROGRESS_CPU_BUDGET
+    );
+
+    env.budget().reset_unlimited();
+    let _ = client.get_progress(&student, &course);
+    let get_cpu = env.budget().cpu_instruction_cost();
+    assert!(
+        get_cpu <= GET_PROGRESS_CPU_BUDGET,
+        "get_progress exceeded CPU budget: {} > {}",
+        get_cpu,
+        GET_PROGRESS_CPU_BUDGET
+    );
+}

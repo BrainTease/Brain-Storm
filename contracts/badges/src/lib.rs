@@ -4,7 +4,7 @@ use soroban_sdk::{contract, contractimpl, Address, Env, String, Symbol, Vec};
 mod types;
 pub use types::*;
 
-use brain_storm_shared::{access, events, upgrade};
+use brain_storm_shared::{access, ttl, validation};
 
 // =============================================================================
 // Contract
@@ -43,6 +43,7 @@ impl BadgesContract {
         description: String,
     ) {
         access::require_admin(&env, &admin, &DataKey::Admin);
+        validation::require_non_empty_string(&env, &description);
         assert!(
             !env.storage()
                 .instance()
@@ -89,6 +90,7 @@ impl BadgesContract {
         env.storage()
             .persistent()
             .set(&DataKey::Badge(id), &badge);
+        ttl::bump_persistent(&env, &DataKey::Badge(id));
 
         // Add to owner's badge list
         let owner_key = DataKey::OwnerBadges(recipient.clone());
@@ -99,6 +101,7 @@ impl BadgesContract {
             .unwrap_or_else(|| Vec::new(&env));
         badges.push_back(id);
         env.storage().persistent().set(&owner_key, &badges);
+        ttl::bump_persistent(&env, &owner_key);
 
         // Update badge type stats
         let mut badge_type_record: BadgeTypeRecord = env
@@ -129,13 +132,21 @@ impl BadgesContract {
     // -------------------------------------------------------------------------
 
     pub fn get_badge(env: Env, id: u64) -> Option<BadgeRecord> {
-        env.storage().persistent().get(&DataKey::Badge(id))
+        let key = DataKey::Badge(id);
+        let badge = env.storage().persistent().get(&key);
+        if badge.is_some() {
+            ttl::bump_persistent(&env, &key);
+        }
+        badge
     }
 
     pub fn get_badges_by_owner(env: Env, owner: Address) -> Vec<BadgeRecord> {
         let owner_key = DataKey::OwnerBadges(owner.clone());
         let ids: Vec<u64> = match env.storage().persistent().get(&owner_key) {
-            Some(i) => i,
+            Some(i) => {
+                ttl::bump_persistent(&env, &owner_key);
+                i
+            }
             None => return Vec::new(&env),
         };
 
@@ -185,6 +196,7 @@ impl BadgesContract {
             if let Some(pos) = ids.iter().position(|x| x == id) {
                 ids.remove(pos as u32);
                 env.storage().persistent().set(&owner_key, &ids);
+                ttl::bump_persistent(&env, &owner_key);
             }
         }
 

@@ -165,6 +165,9 @@ impl CertificateContract {
         env.storage()
             .persistent()
             .set(&DataKey::Transferable(cert_id), &true);
+
+        env.events()
+            .publish((TRANSFER, symbol_short!("enable"), cert_id), ());
     }
 
     /// Transfer a certificate from `from` to `to`.

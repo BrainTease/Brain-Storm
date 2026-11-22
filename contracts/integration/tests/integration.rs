@@ -20,6 +20,107 @@ use brain_storm_token::{TokenContract, TokenContractClient};
 use brain_storm_grants::{GrantsContract, GrantsContractClient};
 
 // =============================================================================
+// #80 — Gas budget regression tests
+// =============================================================================
+//
+// Budgets mirror the table in `contracts/gas-metrics.md`.  Each test measures
+// the CPU-instruction cost of a representative entrypoint and asserts it stays
+// within the documented budget, so any regression fails CI.  When a budget is
+// intentionally raised, update both `gas-metrics.md` and the constant below.
+
+/// CPU-instruction budget for `analytics.record_progress`.
+const GAS_BUDGET_RECORD_PROGRESS: u64 = 2_000_000;
+/// CPU-instruction budget for `analytics.get_progress`.
+const GAS_BUDGET_GET_PROGRESS: u64 = 1_000_000;
+/// CPU-instruction budget for `token.mint_reward`.
+const GAS_BUDGET_MINT_REWARD: u64 = 2_000_000;
+/// CPU-instruction budget for `token.balance`.
+const GAS_BUDGET_TOKEN_BALANCE: u64 = 500_000;
+/// CPU-instruction budget for `grants.approve_grant`.
+const GAS_BUDGET_APPROVE_GRANT: u64 = 2_000_000;
+
+/// Measures the CPU instructions consumed by `f` and asserts it is within
+/// `budget`.  Returns the measured value for diagnostics.
+fn assert_within_gas_budget<F: FnOnce()>(env: &soroban_sdk::Env, budget: u64, f: F) -> u64 {
+    let before = env.budget().cpu_instruction_cost();
+    f();
+    let used = env.budget().cpu_instruction_cost() - before;
+    assert!(
+        used <= budget,
+        "gas regression: used {used} CPU instructions, budget is {budget}"
+    );
+    used
+}
+
+/// `analytics.record_progress` stays within its documented gas budget.
+#[test]
+fn test_gas_budget_record_progress() {
+    let f = TestFixture::new();
+    let course = symbol_short!("GAS001");
+
+    assert_within_gas_budget(&f.env, GAS_BUDGET_RECORD_PROGRESS, || {
+        f.record_student_progress(&course, 50);
+    });
+}
+
+/// `analytics.get_progress` stays within its documented gas budget.
+#[test]
+fn test_gas_budget_get_progress() {
+    let f = TestFixture::new();
+    let course = symbol_short!("GAS002");
+
+    f.record_student_progress(&course, 50);
+
+    assert_within_gas_budget(&f.env, GAS_BUDGET_GET_PROGRESS, || {
+        let rec = f.analytics.get_progress(&f.student, &course);
+        assert!(rec.is_some());
+    });
+}
+
+/// `token.mint_reward` stays within its documented gas budget.
+#[test]
+fn test_gas_budget_mint_reward() {
+    let f = TestFixture::new();
+
+    assert_within_gas_budget(&f.env, GAS_BUDGET_MINT_REWARD, || {
+        f.mint_reward(100);
+    });
+}
+
+/// `token.balance` stays within its documented gas budget.
+#[test]
+fn test_gas_budget_token_balance() {
+    let f = TestFixture::new();
+    f.mint_reward(100);
+
+    assert_within_gas_budget(&f.env, GAS_BUDGET_TOKEN_BALANCE, || {
+        let bal = f.token.balance(&f.student);
+        assert_eq!(bal, 100);
+    });
+}
+
+/// `grants.approve_grant` stays within its documented gas budget.
+#[test]
+fn test_gas_budget_approve_grant() {
+    let env = soroban_sdk::Env::default();
+    env.mock_all_auths();
+
+    let admin = Address::generate(&env);
+
+    let token_id = env.register_contract(None, brain_storm_token::TokenContract);
+    let token = brain_storm_token::TokenContractClient::new(&env, &token_id);
+    token.initialize(&admin);
+
+    let grants_id = env.register_contract(None, brain_storm_grants::GrantsContract);
+    let grants = brain_storm_grants::GrantsContractClient::new(&env, &grants_id);
+    grants.initialize(&admin, &token_id);
+
+    assert_within_gas_budget(&env, GAS_BUDGET_APPROVE_GRANT, || {
+        grants.approve_grant(&admin, &1);
+    });
+}
+
+// =============================================================================
 // #694 — Full register / progress / reward flow
 // =============================================================================
 

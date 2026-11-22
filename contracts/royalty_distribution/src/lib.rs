@@ -4,7 +4,7 @@ use soroban_sdk::{
     contract, contractimpl, contracttype, symbol_short, Address, Env, Symbol,
 };
 
-use brain_storm_shared::{access, events, validation};
+use brain_storm_shared::{access, events::emit_contract_event, reentrancy, ttl, validation};
 
 #[contracttype]
 pub enum DataKey {
@@ -76,9 +76,9 @@ impl RoyaltyDistributionContract {
             platform_percentage: platform_pct,
         };
 
-        env.storage()
-            .persistent()
-            .set(&DataKey::RoyaltySplit(course_id), &split);
+        let split_key = DataKey::RoyaltySplit(course_id);
+        env.storage().persistent().set(&split_key, &split);
+        ttl::bump_persistent(&env, &split_key);
 
         events::emit_contract_event(
             &env,
@@ -102,13 +102,13 @@ impl RoyaltyDistributionContract {
             .get(&DataKey::RecipientCount(course_id))
             .unwrap_or(0);
 
-        env.storage()
-            .persistent()
-            .set(&DataKey::RoyaltyRecipient(course_id, count), &recipient);
+        let recipient_key = DataKey::RoyaltyRecipient(course_id, count);
+        env.storage().persistent().set(&recipient_key, &recipient);
+        ttl::bump_persistent(&env, &recipient_key);
 
-        env.storage()
-            .persistent()
-            .set(&DataKey::RecipientCount(course_id), &(count + 1));
+        let count_key = DataKey::RecipientCount(course_id);
+        env.storage().persistent().set(&count_key, &(count + 1));
+        ttl::bump_persistent(&env, &count_key);
     }
 
     pub fn distribute_royalties(
@@ -119,6 +119,10 @@ impl RoyaltyDistributionContract {
     ) {
         access::require_admin(&env, &admin, &DataKey::Admin);
         validation::require_positive_amount(total_amount);
+
+        // Reentrancy guard: balance mutations and any downstream token
+        // transfers must not be re-entered while a distribution is in flight.
+        reentrancy::enter(&env);
 
         let split: RoyaltySplit = env
             .storage()
@@ -139,15 +143,21 @@ impl RoyaltyDistributionContract {
             .get(&DataKey::RoyaltyRecipient(course_id, 0))
             .expect("Creator not set");
 
+        // Checks-effects-interactions: credit all balances before any
+        // external interaction (token transfer) can occur.
+        let creator_balance_key = DataKey::RoyaltyBalance(creator.clone());
         let mut creator_balance: i128 = env
             .storage()
             .persistent()
-            .get(&DataKey::RoyaltyBalance(creator.clone()))
+            .get(&creator_balance_key)
             .unwrap_or(0);
-        creator_balance += creator_amount;
+        creator_balance = creator_balance
+            .checked_add(creator_amount)
+            .expect("royalty balance overflow");
         env.storage()
             .persistent()
-            .set(&DataKey::RoyaltyBalance(creator), &creator_balance);
+            .set(&creator_balance_key, &creator_balance);
+        ttl::bump_persistent(&env, &creator_balance_key);
 
         let count: u32 = env
             .storage()
@@ -162,15 +172,19 @@ impl RoyaltyDistributionContract {
                 .get(&DataKey::RoyaltyRecipient(course_id, 1))
                 .expect("Contributor not set");
 
+            let contrib_balance_key = DataKey::RoyaltyBalance(contributor.clone());
             let mut contrib_balance: i128 = env
                 .storage()
                 .persistent()
-                .get(&DataKey::RoyaltyBalance(contributor.clone()))
+                .get(&contrib_balance_key)
                 .unwrap_or(0);
-            contrib_balance += contributor_amount;
+            contrib_balance = contrib_balance
+                .checked_add(contributor_amount)
+                .expect("royalty balance overflow");
             env.storage()
                 .persistent()
-                .set(&DataKey::RoyaltyBalance(contributor), &contrib_balance);
+                .set(&contrib_balance_key, &contrib_balance);
+            ttl::bump_persistent(&env, &contrib_balance_key);
         }
 
         let platform: Address = env
@@ -179,15 +193,19 @@ impl RoyaltyDistributionContract {
             .get(&DataKey::RoyaltyRecipient(course_id, count.saturating_sub(1)))
             .expect("Platform not set");
 
+        let platform_balance_key = DataKey::RoyaltyBalance(platform.clone());
         let mut platform_balance: i128 = env
             .storage()
             .persistent()
-            .get(&DataKey::RoyaltyBalance(platform.clone()))
+            .get(&platform_balance_key)
             .unwrap_or(0);
-        platform_balance += platform_amount;
+        platform_balance = platform_balance
+            .checked_add(platform_amount)
+            .expect("royalty balance overflow");
         env.storage()
             .persistent()
-            .set(&DataKey::RoyaltyBalance(platform), &platform_balance);
+            .set(&platform_balance_key, &platform_balance);
+        ttl::bump_persistent(&env, &platform_balance_key);
 
         let payment_id: u64 = env
             .storage()
@@ -201,9 +219,9 @@ impl RoyaltyDistributionContract {
             timestamp: env.ledger().timestamp(),
         };
 
-        env.storage()
-            .persistent()
-            .set(&DataKey::PaymentRecord(payment_id), &record);
+        let record_key = DataKey::PaymentRecord(payment_id);
+        env.storage().persistent().set(&record_key, &record);
+        ttl::bump_persistent(&env, &record_key);
         env.storage()
             .instance()
             .set(&DataKey::PaymentCount, &(payment_id + 1));
@@ -214,33 +232,43 @@ impl RoyaltyDistributionContract {
             DISTRIBUTE,
             (admin, course_id, total_amount),
         );
+
+        reentrancy::exit(&env);
     }
 
     pub fn withdraw_royalties(env: Env, recipient: Address) -> i128 {
         recipient.require_auth();
 
+        reentrancy::enter(&env);
+
+        let balance_key = DataKey::RoyaltyBalance(recipient.clone());
         let balance: i128 = env
             .storage()
             .persistent()
-            .get(&DataKey::RoyaltyBalance(recipient.clone()))
+            .get(&balance_key)
             .unwrap_or(0);
 
         assert!(balance > 0, "No royalties to withdraw");
 
-        env.storage()
-            .persistent()
-            .set(&DataKey::RoyaltyBalance(recipient.clone()), &0i128);
+        // Effects before interactions: zero out the balance before any
+        // external transfer so a re-entrant call cannot double-withdraw.
+        env.storage().persistent().set(&balance_key, &0i128);
+        ttl::bump_persistent(&env, &balance_key);
 
         events::emit_contract_event(&env, EVT_DOMAIN, WITHDRAW, (recipient, balance, 0i128));
+
+        reentrancy::exit(&env);
 
         balance
     }
 
     pub fn get_royalty_balance(env: Env, recipient: Address) -> i128 {
-        env.storage()
-            .persistent()
-            .get(&DataKey::RoyaltyBalance(recipient))
-            .unwrap_or(0)
+        let key = DataKey::RoyaltyBalance(recipient);
+        let balance: i128 = env.storage().persistent().get(&key).unwrap_or(0);
+        if balance != 0 {
+            ttl::bump_persistent(&env, &key);
+        }
+        balance
     }
 
     pub fn get_royalty_split(env: Env, course_id: u64) -> Option<RoyaltySplit> {

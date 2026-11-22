@@ -7,7 +7,7 @@ use soroban_sdk::{contract, contractimpl, Address, Bytes, Env, String};
 
 mod types;
 pub use types::*;
-use brain_storm_shared::{access, events, upgrade};
+use brain_storm_shared::{access, ttl, validation as shared_validation};
 
 pub mod linkage;
 pub mod validation;
@@ -183,7 +183,11 @@ impl CredentialMetadataContract {
     pub fn is_expired(env: Env, credential_id: u64) -> bool {
         let metadata = Self::get_metadata(env.clone(), credential_id);
         match metadata {
-            Some(record) => env.ledger().timestamp() > record.expiry_timestamp,
+            Some(record) => shared_validation::is_expired(
+                &env,
+                record.expiry_timestamp,
+                ttl::DEFAULT_GRACE_PERIOD_SECONDS,
+            ),
             None => false,
         }
     }
@@ -191,13 +195,17 @@ impl CredentialMetadataContract {
     pub fn is_valid(env: Env, credential_id: u64) -> bool {
         let metadata = Self::get_metadata(env.clone(), credential_id);
         match metadata {
-            Some(record) => env.ledger().timestamp() <= record.expiry_timestamp,
+            Some(record) => shared_validation::is_valid(
+                &env,
+                record.expiry_timestamp,
+                ttl::DEFAULT_GRACE_PERIOD_SECONDS,
+            ),
             None => false,
         }
     }
 
     pub fn can_renew(env: Env, credential_id: u64) -> bool {
-        validation::is_renewable(&env, credential_id, GRACE_PERIOD_SECONDS)
+        validation::is_renewable(&env, credential_id, ttl::DEFAULT_GRACE_PERIOD_SECONDS)
     }
 
     pub fn renew_credential(
@@ -313,7 +321,14 @@ impl CredentialMetadataContract {
             .persistent()
             .get(&DataKey::CompactMeta(credential_id));
         match stored {
-            Some(r) => r.expiry_timestamp != 0 && env.ledger().timestamp() > r.expiry_timestamp,
+            Some(r) => {
+                r.expiry_timestamp != 0
+                    && shared_validation::is_expired(
+                        &env,
+                        r.expiry_timestamp,
+                        ttl::DEFAULT_GRACE_PERIOD_SECONDS,
+                    )
+            }
             None => false,
         }
     }
@@ -363,6 +378,26 @@ impl CredentialMetadataContract {
             .persistent()
             .get(&DataKey::HistoryCount(credential_id))
             .unwrap_or(0)
+    }
+
+    /// Extend the TTL of the instance storage entry (admin-only).
+    ///
+    /// Uses the shared TTL helpers so every contract applies the same
+    /// bump policy. Storage layout is unchanged.
+    pub fn bump_instance_ttl(env: Env, admin: Address) {
+        access::require_admin(&env, &admin, &DataKey::Admin);
+        ttl::bump_instance(&env);
+    }
+
+    /// Extend the TTL of a credential's persistent metadata entry (admin-only).
+    ///
+    /// No-op when the credential does not exist. Storage layout is unchanged.
+    pub fn bump_metadata_ttl(env: Env, admin: Address, credential_id: u64) {
+        access::require_admin(&env, &admin, &DataKey::Admin);
+        let key = DataKey::Metadata(credential_id);
+        if env.storage().persistent().has(&key) {
+            ttl::bump_persistent(&env, &key);
+        }
     }
 }
 

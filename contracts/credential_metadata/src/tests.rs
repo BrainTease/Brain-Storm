@@ -255,4 +255,207 @@ mod tests {
         assert_eq!(c2.content_hash, h2);
         assert_ne!(c1.content_hash, c2.content_hash);
     }
+
+    // =========================================================================
+    // Shared validation / TTL helper coverage
+    // =========================================================================
+
+    /// A zero completion date is rejected by the shared validation helper.
+    #[test]
+    #[should_panic(expected = "Invalid timestamp")]
+    fn test_store_metadata_rejects_zero_completion_date() {
+        let (env, client, admin) = setup();
+        client.store_metadata(
+            &admin,
+            &1,
+            &String::from_str(&env, "Course"),
+            &0,
+            &9_999_999,
+            &String::from_str(&env, "A"),
+            &String::from_str(&env, "QmHash"),
+        );
+    }
+
+    /// An expiry timestamp that precedes the completion date is rejected.
+    #[test]
+    #[should_panic(expected = "Invalid expiry")]
+    fn test_store_metadata_rejects_expiry_before_completion() {
+        let (env, client, admin) = setup();
+        client.store_metadata(
+            &admin,
+            &1,
+            &String::from_str(&env, "Course"),
+            &5_000_000,
+            &1_000_000,
+            &String::from_str(&env, "A"),
+            &String::from_str(&env, "QmHash"),
+        );
+    }
+
+    /// An empty course title is rejected by the shared validation helper.
+    #[test]
+    #[should_panic(expected = "Invalid course title")]
+    fn test_store_metadata_rejects_empty_course_title() {
+        let (env, client, admin) = setup();
+        client.store_metadata(
+            &admin,
+            &1,
+            &String::from_str(&env, ""),
+            &1_000_000,
+            &9_999_999,
+            &String::from_str(&env, "A"),
+            &String::from_str(&env, "QmHash"),
+        );
+    }
+
+    /// An empty content hash is rejected by the shared validation helper.
+    #[test]
+    #[should_panic(expected = "Invalid content hash")]
+    fn test_store_metadata_rejects_empty_content_hash() {
+        let (env, client, admin) = setup();
+        client.store_metadata(
+            &admin,
+            &1,
+            &String::from_str(&env, "Course"),
+            &1_000_000,
+            &9_999_999,
+            &String::from_str(&env, "A"),
+            &String::from_str(&env, ""),
+        );
+    }
+
+    /// A zero expiry timestamp means "never expires" and is accepted.
+    #[test]
+    fn test_store_metadata_accepts_zero_expiry_as_no_expiry() {
+        let (env, client, admin) = setup();
+        client.store_metadata(
+            &admin,
+            &1,
+            &String::from_str(&env, "Course"),
+            &1_000_000,
+            &0,
+            &String::from_str(&env, "A"),
+            &String::from_str(&env, "QmHash"),
+        );
+        assert!(!client.is_expired(&1));
+    }
+
+    /// Compact records reject a zero completion date via the shared helper.
+    #[test]
+    #[should_panic(expected = "Invalid timestamp")]
+    fn test_store_compact_metadata_rejects_zero_issued_at() {
+        let (env, client, admin) = setup();
+        let hash = make_hash(&env, 0x01);
+        client.store_compact_metadata(&admin, &1, &hash, &0, &9_999_999);
+    }
+
+    /// Compact records reject an expiry that precedes the issue timestamp.
+    #[test]
+    #[should_panic(expected = "Invalid expiry")]
+    fn test_store_compact_metadata_rejects_expiry_before_issued_at() {
+        let (env, client, admin) = setup();
+        let hash = make_hash(&env, 0x01);
+        client.store_compact_metadata(&admin, &1, &hash, &5_000_000, &1_000_000);
+    }
+
+    /// Compact records accept a zero expiry (never expires).
+    #[test]
+    fn test_store_compact_metadata_accepts_zero_expiry() {
+        let (env, client, admin) = setup();
+        let hash = make_hash(&env, 0x01);
+        client.store_compact_metadata(&admin, &1, &hash, &1_000_000, &0);
+        assert!(!client.is_compact_expired(&1));
+    }
+
+    /// TTL helper: a record whose expiry equals the current ledger time is
+    /// considered expired (boundary is exclusive).
+    #[test]
+    fn test_is_expired_at_exact_expiry_boundary() {
+        let (env, client, admin) = setup();
+        store_sample(&env, &client, &admin, 1);
+        // Advance the ledger to exactly the stored expiry timestamp.
+        env.ledger().set_timestamp(9_999_999);
+        assert!(client.is_expired(&1));
+    }
+
+    /// TTL helper: a record one second before expiry is still valid.
+    #[test]
+    fn test_is_not_expired_one_second_before_expiry() {
+        let (env, client, admin) = setup();
+        store_sample(&env, &client, &admin, 1);
+        env.ledger().set_timestamp(9_999_998);
+        assert!(!client.is_expired(&1));
+    }
+
+    /// TTL helper: compact record at the exact expiry boundary is expired.
+    #[test]
+    fn test_compact_is_expired_at_exact_boundary() {
+        let (env, client, admin) = setup();
+        let hash = make_hash(&env, 0x01);
+        client.store_compact_metadata(&admin, &1, &hash, &1_000_000, &9_999_999);
+        env.ledger().set_timestamp(9_999_999);
+        assert!(client.is_compact_expired(&1));
+    }
+
+    // =========================================================================
+    // Gas-budget regression tests (see docs/gas-metrics.md)
+    // =========================================================================
+
+    /// Upper bound for `store_metadata` CPU instructions. Update together with
+    /// docs/gas-metrics.md whenever the storage layout or validation changes.
+    const STORE_METADATA_CPU_BUDGET: u64 = 2_500_000;
+    /// Upper bound for `store_compact_metadata` CPU instructions.
+    const STORE_COMPACT_CPU_BUDGET: u64 = 1_500_000;
+
+    #[test]
+    fn test_store_metadata_within_gas_budget() {
+        let (env, client, admin) = setup();
+        env.budget().reset_unlimited();
+        store_sample(&env, &client, &admin, 1);
+        let cpu = env.budget().cpu_instruction_cost();
+        assert!(
+            cpu <= STORE_METADATA_CPU_BUDGET,
+            "store_metadata exceeded CPU budget: {} > {}",
+            cpu,
+            STORE_METADATA_CPU_BUDGET
+        );
+    }
+
+    #[test]
+    fn test_store_compact_metadata_within_gas_budget() {
+        let (env, client, admin) = setup();
+        let hash = make_hash(&env, 0x01);
+        env.budget().reset_unlimited();
+        client.store_compact_metadata(&admin, &1, &hash, &1_000_000, &9_999_999);
+        let cpu = env.budget().cpu_instruction_cost();
+        assert!(
+            cpu <= STORE_COMPACT_CPU_BUDGET,
+            "store_compact_metadata exceeded CPU budget: {} > {}",
+            cpu,
+            STORE_COMPACT_CPU_BUDGET
+        );
+    }
+
+    /// Compact storage must be cheaper than the full record path; guards
+    /// against regressions that silently inflate the compact footprint.
+    #[test]
+    fn test_compact_store_is_cheaper_than_full_store() {
+        let (env, client, admin) = setup();
+        let hash = make_hash(&env, 0x01);
+
+        env.budget().reset_unlimited();
+        store_sample(&env, &client, &admin, 1);
+        let full_cpu = env.budget().cpu_instruction_cost();
+
+        env.budget().reset_unlimited();
+        client.store_compact_metadata(&admin, &2, &hash, &1_000_000, &9_999_999);
+        let compact_cpu = env.budget().cpu_instruction_cost();
+
+        assert!(
+            compact_cpu < full_cpu,
+            "compact store ({}) should cost less than full store ({})",
+            compact_cpu,
+            full_cpu
+        );
+    }
 }
