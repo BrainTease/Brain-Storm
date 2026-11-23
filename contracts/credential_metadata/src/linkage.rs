@@ -181,10 +181,14 @@ pub fn is_linked(env: &Env, credential_id: u64) -> bool {
 // We declare a minimal stub here so the credential_metadata crate compiles
 // without depending on the nft crate directly.
 
+// The trait below is consumed entirely by the `contractclient` proc-macro,
+// which generates a `Client` struct from it. Rust's dead-code lint fires on
+// the trait methods because it cannot see through the macro expansion; the
+// allow is therefore scoped to this module rather than applied trait-by-trait.
+#[allow(dead_code)]
 mod nft_contract_client {
     use soroban_sdk::{contractclient, Address, Env, String, Symbol};
 
-    #[allow(dead_code)]
     #[contractclient(name = "Client")]
     pub trait NftContract {
         fn mint_course_nft(

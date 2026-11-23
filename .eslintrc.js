@@ -71,6 +71,10 @@ module.exports = {
         ],
       },
     ],
+    // Cyclomatic-complexity limit (issue #1549): cap at 15 to keep functions
+    // testable and reviewable. Any function already over the limit should be
+    // refactored before merging rather than raising or suppressing this rule.
+    complexity: ['error', { max: 15 }],
   },
   settings: {
     'import/resolver': {

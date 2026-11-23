@@ -12,7 +12,22 @@
 #   `dead_code` and `unused_imports` rustc lints remain denied via
 #   `[workspace.lints.rust]` in the root Cargo.toml so regressions fail CI.
 #   `cargo clippy --workspace --all-targets -- -D warnings` must pass.
+#
+# too_many_arguments (#1547):
+#   Soroban #[contractimpl] entry-points cannot use a parameter struct without
+#   changing the on-chain ABI (the XDR encoding is positional). The lint is
+#   therefore allowed workspace-wide via `[workspace.lints.clippy]`. Any
+#   non-entry-point function that triggers this lint must be refactored at the
+#   call site rather than adding a local #[allow].
 
 # Minimum Supported Rust Version — keeps lint suggestions compatible with the
 # toolchain declared in rust-toolchain.toml.
 msrv = "1.70.0"
+
+# Cognitive complexity threshold (issue #1549): any function whose score exceeds
+# this value triggers the `cognitive_complexity` lint added in [workspace.lints.clippy].
+# The default is 25; we keep it at 25 to avoid breaking the existing contract
+# codebase on day one and to match the ESLint max of 15 (which counts branching
+# points, not nesting depth, so the numbers are not directly comparable).
+# Reduce this gradually as offenders are refactored.
+cognitive-complexity-threshold = 25
