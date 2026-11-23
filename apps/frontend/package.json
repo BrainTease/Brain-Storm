@@ -20,6 +20,8 @@
     "test:ui": "vitest --ui",
     "test:e2e": "playwright test",
     "test:e2e:ci": "playwright test --reporter=github",
+    "test:e2e:enrollment": "playwright test e2e/user-journey.spec.ts --project=chromium",
+    "test:e2e:enrollment:stable": "node ../../scripts/test-rerun-report.mjs npm run test:e2e:enrollment",
     "test:visual": "playwright test --config=playwright-visual.config.ts",
     "test:visual:update": "playwright test --config=playwright-visual.config.ts --update-snapshots",
     "test:pact": "vitest run --include '**/*.pact.test.ts'",
