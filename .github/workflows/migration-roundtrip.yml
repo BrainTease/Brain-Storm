@@ -1,0 +1,37 @@
+name: Migration Round-Trip Integration Test
+
+on:
+  pull_request:
+    paths:
+      - 'apps/backend/src/migrations/**'
+      - 'apps/backend/tests/migrations/**'
+      - 'apps/backend/jest-migration-integration.config.js'
+      - 'apps/backend/package.json'
+      - 'package-lock.json'
+      - '.github/workflows/migration-roundtrip.yml'
+  push:
+    branches: ['**']
+    paths:
+      - 'apps/backend/src/migrations/**'
+      - 'apps/backend/tests/migrations/**'
+      - 'apps/backend/jest-migration-integration.config.js'
+      - 'apps/backend/package.json'
+      - 'package-lock.json'
+      - '.github/workflows/migration-roundtrip.yml'
+
+jobs:
+  migration-roundtrip:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Apply, rollback, and reapply migration
+        run: npm run test:migration-integration --workspace=apps/backend

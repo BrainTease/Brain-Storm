@@ -254,6 +254,11 @@ market_escrow_flow -- --test-threads=1`. For 20 consecutive runs, use
 `node scripts/test-rerun-report.mjs cargo test --manifest-path
 contracts/integration/Cargo.toml --test market_escrow_flow`.
 
+Database migration up/down integration tests require Docker:
+`npm run test:migration-integration --workspace=apps/backend`. To run the
+round-trip 20 times, use
+`node scripts/test-rerun-report.mjs npm run test:migration-integration --workspace=apps/backend`.
+
 ### Snapshot hygiene
 
 Jest and Vitest snapshot files and snapshot matchers are intentionally
