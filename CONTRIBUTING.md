@@ -235,6 +235,10 @@ written to `test-results/rerun-report.json` and `test-results/rerun-report.md`.
 If any run fails, investigate it instead of adding a retry by default. Keep
 quarantined tests isolated and documented until the root cause is fixed.
 
+Database migration up/down integration tests require Docker:
+`npm run test:migration-integration --workspace=apps/backend`. To run the
+round-trip 20 times, use
+`node scripts/test-rerun-report.mjs npm run test:migration-integration --workspace=apps/backend`.
 ### Snapshot hygiene
 
 Jest and Vitest snapshot files and snapshot matchers are intentionally
