@@ -17,6 +17,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "test:coverage:api": "vitest run --coverage && node scripts/check-api-coverage.mjs",
+    "test:coverage:dashboard": "vitest run --coverage && node scripts/check-dashboard-coverage.mjs",
     "test:ui": "vitest --ui",
     "test:e2e": "playwright test",
     "test:e2e:ci": "playwright test --reporter=github",

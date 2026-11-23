@@ -221,6 +221,82 @@ cd apps/backend && npm test
 npm run lint
 ```
 
+### Integration Tests
+
+We have multiple types of integration tests to ensure API reliability:
+
+#### HTTP Integration Tests (Auth + Users)
+
+HTTP-layer integration tests use **supertest** and **testcontainers** to test auth and users API endpoints with a real PostgreSQL test database. Tests are deterministic and isolated with clean database state per test.
+
+```bash
+# Run HTTP integration tests
+cd apps/backend
+npm run test:http-integration
+
+# Run with coverage
+npm run test:http-integration:coverage
+
+# Validate test determinism (runs 20 times)
+npm run test:http-integration:determinism
+```
+
+**Test files:**
+- `src/auth/auth.controller.http-spec.ts` - Auth endpoint tests (register, login, refresh, logout, etc.)
+- `src/users/users.controller.http-spec.ts` - Users endpoint tests (profile CRUD, authorization)
+
+**Test infrastructure:**
+- `jest-http-integration.config.js` - Jest configuration for HTTP tests
+- `src/test/http-integration-setup.ts` - Test database setup with testcontainers
+- `src/test/http-fixtures.ts` - Shared test data and fixtures
+- `src/test/http-test-helpers.ts` - Helper functions for auth, cleanup, assertions
+
+**Writing new HTTP integration tests:**
+
+1. Create a `*.http-spec.ts` file next to your controller
+2. Use test fixtures from `src/test/http-fixtures.ts`
+3. Use helper functions from `src/test/http-test-helpers.ts`
+4. Clean database state in `beforeEach` hook
+5. Test success paths, error paths, and edge cases
+6. Verify authorization and access control
+
+**Example:**
+
+```typescript
+import { registerUser, cleanDatabase } from '../test/http-test-helpers';
+import { generateTestUser } from '../test/http-fixtures';
+import { getTestDataSource } from '../test/http-integration-setup';
+
+describe('MyController (HTTP Integration)', () => {
+  beforeEach(async () => {
+    await cleanDatabase(getTestDataSource());
+  });
+
+  it('should perform action with authentication', async () => {
+    const userData = generateTestUser();
+    const { accessToken } = await registerUser(app, userData);
+
+    const response = await request(app.getHttpServer())
+      .get('/my-endpoint')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .expect(200);
+
+    expect(response.body).toHaveProperty('data');
+  });
+});
+```
+
+#### Other Integration Tests
+
+```bash
+# Service-layer integration tests
+cd apps/backend
+npm run test:integration
+
+# Contract integration tests
+npm run test:contract-integration
+```
+
 ### Flaky test reruns
 
 Run the frontend or backend unit suite 20 consecutive times to identify flakes:
