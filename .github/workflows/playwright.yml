@@ -88,17 +88,17 @@ jobs:
 
       # ── Playwright ───────────────────────────────────────────────────────────
       - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium firefox
+        run: npx playwright install --with-deps chromium firefox webkit
         working-directory: apps/frontend
 
       - name: Run Playwright tests
         run: npm run test:e2e:ci --workspace=apps/frontend
 
-      # Stability gate: repeat the full enrollment-to-completion journey.
-      - name: Verify journey stability (5 consecutive runs)
+      # Stability gate: repeat the full enrollment-to-completion journey 20 times.
+      - name: Verify journey stability (20 consecutive runs)
         run: |
-          for i in 1 2 3 4 5; do
-            echo "── Stability run $i/5 ──"
+          for i in $(seq 1 20); do
+            echo "── Stability run $i/20 ──"
             npm run test:e2e:enrollment --workspace=apps/frontend
           done
 
