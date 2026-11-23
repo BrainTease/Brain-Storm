@@ -9,6 +9,8 @@ brain-storm-analytics = { path = "../analytics" }
 brain-storm-grants = { path = "../grants" }
 brain-storm-token = { path = "../token" }
 brain-storm-shared = { path = "../shared" }
+brain-storm-escrow = { path = "../escrow" }
+market = { path = "../market" }
 
 [lints]
 workspace = true

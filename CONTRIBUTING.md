@@ -235,6 +235,11 @@ written to `test-results/rerun-report.json` and `test-results/rerun-report.md`.
 If any run fails, investigate it instead of adding a retry by default. Keep
 quarantined tests isolated and documented until the root cause is fixed.
 
+Run the escrow/token/market Soroban integration flow with
+`cargo test --manifest-path contracts/integration/Cargo.toml --test
+market_escrow_flow -- --test-threads=1`. For 20 consecutive runs, use
+`node scripts/test-rerun-report.mjs cargo test --manifest-path
+contracts/integration/Cargo.toml --test market_escrow_flow`.
 ### Snapshot hygiene
 
 Jest and Vitest snapshot files and snapshot matchers are intentionally
