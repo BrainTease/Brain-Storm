@@ -311,6 +311,36 @@ written to `test-results/rerun-report.json` and `test-results/rerun-report.md`.
 If any run fails, investigate it instead of adding a retry by default. Keep
 quarantined tests isolated and documented until the root cause is fixed.
 
+For the enrollment-to-course-completion Playwright journey, use a test database
+with migrations applied and the basic course catalogue seeded, then run the
+journey 20 consecutive times:
+
+```bash
+npm run migration:run --workspace=apps/backend
+npm run seed:basic --workspace=apps/backend
+npm run test:e2e:enrollment:stable --workspace=apps/frontend
+```
+
+The E2E workflow performs the same migration and seed setup before running the
+browser suite.
+
+Run the escrow/token/market Soroban integration flow with
+`cargo test --manifest-path contracts/integration/Cargo.toml --test
+market_escrow_flow -- --test-threads=1`. For 20 consecutive runs, use
+`node scripts/test-rerun-report.mjs cargo test --manifest-path
+contracts/integration/Cargo.toml --test market_escrow_flow`.
+
+Database migration up/down integration tests require Docker:
+`npm run test:migration-integration --workspace=apps/backend`. To run the
+round-trip 20 times, use
+`node scripts/test-rerun-report.mjs npm run test:migration-integration --workspace=apps/backend`.
+
+Credential issuance, listing, and public verification integration tests run
+without an external service: `npm run test:credential-integration
+--workspace=apps/backend`. To run them 20 consecutive times, use
+`node scripts/test-rerun-report.mjs npm run test:credential-integration
+--workspace=apps/backend`.
+
 ### Snapshot hygiene
 
 Jest and Vitest snapshot files and snapshot matchers are intentionally

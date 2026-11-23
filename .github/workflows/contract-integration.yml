@@ -41,6 +41,10 @@ jobs:
         run: cargo test --test integration -- --test-threads=1
         working-directory: contracts/integration
 
+      - name: Run escrow, token, and market integration flow
+        run: cargo test --test market_escrow_flow -- --test-threads=1
+        working-directory: contracts/integration
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
