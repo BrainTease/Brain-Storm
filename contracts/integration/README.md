@@ -21,6 +21,7 @@ stellar network start local --docker
 # 3. Run integration tests
 cd contracts/integration
 cargo test --test integration -- --test-threads=1
+cargo test --test market_escrow_flow -- --test-threads=1
 
 # 4. Stop sandbox
 stellar network stop local --docker
@@ -28,10 +29,18 @@ stellar network stop local --docker
 
 ## CI
 
+The focused escrow/token/market flow runs in-process and does not require the
+local sandbox. Repeat it 20 times from the repository root to check stability:
+
+```bash
+node scripts/test-rerun-report.mjs cargo test --manifest-path contracts/integration/Cargo.toml --test market_escrow_flow
+```
+
 The `.github/workflows/contract-integration.yml` workflow:
 
 1. Starts `stellar-quickstart` in Docker (local network mode).
 2. Builds all WASM contracts.
 3. Deploys analytics + token + shared contracts.
-4. Runs the scripted end-to-end scenario defined in `tests/integration.rs`.
+4. Runs the scripted end-to-end scenario defined in `tests/integration.rs` and the
+	focused escrow/token/market flow.
 5. Asserts emitted events and final contract state.

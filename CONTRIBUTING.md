@@ -248,6 +248,12 @@ npm run test:e2e:enrollment:stable --workspace=apps/frontend
 The E2E workflow performs the same migration and seed setup before running the
 browser suite.
 
+Run the escrow/token/market Soroban integration flow with
+`cargo test --manifest-path contracts/integration/Cargo.toml --test
+market_escrow_flow -- --test-threads=1`. For 20 consecutive runs, use
+`node scripts/test-rerun-report.mjs cargo test --manifest-path
+contracts/integration/Cargo.toml --test market_escrow_flow`.
+
 ### Snapshot hygiene
 
 Jest and Vitest snapshot files and snapshot matchers are intentionally
