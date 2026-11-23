@@ -270,30 +270,93 @@ export class CredentialsService {
   }
 
   /**
-   * Delete credential
+   * Delete credential by user and name
    */
-  deleteCredential(credentialId: string): CredentialResult {
-    if (!credentialId) {
+  deleteCredential(userId: string, name: string): CredentialResult {
+    if (!userId || !name) {
       return {
         success: false,
-        error: 'Credential ID is required',
+        error: 'User ID and name are required',
       };
     }
 
-    const credential = this.credentials.get(credentialId);
-
-    if (!credential) {
-      return {
-        success: false,
-        error: 'Credential not found',
-      };
+    // Find credential by user and name
+    for (const [credId, credential] of this.credentials.entries()) {
+      if (credential.userId === userId && credential.name === name) {
+        this.credentials.delete(credId);
+        return {
+          success: true,
+          credential: { ...credential, secret: '***' },
+        };
+      }
     }
-
-    this.credentials.delete(credentialId);
 
     return {
-      success: true,
-      credential: { ...credential, secret: '***' },
+      success: false,
+      error: 'Credential not found',
+    };
+  }
+
+  /**
+   * Deactivate credential
+   */
+  deactivateCredential(userId: string, name: string): CredentialResult {
+    if (!userId || !name) {
+      return {
+        success: false,
+        error: 'User ID and name are required',
+      };
+    }
+
+    // Find credential by user and name
+    for (const credential of this.credentials.values()) {
+      if (credential.userId === userId && credential.name === name) {
+        credential.isActive = false;
+        return {
+          success: true,
+          credential: { ...credential, secret: '***' },
+        };
+      }
+    }
+
+    return {
+      success: false,
+      error: 'Credential not found',
+    };
+  }
+
+  /**
+   * Update credential metadata
+   */
+  updateCredentialMetadata(
+    userId: string,
+    name: string,
+    metadata: Record<string, any>
+  ): CredentialResult {
+    if (!userId || !name) {
+      return {
+        success: false,
+        error: 'User ID and name are required',
+      };
+    }
+
+    // Find credential by user and name
+    for (const credential of this.credentials.values()) {
+      if (credential.userId === userId && credential.name === name) {
+        credential.metadata = {
+          ...(credential.metadata || {}),
+          ...metadata,
+        };
+        return {
+          success: true,
+          credential: { ...credential, secret: '***' },
+        };
+      }
+    }
+
+    return {
+      success: false,
+      error: 'Credential not found',
     };
   }
 
