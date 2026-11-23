@@ -235,6 +235,19 @@ written to `test-results/rerun-report.json` and `test-results/rerun-report.md`.
 If any run fails, investigate it instead of adding a retry by default. Keep
 quarantined tests isolated and documented until the root cause is fixed.
 
+For the enrollment-to-course-completion Playwright journey, use a test database
+with migrations applied and the basic course catalogue seeded, then run the
+journey 20 consecutive times:
+
+```bash
+npm run migration:run --workspace=apps/backend
+npm run seed:basic --workspace=apps/backend
+npm run test:e2e:enrollment:stable --workspace=apps/frontend
+```
+
+The E2E workflow performs the same migration and seed setup before running the
+browser suite.
+
 ### Snapshot hygiene
 
 Jest and Vitest snapshot files and snapshot matchers are intentionally

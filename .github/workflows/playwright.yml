@@ -69,6 +69,9 @@ jobs:
       - name: Run migrations
         run: npm run migration:run --workspace=apps/backend
 
+      - name: Seed E2E course catalogue
+        run: npm run seed:basic --workspace=apps/backend
+
       - name: Start backend
         run: npm run start:prod --workspace=apps/backend &
 
@@ -91,13 +94,12 @@ jobs:
       - name: Run Playwright tests
         run: npm run test:e2e:ci --workspace=apps/frontend
 
-      # Stability gate: the full enrollment-to-completion journey must pass
-      # across 5 consecutive runs (issue #1180 acceptance criteria).
+      # Stability gate: repeat the full enrollment-to-completion journey.
       - name: Verify journey stability (5 consecutive runs)
         run: |
           for i in 1 2 3 4 5; do
             echo "── Stability run $i/5 ──"
-            npm run test:e2e:ci --workspace=apps/frontend -- --grep "enrollment-to-completion"
+            npm run test:e2e:enrollment --workspace=apps/frontend
           done
 
       - name: Upload test report

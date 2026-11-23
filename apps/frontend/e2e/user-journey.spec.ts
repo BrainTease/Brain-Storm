@@ -1,8 +1,8 @@
 import { test, expect } from '@playwright/test';
 import { CoursesPage, EnrollmentPage, LoginPage, RegisterPage, uniqueUser } from './page-objects';
 
-test.describe('Critical user journey: register → enroll → complete lesson', () => {
-  test('register → login → browse courses → enroll → view lesson → mark complete', async ({
+test.describe('Critical user journey: enrollment-to-completion', () => {
+  test('register → login → browse courses → enroll → complete every lesson', async ({
     page,
   }) => {
     const user = uniqueUser('testuser');
@@ -37,19 +37,29 @@ test.describe('Critical user journey: register → enroll → complete lesson', 
     // Confirm enrollment feedback
     await expect(enrollment.enrolledConfirmation).toBeVisible({ timeout: 8_000 });
 
-    // ── 5. View first lesson ─────────────────────────────────────────────────
+    // ── 5. Complete every lesson in the course ───────────────────────────────
     const lessonLink = page.getByRole('link', { name: /lesson|start|begin/i }).first();
     await expect(lessonLink).toBeVisible();
-    await lessonLink.click();
-    await expect(page).toHaveURL(/lesson/);
-
-    // ── 6. Mark lesson complete ───────────────────────────────────────────────
-    const completeBtn = page.getByRole('button', { name: /mark (as )?complete|complete lesson/i });
-    await expect(completeBtn).toBeVisible();
-    await completeBtn.click();
-
-    await expect(page.getByText(/completed|lesson complete|well done|progress saved/i)).toBeVisible(
-      { timeout: 8_000 }
+    const lessonLinks = page.getByRole('link', { name: /lesson|start|begin/i });
+    const lessonHrefs = await lessonLinks.evaluateAll((links) =>
+      links
+        .map((link) => (link as HTMLAnchorElement).getAttribute('href'))
+        .filter((href): href is string => Boolean(href))
     );
+    expect(lessonHrefs.length).toBeGreaterThan(0);
+
+    for (const href of lessonHrefs) {
+      await page.goto(href);
+      await expect(page).toHaveURL(/lesson/i);
+
+      const completeBtn = page.getByRole('button', {
+        name: /mark (as )?complete|complete lesson/i,
+      });
+      await expect(completeBtn).toBeVisible();
+      await completeBtn.click();
+      await expect(
+        page.getByText(/completed|lesson complete|well done|progress saved/i)
+      ).toBeVisible({ timeout: 8_000 });
+    }
   });
 });
