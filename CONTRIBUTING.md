@@ -235,6 +235,11 @@ written to `test-results/rerun-report.json` and `test-results/rerun-report.md`.
 If any run fails, investigate it instead of adding a retry by default. Keep
 quarantined tests isolated and documented until the root cause is fixed.
 
+Credential issuance, listing, and public verification integration tests run
+without an external service: `npm run test:credential-integration
+--workspace=apps/backend`. To run them 20 consecutive times, use
+`node scripts/test-rerun-report.mjs npm run test:credential-integration
+--workspace=apps/backend`.
 ### Snapshot hygiene
 
 Jest and Vitest snapshot files and snapshot matchers are intentionally
