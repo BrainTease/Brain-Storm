@@ -259,6 +259,12 @@ Database migration up/down integration tests require Docker:
 round-trip 20 times, use
 `node scripts/test-rerun-report.mjs npm run test:migration-integration --workspace=apps/backend`.
 
+Credential issuance, listing, and public verification integration tests run
+without an external service: `npm run test:credential-integration
+--workspace=apps/backend`. To run them 20 consecutive times, use
+`node scripts/test-rerun-report.mjs npm run test:credential-integration
+--workspace=apps/backend`.
+
 ### Snapshot hygiene
 
 Jest and Vitest snapshot files and snapshot matchers are intentionally
