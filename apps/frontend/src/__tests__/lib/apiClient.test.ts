@@ -1,296 +1,773 @@
 /**
- * Unit tests for the typed API client wrapper — issue #969
- *
- * ⚠️ DO NOT RUN — implementation only, per task instructions.
+ * Unit tests for apiClient.ts
+ * 
+ * Tests the typed API client wrapper with Result<T> shape, error handling,
+ * error classification, and all HTTP methods (get, post, patch, put, delete).
+ * 
+ * Uses MSW to mock HTTP responses for deterministic testing.
  */
 
-import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
-import { apiClient, type ApiResult } from '@/lib/apiClient';
+import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest';
+import { http, HttpResponse } from 'msw';
+import { setupServer } from 'msw/node';
+import {
+  apiClient,
+  ApiRoutes,
+  classifyErrorCode,
+  classifyStatus,
+  type ApiError,
+  type ApiSuccess,
+} from '@/lib/apiClient';
+import {
+  mockAuthResponse,
+  mockLoginRequest,
+  mockStudent,
+  mockBeginnerCourse,
+  mockCourses,
+} from '../fixtures';
 
-// ── Mock the raw api module ────────────────────────────────────────────────────
-vi.mock('@/lib/api', () => ({
-  default: {
-    get: vi.fn(),
-    post: vi.fn(),
-    patch: vi.fn(),
-    put: vi.fn(),
-    delete: vi.fn(),
-  },
-}));
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
-import api from '@/lib/api';
+// MSW server setup
+const server = setupServer();
 
-const mockApi = api as {
-  get: Mock;
-  post: Mock;
-  patch: Mock;
-  put: Mock;
-  delete: Mock;
-};
+beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
+afterEach(() => server.resetHandlers());
+afterAll(() => server.close());
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+describe('apiClient - HTTP methods', () => {
+  describe('GET requests', () => {
+    it('should successfully fetch data with apiClient.get', async () => {
+      server.use(
+        http.get(`${BASE_URL}/test`, () => {
+          return HttpResponse.json({ message: 'success' });
+        })
+      );
 
-function makeAxiosError(status: number, message: string, body?: unknown): Error {
-  const err = new Error(message) as Error & {
-    response: { status: number; data: { message: string } };
-  };
-  err.response = { status, data: { message, ...(body as object) } };
-  return err;
-}
-
-// ── Tests ─────────────────────────────────────────────────────────────────────
-
-describe('apiClient', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  // ── GET ────────────────────────────────────────────────────────────────────
-
-  describe('get', () => {
-    it('returns ok:true with data on a successful response', async () => {
-      const payload = [{ id: '1', title: 'Intro to Stellar' }];
-      mockApi.get.mockResolvedValueOnce({ data: payload });
-
-      const result = await apiClient.get<typeof payload>('/courses');
+      const result = await apiClient.get<{ message: string }>('/test');
 
       expect(result.ok).toBe(true);
       if (result.ok) {
-        expect(result.data).toEqual(payload);
+        expect(result.data).toEqual({ message: 'success' });
       }
     });
 
-    it('returns ok:false with an error message on a network failure', async () => {
-      mockApi.get.mockRejectedValueOnce(new Error('Network Error'));
+    it('should handle GET request with query params', async () => {
+      server.use(
+        http.get(`${BASE_URL}/items`, ({ request }) => {
+          const url = new URL(request.url);
+          const page = url.searchParams.get('page');
+          const limit = url.searchParams.get('limit');
+          
+          return HttpResponse.json({ 
+            page: Number(page), 
+            limit: Number(limit),
+            items: [] 
+          });
+        })
+      );
 
-      const result = await apiClient.get('/courses');
-
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error.message).toBe('Network Error');
-        expect(result.error.status).toBeUndefined();
-      }
-    });
-
-    it('returns ok:false with the server message and status on a 4xx response', async () => {
-      mockApi.get.mockRejectedValueOnce(makeAxiosError(404, 'Course not found'));
-
-      const result = await apiClient.get('/courses/missing');
-
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error.message).toBe('Course not found');
-        expect(result.error.status).toBe(404);
-      }
-    });
-
-    it('falls back to a generic message when the server body has no message field', async () => {
-      const err = new Error('Request failed with status code 500') as Error & {
-        response: { status: number; data: Record<string, never> };
-      };
-      err.response = { status: 500, data: {} };
-      mockApi.get.mockRejectedValueOnce(err);
-
-      const result = await apiClient.get('/courses');
-
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error.message).toBe('Request failed with status code 500');
-        expect(result.error.status).toBe(500);
-      }
-    });
-  });
-
-  // ── POST ───────────────────────────────────────────────────────────────────
-
-  describe('post', () => {
-    it('returns ok:true with created data on success', async () => {
-      const created = { id: 'abc', title: 'New course' };
-      mockApi.post.mockResolvedValueOnce({ data: created });
-
-      const result = await apiClient.post<typeof created>('/courses', { title: 'New course' });
+      const result = await apiClient.get<{ page: number; limit: number; items: unknown[] }>(
+        '/items',
+        { params: { page: 2, limit: 20 } }
+      );
 
       expect(result.ok).toBe(true);
       if (result.ok) {
-        expect(result.data).toEqual(created);
-      }
-    });
-
-    it('returns ok:false with 401 status on unauthorised', async () => {
-      mockApi.post.mockRejectedValueOnce(makeAxiosError(401, 'Unauthorised'));
-
-      const result = await apiClient.post('/courses', {});
-
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error.status).toBe(401);
+        expect(result.data.page).toBe(2);
+        expect(result.data.limit).toBe(20);
       }
     });
   });
 
-  // ── PATCH ──────────────────────────────────────────────────────────────────
+  describe('POST requests', () => {
+    it('should successfully post data with apiClient.post', async () => {
+      server.use(
+        http.post(`${BASE_URL}/items`, async ({ request }) => {
+          const body = await request.json();
+          return HttpResponse.json({ id: 'new-id', ...body }, { status: 201 });
+        })
+      );
 
-  describe('patch', () => {
-    it('returns ok:true with updated data on success', async () => {
-      const updated = { id: 'abc', title: 'Updated title' };
-      mockApi.patch.mockResolvedValueOnce({ data: updated });
-
-      const result = await apiClient.patch<typeof updated>('/courses/abc', {
-        title: 'Updated title',
-      });
+      const payload = { title: 'New Item', description: 'Test' };
+      const result = await apiClient.post<{ id: string; title: string; description: string }>(
+        '/items',
+        payload
+      );
 
       expect(result.ok).toBe(true);
       if (result.ok) {
-        expect(result.data.title).toBe('Updated title');
+        expect(result.data.id).toBe('new-id');
+        expect(result.data.title).toBe('New Item');
       }
     });
 
-    it('returns ok:false on a server error', async () => {
-      mockApi.patch.mockRejectedValueOnce(makeAxiosError(422, 'Validation failed'));
+    it('should handle POST with empty body', async () => {
+      server.use(
+        http.post(`${BASE_URL}/action`, () => {
+          return HttpResponse.json({ success: true });
+        })
+      );
 
-      const result = await apiClient.patch('/courses/abc', {});
-
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error.message).toBe('Validation failed');
-        expect(result.error.status).toBe(422);
-      }
-    });
-  });
-
-  // ── PUT ────────────────────────────────────────────────────────────────────
-
-  describe('put', () => {
-    it('returns ok:true on success', async () => {
-      const replaced = { id: 'xyz', value: 99 };
-      mockApi.put.mockResolvedValueOnce({ data: replaced });
-
-      const result = await apiClient.put<typeof replaced>('/items/xyz', replaced);
+      const result = await apiClient.post<{ success: boolean }>('/action');
 
       expect(result.ok).toBe(true);
       if (result.ok) {
-        expect(result.data.value).toBe(99);
+        expect(result.data.success).toBe(true);
       }
     });
   });
 
-  // ── DELETE ─────────────────────────────────────────────────────────────────
+  describe('PATCH requests', () => {
+    it('should successfully patch data with apiClient.patch', async () => {
+      server.use(
+        http.patch(`${BASE_URL}/items/123`, async ({ request }) => {
+          const body = await request.json();
+          return HttpResponse.json({ id: '123', updated: true, ...body });
+        })
+      );
 
-  describe('delete', () => {
-    it('returns ok:true with empty data on success', async () => {
-      mockApi.delete.mockResolvedValueOnce({ data: undefined });
-
-      const result: ApiResult<void> = await apiClient.delete('/courses/abc');
+      const updates = { title: 'Updated Title' };
+      const result = await apiClient.patch<{ id: string; updated: boolean; title: string }>(
+        '/items/123',
+        updates
+      );
 
       expect(result.ok).toBe(true);
-    });
-
-    it('returns ok:false with 403 status on forbidden', async () => {
-      mockApi.delete.mockRejectedValueOnce(makeAxiosError(403, 'Forbidden'));
-
-      const result = await apiClient.delete('/courses/abc');
-
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error.status).toBe(403);
-        expect(result.error.message).toBe('Forbidden');
+      if (result.ok) {
+        expect(result.data.id).toBe('123');
+        expect(result.data.title).toBe('Updated Title');
+        expect(result.data.updated).toBe(true);
       }
     });
   });
 
-  // ── Type-narrowing ergonomics ──────────────────────────────────────────────
+  describe('PUT requests', () => {
+    it('should successfully put data with apiClient.put', async () => {
+      server.use(
+        http.put(`${BASE_URL}/items/456`, async ({ request }) => {
+          const body = await request.json();
+          return HttpResponse.json({ id: '456', replaced: true, ...body });
+        })
+      );
 
-  describe('type narrowing', () => {
-    it('narrows to ApiSuccess<T> when ok is true', async () => {
-      mockApi.get.mockResolvedValueOnce({ data: { count: 7 } });
+      const data = { title: 'Full Replacement', description: 'Complete data' };
+      const result = await apiClient.put<{ id: string; replaced: boolean; title: string }>(
+        '/items/456',
+        data
+      );
 
-      const result = await apiClient.get<{ count: number }>('/stats');
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data.id).toBe('456');
+        expect(result.data.replaced).toBe(true);
+        expect(result.data.title).toBe('Full Replacement');
+      }
+    });
+  });
 
-      // TypeScript guards the .data field only when ok === true
-      if (!result.ok) throw new Error('Expected ok result');
-      expect(result.data.count).toBe(7);
+  describe('DELETE requests', () => {
+    it('should successfully delete with apiClient.delete', async () => {
+      server.use(
+        http.delete(`${BASE_URL}/items/789`, () => {
+          return HttpResponse.json({ deleted: true });
+        })
+      );
+
+      const result = await apiClient.delete<{ deleted: boolean }>('/items/789');
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data.deleted).toBe(true);
+      }
     });
 
-    it('narrows to ApiError when ok is false', async () => {
-      mockApi.get.mockRejectedValueOnce(makeAxiosError(503, 'Service unavailable'));
+    it('should handle DELETE with no response body', async () => {
+      server.use(
+        http.delete(`${BASE_URL}/items/999`, () => {
+          return new HttpResponse(null, { status: 204 });
+        })
+      );
 
-      const result = await apiClient.get('/health');
+      const result = await apiClient.delete<void>('/items/999');
 
-      if (result.ok) throw new Error('Expected error result');
-      expect(result.error.message).toBe('Service unavailable');
-      expect(result.error.status).toBe(503);
+      expect(result.ok).toBe(true);
     });
   });
 });
 
-// ── Error kind mapping (issue #1266) ──────────────────────────────────────────
+describe('apiClient - Error handling', () => {
+  describe('HTTP error status codes', () => {
+    it('should handle 400 Bad Request as validation error', async () => {
+      server.use(
+        http.post(`${BASE_URL}/items`, () => {
+          return HttpResponse.json(
+            { message: 'Invalid input', code: 'VALIDATION_ERROR' },
+            { status: 400 }
+          );
+        })
+      );
 
-describe('apiClient error kind mapping', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
+      const result = await apiClient.post('/items', {});
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.kind).toBe('validation');
+        expect(result.error.status).toBe(400);
+        expect(result.error.message).toContain('Invalid input');
+      }
+    });
+
+    it('should handle 401 Unauthorized', async () => {
+      server.use(
+        http.get(`${BASE_URL}/protected`, () => {
+          return HttpResponse.json(
+            { message: 'Unauthorized', code: 'UNAUTHORIZED' },
+            { status: 401 }
+          );
+        })
+      );
+
+      const result = await apiClient.get('/protected');
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.kind).toBe('unauthorized');
+        expect(result.error.status).toBe(401);
+      }
+    });
+
+    it('should handle 403 Forbidden', async () => {
+      server.use(
+        http.get(`${BASE_URL}/admin`, () => {
+          return HttpResponse.json(
+            { message: 'Forbidden', code: 'FORBIDDEN' },
+            { status: 403 }
+          );
+        })
+      );
+
+      const result = await apiClient.get('/admin');
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.kind).toBe('forbidden');
+        expect(result.error.status).toBe(403);
+      }
+    });
+
+    it('should handle 404 Not Found', async () => {
+      server.use(
+        http.get(`${BASE_URL}/items/nonexistent`, () => {
+          return HttpResponse.json(
+            { message: 'Not found', code: 'NOT_FOUND' },
+            { status: 404 }
+          );
+        })
+      );
+
+      const result = await apiClient.get('/items/nonexistent');
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.kind).toBe('not_found');
+        expect(result.error.status).toBe(404);
+      }
+    });
+
+    it('should handle 409 Conflict', async () => {
+      server.use(
+        http.post(`${BASE_URL}/items`, () => {
+          return HttpResponse.json(
+            { message: 'Already exists', code: 'CONFLICT' },
+            { status: 409 }
+          );
+        })
+      );
+
+      const result = await apiClient.post('/items', {});
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.kind).toBe('conflict');
+        expect(result.error.status).toBe(409);
+      }
+    });
+
+    it('should handle 500 Internal Server Error', async () => {
+      server.use(
+        http.get(`${BASE_URL}/error`, () => {
+          return HttpResponse.json(
+            { message: 'Internal server error', code: 'INTERNAL_ERROR' },
+            { status: 500 }
+          );
+        })
+      );
+
+      const result = await apiClient.get('/error');
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.kind).toBe('server');
+        expect(result.error.status).toBe(500);
+      }
+    });
+
+    it('should handle 503 Service Unavailable', async () => {
+      server.use(
+        http.get(`${BASE_URL}/unavailable`, () => {
+          return HttpResponse.json(
+            { message: 'Service unavailable' },
+            { status: 503 }
+          );
+        })
+      );
+
+      const result = await apiClient.get('/unavailable');
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.kind).toBe('server');
+        expect(result.error.status).toBe(503);
+      }
+    });
   });
 
-  it('maps a 401 response to kind "unauthorized"', async () => {
-    mockApi.get.mockRejectedValueOnce(makeAxiosError(401, 'Session expired'));
+  describe('Network errors', () => {
+    it('should handle network errors (no response)', async () => {
+      server.use(
+        http.get(`${BASE_URL}/network-error`, () => {
+          return HttpResponse.error();
+        })
+      );
 
-    const result = await apiClient.get('/users/me');
+      const result = await apiClient.get('/network-error');
 
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.error.kind).toBe('unauthorized');
-      expect(result.error.status).toBe(401);
-      expect(result.error.message).toBe('Session expired');
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.kind).toBe('network');
+        expect(result.error.status).toBeUndefined();
+      }
+    });
+  });
+
+  describe('Error message extraction', () => {
+    it('should extract message from response.data.message', async () => {
+      server.use(
+        http.get(`${BASE_URL}/error-message`, () => {
+          return HttpResponse.json(
+            { message: 'Custom error message' },
+            { status: 400 }
+          );
+        })
+      );
+
+      const result = await apiClient.get('/error-message');
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.message).toBe('Custom error message');
+      }
+    });
+
+    it('should extract message from response.data.error', async () => {
+      server.use(
+        http.get(`${BASE_URL}/error-field`, () => {
+          return HttpResponse.json(
+            { error: 'Error from error field' },
+            { status: 400 }
+          );
+        })
+      );
+
+      const result = await apiClient.get('/error-field');
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.message).toBe('Error from error field');
+      }
+    });
+
+    it('should use default message when no message field exists', async () => {
+      server.use(
+        http.get(`${BASE_URL}/no-message`, () => {
+          return HttpResponse.json({}, { status: 400 });
+        })
+      );
+
+      const result = await apiClient.get('/no-message');
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.message).toBe('An unexpected error occurred.');
+      }
+    });
+
+    it('should include raw response data in error', async () => {
+      server.use(
+        http.get(`${BASE_URL}/with-raw`, () => {
+          return HttpResponse.json(
+            { message: 'Error', details: 'Extra info' },
+            { status: 400 }
+          );
+        })
+      );
+
+      const result = await apiClient.get('/with-raw');
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.raw).toEqual({ message: 'Error', details: 'Extra info' });
+      }
+    });
+  });
+});
+
+describe('Error classification functions', () => {
+  describe('classifyErrorCode', () => {
+    it('should classify UNAUTHORIZED codes', () => {
+      expect(classifyErrorCode('UNAUTHORIZED')).toBe('unauthorized');
+      expect(classifyErrorCode('UNAUTHENTICATED')).toBe('unauthorized');
+    });
+
+    it('should classify FORBIDDEN codes', () => {
+      expect(classifyErrorCode('FORBIDDEN')).toBe('forbidden');
+    });
+
+    it('should classify NOT_FOUND codes', () => {
+      expect(classifyErrorCode('NOT_FOUND')).toBe('not_found');
+    });
+
+    it('should classify CONFLICT codes', () => {
+      expect(classifyErrorCode('CONFLICT')).toBe('conflict');
+      expect(classifyErrorCode('ALREADY_EXISTS')).toBe('conflict');
+    });
+
+    it('should classify VALIDATION codes', () => {
+      expect(classifyErrorCode('VALIDATION_ERROR')).toBe('validation');
+      expect(classifyErrorCode('INVALID_INPUT')).toBe('validation');
+    });
+
+    it('should classify SERVER codes', () => {
+      expect(classifyErrorCode('INTERNAL_ERROR')).toBe('server');
+      expect(classifyErrorCode('SERVER_ERROR')).toBe('server');
+    });
+
+    it('should return undefined for unknown codes', () => {
+      expect(classifyErrorCode('UNKNOWN_CODE')).toBeUndefined();
+      expect(classifyErrorCode(undefined)).toBeUndefined();
+    });
+
+    it('should be case-insensitive', () => {
+      expect(classifyErrorCode('unauthorized')).toBe('unauthorized');
+      expect(classifyErrorCode('Forbidden')).toBe('forbidden');
+    });
+  });
+
+  describe('classifyStatus', () => {
+    it('should classify 401 as unauthorized', () => {
+      expect(classifyStatus(401)).toBe('unauthorized');
+    });
+
+    it('should classify 403 as forbidden', () => {
+      expect(classifyStatus(403)).toBe('forbidden');
+    });
+
+    it('should classify 404 as not_found', () => {
+      expect(classifyStatus(404)).toBe('not_found');
+    });
+
+    it('should classify 409 as conflict', () => {
+      expect(classifyStatus(409)).toBe('conflict');
+    });
+
+    it('should classify 4xx as validation', () => {
+      expect(classifyStatus(400)).toBe('validation');
+      expect(classifyStatus(422)).toBe('validation');
+      expect(classifyStatus(429)).toBe('validation');
+    });
+
+    it('should classify 5xx as server', () => {
+      expect(classifyStatus(500)).toBe('server');
+      expect(classifyStatus(502)).toBe('server');
+      expect(classifyStatus(503)).toBe('server');
+    });
+
+    it('should classify undefined status as network', () => {
+      expect(classifyStatus(undefined)).toBe('network');
+    });
+
+    it('should classify unknown status as unknown', () => {
+      expect(classifyStatus(200)).toBe('unknown');
+      expect(classifyStatus(300)).toBe('unknown');
+    });
+  });
+});
+
+describe('ApiRoutes - Typed endpoint map', () => {
+  describe('auth routes', () => {
+    it('should login successfully', async () => {
+      server.use(
+        http.post(`${BASE_URL}/auth/login`, async ({ request }) => {
+          const body = await request.json();
+          return HttpResponse.json(mockAuthResponse);
+        })
+      );
+
+      const result = await ApiRoutes.auth.login(mockLoginRequest);
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data.accessToken).toBeDefined();
+        expect(result.data.user?.email).toBe('student@example.com');
+      }
+    });
+
+    it('should handle login failure', async () => {
+      server.use(
+        http.post(`${BASE_URL}/auth/login`, () => {
+          return HttpResponse.json(
+            { message: 'Invalid credentials' },
+            { status: 401 }
+          );
+        })
+      );
+
+      const result = await ApiRoutes.auth.login(mockLoginRequest);
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.kind).toBe('unauthorized');
+      }
+    });
+
+    it('should logout successfully', async () => {
+      server.use(
+        http.post(`${BASE_URL}/auth/logout`, () => {
+          return HttpResponse.json({ success: true });
+        })
+      );
+
+      const result = await ApiRoutes.auth.logout();
+
+      expect(result.ok).toBe(true);
+    });
+  });
+
+  describe('users routes', () => {
+    it('should fetch current user profile', async () => {
+      server.use(
+        http.get(`${BASE_URL}/users/me`, () => {
+          return HttpResponse.json(mockStudent);
+        })
+      );
+
+      const result = await ApiRoutes.users.me();
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data.id).toBe('user-1');
+        expect(result.data.email).toBe('student@example.com');
+      }
+    });
+
+    it('should handle unauthorized access to /users/me', async () => {
+      server.use(
+        http.get(`${BASE_URL}/users/me`, () => {
+          return HttpResponse.json(
+            { message: 'Unauthorized' },
+            { status: 401 }
+          );
+        })
+      );
+
+      const result = await ApiRoutes.users.me();
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.kind).toBe('unauthorized');
+      }
+    });
+  });
+
+  describe('courses routes', () => {
+    it('should list courses without query params', async () => {
+      server.use(
+        http.get(`${BASE_URL}/courses`, () => {
+          return HttpResponse.json({
+            data: mockCourses,
+            total: mockCourses.length,
+            page: 1,
+            limit: 20,
+          });
+        })
+      );
+
+      const result = await ApiRoutes.courses.list();
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data.data).toHaveLength(3);
+        expect(result.data.total).toBe(3);
+      }
+    });
+
+    it('should list courses with query params', async () => {
+      server.use(
+        http.get(`${BASE_URL}/courses`, ({ request }) => {
+          const url = new URL(request.url);
+          const page = url.searchParams.get('page');
+          const limit = url.searchParams.get('limit');
+          
+          return HttpResponse.json({
+            data: mockCourses.slice(0, 2),
+            total: mockCourses.length,
+            page: Number(page),
+            limit: Number(limit),
+          });
+        })
+      );
+
+      const result = await ApiRoutes.courses.list({ page: 2, limit: 2 });
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data.page).toBe(2);
+        expect(result.data.limit).toBe(2);
+      }
+    });
+
+    it('should get a single course by id', async () => {
+      server.use(
+        http.get(`${BASE_URL}/courses/course-1`, () => {
+          return HttpResponse.json(mockBeginnerCourse);
+        })
+      );
+
+      const result = await ApiRoutes.courses.get('course-1');
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data.id).toBe('course-1');
+        expect(result.data.title).toBe('Blockchain Basics');
+      }
+    });
+
+    it('should handle course not found', async () => {
+      server.use(
+        http.get(`${BASE_URL}/courses/nonexistent`, () => {
+          return HttpResponse.json(
+            { message: 'Course not found' },
+            { status: 404 }
+          );
+        })
+      );
+
+      const result = await ApiRoutes.courses.get('nonexistent');
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.kind).toBe('not_found');
+      }
+    });
+
+    it('should create a course', async () => {
+      server.use(
+        http.post(`${BASE_URL}/courses`, async ({ request }) => {
+          const body = await request.json();
+          return HttpResponse.json(
+            { id: 'new-course', ...body },
+            { status: 201 }
+          );
+        })
+      );
+
+      const payload = {
+        title: 'New Course',
+        description: 'A new course',
+      };
+      const result = await ApiRoutes.courses.create(payload);
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data.id).toBe('new-course');
+        expect(result.data.title).toBe('New Course');
+      }
+    });
+
+    it('should update a course', async () => {
+      server.use(
+        http.patch(`${BASE_URL}/courses/course-1`, async ({ request }) => {
+          const body = await request.json();
+          return HttpResponse.json({
+            ...mockBeginnerCourse,
+            ...body,
+          });
+        })
+      );
+
+      const updates = { title: 'Updated Title' };
+      const result = await ApiRoutes.courses.update('course-1', updates);
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data.title).toBe('Updated Title');
+      }
+    });
+
+    it('should delete a course', async () => {
+      server.use(
+        http.delete(`${BASE_URL}/courses/course-1`, () => {
+          return new HttpResponse(null, { status: 204 });
+        })
+      );
+
+      const result = await ApiRoutes.courses.remove('course-1');
+
+      expect(result.ok).toBe(true);
+    });
+  });
+});
+
+describe('ApiResult type narrowing', () => {
+  it('should narrow ApiSuccess type', async () => {
+    server.use(
+      http.get(`${BASE_URL}/data`, () => {
+        return HttpResponse.json({ value: 42 });
+      })
+    );
+
+    const result = await apiClient.get<{ value: number }>('/data');
+
+    if (result.ok) {
+      // TypeScript should know result.data exists here
+      const value: number = result.data.value;
+      expect(value).toBe(42);
+    } else {
+      throw new Error('Should not reach here');
     }
   });
 
-  it('maps a 404 response to kind "not_found"', async () => {
-    mockApi.get.mockRejectedValueOnce(makeAxiosError(404, 'Course not found'));
+  it('should narrow ApiError type', async () => {
+    server.use(
+      http.get(`${BASE_URL}/error`, () => {
+        return HttpResponse.json(
+          { message: 'Error occurred' },
+          { status: 400 }
+        );
+      })
+    );
 
-    const result = await apiClient.get('/courses/missing');
+    const result = await apiClient.get('/error');
 
-    expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error.kind).toBe('not_found');
-      expect(result.error.status).toBe(404);
-    }
-  });
-
-  it('maps a 500 response to kind "server"', async () => {
-    mockApi.post.mockRejectedValueOnce(makeAxiosError(500, 'Internal Server Error'));
-
-    const result = await apiClient.post('/enrollments', { courseId: '1' });
-
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.error.kind).toBe('server');
-      expect(result.error.status).toBe(500);
-    }
-  });
-
-  it('maps 403 and 409 to their dedicated kinds and other 4xx to "validation"', async () => {
-    mockApi.delete
-      .mockRejectedValueOnce(makeAxiosError(403, 'Forbidden'))
-      .mockRejectedValueOnce(makeAxiosError(409, 'Already enrolled'))
-      .mockRejectedValueOnce(makeAxiosError(422, 'Invalid payload'));
-
-    const forbidden = await apiClient.delete('/courses/1');
-    const conflict = await apiClient.delete('/courses/1');
-    const validation = await apiClient.delete('/courses/1');
-
-    expect(forbidden.ok ? undefined : forbidden.error.kind).toBe('forbidden');
-    expect(conflict.ok ? undefined : conflict.error.kind).toBe('conflict');
-    expect(validation.ok ? undefined : validation.error.kind).toBe('validation');
-  });
-
-  it('maps a request with no response to kind "network" and no status', async () => {
-    mockApi.get.mockRejectedValueOnce(new Error('Network Error'));
-
-    const result = await apiClient.get('/courses');
-
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.error.kind).toBe('network');
-      expect(result.error.status).toBeUndefined();
+      // TypeScript should know result.error exists here
+      const errorMessage: string = result.error.message;
+      const errorKind = result.error.kind;
+      expect(errorMessage).toBe('Error occurred');
+      expect(errorKind).toBe('validation');
+    } else {
+      throw new Error('Should not reach here');
     }
   });
 });
