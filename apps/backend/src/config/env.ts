@@ -3,8 +3,36 @@
  * that run before the DI container exists (instrument.ts, tracing.ts, data-source.ts), and plain
  * modules outside it. Read every variable here, once, with its default. Everything else should
  * inject ConfigService.
+ *
+ * The explicit interface makes the shape of this snapshot part of the contract:
+ * adding or renaming a key is a compile-time change, not a silent runtime drift.
  */
-export const env = {
+export interface BootstrapEnv {
+  nodeEnv: string;
+  isProduction: boolean;
+  logLevel: string;
+  appVersion: string;
+  gitCommitSha: string;
+  sentryDsn: string | undefined;
+  indexerCatchup: boolean;
+
+  databaseHost: string;
+  databasePort: number;
+  databaseUser: string | undefined;
+  databasePassword: string | undefined;
+  databaseName: string;
+
+  dbPoolMax: number;
+  dbPoolMin: number;
+  dbAcquireTimeout: number;
+  dbIdleTimeout: number;
+
+  otelServiceName: string;
+  otelEndpoint: string;
+  otelTracesSampler: number;
+}
+
+export const env: BootstrapEnv = {
   nodeEnv: process.env.NODE_ENV || 'development',
   isProduction: process.env.NODE_ENV === 'production',
   logLevel: process.env.LOG_LEVEL || 'info',

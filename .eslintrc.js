@@ -19,11 +19,7 @@ module.exports = {
   rules: {
     // Enforce kebab-case file naming for source files.
     // Allows optional .test/.spec/.d suffixes and index files.
-    'filenames/match-regex': [
-      'error',
-      '^[a-z0-9]+(-[a-z0-9]+)*(?:\\.(?:test|spec|d))?$',
-      true,
-    ],
+    'filenames/match-regex': ['error', '^[a-z0-9]+(-[a-z0-9]+)*(?:\\.(?:test|spec|d))?$', true],
     // TypeScript strict rules
     '@typescript-eslint/no-explicit-any': 'error',
     '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
@@ -75,6 +71,16 @@ module.exports = {
     // testable and reviewable. Any function already over the limit should be
     // refactored before merging rather than raising or suppressing this rule.
     complexity: ['error', { max: 15 }],
+    // Environment access must go through a typed config module (#1551).
+    // Apps have their own rules; this covers packages and shared code.
+    'no-restricted-syntax': [
+      'error',
+      {
+        selector: "MemberExpression[object.object.name='process'][object.property.name='env']",
+        message:
+          'Direct process.env access is not allowed. Read values through a typed config module instead.',
+      },
+    ],
   },
   settings: {
     'import/resolver': {
@@ -107,6 +113,23 @@ module.exports = {
       env: {
         jest: true,
       },
+    },
+    {
+      // Config modules are the single place allowed to read the environment.
+      files: ['**/src/config/**/*.{ts,tsx}'],
+      rules: { 'no-restricted-syntax': 'off' },
+    },
+    {
+      // Test fixtures, build tooling and CLI scripts read their own variables
+      // (CI, PORT overrides, artifact paths). Documented exceptions for #1551.
+      files: [
+        'scripts/**',
+        '**/*.config.{js,ts}',
+        '**/*.{test,spec}.{ts,tsx,js}',
+        '**/__tests__/**/*',
+        '**/e2e/**/*',
+      ],
+      rules: { 'no-restricted-syntax': 'off' },
     },
   ],
 };

@@ -9,17 +9,19 @@ import {
 } from '@stellar/stellar-sdk';
 import type { ParsedTransaction, ParsedOperation, ValidationResult } from '@brain-storm/types';
 
+import { getBstContractId, getStellarNetworkName } from '../config';
+
 // Re-export so existing consumers of this module keep working without changes.
 export type { ParsedTransaction, ParsedOperation, ValidationResult } from '@brain-storm/types';
 
-const EXPECTED_NETWORK = (process.env.NEXT_PUBLIC_STELLAR_NETWORK as string) || 'testnet';
+const EXPECTED_NETWORK = getStellarNetworkName();
 
 const NETWORK_PASSPHRASES: Record<string, string> = {
   testnet: Networks.TESTNET,
   mainnet: Networks.PUBLIC,
 };
 
-const BST_CONTRACT_ID = process.env.NEXT_PUBLIC_BST_CONTRACT_ID || '';
+const BST_CONTRACT_ID = getBstContractId();
 
 export function parseTransactionXDR(xdr: string): ParsedTransaction {
   const tx = new Transaction(xdr, NETWORK_PASSPHRASES[EXPECTED_NETWORK]);

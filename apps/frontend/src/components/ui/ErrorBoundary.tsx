@@ -1,9 +1,13 @@
 'use client';
 
-import React, { Component, ErrorInfo, ReactNode, useCallback } from 'react';
 import * as Sentry from '@sentry/nextjs';
-import { Button } from './Button';
+import type { ErrorInfo, ReactNode } from 'react';
+import React, { Component, useCallback } from 'react';
+
+import { getConfig } from '@/config';
 import { categorizeError, getErrorDescription, getErrorTitle } from '@/lib/error-utils';
+
+import { Button } from './Button';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -102,7 +106,7 @@ export function ErrorFallback({ error, reset, title, description }: ErrorFallbac
       </div>
       <h2 className="text-xl font-bold mb-2 text-gray-900 dark:text-white">{displayTitle}</h2>
       <p className="text-gray-600 dark:text-gray-400 mb-4 max-w-md">{displayDescription}</p>
-      {process.env.NODE_ENV !== 'production' && error?.message && (
+      {!getConfig().isProduction && error?.message && (
         <p className="text-xs text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded px-3 py-2 mb-4 max-w-md break-all font-mono">
           {error.message}
         </p>

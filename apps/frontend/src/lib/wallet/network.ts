@@ -9,9 +9,14 @@
  */
 import { getStellarNetworkConfig, type StellarNetwork } from '@brain-storm/sdk';
 
-export const STELLAR_NETWORK = (
-  process.env.NEXT_PUBLIC_STELLAR_NETWORK || 'testnet'
-).toLowerCase() as StellarNetwork;
+import { getConfig } from '@/config';
+
+// The central config validates and normalizes the network value. The SDK only
+// knows testnet/mainnet, so map any other configured network to its fallback.
+const configuredNetwork = getConfig().stellarNetwork;
+
+export const STELLAR_NETWORK: StellarNetwork =
+  configuredNetwork === 'mainnet' ? 'mainnet' : 'testnet';
 
 export const IS_MAINNET = STELLAR_NETWORK === 'mainnet';
 

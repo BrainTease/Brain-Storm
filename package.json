@@ -47,6 +47,7 @@
     "typecheck": "npm run typecheck --workspaces --if-present",
     "typecheck:frontend": "npm run typecheck --workspace=apps/frontend",
     "typecheck:backend": "npm run typecheck --workspace=apps/backend",
+    "check:env": "node scripts/check-env-access.mjs",
     "quality:check": "node scripts/quality-budget.mjs",
     "quality:update": "node scripts/quality-budget.mjs --update",
     "quality:staged": "node scripts/quality-budget.mjs --staged",

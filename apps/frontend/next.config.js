@@ -1,17 +1,12 @@
 const createNextIntlPlugin = require('next-intl/plugin');
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
-// NOTE: Runtime env access is centralized in `src/config` (see `src/config/env.ts`).
-// Components must import from that module instead of reading `process.env` directly.
-// The `env` block below only inlines the public variables at build time so the
-// centralized config module can read them in the browser; keep it in sync with
-// the keys defined in `src/config/env.ts`.
-const PUBLIC_ENV_KEYS = [
-  'NEXT_PUBLIC_API_URL',
-  'NEXT_PUBLIC_STELLAR_NETWORK',
-  'NEXT_PUBLIC_SENTRY_DSN',
-  'NEXT_PUBLIC_GIT_COMMIT_SHA',
-];
+// NOTE: Runtime env access is centralized in `src/config`. Components must
+// import from that module instead of reading `process.env` directly. The `env`
+// block below only inlines the public variables at build time so the
+// centralized config module can read them in the browser. The key list lives in
+// `src/config/public-env.json` so build-time and runtime access cannot drift.
+const PUBLIC_ENV_KEYS = Object.keys(require('./src/config/public-env.json'));
 
 const publicEnv = PUBLIC_ENV_KEYS.reduce((acc, key) => {
   acc[key] = process.env[key];

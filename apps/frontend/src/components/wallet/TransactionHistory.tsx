@@ -1,8 +1,10 @@
 'use client';
 
 import React from 'react';
-import { DataGrid, type ColumnDef } from '@/components/ui/DataGrid';
+
 import { Badge } from '@/components/ui/Badge';
+import { DataGrid, type ColumnDef } from '@/components/ui/DataGrid';
+import { getConfig } from '@/config';
 
 export interface WalletTransaction {
   id: string;
@@ -15,7 +17,7 @@ export interface WalletTransaction {
 }
 
 const EXPLORER_BASE =
-  process.env.NEXT_PUBLIC_STELLAR_NETWORK === 'mainnet'
+  getConfig().stellarNetwork === 'mainnet'
     ? 'https://stellar.expert/explorer/public/tx'
     : 'https://stellar.expert/explorer/testnet/tx';
 

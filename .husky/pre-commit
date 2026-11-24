@@ -7,10 +7,13 @@ npx lint-staged || exit $?
 
 # Ratchet TypeScript strictness and the no-unused-vars / no-explicit-any
 # budgets for the app(s) touched by this commit (#1532, #1533, #1534).
-STAGED_TS=$(git diff --cached --name-only --diff-filter=ACMR | grep -E "^(apps/frontend|apps/backend)/.*\.(ts|tsx|js|jsx)$" || true)
+STAGED_TS=$(git diff --cached --name-only --diff-filter=ACMR | grep -E "^(apps/frontend|apps/backend|packages)/.*\.(ts|tsx|js|jsx)$" || true)
 if [ -n "$STAGED_TS" ]; then
   echo "Checking quality budget for staged changes..."
   node scripts/quality-budget.mjs --staged || exit $?
+
+  echo "Checking type-safe env/config access for staged changes..."
+  node scripts/check-env-access.mjs --staged || exit $?
 fi
 
 # Check Rust files in contracts/

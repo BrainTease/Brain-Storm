@@ -1,4 +1,7 @@
 import { getStellarNetworkConfig } from '@brain-storm/sdk';
+
+import { parseStellarNetwork } from './network';
+
 /**
  * NestJS ConfigModule factory.
  *
@@ -15,6 +18,7 @@ import { getStellarNetworkConfig } from '@brain-storm/sdk';
  * so that a single validated, typed configuration object is the only source of
  * truth.
  */
+
 export default () => ({
   port: parseInt(process.env.PORT || '3000', 10),
   nodeEnv: process.env.NODE_ENV || 'development',
@@ -55,10 +59,14 @@ export default () => ({
 
   // ── Stellar ────────────────────────────────────────────────────────────────
   stellar: {
-    network: process.env.STELLAR_NETWORK as 'testnet' | 'mainnet',
+    network: parseStellarNetwork(process.env.STELLAR_NETWORK),
     secretKey: process.env.STELLAR_SECRET_KEY || '',
-    horizonUrl: process.env.STELLAR_HORIZON_URL || getStellarNetworkConfig((process.env.STELLAR_NETWORK as 'testnet' | 'mainnet') || 'testnet').horizonUrl,
-    sorobanRpcUrl: process.env.SOROBAN_RPC_URL || getStellarNetworkConfig((process.env.STELLAR_NETWORK as 'testnet' | 'mainnet') || 'testnet').sorobanRpcUrl,
+    horizonUrl:
+      process.env.STELLAR_HORIZON_URL ||
+      getStellarNetworkConfig(parseStellarNetwork(process.env.STELLAR_NETWORK)).horizonUrl,
+    sorobanRpcUrl:
+      process.env.SOROBAN_RPC_URL ||
+      getStellarNetworkConfig(parseStellarNetwork(process.env.STELLAR_NETWORK)).sorobanRpcUrl,
     contractId: process.env.SOROBAN_CONTRACT_ID || '',
     analyticsContractId: process.env.ANALYTICS_CONTRACT_ID || '',
     tokenContractId: process.env.TOKEN_CONTRACT_ID || '',

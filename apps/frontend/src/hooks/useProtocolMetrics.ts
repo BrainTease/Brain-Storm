@@ -1,8 +1,9 @@
 'use client';
 
+import { getConfig } from '@/config';
 import { useApiQuery } from '@/hooks/useApiQuery';
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
+const API = getConfig().apiUrl;
 
 export type MetricInterval = 'hour' | 'day' | 'week';
 export type MetricName = 'registrations' | 'tip_volume' | 'escrow_throughput' | 'dispute_outcomes';
