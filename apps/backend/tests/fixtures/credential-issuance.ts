@@ -10,6 +10,7 @@ import type { CertificateRenderer } from '../../src/credentials/certificate-pdf.
 import type { KycService } from '../../src/kyc/kyc.service';
 import type { CredentialsRepository } from '../../src/repositories/credentials-repository.interface';
 import type { StellarService } from '../../src/stellar/stellar.service';
+import { createMockStellarService } from '../../src/test/fixtures/mock-stellar-service';
 
 export const TEST_CREDENTIAL_IDS = {
   user: 'user-1522-test',
@@ -22,15 +23,10 @@ export const TEST_CREDENTIAL_IDS = {
 export function createCredentialIssuanceFixture() {
   const course = { id: TEST_CREDENTIAL_IDS.course, title: 'Stellar Basics', requiresKyc: false } as Course;
   const records = new Map<string, Credential>();
-  const stellarService = {
-    issueCredential: jest.fn().mockResolvedValue(TEST_CREDENTIAL_IDS.txHash),
-    mintReward: jest.fn().mockResolvedValue(undefined),
-    verifyTransaction: jest.fn().mockResolvedValue({
-      verified: true,
-      ledger: 42,
-      createdAt: '2026-01-01T00:00:00.000Z',
-    }),
-  } as unknown as jest.Mocked<StellarService>;
+  const stellarService = createMockStellarService({
+    txHash: TEST_CREDENTIAL_IDS.txHash,
+    transaction: { ledger_attr: 42 },
+  }).service as unknown as jest.Mocked<StellarService>;
 
   const credentialRepository = {
     findOne: jest.fn(async ({ where }: { where: Partial<Credential> }) =>
