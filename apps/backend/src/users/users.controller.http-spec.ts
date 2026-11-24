@@ -1,34 +1,35 @@
+import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { JwtModule } from '@nestjs/jwt';
 /**
  * HTTP Integration Tests for Users Controller
  * 
  * Tests users endpoints via HTTP layer using supertest with real test database.
  * Tests authorization, profile CRUD, and role-based access control.
  */
-
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe } from '@nestjs/common';
-import * as request from 'supertest';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { JwtModule } from '@nestjs/jwt';
-import { UsersController } from './users.controller';
-import { UsersService } from './users.service';
+import * as request from 'supertest';
+
 import { StellarService } from '../stellar/stellar.service';
-import { User } from './user.entity';
-import {
-  getTestDatabaseConfig,
-  getTestDataSource,
-} from '../test/http-integration-setup';
 import {
   testUsers,
   generateTestUser,
   testProfileUpdates,
 } from '../test/http-fixtures';
 import {
+  getTestDatabaseConfig,
+  getTestDataSource,
+} from '../test/http-integration-setup';
+import {
   registerUser,
   getCurrentUser,
   cleanDatabase,
   expectErrorResponse,
 } from '../test/http-test-helpers';
+
+import { User } from './user.entity';
+import { UsersController } from './users.controller';
+import { UsersService } from './users.service';
 
 describe('UsersController (HTTP Integration)', () => {
   let app: INestApplication;

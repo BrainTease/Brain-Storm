@@ -1,16 +1,18 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Parser } from 'json2csv';
 import { Repository, Between, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
-import { InstructorAnalytics } from './instructor-analytics.entity';
+
+import { Course } from '../courses/course.entity';
+import { Review } from '../courses/review.entity';
+import { Enrollment } from '../enrollments/enrollment.entity';
+
 import {
   AnalyticsQueryDto,
   AnalyticsReportDto,
   CourseAnalyticsSummary,
 } from './dto/instructor-analytics.dto.ts';
-import { Enrollment } from '../enrollments/enrollment.entity';
-import { Review } from '../courses/review.entity';
-import { Course } from '../courses/course.entity';
-import { Parser } from 'json2csv';
+import { InstructorAnalytics } from './instructor-analytics.entity';
 
 @Injectable()
 export class InstructorAnalyticsService {

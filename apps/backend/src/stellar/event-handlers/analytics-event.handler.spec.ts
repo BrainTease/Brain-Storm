@@ -1,9 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SorobanRpc } from '@stellar/stellar-sdk';
-import { AnalyticsEventHandler } from './analytics-event.handler';
+
 import { CredentialsService } from '../../credentials/credentials.service';
 import { NotificationsService } from '../../notifications/notifications.service';
 import { UsersService } from '../../users/users.service';
+
+import { AnalyticsEventHandler } from './analytics-event.handler';
 
 describe('AnalyticsEventHandler', () => {
   let handler: AnalyticsEventHandler;

@@ -1,11 +1,13 @@
 import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { ExportService } from './export.service';
-import { User } from '../users/user.entity';
-import { AuditService } from '../audit/audit.service';
 
+import { AuditService } from '../audit/audit.service';
+import { User } from '../users/user.entity';
+
+import { ExportService } from './export.service';
 // Prevent real zip creation touching filesystem
+
 jest.mock('adm-zip', () => {
   return jest.fn().mockImplementation(() => ({
     addFile: jest.fn(),

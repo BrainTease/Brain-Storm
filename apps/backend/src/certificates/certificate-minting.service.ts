@@ -9,8 +9,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Certificate } from './certificate.entity';
+
 import { StellarService } from '../stellar/stellar.service';
+
+import { Certificate } from './certificate.entity';
 
 @Injectable()
 export class CertificateMintingService {

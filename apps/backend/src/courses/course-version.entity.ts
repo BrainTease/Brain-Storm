@@ -6,8 +6,10 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
-import { Course } from './course.entity';
+
 import { User } from '../users/user.entity';
+
+import { Course } from './course.entity';
 
 @Entity('course_versions')
 export class CourseVersion {

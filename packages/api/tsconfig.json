@@ -14,6 +14,13 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "incremental": true,
+    "baseUrl": ".",
+    "paths": {
+      "@brain-storm/types": ["../types/src"],
+      "@brain-storm/types/*": ["../types/src/*"],
+      "@brain-storm/sdk": ["../sdk/src"],
+      "@brain-storm/sdk/*": ["../sdk/src/*"]
+    },
 
     /* Strict mode (#1217) — required, non-negotiable */
     "strict": true,

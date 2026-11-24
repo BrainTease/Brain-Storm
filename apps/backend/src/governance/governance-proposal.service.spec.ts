@@ -1,20 +1,21 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { GovernanceProposalService } from './governance-proposal.service';
-import {
-  GOVERNANCE_PROPOSAL_REPOSITORY,
-  GovernanceProposalRepository,
-} from './governance-proposal.repository.interface';
-import { GovernanceProposal, ProposalStatus, ProposalType } from './governance-proposal.entity';
+import { Test, TestingModule } from '@nestjs/testing';
+
+import { PaginatedResponseDto } from '../common/dto/api-response.dto';
+
 import {
   CreateProposalDto,
   UpdateProposalDto,
   ProposalQueryDto,
   VoteDto,
 } from './dto/governance-proposal.dto';
-import { PaginatedResponseDto } from '../common/dto/api-response.dto';
-
+import { GovernanceProposal, ProposalStatus, ProposalType } from './governance-proposal.entity';
+import {
+  GOVERNANCE_PROPOSAL_REPOSITORY,
+  GovernanceProposalRepository,
+} from './governance-proposal.repository.interface';
+import { GovernanceProposalService } from './governance-proposal.service';
 // ─── Fixtures ────────────────────────────────────────────────────────────────
 
 function makeProposal(overrides: Partial<GovernanceProposal> = {}): GovernanceProposal {

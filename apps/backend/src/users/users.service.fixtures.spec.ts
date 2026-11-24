@@ -13,11 +13,13 @@
  * Closes #1193.
  */
 import { UserFactory } from '@brain-storm/types/test-utils';
-import { UsersService } from './users.service';
-import { User } from './user.entity';
+
 import { UsersRepository } from '../repositories/users-repository.interface';
 
+import { User } from './user.entity';
+import { UsersService } from './users.service';
 /** Build a fully-typed mock that satisfies the UsersRepository interface. */
+
 function buildMockUsersRepository(): jest.Mocked<UsersRepository> {
   return {
     findByEmail: jest.fn(),

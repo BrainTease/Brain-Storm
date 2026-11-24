@@ -7,8 +7,10 @@ import {
   JoinColumn,
   Index,
 } from 'typeorm';
-import { Organization, OrgRole } from './organization.entity';
+
 import { User } from '../users/user.entity';
+
+import { Organization, OrgRole } from './organization.entity';
 
 @Entity('organization_members')
 @Index(['organizationId', 'userId'], { unique: true })

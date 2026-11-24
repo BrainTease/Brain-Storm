@@ -1,11 +1,12 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Certificate } from './certificate.entity';
-import { Enrollment } from '../enrollments/enrollment.entity';
-import { CertificatesService } from './certificates.service';
-import { CertificatePdfService } from './certificate-pdf.service';
-import { CredentialsModule } from '../credentials/credentials.module';
 
+import { CredentialsModule } from '../credentials/credentials.module';
+import { Enrollment } from '../enrollments/enrollment.entity';
+
+import { CertificatePdfService } from './certificate-pdf.service';
+import { Certificate } from './certificate.entity';
+import { CertificatesService } from './certificates.service';
 /**
  * CertificatesModule
  *
@@ -13,6 +14,7 @@ import { CredentialsModule } from '../credentials/credentials.module';
  * calls StellarService directly.  On-chain issuance now delegates to
  * BadgeAwardService (provided by CredentialsModule).
  */
+
 @Module({
   imports: [TypeOrmModule.forFeature([Certificate, Enrollment]), CredentialsModule],
   providers: [CertificatesService, CertificatePdfService],

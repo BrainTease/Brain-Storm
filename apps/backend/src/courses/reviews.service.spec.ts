@@ -1,11 +1,13 @@
 import { ConflictException, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { ReviewsService } from './reviews.service';
-import { Review } from './review.entity';
+
 import { Enrollment } from '../enrollments/enrollment.entity';
+
 import { Course } from './course.entity';
 import { CreateReviewDto } from './dto/create-review.dto';
+import { Review } from './review.entity';
+import { ReviewsService } from './reviews.service';
 
 describe('ReviewsService', () => {
   let service: ReviewsService;

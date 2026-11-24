@@ -1,7 +1,10 @@
+import { InjectQueue } from '@nestjs/bullmq';
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
+
+import type { IndexName } from '../search/search.service';
+
 import {
   QUEUE_EMAIL,
   QUEUE_NOTIFICATION,
@@ -27,7 +30,6 @@ import type {
   IndexPostJobData,
   DeleteFromIndexJobData,
 } from './types';
-import type { IndexName } from '../search/search.service';
 
 @Injectable()
 export class QueueSchedulerService {

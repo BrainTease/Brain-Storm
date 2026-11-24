@@ -1,15 +1,17 @@
 import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { NotificationsService } from './notifications.service';
-import { Notification, NotificationType } from './notification.entity';
+
+import { MailService } from '../mail/mail.service';
+
 import { NotificationPreference } from './notification-preference.entity';
+import { Notification, NotificationType } from './notification.entity';
+import { NotificationsGateway } from './notifications.gateway';
+import { NotificationsService } from './notifications.service';
 import {
   ScheduledNotification,
   ScheduledNotificationStatus,
 } from './scheduled-notification.entity';
-import { NotificationsGateway } from './notifications.gateway';
-import { MailService } from '../mail/mail.service';
 
 describe('NotificationsService', () => {
   let service: NotificationsService;

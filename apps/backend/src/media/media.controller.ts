@@ -13,9 +13,11 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiConsumes } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { StorageService } from './storage.service';
 import * as multer from 'multer';
+
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+
+import { StorageService } from './storage.service';
 
 @ApiTags('media')
 @Controller('media')

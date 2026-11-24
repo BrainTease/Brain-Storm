@@ -10,7 +10,6 @@ import {
   UseGuards,
   Request,
 } from '@nestjs/common';
-import { CoursesBusinessService } from './courses-business.service';
 import {
   ApiTags,
   ApiOperation,
@@ -19,14 +18,17 @@ import {
   ApiBearerAuth,
   ApiBody,
 } from '@nestjs/swagger';
+
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+import { RolesGuard } from '../auth/roles.guard';
+
+import { CoursesBusinessService } from './courses-business.service';
 import { CourseQueryDto } from './dto/course-query.dto';
-import { CreateCourseDto } from './dto/create-course.dto';
-import { UpdateCourseDto } from './dto/update-course.dto';
-import { ScheduleCourseDto } from './dto/schedule-course.dto';
 import { CourseResponseDto, toCourseResponseDto, toCourseResponseDtos } from './dto/course-response.dto';
+import { CreateCourseDto } from './dto/create-course.dto';
+import { ScheduleCourseDto } from './dto/schedule-course.dto';
+import { UpdateCourseDto } from './dto/update-course.dto';
 
 @ApiTags('courses')
 @Controller('courses')

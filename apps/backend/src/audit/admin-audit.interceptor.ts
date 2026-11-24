@@ -1,12 +1,11 @@
 import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { Observable } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
 import { tap, catchError } from 'rxjs/operators';
-import { throwError } from 'rxjs';
-import { AuditService } from './audit.service';
-import { AuditAction } from './audit-log.entity';
-import { AUDIT_LOG_METADATA_KEY, AuditLogMetadata } from './audit-log.decorator';
 
+import { AUDIT_LOG_METADATA_KEY, AuditLogMetadata } from './audit-log.decorator';
+import { AuditAction } from './audit-log.entity';
+import { AuditService } from './audit.service';
 /**
  * Auto-logs admin mutation endpoints to the audit trail.
  *
@@ -16,6 +15,7 @@ import { AUDIT_LOG_METADATA_KEY, AuditLogMetadata } from './audit-log.decorator'
  * `auditService.log(...)` itself. New endpoints are covered automatically
  * as soon as they add the decorator.
  */
+
 @Injectable()
 export class AdminAuditInterceptor implements NestInterceptor {
   constructor(

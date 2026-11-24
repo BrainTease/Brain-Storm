@@ -1,6 +1,6 @@
-import { IsOptional, IsDateString, IsNumber, Min, Max, IsIn } from 'class-validator';
+import type { ISODateString, AdminDashboardQuery, AdminAggregationQuery, ExportQuery } from '@brain-storm/types';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import type { ISODateString } from '@brain-storm/types';
+import { IsOptional, IsDateString, IsNumber, Min, Max, IsIn } from 'class-validator';
 
 export class AdminDashboardQueryDto implements Partial<Pick<AdminDashboardQuery, 'startDate' | 'endDate'>> {
   @ApiPropertyOptional()
@@ -39,11 +39,3 @@ export class ExportQueryDto
   @IsIn(['csv', 'json'])
   format?: 'csv' | 'json';
 }
-
-// Shared query shapes re-exported from @brain-storm/types to avoid duplicate
-// interface declarations for the same entity between packages/types and the backend.
-import type {
-  AdminDashboardQuery,
-  AdminAggregationQuery,
-  ExportQuery,
-} from '@brain-storm/types';

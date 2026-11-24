@@ -1,12 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { SessionsService } from './sessions.service';
-import { CohortSession, SessionStatus } from './session.entity';
-import { SessionAttendance, AttendanceStatus } from './session-attendance.entity';
-import { NotificationsService } from '../notifications/notifications.service';
-import { CreateSessionDto } from './dto/session.dto';
 
+import { NotificationsService } from '../notifications/notifications.service';
+
+import { CreateSessionDto } from './dto/session.dto';
+import { SessionAttendance, AttendanceStatus } from './session-attendance.entity';
+import { CohortSession, SessionStatus } from './session.entity';
+import { SessionsService } from './sessions.service';
 // Suppress ics/schedule decorator side-effects in unit tests
+
 jest.mock('ics', () => ({
   createEvent: jest.fn(() => ({ error: null, value: 'BEGIN:VCALENDAR\nEND:VCALENDAR' })),
 }));

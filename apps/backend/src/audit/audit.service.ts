@@ -1,10 +1,13 @@
+import * as crypto from 'crypto';
+
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import * as crypto from 'crypto';
-import { AuditLog, AuditAction } from './audit-log.entity';
-import { CustomLoggerService } from '../common/logger/logger.service';
+
 import { EncryptionService } from '../common/encryption.service';
+import { CustomLoggerService } from '../common/logger/logger.service';
+
+import { AuditLog, AuditAction } from './audit-log.entity';
 
 export interface AuditLogFilters {
   userId?: string;

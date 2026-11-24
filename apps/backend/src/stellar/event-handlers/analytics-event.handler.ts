@@ -1,9 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { SorobanRpc } from '@stellar/stellar-sdk';
-import { ContractEventHandler } from './contract-event.dispatcher';
+
 import { CredentialsService } from '../../credentials/credentials.service';
 import { NotificationsService } from '../../notifications/notifications.service';
 import { UsersService } from '../../users/users.service';
+
+import { ContractEventHandler } from './contract-event.dispatcher';
 
 @Injectable()
 export class AnalyticsEventHandler implements ContractEventHandler {

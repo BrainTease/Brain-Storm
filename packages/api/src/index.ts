@@ -1,8 +1,8 @@
-import express from 'express';
 import cors from 'cors';
+import express from 'express';
 import helmet from 'helmet';
-import { responseInterceptor } from './middleware/responseInterceptor';
-import userRoutes from './routes/userRoutes';
+import { responseInterceptor } from './middleware/response-interceptor';
+import userRoutes from './routes/user-routes';
 
 const app = express();
 const PORT = process.env.PORT || 3000;

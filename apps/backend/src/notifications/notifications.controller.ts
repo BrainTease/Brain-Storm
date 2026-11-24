@@ -10,15 +10,16 @@ import {
   UseGuards,
   Req,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags, ApiOperation, ApiResponse, ApiBody, ApiProperty } from '@nestjs/swagger';
+import { IsEnum, IsString, IsDateString } from 'class-validator';
 import { Request as ExpressRequest } from 'express';
+
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { PaginationDto } from '../common/dto/pagination.dto';
+
+import { NotificationType } from './notification.entity';
 import { NotificationsService } from './notifications.service';
 import { PushNotificationService } from './push-notification.service';
-import { ApiBearerAuth, ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { NotificationType } from './notification.entity';
-import { IsEnum, IsString, IsDateString } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
-import { PaginationDto } from '../common/dto/pagination.dto';
 
 class ScheduleNotificationDto {
   @ApiProperty({ enum: NotificationType })

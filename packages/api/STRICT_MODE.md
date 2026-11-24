@@ -14,10 +14,10 @@ was small enough (7 source files) to flip strict in a single change.
 | File | Strict | Notes |
 |------|:------:|-------|
 | `src/index.ts` | ✅ | Express entry; typed error handler |
-| `src/middleware/responseInterceptor.ts` | ✅ | Response envelope |
-| `src/routes/userRoutes.ts` | ✅ | Route definitions |
-| `src/controllers/BaseController.ts` | ✅ | Base class |
-| `src/controllers/UserController.ts` | ✅ | User endpoints |
+| `src/middleware/response-interceptor.ts` | ✅ | Response envelope |
+| `src/routes/user-routes.ts` | ✅ | Route definitions |
+| `src/controllers/base-controller.ts` | ✅ | Base class |
+| `src/controllers/user-controller.ts` | ✅ | User endpoints |
 | `src/types/response.ts` | ✅ | Envelope types |
 | `src/__tests__/response-envelope.test.ts` | ✅ | Excluded from build, still strict-checked |
 

@@ -7,8 +7,10 @@ import {
   JoinColumn,
   Index,
 } from 'typeorm';
-import { CohortSession } from './session.entity';
+
 import { User } from '../users/user.entity';
+
+import { CohortSession } from './session.entity';
 
 export enum AttendanceStatus {
   PRESENT = 'PRESENT',

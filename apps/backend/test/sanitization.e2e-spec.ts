@@ -1,15 +1,15 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
+import { TypeOrmModule, getRepositoryToken } from '@nestjs/typeorm';
 import * as request from 'supertest';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+
 import { AuthModule } from '../src/auth/auth.module';
-import { UsersModule } from '../src/users/users.module';
-import { User } from '../src/users/user.entity';
-import { RefreshToken } from '../src/auth/refresh-token.entity';
 import { PasswordResetToken } from '../src/auth/password-reset-token.entity';
+import { RefreshToken } from '../src/auth/refresh-token.entity';
 import { SanitizationPipe } from '../src/common/pipes/sanitization.pipe';
+import { User } from '../src/users/user.entity';
+import { UsersModule } from '../src/users/users.module';
 
 describe('Input Sanitization (E2E)', () => {
   let app: INestApplication;

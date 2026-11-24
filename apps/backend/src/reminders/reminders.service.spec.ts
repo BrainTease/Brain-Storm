@@ -1,3 +1,4 @@
+import { ConfigService } from '@nestjs/config';
 /**
  * Regression tests for RemindersService — Issue #1195
  *
@@ -7,15 +8,14 @@
  *  - Duplicate-delivery prevention (frequency guard)
  *  - Queue mock for deterministic test timing
  */
-
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { ConfigService } from '@nestjs/config';
-import { RemindersService } from './reminders.service';
-import { Reminder } from './reminder.entity';
+
 import { Enrollment } from '../enrollments/enrollment.entity';
 import { MailService } from '../mail/mail.service';
 
+import { Reminder } from './reminder.entity';
+import { RemindersService } from './reminders.service';
 // ─── Mock factories ──────────────────────────────────────────────────────────
 
 const mockReminderRepo = {

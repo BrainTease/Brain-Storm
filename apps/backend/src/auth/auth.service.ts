@@ -1,4 +1,5 @@
-import { Role } from '../common/enums/role.enum';
+import * as crypto from 'crypto';
+
 import {
   Injectable,
   UnauthorizedException,
@@ -7,17 +8,19 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { UsersService } from '../users/users.service';
-import { MailService } from '../mail/mail.service';
-import { AuthRepository } from './auth.repository';
-import { TokenBlacklistService } from './token-blacklist.service';
 import * as bcrypt from 'bcrypt';
-import * as crypto from 'crypto';
 import { generateSecret, generateSync, verifySync, generateURI } from 'otplib';
 import * as qrcode from 'qrcode';
-import { EncryptionService } from '../common/encryption.service';
-import { AuditService } from '../audit/audit.service';
+
 import { AuditAction } from '../audit/audit-log.entity';
+import { AuditService } from '../audit/audit.service';
+import { EncryptionService } from '../common/encryption.service';
+import { Role } from '../common/enums/role.enum';
+import { MailService } from '../mail/mail.service';
+import { UsersService } from '../users/users.service';
+
+import { AuthRepository } from './auth.repository';
+import { TokenBlacklistService } from './token-blacklist.service';
 
 @Injectable()
 export class AuthService {

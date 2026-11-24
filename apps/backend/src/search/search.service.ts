@@ -2,10 +2,12 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { SearchAnalytic } from './search-analytic.entity';
+
 import { Course } from '../courses/course.entity';
 import { Lesson } from '../courses/lesson.entity';
 import { Post } from '../forums/post.entity';
+
+import { SearchAnalytic } from './search-analytic.entity';
 import { SearchFilters, SearchQueryBuilder } from './search-query-builder.util';
 
 export type IndexName = 'courses' | 'lessons' | 'posts';

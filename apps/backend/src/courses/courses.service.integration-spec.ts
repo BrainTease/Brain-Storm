@@ -1,12 +1,14 @@
+import { CacheModule } from '@nestjs/cache-manager';
 import { Test, TestingModule } from '@nestjs/testing';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { CacheModule } from '@nestjs/cache-manager';
 import { DataSource } from 'typeorm';
-import { CoursesService } from './courses.service';
-import { Course } from './course.entity';
-import { setupTestDatabase, teardownTestDatabase } from '../test/integration-test.setup';
+
 import { COURSES_REPOSITORY_TOKEN } from '../repositories';
 import { TypeOrmCoursesRepository } from '../repositories/typeorm-courses.repository';
+import { setupTestDatabase, teardownTestDatabase } from '../test/integration-test.setup';
+
+import { Course } from './course.entity';
+import { CoursesService } from './courses.service';
 
 describe('CoursesService (Integration)', () => {
   let service: CoursesService;

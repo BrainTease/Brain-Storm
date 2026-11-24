@@ -1,12 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+
+import { fetchWithRetry, FetchRetryOptions } from '../../common/http/fetch-with-retry';
+
 import {
   KycDocumentUploadInput,
   KycDocumentUploadResult,
   KycProvider,
   KycSessionResult,
 } from './kyc-provider.interface';
-import { fetchWithRetry, FetchRetryOptions } from '../../common/http/fetch-with-retry';
 
 const SYNAPS_BASE_URL = 'https://api.synaps.io/v4';
 

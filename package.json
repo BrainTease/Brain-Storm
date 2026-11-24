@@ -11,7 +11,8 @@
     "packages/mobile",
     "packages/mobile-app",
     "packages/sdk",
-    "packages/types"
+    "packages/types",
+    "packages/utils"
   ],
   "scripts": {
     "dev:frontend": "npm run dev --workspace=apps/frontend",
@@ -44,6 +45,11 @@
     "lint:frontend": "npm run lint --workspace=apps/frontend",
     "lint:backend": "npm run lint --workspace=apps/backend",
     "lint:staged": "lint-staged",
+    "lint:commit": "bash scripts/check-commit-and-pr.sh",
+    "lint:naming": "bash scripts/check-naming.sh",
+    "lint:imports": "bash scripts/check-import-order.sh",
+    "lint:utils": "bash scripts/check-duplicate-utils.sh",
+    "quality:local": "npm run lint:commit && npm run lint:naming && npm run lint:imports && npm run lint:utils",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "typecheck:frontend": "npm run typecheck --workspace=apps/frontend",
     "typecheck:backend": "npm run typecheck --workspace=apps/backend",

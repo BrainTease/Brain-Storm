@@ -1,27 +1,24 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
+import { TypeOrmModule, getRepositoryToken } from '@nestjs/typeorm';
 import * as request from 'supertest';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { getRepositoryToken } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 
+import { ApiKey } from '../src/auth/api-key.entity';
 // Modules under test
 import { AuthModule } from '../src/auth/auth.module';
-import { CertificatesModule } from '../src/certificates/certificates.module';
-
-// Entities required by SQLite in-memory DB
-import { User } from '../src/users/user.entity';
-import { Course } from '../src/courses/course.entity';
-import { Certificate } from '../src/certificates/certificate.entity';
-import { Enrollment } from '../src/enrollments/enrollment.entity';
-import { RefreshToken } from '../src/auth/refresh-token.entity';
 import { PasswordResetToken } from '../src/auth/password-reset-token.entity';
+import { RefreshToken } from '../src/auth/refresh-token.entity';
 import { TokenBlacklist } from '../src/auth/token-blacklist.entity';
-import { ApiKey } from '../src/auth/api-key.entity';
+import { Certificate } from '../src/certificates/certificate.entity';
+import { CertificatesModule } from '../src/certificates/certificates.module';
+import { Course } from '../src/courses/course.entity';
+import { Enrollment } from '../src/enrollments/enrollment.entity';
 import { StellarTransactionLog } from '../src/stellar/stellar-transaction-log.entity';
-
 // Stub StellarService so no real Horizon/Soroban calls are made
 import { StellarService } from '../src/stellar/stellar.service';
+// Entities required by SQLite in-memory DB
+import { User } from '../src/users/user.entity';
 
 // Per-test data reset so specs pass in any order (#1362)
 import { clearE2ETestData } from './e2e-test-utils';

@@ -5,8 +5,10 @@
  * so this class contains only domain-specific line layout, not PDF mechanics.
  */
 import { Injectable } from '@nestjs/common';
-import { Certificate } from './certificate.entity';
+
 import { PdfBuilderService } from '../common/services/pdf-builder.service';
+
+import { Certificate } from './certificate.entity';
 
 @Injectable()
 export class CertificatePdfService {

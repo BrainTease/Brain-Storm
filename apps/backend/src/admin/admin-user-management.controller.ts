@@ -1,14 +1,15 @@
 import { Body, Controller, Param, Patch, Request, UseGuards, UseInterceptors } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { RolesGuard } from '../auth/roles.guard';
-import { Roles } from '../auth/roles.decorator';
-import { AdminService } from './admin.service';
-import { SuspendUserDto } from './admin.dto';
+
 import { AdminAuditInterceptor } from '../audit/admin-audit.interceptor';
 import { AuditLog } from '../audit/audit-log.decorator';
 import { AuditAction } from '../audit/audit-log.entity';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { Roles } from '../auth/roles.decorator';
+import { RolesGuard } from '../auth/roles.guard';
 
+import { SuspendUserDto } from './admin.dto';
+import { AdminService } from './admin.service';
 /**
  * Platform-level user moderation actions (ban / suspend / role change).
  * Split out of the former AdminController (#973) so user-management and
@@ -18,6 +19,7 @@ import { AuditAction } from '../audit/audit-log.entity';
  * `@AuditLog(...)` — new mutation endpoints are covered as soon as they
  * add the decorator, without touching the interceptor itself.
  */
+
 @ApiTags('admin')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)

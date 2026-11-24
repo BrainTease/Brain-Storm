@@ -1,11 +1,13 @@
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { CredentialsService } from './credentials.service';
-import { Credential } from './credential.entity';
-import { StellarService } from '../stellar/stellar.service';
-import { KycService } from '../kyc/kyc.service';
+
 import { CoursesService } from '../courses/courses.service';
+import { KycService } from '../kyc/kyc.service';
+import { StellarService } from '../stellar/stellar.service';
+
+import { Credential } from './credential.entity';
+import { CredentialsService } from './credentials.service';
 
 describe('CredentialsService', () => {
   let service: CredentialsService;

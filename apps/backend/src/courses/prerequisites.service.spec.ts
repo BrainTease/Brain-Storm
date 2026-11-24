@@ -1,10 +1,12 @@
 import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { PrerequisitesService } from './prerequisites.service';
-import { CoursePrerequisite } from './course-prerequisite.entity';
+
 import { Enrollment } from '../enrollments/enrollment.entity';
+
+import { CoursePrerequisite } from './course-prerequisite.entity';
 import { Course } from './course.entity';
+import { PrerequisitesService } from './prerequisites.service';
 
 describe('PrerequisitesService', () => {
   let service: PrerequisitesService;

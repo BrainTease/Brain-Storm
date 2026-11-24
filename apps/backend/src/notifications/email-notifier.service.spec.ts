@@ -1,6 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { EmailNotifierService } from './email-notifier.service';
+
 import { MailService } from '../mail/mail.service';
+
+import { EmailNotifierService } from './email-notifier.service';
 import { NotificationType } from './notification.entity';
 
 describe('EmailNotifierService', () => {

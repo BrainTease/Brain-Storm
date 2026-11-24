@@ -1,10 +1,12 @@
 import { Test } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { NotificationRouterService } from './notification-router.service';
-import { NotificationPreference, NotificationChannel } from './notification-preference.entity';
-import { NotificationsService } from './notifications.service';
+
 import { MailService } from '../mail/mail.service';
+
+import { NotificationPreference, NotificationChannel } from './notification-preference.entity';
+import { NotificationRouterService } from './notification-router.service';
 import { NotificationType } from './notification.entity';
+import { NotificationsService } from './notifications.service';
 
 const mockPrefRepo = () => ({
   findOne: jest.fn(),

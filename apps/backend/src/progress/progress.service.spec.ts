@@ -1,10 +1,11 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
-import { ProgressService } from './progress.service';
-import { StellarService } from '../stellar/stellar.service';
+import { Test, TestingModule } from '@nestjs/testing';
+
 import { BadgeAwardService } from '../credentials/badge-award.service';
 import { PROGRESS_REPOSITORY_TOKEN } from '../repositories/repositories.module';
+import { StellarService } from '../stellar/stellar.service';
 
+import { ProgressService } from './progress.service';
 /**
  * Unit tests for ProgressService.
  *
@@ -14,6 +15,7 @@ import { PROGRESS_REPOSITORY_TOKEN } from '../repositories/repositories.module';
  * mocked here.  The badge-award path is fully tested in
  * badge-award.service.spec.ts.
  */
+
 describe('ProgressService', () => {
   let service: ProgressService;
 

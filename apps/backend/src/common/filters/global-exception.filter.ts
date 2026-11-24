@@ -1,4 +1,3 @@
-import { env } from '../../config/env';
 import {
   ExceptionFilter,
   Catch,
@@ -9,8 +8,9 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
-import { AppError } from '../errors/app.error';
 
+import { env } from '../../config/env';
+import { AppError } from '../errors/app.error';
 /**
  * GlobalExceptionFilter — the single, canonical exception filter (#799, #974).
  *
@@ -45,6 +45,7 @@ import { AppError } from '../errors/app.error';
  *   - ValidationExceptionFilter (handled case 2)
  *   - ErrorHandlingMiddleware   (duplicated case 1 with different shape)
  */
+
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(GlobalExceptionFilter.name);

@@ -1,9 +1,11 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between } from 'typeorm';
-import { Payout } from './payout.entity';
-import { Enrollment } from '../enrollments/enrollment.entity';
+
 import { Course } from '../courses/course.entity';
+import { Enrollment } from '../enrollments/enrollment.entity';
+
+import { Payout } from './payout.entity';
 import { RoyaltyCalculationService } from './royalty-calculation.service';
 
 @Injectable()
