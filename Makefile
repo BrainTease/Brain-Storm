@@ -1,19 +1,20 @@
-.PHONY: setup dev test build lint clean docker-up docker-down export-openapi audit cargo-audit help
+.PHONY: setup dev test build lint lint-complexity clean docker-up docker-down export-openapi audit cargo-audit help
 
 help:
 	@echo "Brain-Storm Makefile"
 	@echo "--------------------"
-	@echo "make setup          - Install dependencies, add wasm target, build contracts"
-	@echo "make dev            - Start backend and frontend in development mode"
-	@echo "make test           - Run all tests (backend, frontend, contracts)"
-	@echo "make build          - Build all apps for production"
-	@echo "make lint           - Run linter on all apps"
-	@echo "make clean          - Remove node_modules and build artifacts"
-	@echo "make docker-up      - Start PostgreSQL and Redis via Docker Compose"
-	@echo "make docker-down    - Stop and remove Docker Compose services"
-	@echo "make export-openapi - Build backend and export openapi.json"
-	@echo "make audit          - Run npm audit across all workspaces"
-	@echo "make cargo-audit    - Run cargo-audit on Rust contracts"
+	@echo "make setup           - Install dependencies, add wasm target, build contracts"
+	@echo "make dev             - Start backend and frontend in development mode"
+	@echo "make test            - Run all tests (backend, frontend, contracts)"
+	@echo "make build           - Build all apps for production"
+	@echo "make lint            - Run linter on all apps"
+	@echo "make lint-complexity - Report cyclomatic/cognitive complexity violations"
+	@echo "make clean           - Remove node_modules and build artifacts"
+	@echo "make docker-up       - Start PostgreSQL and Redis via Docker Compose"
+	@echo "make docker-down     - Stop and remove Docker Compose services"
+	@echo "make export-openapi  - Build backend and export openapi.json"
+	@echo "make audit           - Run npm audit across all workspaces"
+	@echo "make cargo-audit     - Run cargo-audit on Rust contracts"
 
 setup:
 	@echo "==> Installing Node.js dependencies..."
@@ -44,6 +45,13 @@ lint:
 	@echo "==> Running lint checks..."
 	npm run lint --workspace=apps/backend
 	npm run lint --workspace=apps/frontend
+
+lint-complexity:
+	@echo "==> Checking cyclomatic complexity (TypeScript — max 15)..."
+	npm run lint --workspace=apps/backend -- --rule 'complexity: [error, {max: 15}]' --no-eslintrc --parser @typescript-eslint/parser || true
+	npm run lint --workspace=apps/frontend -- --rule 'complexity: [error, {max: 15}]' --no-eslintrc --parser @typescript-eslint/parser || true
+	@echo "==> Checking cognitive complexity (Rust — threshold 25)..."
+	cargo clippy --workspace --all-targets -- -W clippy::cognitive_complexity
 
 clean:
 	@echo "==> Cleaning project..."

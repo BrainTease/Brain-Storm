@@ -106,6 +106,10 @@ manual_ok_or                 = "warn"   # prefer `.ok_or()` over `match … { So
 map_unwrap_or                = "warn"   # prefer `.unwrap_or_else()` over `.map().unwrap_or()`
 match_bool                   = "warn"   # prefer `if/else` over `match` on booleans
 match_same_arms              = "warn"   # merge identical match arms
+# Complexity (issue #1549): cognitive_complexity fires when a single function
+# accumulates too many nested control-flow branches. The default threshold (25)
+# is generous; contract entry-points that exceed it should be split.
+cognitive_complexity          = "warn"  # flag functions with high cognitive complexity
 needless_continue            = "warn"   # remove redundant `continue` at end of loop
 needless_pass_by_value       = "warn"   # prefer pass-by-reference when ownership is not needed
 range_minus_one              = "warn"   # prefer `..end` over `..=end - 1`
@@ -135,4 +139,11 @@ used_underscore_binding      = "warn"   # using a `_`-prefixed variable suggests
 [workspace.lints.clippy.unwrap_used]
 level = "warn"
 priority = -1
-======>>> REPLACE
+
+# too_many_arguments is kept at allow workspace-wide because Soroban contract
+# entry-points (contractimpl) cannot use a params struct without changing the
+# on-chain ABI. Any site that is NOT a contract entry-point should be refactored
+# locally rather than adding a function-level #[allow].
+[workspace.lints.clippy.too_many_arguments]
+level = "allow"
+priority = 1

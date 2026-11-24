@@ -2,6 +2,14 @@ version: '3.8'
 
 # Base service definitions shared across environments.
 # Not intended to be used directly — referenced via `extends:` in environment-specific files.
+#
+# Files that extend this base:
+#   docker-compose.yml         — local development
+#   docker-compose.prod.yml    — production
+#   docker-compose.staging.yml — staging
+#
+# Each environment-specific file sets the network, environment variables,
+# resource limits, and any image overrides on top of these shared definitions.
 
 services:
   postgres:
