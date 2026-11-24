@@ -5,67 +5,11 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
-export const EVENT_CATEGORIES = {
-  USER: 'user',
-  COURSE: 'course',
-  ENROLLMENT: 'enrollment',
-  CREDENTIAL: 'credential',
-  TIP: 'tip',
-  REVIEW: 'review',
-  DISCOVERY: 'discovery',
-} as const;
+import { CORE_EVENTS, scrubPII, type EventType } from '../../../../packages/utils/src';
 
-export const CORE_EVENTS = {
-  // Discovery funnel
-  PAGE_VIEW: 'discovery_page_view',
-  SEARCH: 'discovery_search',
-  COURSE_VIEW: 'discovery_course_view',
-  INSTRUCTOR_VIEW: 'discovery_instructor_view',
-
-  // Profile funnel
-  PROFILE_VIEW: 'profile_view',
-  PROFILE_UPDATE: 'profile_update',
-
-  // Enrollment funnel
-  ENROLLMENT_START: 'enrollment_start',
-  ENROLLMENT_COMPLETE: 'enrollment_complete',
-  PROGRESS_UPDATE: 'course_progress_update',
-
-  // Tip/Transaction funnel
-  TIP_INITIATED: 'tip_initiated',
-  TIP_SENT: 'tip_sent',
-  TIP_RECEIVED: 'tip_received',
-
-  // Review funnel
-  REVIEW_SUBMITTED: 'review_submitted',
-  REVIEW_VOTED: 'review_voted',
-
-  // Credential events
-  CREDENTIAL_ISSUED: 'credential_issued',
-  CREDENTIAL_VERIFIED: 'credential_verified',
-
-  // Auth events
-  LOGIN: 'auth_login',
-  LOGOUT: 'auth_logout',
-  REGISTER: 'auth_register',
-} as const;
-
-export type EventType = (typeof CORE_EVENTS)[keyof typeof CORE_EVENTS];
-
-// PII fields to never send
-const PII_FIELDS = [
-  'email',
-  'name',
-  'fullName',
-  'firstName',
-  'lastName',
-  'phone',
-  'address',
-  'dateOfBirth',
-  'password',
-  'secret',
-  'token',
-];
+// The taxonomy, event type and PII scrubber are shared with the backend (#1543).
+// Re-exported for existing consumers of this module.
+export { CORE_EVENTS, EVENT_CATEGORIES, type EventType } from '../../../../packages/utils/src';
 
 interface ConsentState {
   analytics: boolean;
@@ -129,22 +73,6 @@ function canSendEvent(eventType: EventType): boolean {
     return config.consent.marketing;
   }
   return config.consent.analytics;
-}
-
-/**
- * Scrub PII from payload
- */
-function scrubPII<T extends Record<string, unknown>>(payload: T): T {
-  const scrubbed: Record<string, unknown> = { ...payload };
-  for (const field of PII_FIELDS) {
-    delete scrubbed[field];
-  }
-  for (const [key, value] of Object.entries(scrubbed)) {
-    if (value && typeof value === 'object' && !Array.isArray(value)) {
-      scrubbed[key] = scrubPII(value as Record<string, unknown>);
-    }
-  }
-  return scrubbed as T;
 }
 
 /**

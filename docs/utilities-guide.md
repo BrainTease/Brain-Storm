@@ -12,6 +12,19 @@ The utility module provides reusable functions for:
 - Object manipulation
 - Number formatting
 
+## Shared utilities package (`@brain-storm/utils`)
+
+Framework-agnostic helpers used by both backend and frontend now live in
+`packages/utils/src` (`analytics.ts`, `date.ts`) and are re-exported by their former modules:
+
+- `EVENT_CATEGORIES`, `CORE_EVENTS`, `EventType`, `PII_FIELDS`, `scrubPII`
+- `toDate`
+
+Imports from `@common/utils` (the backend `*Utils` classes) and from
+`@/lib/{amount,date,error}-utils` (web/UI-specific helpers) remain unchanged. The full
+duplicate audit, justified exceptions and enforcement script are documented in
+`docs/quality/issue-1543-baseline.md`.
+
 ## String Utilities
 
 ```typescript

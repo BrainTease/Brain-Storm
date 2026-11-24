@@ -1,5 +1,7 @@
 import { useFormatter, useLocale } from 'next-intl';
 
+import { toDate } from '../../../../packages/utils/src';
+
 /**
  * Locale-aware formatting helpers built on next-intl's `useFormatter`.
  * All helpers are client-side hooks; they read the active locale from
@@ -27,10 +29,6 @@ export function useNumberFormatter() {
       new Intl.NumberFormat(locale, { notation: 'compact', maximumFractionDigits: 1 }).format(n),
     currency: (n: number, currency = 'USD') => format.number(n, { style: 'currency', currency }),
   };
-}
-
-function toDate(d: Date | number | string): Date {
-  return d instanceof Date ? d : new Date(d);
 }
 
 /**
