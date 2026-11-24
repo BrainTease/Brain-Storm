@@ -44,14 +44,16 @@ Closes #
 
 ## Checklist
 
-- [ ] My code follows the project's style guidelines
+- [ ] PR title follows Conventional Commits (e.g. `fix(backend): ...`)
+- [ ] Commitlint passes for every commit in this PR (`npx --no -- commitlint`)
+- [ ] `npm run lint` and `npm run typecheck` pass with no errors or warnings
+- [ ] Unit tests added/updated and `npm run test` passes
+- [ ] Naming conventions followed (kebab-case files via `filenames/match-regex`)
+- [ ] Import ordering followed (`simple-import-sort`, `import/no-duplicates`)
+- [ ] No new complexity violations (`complexity` max 15, `scripts/check-complexity.sh`)
+- [ ] Coverage thresholds met (85% lines)
+- [ ] Secret scan clean (gitleaks / secret-scanning workflow)
 - [ ] I have performed a self-review of my own code
-- [ ] I have commented my code, particularly in hard-to-understand areas
-- [ ] I have made corresponding changes to the documentation
-- [ ] My changes generate no new warnings
-- [ ] I have added tests that prove my fix is effective or that my feature works
-- [ ] New and existing unit tests passed locally with my changes
-- [ ] Any dependent changes have been merged and published
 
 ## Screenshots (if applicable)
 
