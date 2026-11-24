@@ -2,13 +2,15 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+
+import { NotificationPreferences } from './NotificationPreferences';
+
 import {
   useNotifications,
   TYPE_ICONS,
   TYPE_LABELS,
   NotificationType,
 } from '@/hooks/useNotifications';
-import { NotificationPreferences } from './NotificationPreferences';
 
 const PAGE_SIZE = 15;
 

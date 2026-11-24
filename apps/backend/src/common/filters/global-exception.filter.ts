@@ -1,4 +1,3 @@
-import { env } from '../../config/env';
 import {
   ExceptionFilter,
   Catch,
@@ -9,6 +8,8 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
+
+import { env } from '../../config/env';
 import { AppError } from '../errors/app.error';
 
 /**

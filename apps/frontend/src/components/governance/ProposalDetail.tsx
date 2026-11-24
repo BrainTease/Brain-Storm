@@ -1,12 +1,13 @@
 'use client';
 
+import { ProposalSummary } from './ProposalSummary';
+import { VoteResults } from './VoteResults';
+import { VoteCastPanel } from './VoteCastPanel';
+
 import { Card } from '@/components/ui/Card';
 import { Spinner } from '@/components/ui/Spinner';
 import { Proposal } from '@/store/governanceStore';
 import { calculateVoteTally } from '@/lib/governance-tally';
-import { ProposalSummary } from './ProposalSummary';
-import { VoteResults } from './VoteResults';
-import { VoteCastPanel } from './VoteCastPanel';
 
 export interface ProposalDetailProps {
   proposal: Proposal | null;

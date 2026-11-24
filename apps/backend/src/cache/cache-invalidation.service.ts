@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { CacheService } from './cache.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+
+import { CacheService } from './cache.service';
 
 export interface CacheInvalidationEvent {
   keys: string[];

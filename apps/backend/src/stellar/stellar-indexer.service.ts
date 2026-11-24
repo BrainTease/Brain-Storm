@@ -1,12 +1,14 @@
-import { env } from '../config/env';
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit, Inject } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { rpc } from '@stellar/stellar-sdk';
+
+import { env } from '../config/env';
 import { CredentialsService } from '../credentials/credentials.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { UsersService } from '../users/users.service';
+
 import { StellarSdkService } from './stellar-sdk.service';
 
 const LAST_LEDGER_KEY = 'indexer:last_ledger';

@@ -1,4 +1,3 @@
-import { env } from './config/env';
 /**
  * OpenTelemetry SDK initialiser — must be imported before any other module.
  * Provides distributed tracing with context propagation across HTTP and async
@@ -20,6 +19,8 @@ import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions'
 import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
 import { TraceIdRatioBasedSampler } from '@opentelemetry/sdk-trace-base';
 import { W3CTraceContextPropagator } from '@opentelemetry/core';
+
+import { env } from './config/env';
 
 const isProd = env.isProduction;
 

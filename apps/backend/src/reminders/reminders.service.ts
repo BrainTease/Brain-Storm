@@ -1,10 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, MoreThanOrEqual } from 'typeorm';
-import { Reminder } from './reminder.entity';
+import { ConfigService } from '@nestjs/config';
+
 import { Enrollment } from '../enrollments/enrollment.entity';
 import { MailService } from '../mail/mail.service';
-import { ConfigService } from '@nestjs/config';
+
+import { Reminder } from './reminder.entity';
 
 @Injectable()
 export class RemindersService {

@@ -1,5 +1,6 @@
-import { env } from '../config/env';
 import { Injectable } from '@nestjs/common';
+
+import { env } from '../config/env';
 
 export interface RouteDefinition {
   path: string;

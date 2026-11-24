@@ -1,13 +1,15 @@
 import { Body, Controller, Param, Patch, Request, UseGuards, UseInterceptors } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
-import { AdminService } from './admin.service';
-import { SuspendUserDto } from './admin.dto';
 import { AdminAuditInterceptor } from '../audit/admin-audit.interceptor';
 import { AuditLog } from '../audit/audit-log.decorator';
 import { AuditAction } from '../audit/audit-log.entity';
+
+import { AdminService } from './admin.service';
+import { SuspendUserDto } from './admin.dto';
 
 /**
  * Platform-level user moderation actions (ban / suspend / role change).

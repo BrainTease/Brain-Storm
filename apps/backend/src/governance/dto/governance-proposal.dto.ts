@@ -10,9 +10,11 @@ import {
 } from 'class-validator';
 import { Sanitize, Trim } from 'class-sanitizer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ProposalType } from './governance-proposal.entity';
+
 import { PaginationDto } from '../common/dto/pagination.dto';
 import { StripHtmlSanitizer } from '../../common/sanitizers/strip-html.sanitizer';
+
+import { ProposalType } from './governance-proposal.entity';
 
 export class CreateProposalDto {
   @ApiProperty({ description: 'Proposal title', maxLength: 200 })

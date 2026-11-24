@@ -1,3 +1,7 @@
+import { Test, TestingModule } from '@nestjs/testing';
+import { ConflictException, NotFoundException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+
 /**
  * Unit tests for EnrollmentsService — migrated to shared fixtures (#1193).
  *
@@ -13,13 +17,12 @@
  * Closes #1193.
  */
 import { EnrollmentFactory, UserFactory, CourseFactory } from '@brain-storm/types/test-utils';
-import { Test, TestingModule } from '@nestjs/testing';
-import { ConflictException, NotFoundException } from '@nestjs/common';
-import { EventEmitter2 } from '@nestjs/event-emitter';
-import { EnrollmentsService } from './enrollments.service';
-import { Enrollment } from './enrollment.entity';
+
 import { PrerequisitesService } from '../courses/prerequisites.service';
 import { ENROLLMENTS_REPOSITORY_TOKEN } from '../repositories/repositories.module';
+
+import { EnrollmentsService } from './enrollments.service';
+import { Enrollment } from './enrollment.entity';
 
 describe('EnrollmentsService — shared fixtures (#1193)', () => {
   let service: EnrollmentsService;

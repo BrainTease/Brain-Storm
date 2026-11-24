@@ -2,12 +2,12 @@
 
 import { useEffect, useRef } from 'react';
 
+import { CourseCardSkeleton } from './CourseCardSkeleton';
+import { CourseGridItem } from './CourseGridItem';
+
 import { Spinner } from '@/components/ui/Spinner';
 import { Course } from '@/hooks/useCourseSearch';
 import { useRovingFocus } from '@/hooks/useRovingFocus';
-
-import { CourseCardSkeleton } from './CourseCardSkeleton';
-import { CourseGridItem } from './CourseGridItem';
 
 const SKELETON_COUNT = 6;
 

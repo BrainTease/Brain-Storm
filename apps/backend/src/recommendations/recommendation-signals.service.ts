@@ -10,9 +10,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, MoreThan } from 'typeorm';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
-import { RecommendationSignal, SignalType } from './recommendation-signal.entity';
+
 import { Enrollment } from '../enrollments/enrollment.entity';
 import { Course } from '../courses/course.entity';
+
+import { RecommendationSignal, SignalType } from './recommendation-signal.entity';
 
 // ── Scoring weights ────────────────────────────────────────────────────────
 

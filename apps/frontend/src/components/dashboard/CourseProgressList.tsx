@@ -1,6 +1,7 @@
+import { SkeletonBlock } from './SkeletonBlock';
+
 import { CircularProgress } from '@/components/ui/CircularProgress';
 import { isCourseComplete, type EnrolledCourse } from '@/lib/dashboard';
-import { SkeletonBlock } from './SkeletonBlock';
 
 interface CourseProgressListProps {
   courses: EnrolledCourse[];

@@ -1,9 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
-import { ProgressService } from './progress.service';
+
 import { StellarService } from '../stellar/stellar.service';
 import { BadgeAwardService } from '../credentials/badge-award.service';
 import { PROGRESS_REPOSITORY_TOKEN } from '../repositories/repositories.module';
+
+import { ProgressService } from './progress.service';
 
 /**
  * Unit tests for ProgressService.

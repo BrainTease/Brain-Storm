@@ -1,9 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
+
+import { NotificationsService } from '../notifications/notifications.service';
+
 import { SessionsService } from './sessions.service';
 import { CohortSession, SessionStatus } from './session.entity';
 import { SessionAttendance, AttendanceStatus } from './session-attendance.entity';
-import { NotificationsService } from '../notifications/notifications.service';
 import { CreateSessionDto } from './dto/session.dto';
 
 // Suppress ics/schedule decorator side-effects in unit tests

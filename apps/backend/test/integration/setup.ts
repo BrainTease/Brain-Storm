@@ -2,8 +2,9 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { PostgreSqlContainer } from '@testcontainers/postgresql';
 import { DataSource } from 'typeorm';
-import { AppModule } from '../../src/app.module';
 import * as request from 'supertest';
+
+import { AppModule } from '../../src/app.module';
 
 let pgContainer;
 let dataSource: DataSource;

@@ -1,11 +1,13 @@
 import { Controller, Get, Query, UseGuards, Res } from '@nestjs/common';
 import { Response } from 'express';
+
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
-import { InstructorAnalyticsService } from './instructor-analytics.service';
-import { AnalyticsQueryDto } from './dto/instructor-analytics.dto.ts';
 import { Cacheable } from '../cache/cache.decorators';
 import { CacheKeys } from '../cache/cache-invalidation.service';
+
+import { InstructorAnalyticsService } from './instructor-analytics.service';
+import { AnalyticsQueryDto } from './dto/instructor-analytics.dto.ts';
 
 @Controller('v1/analytics/instructor')
 @UseGuards(JwtAuthGuard)

@@ -2,6 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { getRepositoryToken } from '@nestjs/typeorm';
+import { Horizon, Keypair, TransactionBuilder, Operation } from '@stellar/stellar-sdk';
+
 import { StellarService } from './stellar.service';
 import { SorobanRpcClientService } from './soroban-rpc-client.service';
 import {
@@ -9,7 +11,6 @@ import {
   StellarTxType,
   StellarTxStatus,
 } from './stellar-transaction-log.entity';
-import { Horizon, Keypair, TransactionBuilder, Operation } from '@stellar/stellar-sdk';
 
 /**
  * Unit / integration coverage for the badge-award (credential-issuance)

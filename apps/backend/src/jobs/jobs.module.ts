@@ -1,10 +1,12 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ScheduleModule } from '@nestjs/schedule';
+
+import { JobRunnerService } from '../common/job-runner/job-runner.service';
+
 import { Job, JobApplication } from './job.entity';
 import { JobsService } from './jobs.service';
 import { JobsController } from './jobs.controller';
-import { JobRunnerService } from '../common/job-runner/job-runner.service';
 import { JobsJobRunnerAdapter } from './jobs.job-runner.adapter';
 
 @Module({

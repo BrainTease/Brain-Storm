@@ -1,10 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+
+import { MailService } from '../mail/mail.service';
+
 import { NotificationPreference, NotificationChannel } from './notification-preference.entity';
 import { NotificationsService } from './notifications.service';
 import { NotificationType } from './notification.entity';
-import { MailService } from '../mail/mail.service';
 
 export interface NotificationPayload {
   userId: string;

@@ -1,5 +1,6 @@
-import { TypeOrmEnrollmentsRepository } from './typeorm-enrollments.repository';
 import { Enrollment } from '../enrollments/enrollment.entity';
+
+import { TypeOrmEnrollmentsRepository } from './typeorm-enrollments.repository';
 
 const mockTypeOrmRepo = () => ({
   findOne: jest.fn(),

@@ -11,10 +11,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
-import { RemindersService } from './reminders.service';
-import { Reminder } from './reminder.entity';
+
 import { Enrollment } from '../enrollments/enrollment.entity';
 import { MailService } from '../mail/mail.service';
+
+import { RemindersService } from './reminders.service';
+import { Reminder } from './reminder.entity';
 
 // ─── Mock factories ──────────────────────────────────────────────────────────
 

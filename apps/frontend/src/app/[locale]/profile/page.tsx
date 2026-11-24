@@ -4,13 +4,15 @@ import { useEffect, useState, useCallback, useRef, type FormEvent, type ChangeEv
 import Image from 'next/image';
 import Link from 'next/link';
 import { useTranslations, useLocale } from 'next-intl';
-import api from '@/lib/api';
-import { Button } from '@/components/ui/Button';
+
 import WalletSection from './WalletSection';
 import ReferralSection from './ReferralSection';
 import NotificationPreferences from './NotificationPreferences';
 import LearningStats from './LearningStats';
 import SecuritySettings from './SecuritySettings';
+
+import api from '@/lib/api';
+import { Button } from '@/components/ui/Button';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { useBookmarksStore } from '@/store/bookmarks.store';
 

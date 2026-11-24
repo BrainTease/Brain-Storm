@@ -1,19 +1,20 @@
 import './instrument';
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
-import { TransformInterceptor } from './common/interceptors/transform.interceptor';
-import { SanitizationPipe } from './common/pipes/sanitization.pipe';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { writeFileSync } from 'fs';
 import { join } from 'path';
-import { MetricsInterceptor } from './metrics/metrics.interceptor';
-import { MetricsService } from './metrics/metrics.service';
 // #709: gzip/brotli compression — reduces payload size by 60–80 % for JSON
 import * as compression from 'compression';
+
+import { AppModule } from './app.module';
+import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
+import { TransformInterceptor } from './common/interceptors/transform.interceptor';
+import { SanitizationPipe } from './common/pipes/sanitization.pipe';
+import { MetricsInterceptor } from './metrics/metrics.interceptor';
+import { MetricsService } from './metrics/metrics.service';
 import { SparseFieldsInterceptor } from './common/interceptors/sparse-fields.interceptor';
 
 async function bootstrap() {

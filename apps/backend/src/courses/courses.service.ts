@@ -6,14 +6,16 @@ import {
 } from '@nestjs/common';
 import { Cache } from 'cache-manager';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Course, CourseStatus } from './course.entity';
-import { CourseQueryDto } from './dto/course-query.dto';
+
 import { SearchService } from '../search/search.service';
 import {
   CoursesRepository,
   COURSES_REPOSITORY_TOKEN,
 } from '../repositories/courses-repository.interface';
 import { PaginatedResponseDto } from '../common/dto/api-response.dto';
+
+import { Course, CourseStatus } from './course.entity';
+import { CourseQueryDto } from './dto/course-query.dto';
 
 @Injectable()
 export class CoursesService {

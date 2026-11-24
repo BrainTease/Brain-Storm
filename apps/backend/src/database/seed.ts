@@ -1,7 +1,9 @@
-import { env } from '../config/env';
 import { NestFactory } from '@nestjs/core';
 import { Logger } from '@nestjs/common';
+
+import { env } from '../config/env';
 import { AppModule } from '../app.module';
+
 import { SeedService } from './seed.service';
 
 async function bootstrap() {

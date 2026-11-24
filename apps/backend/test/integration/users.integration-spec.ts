@@ -1,12 +1,13 @@
 import * as request from 'supertest';
+import { INestApplication } from '@nestjs/common';
+import { DataSource } from 'typeorm';
+
 import {
   setupIntegrationTest,
   teardownIntegrationTest,
   clearDatabase,
   createAuthToken,
 } from './setup';
-import { INestApplication } from '@nestjs/common';
-import { DataSource } from 'typeorm';
 
 interface TestContext {
   app: INestApplication;

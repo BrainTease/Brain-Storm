@@ -3,8 +3,9 @@ import { PassportStrategy } from '@nestjs/passport';
 import { InjectRepository } from '@nestjs/typeorm';
 import { HeaderAPIKeyStrategy } from 'passport-headerapikey';
 import { Repository } from 'typeorm';
-import { ApiKey } from './api-key.entity';
 import * as crypto from 'crypto';
+
+import { ApiKey } from './api-key.entity';
 
 @Injectable()
 export class ApiKeyStrategy extends PassportStrategy(HeaderAPIKeyStrategy, 'api-key') {

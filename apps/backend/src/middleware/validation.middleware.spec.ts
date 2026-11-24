@@ -1,8 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ValidationMiddleware } from './validation.middleware';
 import { BadRequestException } from '@nestjs/common';
 import { Request, Response } from 'express';
 import * as Joi from 'joi';
+
+import { ValidationMiddleware } from './validation.middleware';
 
 describe('ValidationMiddleware', () => {
   let middleware: ValidationMiddleware;

@@ -2,8 +2,9 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { CdnAsset, ContentType } from './cdn-asset.entity';
 import * as crypto from 'crypto';
+
+import { CdnAsset, ContentType } from './cdn-asset.entity';
 
 @Injectable()
 export class CdnService {

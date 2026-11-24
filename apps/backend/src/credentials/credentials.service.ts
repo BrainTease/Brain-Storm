@@ -7,10 +7,12 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Credential } from './credential.entity';
+
 import { StellarService } from '../stellar/stellar.service';
 import { KycService } from '../kyc/kyc.service';
 import { CoursesService } from '../courses/courses.service';
+
+import { Credential } from './credential.entity';
 
 @Injectable()
 export class CredentialsService {

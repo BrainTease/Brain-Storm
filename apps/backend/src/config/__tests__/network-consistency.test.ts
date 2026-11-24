@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { assertNetworkConsistency } from '../network-consistency';
+
 import { getStellarNetworkConfig } from '@brain-storm/sdk';
+
+import { assertNetworkConsistency } from '../network-consistency';
 
 describe('assertNetworkConsistency (#1218)', () => {
   it('passes when network is known and no overrides', () => {

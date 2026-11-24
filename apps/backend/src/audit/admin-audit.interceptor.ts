@@ -1,8 +1,7 @@
 import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { Observable } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
 import { tap, catchError } from 'rxjs/operators';
-import { throwError } from 'rxjs';
 import { AuditService } from './audit.service';
 import { AuditAction } from './audit-log.entity';
 import { AUDIT_LOG_METADATA_KEY, AuditLogMetadata } from './audit-log.decorator';

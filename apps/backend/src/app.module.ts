@@ -1,7 +1,5 @@
 import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { ShutdownMiddleware, CacheHeadersMiddleware } from './middleware';
-import { CorrelationMiddleware } from './common/logger/correlation.middleware';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CacheModule } from '@nestjs/cache-manager';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
@@ -9,6 +7,11 @@ import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { SentryModule } from '@sentry/nestjs/setup';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ScheduleModule } from '@nestjs/schedule';
+import * as redisStore from 'cache-manager-redis-store';
+import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
+
+import { ShutdownMiddleware, CacheHeadersMiddleware } from './middleware';
+import { CorrelationMiddleware } from './common/logger/correlation.middleware';
 import { AuthModule } from './auth';
 import { CoursesModule } from './courses/courses.module';
 import { UsersModule } from './users';
@@ -51,8 +54,6 @@ import { PaymentsModule } from './payments';
 import { GatewayLoggingInterceptor } from './gateway/gateway.interceptor';
 import { WsGatewayModule } from './ws-gateway/ws-gateway.module';
 import { AppGraphQLModule } from './graphql/graphql.module';
-import * as redisStore from 'cache-manager-redis-store';
-import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
 import configuration from './config/configuration';
 import { validationSchema } from './config/validation.schema';
 import { DatabaseModule } from './database/database.module';

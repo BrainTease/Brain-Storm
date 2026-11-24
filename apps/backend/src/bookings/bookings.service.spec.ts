@@ -1,10 +1,12 @@
 import { ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
+
+import { NotificationsService } from '../notifications/notifications.service';
+
 import { BookingService } from './booking.service';
 import { BookingRequest, BookingStatus } from './booking-request.entity';
 import { AvailabilitySlot } from './availability-slot.entity';
-import { NotificationsService } from '../notifications/notifications.service';
 
 describe('BookingService', () => {
   let service: BookingService;

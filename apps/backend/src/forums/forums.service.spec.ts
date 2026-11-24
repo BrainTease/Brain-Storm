@@ -1,12 +1,14 @@
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { ForumsService } from './forums.service';
-import { Post } from './post.entity';
-import { Reply } from './reply.entity';
+
 import { Course } from '../courses/course.entity';
 import { ModerationService } from '../moderation/moderation.service';
 import { SearchService } from '../search/search.service';
+
+import { ForumsService } from './forums.service';
+import { Post } from './post.entity';
+import { Reply } from './reply.entity';
 import { CreatePostDto } from './dto/create-post.dto';
 import { CreateReplyDto } from './dto/create-reply.dto';
 

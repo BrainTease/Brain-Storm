@@ -3,8 +3,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThan } from 'typeorm';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
-import { TokenBlacklist } from './token-blacklist.entity';
 import * as crypto from 'crypto';
+
+import { TokenBlacklist } from './token-blacklist.entity';
 
 @Injectable()
 export class TokenBlacklistService {

@@ -2,8 +2,7 @@ import { Controller, Get, Query, Res, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { Response } from 'express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { RolesGuard } from '../auth/roles.guard';
-import { Roles } from '../auth/roles.guard';
+import { RolesGuard, Roles } from '../auth/roles.guard';
 import { AdminAnalyticsService } from './admin-analytics.service';
 import { AdminDashboardQueryDto, ExportQueryDto } from './admin-analytics.dto';
 

@@ -1,5 +1,11 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+
+import { CredentialsModule } from '../credentials/credentials.module';
+import { NotificationsModule } from '../notifications/notifications.module';
+import { UsersModule } from '../users/users.module';
+import { LoggerModule } from '../common/logger/logger.module';
+
 import { StellarService } from './stellar.service';
 import { StellarController, CredentialsController } from './stellar.controller';
 import { NetworkMonitorService } from './network-monitor.service';
@@ -12,10 +18,6 @@ import { TransactionBuilderService } from './transaction-builder.service';
 import { ContractEventDispatcher } from './event-handlers/contract-event.dispatcher';
 import { AnalyticsEventHandler } from './event-handlers/analytics-event.handler';
 import { TokenEventHandler } from './event-handlers/token-event.handler';
-import { CredentialsModule } from '../credentials/credentials.module';
-import { NotificationsModule } from '../notifications/notifications.module';
-import { UsersModule } from '../users/users.module';
-import { LoggerModule } from '../common/logger/logger.module';
 
 @Module({
   imports: [

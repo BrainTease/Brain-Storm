@@ -1,10 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { RecommendationSignalsService } from './recommendation-signals.service';
-import { RecommendationSignal, SignalType } from './recommendation-signal.entity';
+
 import { Enrollment } from '../enrollments/enrollment.entity';
 import { Course } from '../courses/course.entity';
+
+import { RecommendationSignalsService } from './recommendation-signals.service';
+import { RecommendationSignal, SignalType } from './recommendation-signal.entity';
 
 const mockCache = {
   get: jest.fn().mockResolvedValue(null),

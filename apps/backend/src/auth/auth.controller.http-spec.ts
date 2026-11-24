@@ -10,14 +10,10 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import * as request from 'supertest';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
-import { AuthController } from './auth.controller';
-import { AuthService } from './auth.service';
-import { StellarAuthService } from './stellar-auth.service';
+
 import { UsersService } from '../users/users.service';
 import { MailService } from '../mail/mail.service';
 import { User } from '../users/user.entity';
-import { RefreshToken } from './refresh-token.entity';
-import { PasswordResetToken } from './password-reset-token.entity';
 import {
   getTestDatabaseConfig,
   getTestDataSource,
@@ -34,6 +30,12 @@ import {
   cleanDatabase,
   expectErrorResponse,
 } from '../test/http-test-helpers';
+
+import { AuthController } from './auth.controller';
+import { AuthService } from './auth.service';
+import { StellarAuthService } from './stellar-auth.service';
+import { RefreshToken } from './refresh-token.entity';
+import { PasswordResetToken } from './password-reset-token.entity';
 
 describe('AuthController (HTTP Integration)', () => {
   let app: INestApplication;

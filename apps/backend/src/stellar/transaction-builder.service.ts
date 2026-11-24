@@ -9,8 +9,10 @@ import {
   FeeBumpTransaction,
   Transaction,
 } from '@stellar/stellar-sdk';
-import { StellarClientFactory } from './stellar-client.factory';
+
 import { StructuredLoggerService } from '../common/logger/structured-logger.service';
+
+import { StellarClientFactory } from './stellar-client.factory';
 
 export interface TransactionBuildOptions {
   fee?: number;

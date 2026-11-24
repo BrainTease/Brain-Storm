@@ -1,5 +1,6 @@
-import { SortOption } from '@/hooks/useCourseSearch';
 import { DURATIONS, SORT_OPTIONS, LANGUAGES, PRICE_OPTIONS } from './CourseFilters';
+
+import { SortOption } from '@/hooks/useCourseSearch';
 
 interface ActiveFiltersProps {
   level: string;

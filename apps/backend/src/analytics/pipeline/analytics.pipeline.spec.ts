@@ -6,13 +6,14 @@
  * All I/O is replaced with jest mocks — no database or cache required.
  */
 
+import { CourseAnalytics } from '../course-analytics.entity';
+
 import { AggregationStage } from './aggregation.stage';
 import { CacheStage } from './cache.stage';
 import { PersistenceStage } from './persistence.stage';
 import { DataCollectionStage } from './data-collection.stage';
 import { AnalyticsPipeline } from './analytics.pipeline';
 import { PipelineContext } from './pipeline.types';
-import { CourseAnalytics } from '../course-analytics.entity';
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 

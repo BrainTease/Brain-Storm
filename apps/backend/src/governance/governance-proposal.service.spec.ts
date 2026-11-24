@@ -1,6 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+
+import { PaginatedResponseDto } from '../common/dto/api-response.dto';
+
 import { GovernanceProposalService } from './governance-proposal.service';
 import {
   GOVERNANCE_PROPOSAL_REPOSITORY,
@@ -13,7 +16,6 @@ import {
   ProposalQueryDto,
   VoteDto,
 } from './dto/governance-proposal.dto';
-import { PaginatedResponseDto } from '../common/dto/api-response.dto';
 
 // ─── Fixtures ────────────────────────────────────────────────────────────────
 

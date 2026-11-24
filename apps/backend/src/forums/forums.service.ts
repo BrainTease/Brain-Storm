@@ -1,17 +1,19 @@
-import { Role } from '../common/enums/role.enum';
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+
+import { Role } from '../common/enums/role.enum';
 import { Course } from '../courses/course.entity';
-import { CreatePostDto } from './dto/create-post.dto';
-import { CreateReplyDto } from './dto/create-reply.dto';
-import { Post } from './post.entity';
-import { Reply } from './reply.entity';
 import { ModerationService } from '../moderation/moderation.service';
 import { ContentType } from '../moderation/moderation.enums';
 import { SearchService } from '../search/search.service';
 import { PaginationDto } from '../common/dto/pagination.dto';
 import { PaginatedListDto } from '../common/dto/paginated-list.dto';
+
+import { CreatePostDto } from './dto/create-post.dto';
+import { CreateReplyDto } from './dto/create-reply.dto';
+import { Post } from './post.entity';
+import { Reply } from './reply.entity';
 
 @Injectable()
 export class ForumsService {

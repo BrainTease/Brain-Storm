@@ -2,11 +2,13 @@
 
 import React from 'react';
 import Image from 'next/image';
+
+import { NFTMetadataBadge } from './NFTMetadataBadge';
+
 import { Card } from '@/components/ui/Card';
 import { formatDateShort } from '@/lib/date-utils';
 import { Button } from '@/components/ui/Button';
 import { TokenBalance } from '@/components/ui/TokenBalance';
-import { NFTMetadataBadge } from './NFTMetadataBadge';
 
 export interface NFTItem {
   id: string | number;

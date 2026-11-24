@@ -1,8 +1,10 @@
-import { THROTTLE } from '../rate-limit/rate-limit.config';
 import { Body, Controller, Get, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { Request } from 'express';
+
+import { THROTTLE } from '../rate-limit/rate-limit.config';
+
 import { AuthService } from './auth.service';
 import { StellarAuthService } from './stellar-auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';

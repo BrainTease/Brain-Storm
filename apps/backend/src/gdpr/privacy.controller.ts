@@ -1,9 +1,11 @@
-import { THROTTLE } from '../rate-limit/rate-limit.config';
 import { Controller, Delete, Get, Req, Res, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
 import { Response, Request } from 'express';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
+
+import { THROTTLE } from '../rate-limit/rate-limit.config';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+
 import { ExportService } from './export.service';
 
 @ApiTags('privacy')

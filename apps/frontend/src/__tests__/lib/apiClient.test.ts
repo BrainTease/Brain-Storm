@@ -10,6 +10,15 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest';
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
+
+import {
+  mockAuthResponse,
+  mockLoginRequest,
+  mockStudent,
+  mockBeginnerCourse,
+  mockCourses,
+} from '../fixtures';
+
 import {
   apiClient,
   ApiRoutes,
@@ -18,13 +27,6 @@ import {
   type ApiError,
   type ApiSuccess,
 } from '@/lib/apiClient';
-import {
-  mockAuthResponse,
-  mockLoginRequest,
-  mockStudent,
-  mockBeginnerCourse,
-  mockCourses,
-} from '../fixtures';
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
