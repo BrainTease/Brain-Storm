@@ -1,3 +1,6 @@
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { ConfigService } from '@nestjs/config';
+import { HealthCheckService, TypeOrmHealthIndicator, MemoryHealthIndicator, HttpHealthIndicator } from '@nestjs/terminus';
 /**
  * Unit tests for HealthController — issue #995
  *
@@ -10,13 +13,9 @@
  * Redis, or HTTP connections are required.
  */
 import { Test, TestingModule } from '@nestjs/testing';
-import { HealthCheckService, TypeOrmHealthIndicator, MemoryHealthIndicator, HttpHealthIndicator } from '@nestjs/terminus';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import { ConfigService } from '@nestjs/config';
 
 import { HealthController } from './health.controller';
-
 // ── Shared mock builders ──────────────────────────────────────────────────────
 
 function mockLogger() {

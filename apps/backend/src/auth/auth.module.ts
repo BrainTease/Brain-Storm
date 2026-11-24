@@ -1,28 +1,28 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ConfigModule, ConfigService } from '@nestjs/config';
 
-import { UsersModule } from '../users/users.module';
-import { MailModule } from '../mail/mail.module';
-import { EncryptionService } from '../common/encryption.service';
 import { AuditModule } from '../audit/audit.module';
+import { EncryptionService } from '../common/encryption.service';
+import { MailModule } from '../mail/mail.module';
+import { UsersModule } from '../users/users.module';
 
-import { AuthService } from './auth.service';
-import { AuthRepository } from './auth.repository';
-import { StellarAuthService } from './stellar-auth.service';
+import { ApiKeyAuthGuard } from './api-key-auth.guard';
+import { ApiKey } from './api-key.entity';
+import { ApiKeyStrategy } from './api-key.strategy';
 import { AuthController } from './auth.controller';
-import { JwtStrategy } from './jwt.strategy';
+import { AuthRepository } from './auth.repository';
+import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
-import { RolesGuard } from './roles.guard';
+import { JwtStrategy } from './jwt.strategy';
 import { PasswordResetToken } from './password-reset-token.entity';
 import { RefreshToken } from './refresh-token.entity';
-import { ApiKey } from './api-key.entity';
+import { RolesGuard } from './roles.guard';
+import { StellarAuthService } from './stellar-auth.service';
 import { TokenBlacklist } from './token-blacklist.entity';
 import { TokenBlacklistService } from './token-blacklist.service';
-import { ApiKeyStrategy } from './api-key.strategy';
-import { ApiKeyAuthGuard } from './api-key-auth.guard';
 
 @Module({
   imports: [

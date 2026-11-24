@@ -10,8 +10,8 @@ import {
 
 import { User } from '../users/user.entity';
 
-import { Quiz } from './quiz.entity';
 import { QuizAttemptAnswer } from './quiz-attempt-answer.entity';
+import { Quiz } from './quiz.entity';
 
 @Entity('quiz_attempts')
 export class QuizAttempt {

@@ -1,15 +1,14 @@
 'use client';
 
+import type { Exercise, TestResult, ExerciseResult } from '@brain-storm/types';
 import { useCallback, useState } from 'react';
 
-import type { Exercise, TestResult, ExerciseResult } from '@brain-storm/types';
+import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
 
 import { CodeEditor } from './CodeEditor';
 import { runExercise, supportsSandbox } from './SandboxRunner';
-
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
 
 interface ExerciseRunnerProps {
   exercise: Exercise;

@@ -1,13 +1,12 @@
 import { Injectable, NotFoundException, Inject } from '@nestjs/common';
 
-import { StellarService } from '../stellar/stellar.service';
 import { BadgeAwardService } from '../credentials/badge-award.service';
-import { PROGRESS_REPOSITORY_TOKEN } from '../repositories/repositories.module';
 import { ProgressRepository } from '../repositories/progress-repository.interface';
+import { PROGRESS_REPOSITORY_TOKEN } from '../repositories/repositories.module';
+import { StellarService } from '../stellar/stellar.service';
 
-import { Progress } from './progress.entity';
 import { RecordProgressDto } from './dto/record-progress.dto';
-
+import { Progress } from './progress.entity';
 /**
  * ProgressService
  *
@@ -17,6 +16,7 @@ import { RecordProgressDto } from './dto/record-progress.dto';
  * (#818) — this service no longer owns CredentialsService or the referral-reward
  * minting logic.
  */
+
 @Injectable()
 export class ProgressService {
   constructor(

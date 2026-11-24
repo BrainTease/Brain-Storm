@@ -4,9 +4,9 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 
 import { Enrollment } from '../enrollments/enrollment.entity';
 
-import { PrerequisitesService } from './prerequisites.service';
 import { CoursePrerequisite } from './course-prerequisite.entity';
 import { Course } from './course.entity';
+import { PrerequisitesService } from './prerequisites.service';
 
 describe('PrerequisitesService', () => {
   let service: PrerequisitesService;

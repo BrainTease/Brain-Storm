@@ -1,9 +1,10 @@
+import * as crypto from 'crypto';
+
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { InjectRepository } from '@nestjs/typeorm';
 import { HeaderAPIKeyStrategy } from 'passport-headerapikey';
 import { Repository } from 'typeorm';
-import * as crypto from 'crypto';
 
 import { ApiKey } from './api-key.entity';
 

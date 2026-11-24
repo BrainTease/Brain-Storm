@@ -1,7 +1,7 @@
-import { UseInterceptors, CallHandler, ExecutionContext, Injectable, NestInterceptor, Inject } from '@nestjs/common';
-import { Observable, throwError } from 'rxjs';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { UseInterceptors, CallHandler, ExecutionContext, Injectable, NestInterceptor, Inject } from '@nestjs/common';
 import { Cache } from 'cache-manager';
+import { Observable, throwError } from 'rxjs';
 
 export interface RateLimitConfig {
   limit: number;

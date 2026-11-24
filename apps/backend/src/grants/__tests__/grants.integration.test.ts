@@ -1,3 +1,4 @@
+import { INestApplication, ValidationPipe, CanActivate, ExecutionContext } from '@nestjs/common';
 /**
  * Issue #843 — Integration Tests for Grants API Endpoints
  *
@@ -10,20 +11,17 @@
  *  - Schema is synchronised before the suite starts and the table is truncated
  *    between tests via `beforeEach` to guarantee isolation.
  */
-
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe, CanActivate, ExecutionContext } from '@nestjs/common';
 import { TypeOrmModule, getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import * as request from 'supertest';
+import { Repository } from 'typeorm';
 
-import { GrantsModule } from '../grants.module';
-import { Grant } from '../grant.entity';
 import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
-
+import { Grant } from '../grant.entity';
+import { GrantsModule } from '../grants.module';
 // ── Auth stub ────────────────────────────────────────────────────────────────
-
 /** Passthrough guard that injects a deterministic test user into every request. */
+
 class MockJwtAuthGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const req = context.switchToHttp().getRequest();

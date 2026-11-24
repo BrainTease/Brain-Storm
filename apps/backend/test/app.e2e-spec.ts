@@ -1,16 +1,17 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
-import * as request from 'supertest';
+import { Test, TestingModule } from '@nestjs/testing';
 import { TypeOrmModule, getRepositoryToken } from '@nestjs/typeorm';
+import * as request from 'supertest';
 import { Repository } from 'typeorm';
+
 import { AuthModule } from '../src/auth/auth.module';
+import { PasswordResetToken } from '../src/auth/password-reset-token.entity';
+import { RefreshToken } from '../src/auth/refresh-token.entity';
+import { Course } from '../src/courses/course.entity';
 import { CoursesModule } from '../src/courses/courses.module';
-import { UsersModule } from '../src/users/users.module';
 import { StellarModule } from '../src/stellar/stellar.module';
 import { User } from '../src/users/user.entity';
-import { Course } from '../src/courses/course.entity';
-import { RefreshToken } from '../src/auth/refresh-token.entity';
-import { PasswordResetToken } from '../src/auth/password-reset-token.entity';
+import { UsersModule } from '../src/users/users.module';
 
 describe('App E2E', () => {
   let app: INestApplication;

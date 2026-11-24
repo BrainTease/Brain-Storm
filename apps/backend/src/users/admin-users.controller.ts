@@ -24,11 +24,11 @@ import {
 } from '@nestjs/swagger';
 
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+import { RolesGuard } from '../auth/roles.guard';
 
-import { UsersService } from './users.service';
 import { AccountService } from './account.service';
+import { UsersService } from './users.service';
 
 @ApiTags('admin')
 @ApiBearerAuth()

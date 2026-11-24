@@ -9,19 +9,19 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThanOrEqual } from 'typeorm';
 
-import { PaginationDto } from '../common/dto/pagination.dto';
 import { PaginatedResponseDto } from '../common/dto/api-response.dto';
+import { PaginationDto } from '../common/dto/pagination.dto';
 
-import { Notification, NotificationType } from './notification.entity';
+import { EmailNotifierService, EmailNotificationContext } from './email-notifier.service';
+import { InAppNotifierService } from './inapp-notifier.service';
 import { NotificationPreference } from './notification-preference.entity';
+import { Notification, NotificationType } from './notification.entity';
+import { NotificationsGateway } from './notifications.gateway';
+import { PushNotifierService } from './push-notifier.service';
 import {
   ScheduledNotification,
   ScheduledNotificationStatus,
 } from './scheduled-notification.entity';
-import { NotificationsGateway } from './notifications.gateway';
-import { EmailNotifierService, EmailNotificationContext } from './email-notifier.service';
-import { PushNotifierService } from './push-notifier.service';
-import { InAppNotifierService } from './inapp-notifier.service';
 
 @Injectable()
 export class NotificationsService implements OnModuleInit {

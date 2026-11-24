@@ -1,3 +1,7 @@
+import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
+import { W3CTraceContextPropagator } from '@opentelemetry/core';
+import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
+import { Resource } from '@opentelemetry/resources';
 /**
  * OpenTelemetry SDK initialiser — must be imported before any other module.
  * Provides distributed tracing with context propagation across HTTP and async
@@ -13,12 +17,8 @@
  *   OTEL_TRACES_SAMPLER_ARG      - Sampling ratio 0-1 (default: 1.0 in dev, 0.1 in prod)
  */
 import { NodeSDK } from '@opentelemetry/sdk-node';
-import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
-import { Resource } from '@opentelemetry/resources';
-import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
-import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
 import { TraceIdRatioBasedSampler } from '@opentelemetry/sdk-trace-base';
-import { W3CTraceContextPropagator } from '@opentelemetry/core';
+import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 
 import { env } from './config/env';
 

@@ -12,9 +12,11 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags, ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsDateString, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
+import { IsArray, IsDateString, IsOptional, IsString, ValidateNested } from 'class-validator';
+
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+
 import { BookingService } from './booking.service';
 
 class AvailabilitySlotDto {

@@ -1,11 +1,11 @@
-import { of } from 'rxjs';
 import { ExecutionContext } from '@nestjs/common';
+import { of } from 'rxjs';
 
 import { ApiResponseDto, PaginatedResponseDto } from '../dto/api-response.dto';
 
 import { TransformInterceptor } from './transform.interceptor';
-
 /** Build a minimal ExecutionContext mock with the given HTTP status code */
+
 function buildCtx(statusCode = 200): ExecutionContext {
   const getResponse = jest.fn().mockReturnValue({ statusCode });
   const switchToHttp = jest.fn().mockReturnValue({ getResponse });

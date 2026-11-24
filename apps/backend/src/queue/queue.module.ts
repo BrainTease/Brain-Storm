@@ -1,23 +1,23 @@
-import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
+import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 
 import { EmailModule } from '../email/email.module';
 import { SearchModule } from '../search/search.module';
 
+import { CertificateWorker } from './certificate.worker';
+import { EmailWorker } from './email.worker';
+import { IndexingWorker } from './indexing.worker';
+import { NotificationWorker } from './notification.worker';
+import { QueueMetricsService } from './queue-metrics.service';
+import { QueueSchedulerService } from './queue-scheduler.service';
 import {
   QUEUE_EMAIL,
   QUEUE_NOTIFICATION,
   QUEUE_CERTIFICATE,
   QUEUE_INDEXING,
 } from './queue.constants';
-import { EmailWorker } from './email.worker';
-import { NotificationWorker } from './notification.worker';
-import { CertificateWorker } from './certificate.worker';
-import { IndexingWorker } from './indexing.worker';
-import { QueueSchedulerService } from './queue-scheduler.service';
-import { QueueMetricsService } from './queue-metrics.service';
 
 const defaultJobOptions = {
   attempts: 3,

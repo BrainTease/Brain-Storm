@@ -2,8 +2,8 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 
 import { PaginatedResponseDto } from '../common/dto/api-response.dto';
 
-import { CoursesService } from './courses.service';
 import { Course, CourseStatus } from './course.entity';
+import { CoursesService } from './courses.service';
 
 describe('CoursesService', () => {
   let service: CoursesService;

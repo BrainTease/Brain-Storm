@@ -1,16 +1,16 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
+import { CacheManagementModule } from '../cache/cache-management.module';
+import { Enrollment } from '../enrollments/enrollment.entity';
+import { Progress } from '../progress/progress.entity';
 import { StellarModule } from '../stellar/stellar.module';
 import { User } from '../users/user.entity';
-import { Progress } from '../progress/progress.entity';
-import { Enrollment } from '../enrollments/enrollment.entity';
-import { CacheManagementModule } from '../cache/cache-management.module';
 
 import { LeaderboardController } from './leaderboard.controller';
 import { LeaderboardService } from './leaderboard.service';
-import { RedisLeaderboardService } from './redis-leaderboard.service';
 import { RedisLeaderboardController } from './redis-leaderboard.controller';
+import { RedisLeaderboardService } from './redis-leaderboard.service';
 
 @Module({
   imports: [

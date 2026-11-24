@@ -1,8 +1,8 @@
-import { NestFactory } from '@nestjs/core';
 import { Logger } from '@nestjs/common';
+import { NestFactory } from '@nestjs/core';
 
-import { env } from '../config/env';
 import { AppModule } from '../app.module';
+import { env } from '../config/env';
 
 import { SeedService } from './seed.service';
 

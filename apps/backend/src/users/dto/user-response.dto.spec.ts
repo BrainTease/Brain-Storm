@@ -7,8 +7,8 @@ import { User } from '../user.entity';
  * entity is stripped before a response reaches the client.
  */
 import { UserResponseDto, toUserResponseDto, toUserResponseDtos } from './user-response.dto';
-
 /** Build a fully-populated User entity including all sensitive fields. */
+
 function buildUser(overrides: Partial<User> = {}): User {
   const user = new User();
   user.id = 'user-uuid-1';

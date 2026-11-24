@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
-import * as winston from 'winston';
 import { v4 as uuidv4 } from 'uuid';
+import * as winston from 'winston';
 
 import { env } from '../../config/env';
 

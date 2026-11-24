@@ -1,13 +1,13 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { JwtService } from '@nestjs/jwt';
 import { BadRequestException, UnauthorizedException, ForbiddenException } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { Test, TestingModule } from '@nestjs/testing';
 import * as bcrypt from 'bcrypt';
 
-import { UsersService } from '../users/users.service';
 import { MailService } from '../mail/mail.service';
+import { UsersService } from '../users/users.service';
 
-import { AuthService } from './auth.service';
 import { AuthRepository } from './auth.repository';
+import { AuthService } from './auth.service';
 
 describe('AuthService', () => {
   let service: AuthService;

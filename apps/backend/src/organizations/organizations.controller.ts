@@ -11,13 +11,13 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { PaginationDto } from '../common/dto/pagination.dto';
 
-import { OrganizationsService } from './organizations.service';
 import { CreateOrgDto, InviteMemberDto } from './dto/organization.dto';
 import { OrgRole } from './organization.entity';
+import { OrganizationsService } from './organizations.service';
 
 @Controller('v1/organizations')
 @UseGuards(JwtAuthGuard)

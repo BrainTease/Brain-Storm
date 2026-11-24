@@ -1,3 +1,5 @@
+import * as crypto from 'crypto';
+
 /**
  * #808 — Modularised Certificate-Issuance Orchestrator
  *
@@ -12,16 +14,14 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import * as crypto from 'crypto';
 
 import { Enrollment } from '../enrollments/enrollment.entity';
 
-import { Certificate } from './certificate.entity';
 import { BadgeAwardService } from './badge-award.service';
-import { IssueCertificateDto } from './dto/issue-certificate.dto';
-import { CertificateValidationService } from './certificate-validation.service';
 import { CertificateMintingService } from './certificate-minting.service';
-
+import { CertificateValidationService } from './certificate-validation.service';
+import { Certificate } from './certificate.entity';
+import { IssueCertificateDto } from './dto/issue-certificate.dto';
 /**
  * CertificatesService
  *
@@ -33,6 +33,7 @@ import { CertificateMintingService } from './certificate-minting.service';
  *  - Referral reward minting is not silently skipped.
  *  - A single unit test covers the award path (badge-award.service.spec.ts).
  */
+
 @Injectable()
 export class CertificatesService {
   constructor(

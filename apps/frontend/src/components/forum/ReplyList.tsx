@@ -1,12 +1,13 @@
 'use client';
+
 import { useState } from 'react';
 
-import { VoteButton } from './VoteButton';
-import { RichTextEditor } from './RichTextEditor';
-
-import { Reply, forumApi } from '@/lib/forumApi';
-import { formatDateShort } from '@/lib/date-utils';
 import { Button } from '@/components/ui/Button';
+import { formatDateShort } from '@/lib/date-utils';
+import { Reply, forumApi } from '@/lib/forumApi';
+
+import { RichTextEditor } from './RichTextEditor';
+import { VoteButton } from './VoteButton';
 
 interface ReplyListProps {
   courseId: string;

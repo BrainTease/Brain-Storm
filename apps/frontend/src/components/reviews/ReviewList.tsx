@@ -1,12 +1,13 @@
 'use client';
+
 import { useEffect, useState, useCallback } from 'react';
 
-import { StarRating } from './StarRating';
-import { InstructorReply } from './InstructorReply';
-import { FlagModal } from './FlagModal';
-
-import { reviewsApi, Review, SortCriterion } from '@/lib/reviewsApi';
 import { formatDateShort } from '@/lib/date-utils';
+import { reviewsApi, Review, SortCriterion } from '@/lib/reviewsApi';
+
+import { FlagModal } from './FlagModal';
+import { InstructorReply } from './InstructorReply';
+import { StarRating } from './StarRating';
 
 interface ReviewListProps {
   courseId: string;

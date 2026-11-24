@@ -1,20 +1,20 @@
 'use client';
 
-import { useEffect, useState, useCallback, useRef, type FormEvent, type ChangeEvent } from 'react';
+import { useTranslations, useLocale } from 'next-intl';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useTranslations, useLocale } from 'next-intl';
+import { useEffect, useState, useCallback, useRef, type FormEvent, type ChangeEvent } from 'react';
 
-import WalletSection from './WalletSection';
-import ReferralSection from './ReferralSection';
-import NotificationPreferences from './NotificationPreferences';
-import LearningStats from './LearningStats';
-import SecuritySettings from './SecuritySettings';
-
-import api from '@/lib/api';
-import { Button } from '@/components/ui/Button';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
+import { Button } from '@/components/ui/Button';
+import api from '@/lib/api';
 import { useBookmarksStore } from '@/store/bookmarks.store';
+
+import LearningStats from './LearningStats';
+import NotificationPreferences from './NotificationPreferences';
+import ReferralSection from './ReferralSection';
+import SecuritySettings from './SecuritySettings';
+import WalletSection from './WalletSection';
 
 interface User {
   id: string;

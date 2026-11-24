@@ -6,11 +6,11 @@ import { Course } from '../courses/course.entity';
 import { ModerationService } from '../moderation/moderation.service';
 import { SearchService } from '../search/search.service';
 
+import { CreatePostDto } from './dto/create-post.dto';
+import { CreateReplyDto } from './dto/create-reply.dto';
 import { ForumsService } from './forums.service';
 import { Post } from './post.entity';
 import { Reply } from './reply.entity';
-import { CreatePostDto } from './dto/create-post.dto';
-import { CreateReplyDto } from './dto/create-reply.dto';
 
 describe('ForumsService', () => {
   let service: ForumsService;

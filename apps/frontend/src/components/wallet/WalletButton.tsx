@@ -2,11 +2,11 @@
 
 import React from 'react';
 
-import { WalletConnectButton } from './WalletConnectButton';
+import { useWallet } from '@/lib/wallet';
+
 import { AccountBadge } from './AccountBadge';
 import { NetworkSelector } from './NetworkSelector';
-
-import { useWallet } from '@/lib/wallet';
+import { WalletConnectButton } from './WalletConnectButton';
 
 export interface WalletButtonProps {
   className?: string;

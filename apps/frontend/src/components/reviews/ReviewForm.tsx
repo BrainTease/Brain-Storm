@@ -1,13 +1,14 @@
 'use client';
+
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { z } from 'zod';
 
-import { StarRating } from './StarRating';
-
 import { Button } from '@/components/ui/Button';
 import { reviewsApi } from '@/lib/reviewsApi';
+
+import { StarRating } from './StarRating';
 
 const MAX_CHARS = 1000;
 const COUNTER_THRESHOLD = 900;

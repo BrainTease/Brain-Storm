@@ -1,5 +1,5 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
+import { Test, TestingModule } from '@nestjs/testing';
 import { Horizon, SorobanRpc } from '@stellar/stellar-sdk';
 
 import { StellarClientFactory } from './stellar-client.factory';

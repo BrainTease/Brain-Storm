@@ -6,11 +6,11 @@ import { BusinessLogicService } from '../common/services/business-logic.service'
 import { CoursesService } from './courses.service';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { UpdateCourseDto } from './dto/update-course.dto';
-
 /**
  * Business logic service for courses
  * Handles authorization, validation, and orchestration of course operations
  */
+
 @Injectable()
 export class CoursesBusinessService extends BusinessLogicService {
   constructor(private readonly coursesService: CoursesService) {

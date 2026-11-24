@@ -8,9 +8,9 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
-import { StellarService } from '../stellar/stellar.service';
-import { KycService } from '../kyc/kyc.service';
 import { CoursesService } from '../courses/courses.service';
+import { KycService } from '../kyc/kyc.service';
+import { StellarService } from '../stellar/stellar.service';
 
 import { Credential } from './credential.entity';
 

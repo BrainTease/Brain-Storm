@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, MoreThanOrEqual } from 'typeorm';
-import { ConfigService } from '@nestjs/config';
 
 import { Enrollment } from '../enrollments/enrollment.entity';
 import { MailService } from '../mail/mail.service';

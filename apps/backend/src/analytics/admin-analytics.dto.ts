@@ -1,6 +1,6 @@
-import { IsOptional, IsDateString, IsNumber, Min, Max, IsIn } from 'class-validator';
-import { ApiPropertyOptional } from '@nestjs/swagger';
 import type { ISODateString, AdminDashboardQuery, AdminAggregationQuery, ExportQuery } from '@brain-storm/types';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsOptional, IsDateString, IsNumber, Min, Max, IsIn } from 'class-validator';
 
 export class AdminDashboardQueryDto implements Partial<Pick<AdminDashboardQuery, 'startDate' | 'endDate'>> {
   @ApiPropertyOptional()

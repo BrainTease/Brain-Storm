@@ -1,8 +1,8 @@
 import { Controller, Post, Get, Param, Body, UseGuards, Query } from '@nestjs/common';
 
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+import { RolesGuard } from '../auth/roles.guard';
 
 import { PayoutsService } from './payouts.service';
 

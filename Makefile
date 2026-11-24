@@ -1,4 +1,4 @@
-.PHONY: setup dev test build lint lint-complexity clean docker-up docker-down export-openapi audit cargo-audit help
+.PHONY: setup dev test build lint lint-complexity lint-commit lint-naming lint-imports lint-utils quality-local clean docker-up docker-down export-openapi audit cargo-audit help
 
 help:
 	@echo "Brain-Storm Makefile"
@@ -9,6 +9,11 @@ help:
 	@echo "make build           - Build all apps for production"
 	@echo "make lint            - Run linter on all apps"
 	@echo "make lint-complexity - Report cyclomatic/cognitive complexity violations"
+	@echo "make quality-local   - Run all dependency-free quality checks"
+	@echo "make lint-commit     - Check commitlint config and PR template"
+	@echo "make lint-naming     - Check kebab-case source file names"
+	@echo "make lint-imports    - Check import order and duplicate imports"
+	@echo "make lint-utils      - Check for duplicate exported utilities"
 	@echo "make clean           - Remove node_modules and build artifacts"
 	@echo "make docker-up       - Start PostgreSQL and Redis via Docker Compose"
 	@echo "make docker-down     - Stop and remove Docker Compose services"
@@ -52,6 +57,24 @@ lint-complexity:
 	npm run lint --workspace=apps/frontend -- --rule 'complexity: [error, {max: 15}]' --no-eslintrc --parser @typescript-eslint/parser || true
 	@echo "==> Checking cognitive complexity (Rust — threshold 25)..."
 	cargo clippy --workspace --all-targets -- -W clippy::cognitive_complexity
+
+quality-local:
+	./scripts/check-commit-and-pr.sh
+	./scripts/check-naming.sh
+	./scripts/check-import-order.sh
+	./scripts/check-duplicate-utils.sh
+
+lint-commit:
+	./scripts/check-commit-and-pr.sh
+
+lint-naming:
+	./scripts/check-naming.sh
+
+lint-imports:
+	./scripts/check-import-order.sh
+
+lint-utils:
+	./scripts/check-duplicate-utils.sh
 
 clean:
 	@echo "==> Cleaning project..."

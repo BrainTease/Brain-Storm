@@ -7,8 +7,8 @@ import { Course, CourseStatus } from '../course.entity';
  * response reaches the client.
  */
 import { CourseResponseDto, toCourseResponseDto, toCourseResponseDtos } from './course-response.dto';
-
 /** Build a fully-populated Course entity including all internal fields. */
+
 function buildCourse(overrides: Partial<Course> = {}): Course {
   const course = new Course();
   course.id = 'course-uuid-1';

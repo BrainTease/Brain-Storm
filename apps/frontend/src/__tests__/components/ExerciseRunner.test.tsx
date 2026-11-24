@@ -1,8 +1,7 @@
-import { describe, it, expect, vi } from 'vitest';
+import type { Exercise } from '@brain-storm/types';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-
-import type { Exercise } from '@brain-storm/types';
+import { describe, it, expect, vi } from 'vitest';
 
 import { ExerciseRunner } from '@/components/exercise/ExerciseRunner';
 import { runExercise, supportsSandbox } from '@/components/exercise/SandboxRunner';

@@ -1,10 +1,10 @@
 import Link from 'next/link';
 
-import { SkeletonBlock } from './SkeletonBlock';
-
 import { Badge } from '@/components/ui/Badge';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { isCourseComplete, type EnrolledCourse } from '@/lib/dashboard';
+
+import { SkeletonBlock } from './SkeletonBlock';
 
 interface EnrolledCourseListProps {
   courses: EnrolledCourse[];

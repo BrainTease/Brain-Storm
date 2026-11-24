@@ -15,7 +15,6 @@
  * Explicitly NOT owned here (remains in AdminService):
  *   • User management (ban, suspend, role change)
  */
-
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -23,10 +22,10 @@ import { Repository } from 'typeorm';
 import { AuditService } from '../audit/audit.service';
 import { PaginatedResponseDto } from '../common/dto/api-response.dto';
 
-import { Dispute, DisputeStatus } from './dispute.entity';
 import { CreateDisputeDto, ResolveDisputeDto, DisputeQueryDto } from './admin.dto';
-
+import { Dispute, DisputeStatus } from './dispute.entity';
 /** Terminal statuses — a dispute in these states cannot be resolved again. */
+
 const TERMINAL_STATUSES: DisputeStatus[] = [DisputeStatus.RESOLVED, DisputeStatus.CLOSED];
 
 @Injectable()

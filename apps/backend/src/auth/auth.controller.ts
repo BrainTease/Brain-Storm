@@ -6,22 +6,22 @@ import { Request } from 'express';
 import { THROTTLE } from '../rate-limit/rate-limit.config';
 
 import { AuthService } from './auth.service';
-import { StellarAuthService } from './stellar-auth.service';
-import { JwtAuthGuard } from './jwt-auth.guard';
-import { Roles } from './roles.decorator';
-import { RolesGuard } from './roles.guard';
 import { AuthDto } from './dto/auth.dto';
-import { LoginDto } from './dto/login.dto';
-import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
-import { ResetPasswordDto } from './dto/reset-password.dto';
-import { RefreshDto } from './dto/refresh.dto';
+import { GenerateApiKeyDto } from './dto/generate-api-key.dto';
+import { LoginDto } from './dto/login.dto';
 import { LogoutDto } from './dto/logout.dto';
 import { MfaCodeDto } from './dto/mfa-code.dto';
-import { GenerateApiKeyDto } from './dto/generate-api-key.dto';
+import { RefreshDto } from './dto/refresh.dto';
+import { ResendVerificationDto } from './dto/resend-verification.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { RevokeApiKeyDto } from './dto/revoke-api-key.dto';
 import { StellarChallengeDto } from './dto/stellar-challenge.dto';
 import { StellarVerifyDto } from './dto/stellar-verify.dto';
+import { JwtAuthGuard } from './jwt-auth.guard';
+import { Roles } from './roles.decorator';
+import { RolesGuard } from './roles.guard';
+import { StellarAuthService } from './stellar-auth.service';
 
 @ApiTags('auth')
 @Controller('auth')

@@ -3,10 +3,9 @@
  *
  * ⚠️ DO NOT RUN — implementation only, per task instructions.
  */
-
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-
 // Mock jwt module to control expiry checks
+
 vi.mock('@/lib/jwt', () => ({
   isTokenExpired: vi.fn(() => false),
 }));

@@ -2,14 +2,14 @@
 
 import { useEffect, useState } from 'react';
 
-import { ProposalCard } from './ProposalCard';
-
+import { Card } from '@/components/ui/Card';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { LoadingState } from '@/components/ui/LoadingState';
 import { Spinner } from '@/components/ui/Spinner';
-import { Card } from '@/components/ui/Card';
 import { Proposal } from '@/store/governanceStore';
+
+import { ProposalCard } from './ProposalCard';
 
 export interface ProposalListProps {
   proposals: Proposal[];

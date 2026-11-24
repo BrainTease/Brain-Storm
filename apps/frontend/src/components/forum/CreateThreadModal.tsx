@@ -5,10 +5,10 @@ import React, { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { z } from 'zod';
 
-import { MarkdownEditor } from './MarkdownEditor';
-
 import { Modal } from '@/components/ui/Modal';
 import { useCreatePost } from '@/hooks/useForum';
+
+import { MarkdownEditor } from './MarkdownEditor';
 
 export const threadSchema = z.object({
   title: z

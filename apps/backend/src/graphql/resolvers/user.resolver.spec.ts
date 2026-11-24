@@ -1,7 +1,7 @@
 import { Test } from '@nestjs/testing';
 
-import { DataLoaderProvider } from '../dataloader.provider';
 import { UsersService } from '../../users/users.service';
+import { DataLoaderProvider } from '../dataloader.provider';
 
 import { UserResolver } from './user.resolver';
 

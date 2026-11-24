@@ -1,8 +1,9 @@
-import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { XpProgress } from '@/components/gamification/XpProgress';
-import { StreakIndicator } from '@/components/gamification/StreakIndicator';
+import { describe, it, expect } from 'vitest';
+
 import { BadgeGrid, type Badge } from '@/components/gamification/BadgeGrid';
+import { StreakIndicator } from '@/components/gamification/StreakIndicator';
+import { XpProgress } from '@/components/gamification/XpProgress';
 
 describe('XpProgress', () => {
   it('renders level and xp values', () => {

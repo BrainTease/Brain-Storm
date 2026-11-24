@@ -1,17 +1,17 @@
 import { Module, forwardRef } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { ScheduleModule } from '@nestjs/schedule';
+import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { NotificationsModule } from '../notifications/notifications.module';
 
-import { Cohort } from './cohort.entity';
 import { CohortMember } from './cohort-member.entity';
-import { CohortSession } from './session.entity';
-import { SessionAttendance } from './session-attendance.entity';
-import { CohortsService } from './cohorts.service';
+import { Cohort } from './cohort.entity';
 import { CohortsController } from './cohorts.controller';
-import { SessionsService } from './sessions.service';
+import { CohortsService } from './cohorts.service';
+import { SessionAttendance } from './session-attendance.entity';
+import { CohortSession } from './session.entity';
 import { SessionsController } from './sessions.controller';
+import { SessionsService } from './sessions.service';
 
 @Module({
   imports: [

@@ -1,3 +1,4 @@
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import {
   Injectable,
   NotFoundException,
@@ -5,14 +6,13 @@ import {
   Inject,
 } from '@nestjs/common';
 import { Cache } from 'cache-manager';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
 
-import { SearchService } from '../search/search.service';
+import { PaginatedResponseDto } from '../common/dto/api-response.dto';
 import {
   CoursesRepository,
   COURSES_REPOSITORY_TOKEN,
 } from '../repositories/courses-repository.interface';
-import { PaginatedResponseDto } from '../common/dto/api-response.dto';
+import { SearchService } from '../search/search.service';
 
 import { Course, CourseStatus } from './course.entity';
 import { CourseQueryDto } from './dto/course-query.dto';

@@ -1,11 +1,11 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigService } from '@nestjs/config';
-import { CacheModule } from '@nestjs/cache-manager';
 import { execSync } from 'child_process';
 import * as path from 'path';
 
-import { StellarService } from './stellar.service';
+import { CacheModule } from '@nestjs/cache-manager';
+import { ConfigService } from '@nestjs/config';
+import { Test, TestingModule } from '@nestjs/testing';
 
+import { StellarService } from './stellar.service';
 /**
  * Soroban Testnet Integration Tests
  *
@@ -15,6 +15,7 @@ import { StellarService } from './stellar.service';
  * Run only on main branch pushes to avoid rate limits.
  * Requires: stellar-cli, docker
  */
+
 describe('StellarService - Soroban Testnet (Integration)', () => {
   let service: StellarService;
   let module: TestingModule;

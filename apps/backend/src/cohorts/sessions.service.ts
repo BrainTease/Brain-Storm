@@ -1,16 +1,16 @@
 import { Injectable, Logger, Inject, forwardRef } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, LessThanOrEqual, MoreThan } from 'typeorm';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { InjectRepository } from '@nestjs/typeorm';
 import * as ics from 'ics';
+import { Repository, LessThanOrEqual, MoreThan } from 'typeorm';
 
-import { NotificationsService } from '../notifications/notifications.service';
-import { PaginationDto } from '../common/dto/pagination.dto';
 import { PaginatedListDto } from '../common/dto/paginated-list.dto';
+import { PaginationDto } from '../common/dto/pagination.dto';
+import { NotificationsService } from '../notifications/notifications.service';
 
-import { CohortSession, SessionStatus } from './session.entity';
-import { SessionAttendance, AttendanceStatus } from './session-attendance.entity';
 import { CreateSessionDto } from './dto/session.dto';
+import { SessionAttendance, AttendanceStatus } from './session-attendance.entity';
+import { CohortSession, SessionStatus } from './session.entity';
 
 @Injectable()
 export class SessionsService {

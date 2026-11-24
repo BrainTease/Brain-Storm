@@ -3,13 +3,13 @@
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 
-import { MarkdownEditor } from './MarkdownEditor';
-import { ReplyItem } from './ReplyItem';
-
 import { useAuth } from '@/hooks/useAuth';
 import { useCreateReply, useFlagContent, useDeletePost } from '@/hooks/useForum';
 import { formatDateTime } from '@/lib/date-utils';
 import { Post, Reply } from '@/lib/forumApi';
+
+import { MarkdownEditor } from './MarkdownEditor';
+import { ReplyItem } from './ReplyItem';
 
 interface ThreadDetailProps {
   post: Post;

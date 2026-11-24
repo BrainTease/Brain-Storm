@@ -1,20 +1,21 @@
+import { join } from 'path';
+
 import { Module } from '@nestjs/common';
 import { GraphQLModule } from '@nestjs/graphql';
-import { join } from 'path';
-import depthLimit from 'graphql-depth-limit';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import depthLimit from 'graphql-depth-limit';
 
-import { UsersModule } from '../users/users.module';
+import { Course } from '../courses/course.entity';
 import { CoursesModule } from '../courses/courses.module';
+import { Progress } from '../progress/progress.entity';
 import { ProgressModule } from '../progress/progress.module';
 import { User } from '../users/user.entity';
-import { Progress } from '../progress/progress.entity';
-import { Course } from '../courses/course.entity';
+import { UsersModule } from '../users/users.module';
 
-import { UserResolver } from './resolvers/user.resolver';
+import { DataLoaderProvider } from './dataloader.provider';
 import { CourseResolver } from './resolvers/course.resolver';
 import { ProgressResolver } from './resolvers/progress.resolver';
-import { DataLoaderProvider } from './dataloader.provider';
+import { UserResolver } from './resolvers/user.resolver';
 
 @Module({
   imports: [

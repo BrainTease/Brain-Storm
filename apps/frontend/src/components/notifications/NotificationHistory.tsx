@@ -1,9 +1,7 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
-
-import { NotificationPreferences } from './NotificationPreferences';
+import { useState } from 'react';
 
 import {
   useNotifications,
@@ -11,6 +9,8 @@ import {
   TYPE_LABELS,
   NotificationType,
 } from '@/hooks/useNotifications';
+
+import { NotificationPreferences } from './NotificationPreferences';
 
 const PAGE_SIZE = 15;
 

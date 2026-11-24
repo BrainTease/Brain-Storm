@@ -1,15 +1,15 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { JwtModule } from '@nestjs/jwt';
+import { Test, TestingModule } from '@nestjs/testing';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 
-import { UsersService } from '../users/users.service';
 import { MailService } from '../mail/mail.service';
-import { User } from '../users/user.entity';
 import { setupTestDatabase, teardownTestDatabase } from '../test/integration-test.setup';
+import { User } from '../users/user.entity';
+import { UsersService } from '../users/users.service';
 
-import { AuthService } from './auth.service';
 import { AuthRepository } from './auth.repository';
+import { AuthService } from './auth.service';
 import { PasswordResetToken } from './password-reset-token.entity';
 import { RefreshToken } from './refresh-token.entity';
 

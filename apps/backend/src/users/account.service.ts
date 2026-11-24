@@ -6,11 +6,11 @@ import {
 } from '../repositories/users-repository.interface';
 
 import { User } from './user.entity';
-
 /**
  * Account and security actions on a user: ban, role change and soft delete. Profile reads and
  * edits stay in UsersService.
  */
+
 @Injectable()
 export class AccountService {
   constructor(

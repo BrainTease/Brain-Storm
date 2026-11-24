@@ -1,3 +1,4 @@
+import type { PaginatedGrants } from '@brain-storm/types';
 /**
  * #809 — Grants: Persistence Layer
  *
@@ -9,10 +10,8 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindOptionsWhere } from 'typeorm';
 
-import type { PaginatedGrants } from '@brain-storm/types';
-
-import { Grant } from './grant.entity';
 import { CreateGrantDto, UpdateGrantDto, PaginateGrantsDto } from './dto/grant.dto';
+import { Grant } from './grant.entity';
 import { GrantsBusinessService } from './grants-business.service';
 
 export type { PaginatedGrants } from '@brain-storm/types';

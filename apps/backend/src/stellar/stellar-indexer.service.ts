@@ -1,8 +1,8 @@
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit, Inject } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Cache } from 'cache-manager';
 import { rpc } from '@stellar/stellar-sdk';
+import { Cache } from 'cache-manager';
 
 import { env } from '../config/env';
 import { CredentialsService } from '../credentials/credentials.service';

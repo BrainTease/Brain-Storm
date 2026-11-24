@@ -4,14 +4,14 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 
 import { MailService } from '../mail/mail.service';
 
-import { NotificationsService } from './notifications.service';
-import { Notification, NotificationType } from './notification.entity';
 import { NotificationPreference } from './notification-preference.entity';
+import { Notification, NotificationType } from './notification.entity';
+import { NotificationsGateway } from './notifications.gateway';
+import { NotificationsService } from './notifications.service';
 import {
   ScheduledNotification,
   ScheduledNotificationStatus,
 } from './scheduled-notification.entity';
-import { NotificationsGateway } from './notifications.gateway';
 
 describe('NotificationsService', () => {
   let service: NotificationsService;

@@ -1,12 +1,11 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
 
-import { StellarService } from '../stellar/stellar.service';
-import { UsersService } from '../users/users.service';
 import { ProgressRepository } from '../repositories/progress-repository.interface';
 import { PROGRESS_REPOSITORY_TOKEN } from '../repositories/repositories.module';
+import { StellarService } from '../stellar/stellar.service';
+import { UsersService } from '../users/users.service';
 
 import { CredentialsService } from './credentials.service';
-
 /**
  * BadgeAwardService — issue #818
  *
@@ -43,6 +42,7 @@ import { CredentialsService } from './credentials.service';
  * directly — it calls `badgeAwardService.awardOnCompletion()` instead, ensuring
  * the de-duplication and referral logic runs in one place.
  */
+
 @Injectable()
 export class BadgeAwardService {
   private readonly logger = new Logger(BadgeAwardService.name);

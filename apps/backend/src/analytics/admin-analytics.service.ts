@@ -1,14 +1,14 @@
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Injectable, Logger, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, MoreThanOrEqual, LessThanOrEqual } from 'typeorm';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
+import { Repository, MoreThanOrEqual, LessThanOrEqual } from 'typeorm';
 
-import { User } from '../users/user.entity';
 import { Course } from '../courses/course.entity';
+import { Review } from '../courses/review.entity';
 import { Enrollment } from '../enrollments/enrollment.entity';
 import { Progress } from '../progress/progress.entity';
-import { Review } from '../courses/review.entity';
+import { User } from '../users/user.entity';
 
 import { AdminAggregationQueryDto, AdminDashboardQueryDto } from './admin-analytics.dto';
 import { AnalyticsEvent } from './analytics-event.entity';

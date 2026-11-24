@@ -13,9 +13,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Test, TestingModule } from '@nestjs/testing';
 
+import { PROGRESS_REPOSITORY_TOKEN } from '../repositories/repositories.module';
 import { StellarService } from '../stellar/stellar.service';
 import { UsersService } from '../users/users.service';
-import { PROGRESS_REPOSITORY_TOKEN } from '../repositories/repositories.module';
 
 import { BadgeAwardService } from './badge-award.service';
 import { CredentialsService } from './credentials.service';

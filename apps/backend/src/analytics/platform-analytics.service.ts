@@ -1,16 +1,16 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThan } from 'typeorm';
-import { Cron, CronExpression } from '@nestjs/schedule';
 
-import { User } from '../users/user.entity';
 import { Course } from '../courses/course.entity';
+import { Review } from '../courses/review.entity';
 import { Enrollment } from '../enrollments/enrollment.entity';
 import { Progress } from '../progress/progress.entity';
-import { Review } from '../courses/review.entity';
+import { User } from '../users/user.entity';
 
-import { PlatformAnalytics } from './platform-analytics.entity';
 import { AnalyticsEvent } from './analytics-event.entity';
+import { PlatformAnalytics } from './platform-analytics.entity';
 
 @Injectable()
 export class PlatformAnalyticsService {

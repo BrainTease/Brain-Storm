@@ -1,12 +1,11 @@
 import { Module } from '@nestjs/common';
 
-import { StellarModule } from '../stellar/stellar.module';
 import { CredentialsModule } from '../credentials/credentials.module';
 import { RepositoriesModule } from '../repositories/repositories.module';
+import { StellarModule } from '../stellar/stellar.module';
 
-import { ProgressService } from './progress.service';
 import { ProgressController } from './progress.controller';
-
+import { ProgressService } from './progress.service';
 /**
  * ProgressModule
  *
@@ -17,6 +16,7 @@ import { ProgressController } from './progress.controller';
  * ProgressService no longer depends on UsersService or CredentialsService
  * directly — it delegates to BadgeAwardService instead.
  */
+
 @Module({
   imports: [RepositoriesModule, StellarModule, CredentialsModule],
   providers: [ProgressService],

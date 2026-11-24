@@ -1,15 +1,16 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
-import { User } from '../users/user.entity';
-import { Course } from '../courses/course.entity';
+import { Repository } from 'typeorm';
+
 import { CourseModule } from '../courses/course-module.entity';
+import { Course } from '../courses/course.entity';
 import { Lesson } from '../courses/lesson.entity';
-import { Enrollment } from '../enrollments/enrollment.entity';
-import { Progress } from '../progress/progress.entity';
 import { Review } from '../courses/review.entity';
+import { Enrollment } from '../enrollments/enrollment.entity';
 import { Notification, NotificationType } from '../notifications/notification.entity';
+import { Progress } from '../progress/progress.entity';
+import { User } from '../users/user.entity';
 
 interface SeedOptions {
   includeReviews?: boolean;

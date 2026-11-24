@@ -1,3 +1,4 @@
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 /**
  * Recommendation Feedback-Loop Service (Issue #631)
  *
@@ -7,15 +8,13 @@
  */
 import { Injectable, Inject, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, MoreThan } from 'typeorm';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
+import { Repository, MoreThan } from 'typeorm';
 
-import { Enrollment } from '../enrollments/enrollment.entity';
 import { Course } from '../courses/course.entity';
+import { Enrollment } from '../enrollments/enrollment.entity';
 
 import { RecommendationSignal, SignalType } from './recommendation-signal.entity';
-
 // ── Scoring weights ────────────────────────────────────────────────────────
 
 const SIGNAL_BASE_WEIGHTS: Record<SignalType, number> = {

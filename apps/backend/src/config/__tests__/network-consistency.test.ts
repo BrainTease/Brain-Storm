@@ -1,6 +1,5 @@
-import { describe, it, expect } from 'vitest';
-
 import { getStellarNetworkConfig } from '@brain-storm/sdk';
+import { describe, it, expect } from 'vitest';
 
 import { assertNetworkConsistency } from '../network-consistency';
 

@@ -155,10 +155,11 @@ Add `"packages/utils"` to the root `workspaces` array (append after `"packages/t
    ],
 ```
 
-Optionally add `"check:duplicate-utils": "bash scripts/check-duplicate-utils.sh"` to `scripts`
-and call it from `.husky/pre-commit` / CI. Also consider adding a `@brain-storm/utils` path
-mapping to the frontend/backend tsconfigs before switching the four relative imports to the
-package name.
+The workspace entry above and the `lint:utils` / `quality:local` npm scripts have been added
+by the integrator, and `scripts/check-duplicate-utils.sh` runs from `.husky/pre-commit` and
+the `code-quality-gates.yml` convention job. Consumers currently use a relative path into
+`packages/utils/src`; adding a `@brain-storm/utils` path mapping to the frontend/backend
+tsconfigs is a follow-up so those imports can move to the package name.
 
 ## Verification note
 

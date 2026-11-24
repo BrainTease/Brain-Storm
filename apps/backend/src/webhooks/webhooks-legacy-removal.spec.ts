@@ -8,12 +8,11 @@
  *     is unaffected by the removal).
  *  3. All other public API methods remain intact.
  */
-
 import { NotFoundException } from '@nestjs/common';
-import { WebhooksService } from './webhooks.service';
+
 import { DeliveryStatus, type WebhookDelivery } from './webhook-delivery.entity';
 import type { Webhook } from './webhook.entity';
-
+import { WebhooksService } from './webhooks.service';
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 
 const makeWebhook = (overrides: Partial<Webhook> = {}): Webhook =>

@@ -8,18 +8,17 @@
  * Dispute methods are thin delegators kept here for backwards-compatibility
  * with DisputesController — the real logic lives in DisputeResolutionService.
  */
-
 import { Injectable, NotFoundException } from '@nestjs/common';
 
-import { AuditService } from '../audit/audit.service';
-import { UsersService } from '../users/users.service';
-import { AccountService } from '../users/account.service';
 import { AuditAction } from '../audit/audit-log.entity';
+import { AuditService } from '../audit/audit.service';
 import { PaginatedResponseDto } from '../common/dto/api-response.dto';
+import { AccountService } from '../users/account.service';
+import { UsersService } from '../users/users.service';
 
 import { CreateDisputeDto, ResolveDisputeDto, SuspendUserDto, DisputeQueryDto } from './admin.dto';
-import { Dispute, DisputeStatus } from './dispute.entity';
 import { DisputeResolutionService } from './dispute-resolution.service';
+import { Dispute, DisputeStatus } from './dispute.entity';
 
 @Injectable()
 export class AdminService {

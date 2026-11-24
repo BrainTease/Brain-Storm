@@ -2,12 +2,12 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 
-import { setupTestDatabase, teardownTestDatabase } from '../test/integration-test.setup';
 import { USERS_REPOSITORY_TOKEN } from '../repositories';
 import { TypeOrmUsersRepository } from '../repositories/typeorm-users.repository';
+import { setupTestDatabase, teardownTestDatabase } from '../test/integration-test.setup';
 
-import { UsersService } from './users.service';
 import { User } from './user.entity';
+import { UsersService } from './users.service';
 
 type TestUserInput = Partial<User> & {
   firstName?: string;

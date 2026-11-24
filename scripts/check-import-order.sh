@@ -1,7 +1,19 @@
 #!/usr/bin/env bash
-# Dependency-free static check for import group order and duplicate imports.
-# Mirrors the group order configured in .eslintrc.js (simple-import-sort/imports)
-# and import/no-duplicates, without requiring node_modules.
+# Dependency-free static check for import ordering and duplicate imports.
+#
+# Mirrors the ordering rules declared in the ESLint configs:
+#   - apps/frontend/.eslintrc.js and apps/backend/.eslintrc.js use
+#     import/order with alphabetize asc (case-insensitive) and pathGroups
+#     that place "@/**" in the internal group for the frontend.
+#   - the root .eslintrc.js (used by packages/*) uses simple-import-sort
+#     with groups: external, @brain-storm/, parent, sibling, other.
+#
+# Usage:
+#   ./scripts/check-import-order.sh            # check all tracked sources
+#   git diff --cached --name-only --diff-filter=ACMR \
+#     | ./scripts/check-import-order.sh --stdin  # check staged sources only
+#
+# Exit code: 0 when clean, 1 when violations are found.
 set -uo pipefail
 
 if ! command -v node >/dev/null 2>&1; then
@@ -11,196 +23,113 @@ fi
 
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 export IMPORT_CHECK_ROOT="$ROOT"
+export IMPORT_CHECK_STDIN="${1:-}"
+if [ "${1:-}" = "--stdin" ]; then
+  IMPORT_CHECK_LIST="$(mktemp)"
+  export IMPORT_CHECK_LIST
+  trap 'rm -f "$IMPORT_CHECK_LIST"' EXIT
+  cat > "$IMPORT_CHECK_LIST"
+fi
 
 node <<'NODE'
 'use strict';
-
 const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
 
 const root = process.env.IMPORT_CHECK_ROOT || process.cwd();
+const stdinMode = process.env.IMPORT_CHECK_STDIN === '--stdin';
 
-const IGNORED_DIRS = [
-  'node_modules/', 'dist/', 'build/', 'coverage/', 'lib/', 'out/',
-  '.next/', '.nuxt/', 'generated/', '__generated__/',
-];
+const IGNORED = new Set(['node_modules','dist','build','coverage','lib','out','.next','.nuxt','generated','__generated__']);
+const BUILTIN = new Set(('assert async_hooks buffer child_process cluster console constants crypto dgram dns domain events fs http http2 https module net os path perf_hooks process punycode querystring readline repl stream string_decoder timers tls trace_events tty url util v8 vm worker_threads zlib').split(' '));
+const collator = new Intl.Collator('en', { sensitivity: 'base', numeric: true });
+const cmp = (a, b) => collator.compare(a, b) || (a < b ? -1 : a > b ? 1 : 0);
 
-const files = execFileSync(
-  'git',
-  ['ls-files', '-z', '--', '*.ts', '*.tsx'],
-  { cwd: root, maxBuffer: 64 * 1024 * 1024 },
-)
-  .toString()
-  .split('\0')
-  .filter(Boolean)
-  .filter((f) => !f.endsWith('.d.ts'))
-  .filter((f) => {
-    const segments = f.split('/');
-    return !IGNORED_DIRS.some((d) => segments.includes(d.replace(/\/$/, '')));
-  });
-
-const GROUP_LABEL = [
-  'external',
-  '@brain-storm/',
-  'parent (../)',
-  'sibling (./)',
-  'unmatched/absolute (e.g. @/)',
-];
-
-// simple-import-sort assigns each import to the group whose regex matches the
-// longest prefix. Anything unmatched goes into a final tail group.
-function groupOf(source) {
-  let bestGroup = 4;
-  let bestLength = -1;
-  const consider = (group, re) => {
-    const match = re.exec(source);
-    if (match && match[0].length > bestLength) {
-      bestLength = match[0].length;
-      bestGroup = group;
-    }
-  };
-  consider(0, /^@?\w/);
-  consider(1, /^@brain-storm\//);
-  consider(2, /^\.\.(?!\/?$)/);
-  consider(2, /^\.\.\/?$/);
-  consider(3, /^\.\/(?=.*\/)(?!\/?$)/);
-  consider(3, /^\.(?!\/?$)/);
-  consider(3, /^\.\/?$/);
-  return bestLength === -1 ? 4 : bestGroup;
+let files;
+if (stdinMode) {
+  files = fs.readFileSync(process.env.IMPORT_CHECK_LIST, 'utf8').split('\n').map(s => s.trim()).filter(Boolean)
+    .filter(f => /\.(ts|tsx)$/.test(f) && !f.endsWith('.d.ts'));
+} else {
+  files = execFileSync('git', ['ls-files', '-z', '--', '*.ts', '*.tsx'], { cwd: root, maxBuffer: 64 * 1024 * 1024 })
+    .toString().split('\0').filter(Boolean)
+    .filter(f => !f.endsWith('.d.ts'));
 }
+files = files.filter(f => !f.split('/').some(s => IGNORED.has(s)));
 
-const IMPORT_START = /^\s*import\b/;
-const DYNAMIC_IMPORT = /^\s*import\s*\(/;
-const FROM_CLAUSE = /\bfrom\s*['"]([^'"]+)['"]/;
-const SIDE_EFFECT = /^\s*import\s*(?:type\s+)?['"]([^'"]+)['"]/;
-const MAX_IMPORT_LINES = 60;
-
-function isCommentLine(line) {
-  return /^\s*(\/\/|\/\*|\*|\*\/)/.test(line);
+function modeFor(f) {
+  if (f.startsWith('apps/frontend/')) return 'frontend';
+  if (f.startsWith('apps/backend/')) return 'backend';
+  return 'root';
 }
-
-function isBlank(line) {
-  return line.trim() === '';
+function groupOf(src, mode) {
+  if (mode === 'root') {
+    if (/^@brain-storm\//.test(src)) return 1;
+    if (/^\.\.(?!\/?$)/.test(src) || /^\.\.\/?$/.test(src)) return 2;
+    if (/^\./.test(src)) return 3;
+    if (/^@?\w/.test(src)) return 0;
+    return 4;
+  }
+  if (src.startsWith('node:')) return 0;
+  if (mode === 'backend' && BUILTIN.has(src)) return 0;
+  if (mode === 'frontend' && src.startsWith('@/')) return 2;
+  if (src.startsWith('../')) return 3;
+  if (src.startsWith('./') || src === '.' || src === '..') return 4;
+  return 1;
 }
-
+function label(g, mode) {
+  if (mode === 'root') return ['external', '@brain-storm/', 'parent (../)', 'sibling (./)', 'other'][g];
+  return ['builtin', 'external', 'internal', 'parent (../)', 'sibling (./)', 'index'][g];
+}
 function parseImports(text) {
   const lines = text.split('\n');
   const imports = [];
   let i = 0;
+  const starts = l => /^\s*import\b/.test(l) && !/^\s*import\s*\(/.test(l);
   while (i < lines.length) {
-    if (!IMPORT_START.test(lines[i]) || DYNAMIC_IMPORT.test(lines[i])) {
-      i++;
-      continue;
+    if (!starts(lines[i])) { i++; continue; }
+    const block = [lines[i]];
+    while (i < lines.length - 1 && !/from\s*['"]|^\s*import\s*['"]/.test(block[block.length - 1])) {
+      i++; block.push(lines[i]);
     }
-    const startLine = i + 1;
-    let block = lines[i];
-    let last = i;
-    while (last < lines.length - 1 && last - i < MAX_IMPORT_LINES) {
-      if (FROM_CLAUSE.test(block) || SIDE_EFFECT.test(block)) break;
-      last++;
-      block += '\n' + lines[last];
-    }
-    const fromMatch = FROM_CLAUSE.exec(block);
-    const sideMatch = SIDE_EFFECT.exec(block);
-    const source = fromMatch ? fromMatch[1] : sideMatch ? sideMatch[1] : null;
-    if (source) {
-      imports.push({
-        line: startLine,
-        endLine: last + 1,
-        source,
-        sideEffect: !fromMatch && !!sideMatch,
-        chunk: 0,
-      });
-    }
-    i = last + 1;
-  }
-
-  // Assign chunk ids: imports separated only by blank/comment lines stay in
-  // the same chunk (this is how simple-import-sort scopes its sorting).
-  let chunk = 0;
-  for (let idx = 0; idx < imports.length; idx++) {
-    if (idx > 0) {
-      const prev = imports[idx - 1];
-      const between = lines.slice(prev.endLine, imports[idx].line - 1);
-      const onlyTrivia = between.every((l) => isBlank(l) || isCommentLine(l));
-      if (!onlyTrivia) chunk++;
-    }
-    imports[idx].chunk = chunk;
+    const joined = block.join('\n');
+    const m = /from\s*['"]([^'"]+)['"]/.exec(joined) || /^\s*import\s*['"]([^'"]+)['"]/.exec(joined);
+    if (m) imports.push({ line: i - block.length + 2, src: m[1], sideEffect: !/from\s*['"]/.test(joined) });
+    i++;
   }
   return imports;
 }
 
-let orderViolations = 0;
-let duplicateViolations = 0;
-let filesAffected = 0;
-
-for (const file of files) {
-  const text = fs.readFileSync(path.join(root, file), 'utf8');
+let order = 0, duplicates = 0, affected = 0;
+for (const f of files) {
+  const abs = path.join(root, f);
+  if (!fs.existsSync(abs)) continue;
+  const text = fs.readFileSync(abs, 'utf8');
   const imports = parseImports(text);
-  if (imports.length === 0) continue;
-
+  if (!imports.length) continue;
+  const mode = modeFor(f);
   const problems = [];
 
-  const byChunk = new Map();
+  let maxGroup = -1, maxSource = null;
   for (const imp of imports) {
-    if (!byChunk.has(imp.chunk)) byChunk.set(imp.chunk, []);
-    byChunk.get(imp.chunk).push(imp);
-  }
-  for (const [chunkId, chunkImports] of byChunk) {
-    let maxGroup = -1;
-    for (const imp of chunkImports) {
-      // Side-effect imports are pinned by their load-order semantics, so they
-      // start a fresh ordering segment instead of constraining other imports.
-      if (imp.sideEffect) {
-        maxGroup = -1;
-        continue;
-      }
-      const group = groupOf(imp.source);
-      if (group < maxGroup) {
-        problems.push({
-          line: imp.line,
-          message:
-            `import group out of order: '${imp.source}' (${GROUP_LABEL[group]}) ` +
-            `appears after ${GROUP_LABEL[maxGroup]}`,
-        });
-      }
-      if (group > maxGroup) maxGroup = group;
+    if (imp.sideEffect) { maxGroup = -1; maxSource = null; continue; }
+    const g = groupOf(imp.src, mode);
+    if (g < maxGroup || (g === maxGroup && maxSource !== null && cmp(maxSource, imp.src) > 0)) {
+      problems.push(`${f}:${imp.line}: import order: '${imp.src}' appears after '${maxSource}' (${label(g, mode)} group)`);
     }
-    void chunkId;
+    if (g >= maxGroup) { maxGroup = g; maxSource = imp.src; }
   }
 
-  const bySource = new Map();
+  const seen = new Set();
   for (const imp of imports) {
-    if (!bySource.has(imp.source)) bySource.set(imp.source, []);
-    bySource.get(imp.source).push(imp);
+    if (seen.has(imp.src)) problems.push(`${f}:${imp.line}: duplicate import from '${imp.src}'`);
+    seen.add(imp.src);
   }
-  for (const [source, occurrences] of bySource) {
-    if (occurrences.length < 2) continue;
-    for (const dup of occurrences.slice(1)) {
-      problems.push({
-        line: dup.line,
-        message:
-          `duplicate import from '${source}' (first occurrence at line ` +
-          `${occurrences[0].line})`,
-      });
-    }
-  }
-
-  if (problems.length === 0) continue;
-  filesAffected++;
-  problems
-    .slice()
-    .sort((a, b) => a.line - b.line)
-    .forEach((p) => console.log(`${file}:${p.line}: ${p.message}`));
-  orderViolations += problems.filter((p) => p.message.startsWith('import group')).length;
-  duplicateViolations += problems.filter((p) => p.message.startsWith('duplicate import')).length;
+  if (!problems.length) continue;
+  affected++;
+  problems.forEach(p => console.log(p));
+  order += problems.filter(p => p.includes('import order:')).length;
+  duplicates += problems.filter(p => p.includes('duplicate import')).length;
 }
-
-console.log(
-  `\nChecked ${files.length} tracked .ts/.tsx files: ` +
-    `${orderViolations} import-order violation(s), ` +
-    `${duplicateViolations} duplicate-import violation(s) in ${filesAffected} file(s).`,
-);
-process.exit(orderViolations + duplicateViolations === 0 ? 0 : 1);
+console.log(`\nChecked ${files.length} tracked .ts/.tsx files: ${order} import-order violation(s), ${duplicates} duplicate-import violation(s) in ${affected} file(s).`);
+process.exit(order + duplicates === 0 ? 0 : 1);
 NODE

@@ -123,10 +123,15 @@ a directory that does not exist.
 2. **Generated/declarations**: `*.d.ts` and files under `dist/`, `build/`,
    `coverage/`, `lib/`, `out/`, `.next/`, `generated/`, `__generated__/` are
    excluded from the checker (64 tracked files at baseline).
-3. **Within-group alphabetical sorting** is intentionally out of scope for the
-   static checker (it is comment/parser sensitive). It remains delegated to
-   `simple-import-sort/imports --fix` when dependencies are available. The
-   checker enforces group order and uniqueness only.
+3. **Two different toolchains govern imports in this monorepo.** The apps use
+   `eslint-plugin-import`'s `import/order` rule (with `newlines-between: always`,
+   `alphabetize: asc/caseInsensitive`, and a `@/**` pathGroup for the frontend),
+   while the root config used by `packages/*` uses `simple-import-sort`. The
+   static checker mirrors both: app files are checked against the `import/order`
+   group sequence (builtin, external, internal/`@/`, parent, sibling, index),
+   package files against the `simple-import-sort` groups. Within-group
+   alphabetical order is enforced for changed files; ESLint remains the
+   authoritative check when dependencies are installed.
 4. **`apps/backend/src/common/errors/{__tests__/schema.integration.test.ts,contract-error.map.ts,unified-error.adapter.ts}`**
    import `@brain-storm/types/src/error.types`. With the backend alias
    `@brain-storm/types/* → ../../packages/types/src/*` this maps to the
@@ -146,11 +151,16 @@ a directory that does not exist.
 
 ## Resolution / verification
 
-- Re-ran `./scripts/check-import-order.sh`: **0 order violations, 0 duplicate
-  violations, exit 0** across 1296 checked files.
+- `./scripts/check-import-order.sh --stdin` over all 234 changed `.ts/.tsx`
+  files: **0 order violations, 0 duplicate violations, exit 0**.
+- The full-repo run still reports pre-existing violations in untouched files;
+  those are outside this issue's change set and are not claimed as fixed.
 - `git diff --check`: clean.
-- Automated import rewrite was cross-checked against `HEAD` for all 230 changed
-  source files: per-module specifier sets and non-import code are unchanged.
+- Automated import rewrite was cross-checked against `main` for every changed
+  source file: all non-import code is byte-identical apart from three
+  intentional changes (a trailing type import consolidated into its top-level
+  import, a duplicate `@nestjs/typeorm` import merged, and the #1543 utility
+  consolidation).
 - Every modified tsconfig parses as JSON (after stripping whole-line comments)
   and every configured alias target exists.
 - Build/tests were **not** run: dependencies are not installed and the network

@@ -3,9 +3,9 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThanOrEqual } from 'typeorm';
 
-import { NotificationsService } from '../notifications/notifications.service';
-import { NotificationType } from '../notifications/notification.entity';
 import { Enrollment } from '../enrollments/enrollment.entity';
+import { NotificationType } from '../notifications/notification.entity';
+import { NotificationsService } from '../notifications/notifications.service';
 
 import { Course, CourseStatus } from './course.entity';
 

@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
+
 import { BadgeGrid, type Badge } from './BadgeGrid';
 
 const meta: Meta<typeof BadgeGrid> = {

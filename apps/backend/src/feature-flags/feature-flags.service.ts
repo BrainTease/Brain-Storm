@@ -1,8 +1,9 @@
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Injectable, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { Cache } from 'cache-manager';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Repository } from 'typeorm';
+
 import { FeatureFlag, FlagType } from './feature-flag.entity';
 
 @Injectable()

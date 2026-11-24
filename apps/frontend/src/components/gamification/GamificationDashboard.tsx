@@ -1,9 +1,9 @@
 'use client';
 
-import { ReputationScoreWidget } from './ReputationScoreWidget';
-import { BadgeGrid } from './BadgeGrid';
-
 import { useGamification } from '@/hooks/useGamification';
+
+import { BadgeGrid } from './BadgeGrid';
+import { ReputationScoreWidget } from './ReputationScoreWidget';
 
 interface GamificationDashboardProps {
   userId: string;
