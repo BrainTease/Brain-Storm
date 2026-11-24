@@ -1,3 +1,5 @@
+import { Course, CourseStatus } from '../course.entity';
+
 /**
  * Unit tests for CourseResponseDto — issue #993
  *
@@ -5,7 +7,6 @@
  * response reaches the client.
  */
 import { CourseResponseDto, toCourseResponseDto, toCourseResponseDtos } from './course-response.dto';
-import { Course, CourseStatus } from '../course.entity';
 
 /** Build a fully-populated Course entity including all internal fields. */
 function buildCourse(overrides: Partial<Course> = {}): Course {

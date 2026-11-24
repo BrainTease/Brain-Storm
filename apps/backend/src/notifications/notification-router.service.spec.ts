@@ -1,9 +1,11 @@
 import { Test } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
+
+import { MailService } from '../mail/mail.service';
+
 import { NotificationRouterService } from './notification-router.service';
 import { NotificationPreference, NotificationChannel } from './notification-preference.entity';
 import { NotificationsService } from './notifications.service';
-import { MailService } from '../mail/mail.service';
 import { NotificationType } from './notification.entity';
 
 const mockPrefRepo = () => ({

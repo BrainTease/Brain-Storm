@@ -6,8 +6,10 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { CoursePrerequisite } from './course-prerequisite.entity';
+
 import { Enrollment } from '../enrollments/enrollment.entity';
+
+import { CoursePrerequisite } from './course-prerequisite.entity';
 import { Course } from './course.entity';
 
 @Injectable()

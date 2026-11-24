@@ -1,3 +1,6 @@
+import { Test, TestingModule } from '@nestjs/testing';
+import { NotFoundException } from '@nestjs/common';
+
 /**
  * Unit tests for ProgressService — migrated to shared fixtures (#1193).
  *
@@ -8,12 +11,12 @@
  * Closes #1193.
  */
 import { ProgressFactory, UserFactory, CourseFactory } from '@brain-storm/types/test-utils';
-import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException } from '@nestjs/common';
-import { ProgressService } from './progress.service';
+
 import { StellarService } from '../stellar/stellar.service';
 import { BadgeAwardService } from '../credentials/badge-award.service';
 import { PROGRESS_REPOSITORY_TOKEN } from '../repositories/repositories.module';
+
+import { ProgressService } from './progress.service';
 
 describe('ProgressService — shared fixtures (#1193)', () => {
   let service: ProgressService;

@@ -1,7 +1,9 @@
-import { env } from '../../config/env';
 import { Injectable, Logger } from '@nestjs/common';
 import * as winston from 'winston';
 import { v4 as uuidv4 } from 'uuid';
+
+import { env } from '../../config/env';
+
 import { getCorrelationId } from './correlation.store';
 
 export interface StructuredLogContext {

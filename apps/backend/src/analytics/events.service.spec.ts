@@ -9,9 +9,10 @@
  *   - findEvents: filter combinations (type, userId, courseId, date range, pagination)
  */
 
+import { Repository, SelectQueryBuilder } from 'typeorm';
+
 import { EventsService } from './events.service';
 import { AnalyticsEvent } from './analytics-event.entity';
-import { Repository, SelectQueryBuilder } from 'typeorm';
 
 // ─── mock helpers ─────────────────────────────────────────────────────────────
 

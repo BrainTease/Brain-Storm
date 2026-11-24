@@ -1,7 +1,9 @@
 import { Test } from '@nestjs/testing';
-import { UserResolver } from './user.resolver';
+
 import { DataLoaderProvider } from '../dataloader.provider';
 import { UsersService } from '../../users/users.service';
+
+import { UserResolver } from './user.resolver';
 
 describe('UserResolver & DataLoaderProvider', () => {
   let resolver: UserResolver;

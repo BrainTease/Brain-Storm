@@ -1,5 +1,4 @@
-import { DISPUTE_FLAG_REASONS } from '@brain-storm/types';
-import type { FlagReason, DisputeState } from '@brain-storm/types';
+import { DISPUTE_FLAG_REASONS, type FlagReason, type DisputeState } from '@brain-storm/types';
 
 export { DISPUTE_FLAG_REASONS } from '@brain-storm/types';
 export type { FlagReason, DisputeState } from '@brain-storm/types';

@@ -9,8 +9,7 @@ import { Lesson } from '../courses/lesson.entity';
 import { Enrollment } from '../enrollments/enrollment.entity';
 import { Progress } from '../progress/progress.entity';
 import { Review } from '../courses/review.entity';
-import { Notification } from '../notifications/notification.entity';
-import { NotificationType } from '../notifications/notification.entity';
+import { Notification, NotificationType } from '../notifications/notification.entity';
 
 interface SeedOptions {
   includeReviews?: boolean;

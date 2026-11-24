@@ -7,8 +7,10 @@ import {
   OneToMany,
   JoinColumn,
 } from 'typeorm';
-import { Quiz } from './quiz.entity';
+
 import { User } from '../users/user.entity';
+
+import { Quiz } from './quiz.entity';
 import { QuizAttemptAnswer } from './quiz-attempt-answer.entity';
 
 @Entity('quiz_attempts')

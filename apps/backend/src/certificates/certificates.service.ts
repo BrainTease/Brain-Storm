@@ -13,8 +13,10 @@ import { Injectable, BadRequestException, NotFoundException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as crypto from 'crypto';
-import { Certificate } from './certificate.entity';
+
 import { Enrollment } from '../enrollments/enrollment.entity';
+
+import { Certificate } from './certificate.entity';
 import { BadgeAwardService } from './badge-award.service';
 import { IssueCertificateDto } from './dto/issue-certificate.dto';
 import { CertificateValidationService } from './certificate-validation.service';

@@ -1,8 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
+import * as crypto from 'crypto';
+
 import { ApiKeyStrategy } from '../../../src/auth/api-key.strategy';
 import { ApiKey } from '../../../src/auth/api-key.entity';
-import * as crypto from 'crypto';
 
 const mockApiKeyRepo = {
   findOne: jest.fn(),

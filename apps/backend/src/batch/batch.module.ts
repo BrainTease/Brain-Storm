@@ -1,14 +1,16 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BullModule } from '@nestjs/bull';
-import { BatchJob } from './batch-job.entity';
-import { BatchService } from './batch.service';
-import { BatchProcessor } from './batch.processor';
+
 import { UsersModule } from '../users/users.module';
 import { CoursesModule } from '../courses/courses.module';
 import { CertificatesModule } from '../certificates/certificates.module';
 import { MailModule } from '../mail/mail.module';
 import { JobRunnerService } from '../common/job-runner/job-runner.service';
+
+import { BatchJob } from './batch-job.entity';
+import { BatchService } from './batch.service';
+import { BatchProcessor } from './batch.processor';
 import { BatchJobRunnerAdapter } from './batch.job-runner.adapter';
 
 @Module({

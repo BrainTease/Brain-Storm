@@ -12,10 +12,12 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { LeaderboardService } from './leaderboard.service';
+
 import { User } from '../users/user.entity';
 import { StellarService } from '../stellar/stellar.service';
 import { CacheService } from '../cache/cache.service';
+
+import { LeaderboardService } from './leaderboard.service';
 
 // ── Mocks ─────────────────────────────────────────────────────────────────
 

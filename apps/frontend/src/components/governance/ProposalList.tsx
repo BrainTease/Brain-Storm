@@ -1,12 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+
+import { ProposalCard } from './ProposalCard';
+
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { LoadingState } from '@/components/ui/LoadingState';
 import { Spinner } from '@/components/ui/Spinner';
 import { Card } from '@/components/ui/Card';
-import { ProposalCard } from './ProposalCard';
 import { Proposal } from '@/store/governanceStore';
 
 export interface ProposalListProps {

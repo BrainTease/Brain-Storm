@@ -1,9 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { CacheModule } from '@nestjs/cache-manager';
-import { StellarService } from './stellar.service';
 import { execSync } from 'child_process';
 import * as path from 'path';
+
+import { StellarService } from './stellar.service';
 
 /**
  * Soroban Testnet Integration Tests

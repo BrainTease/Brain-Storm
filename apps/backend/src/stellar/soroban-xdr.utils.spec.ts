@@ -1,10 +1,11 @@
+import { SorobanRpc } from '@stellar/stellar-sdk';
+
 import {
   decodeBigIntValue,
   decodeStringValue,
   decodeBooleanValue,
   decodeRawValue,
 } from './soroban-xdr.utils';
-import { SorobanRpc } from '@stellar/stellar-sdk';
 
 describe('Soroban XDR Utils', () => {
   describe('decodeBigIntValue', () => {

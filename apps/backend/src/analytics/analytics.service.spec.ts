@@ -10,9 +10,10 @@
  * tests are fully deterministic and run without a real database.
  */
 
+import { Repository } from 'typeorm';
+
 import { AnalyticsService } from './analytics.service';
 import { CourseAnalytics } from './course-analytics.entity';
-import { Repository } from 'typeorm';
 
 // ─── minimal mock builder ────────────────────────────────────────────────────
 

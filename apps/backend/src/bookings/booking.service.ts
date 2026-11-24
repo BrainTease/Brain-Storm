@@ -7,10 +7,12 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Not, In } from 'typeorm';
-import { AvailabilitySlot } from './availability-slot.entity';
-import { BookingRequest, BookingStatus } from './booking-request.entity';
+
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationType } from '../notifications/notification.entity';
+
+import { AvailabilitySlot } from './availability-slot.entity';
+import { BookingRequest, BookingStatus } from './booking-request.entity';
 
 @Injectable()
 export class BookingService {

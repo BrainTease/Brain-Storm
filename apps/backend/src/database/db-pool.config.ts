@@ -1,5 +1,6 @@
-import { env } from '../config/env';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
+
+import { env } from '../config/env';
 
 export interface PoolConfig {
   max: number;

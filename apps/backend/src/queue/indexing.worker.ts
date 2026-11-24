@@ -1,6 +1,9 @@
 import { Processor, WorkerHost, OnWorkerEvent } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
+
+import { SearchService, IndexName } from '../search/search.service';
+
 import {
   QUEUE_INDEXING,
   JOB_INDEX_COURSE,
@@ -8,7 +11,6 @@ import {
   JOB_INDEX_POST,
   JOB_DELETE_FROM_INDEX,
 } from './queue.constants';
-import { SearchService, IndexName } from '../search/search.service';
 
 export interface IndexCourseJobData {
   course: {

@@ -1,5 +1,6 @@
-import { AuditService } from './audit.service';
 import * as crypto from 'crypto';
+
+import { AuditService } from './audit.service';
 
 const makeRepo = (entries: any[] = []) => ({
   findOne: jest.fn(async () => entries[entries.length - 1] ?? null),

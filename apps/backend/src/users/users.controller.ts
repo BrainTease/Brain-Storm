@@ -14,7 +14,6 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { UsersService } from './users.service';
 import {
   ApiBearerAuth,
   ApiTags,
@@ -23,14 +22,17 @@ import {
   ApiBody,
   ApiConsumes,
 } from '@nestjs/swagger';
+
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+import { StellarService } from '../stellar/stellar.service';
+import { CurrentUser } from '../auth/current-user.decorator';
+
+import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserQueryDto } from './dto/user-query.dto';
 import { UserResponseDto, toUserResponseDto, toUserResponseDtos } from './dto/user-response.dto';
-import { StellarService } from '../stellar/stellar.service';
-import { CurrentUser } from '../auth/current-user.decorator';
 
 @ApiTags('users')
 @ApiBearerAuth()

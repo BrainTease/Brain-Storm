@@ -3,8 +3,12 @@ import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+
 import { UsersModule } from '../users/users.module';
 import { MailModule } from '../mail/mail.module';
+import { EncryptionService } from '../common/encryption.service';
+import { AuditModule } from '../audit/audit.module';
+
 import { AuthService } from './auth.service';
 import { AuthRepository } from './auth.repository';
 import { StellarAuthService } from './stellar-auth.service';
@@ -17,10 +21,8 @@ import { RefreshToken } from './refresh-token.entity';
 import { ApiKey } from './api-key.entity';
 import { TokenBlacklist } from './token-blacklist.entity';
 import { TokenBlacklistService } from './token-blacklist.service';
-import { EncryptionService } from '../common/encryption.service';
 import { ApiKeyStrategy } from './api-key.strategy';
 import { ApiKeyAuthGuard } from './api-key-auth.guard';
-import { AuditModule } from '../audit/audit.module';
 
 @Module({
   imports: [

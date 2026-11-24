@@ -14,9 +14,10 @@ import { Controller, Get, Header, Inject, NotFoundException, Param, Res } from '
 import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
+import type { Response } from 'express';
+
 import { StellarService } from '../stellar/stellar.service';
 import { CREDENTIALS_REPOSITORY_TOKEN, CredentialsRepository } from '../repositories';
-import type { Response } from 'express';
 
 const CACHE_TTL = 60; // seconds – credential data changes rarely
 

@@ -1,7 +1,9 @@
-import { Role } from '../common/enums/role.enum';
 import { Injectable, ForbiddenException, BadRequestException } from '@nestjs/common';
-import { CoursesService } from './courses.service';
+
+import { Role } from '../common/enums/role.enum';
 import { BusinessLogicService } from '../common/services/business-logic.service';
+
+import { CoursesService } from './courses.service';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { UpdateCourseDto } from './dto/update-course.dto';
 

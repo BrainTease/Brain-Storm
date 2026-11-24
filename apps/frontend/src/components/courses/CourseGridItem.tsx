@@ -2,10 +2,10 @@
 
 import { memo } from 'react';
 
-import type { Course } from '@/hooks/useCourseSearch';
-
 import { CompareCheckbox } from './CompareCheckbox';
 import { CourseCard } from './CourseCard';
+
+import type { Course } from '@/hooks/useCourseSearch';
 
 interface CourseGridItemProps {
   course: Course;

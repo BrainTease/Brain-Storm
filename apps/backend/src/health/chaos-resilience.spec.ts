@@ -41,7 +41,6 @@
  */
 
 import { Test, TestingModule } from '@nestjs/testing';
-import { HealthController } from './health.controller';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { ConfigService } from '@nestjs/config';
@@ -51,6 +50,8 @@ import {
   MemoryHealthIndicator,
   HttpHealthIndicator,
 } from '@nestjs/terminus';
+
+import { HealthController } from './health.controller';
 
 // ---------------------------------------------------------------------------
 // Type helpers

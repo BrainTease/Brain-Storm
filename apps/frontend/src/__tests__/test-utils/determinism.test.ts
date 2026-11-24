@@ -1,3 +1,5 @@
+import { describe, expect, it } from 'vitest';
+
 import {
   DEFAULT_EPOCH_MS,
   DEFAULT_SEED,
@@ -6,7 +8,6 @@ import {
   installDeterminism,
   withDeterminism,
 } from '@brain-storm/types/test-utils';
-import { describe, expect, it } from 'vitest';
 
 describe('shared determinism utilities (frontend)', () => {
   it('freezes time for the duration of a test', () => {

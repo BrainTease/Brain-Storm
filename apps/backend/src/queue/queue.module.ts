@@ -2,6 +2,10 @@ import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
+
+import { EmailModule } from '../email/email.module';
+import { SearchModule } from '../search/search.module';
+
 import {
   QUEUE_EMAIL,
   QUEUE_NOTIFICATION,
@@ -14,8 +18,6 @@ import { CertificateWorker } from './certificate.worker';
 import { IndexingWorker } from './indexing.worker';
 import { QueueSchedulerService } from './queue-scheduler.service';
 import { QueueMetricsService } from './queue-metrics.service';
-import { EmailModule } from '../email/email.module';
-import { SearchModule } from '../search/search.module';
 
 const defaultJobOptions = {
   attempts: 3,

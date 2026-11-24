@@ -1,8 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import { SUPPORTED_WALLETS, useWallet } from '@/lib/wallet';
+
 import { WalletSelectModal } from './WalletSelectModal';
+
+import { SUPPORTED_WALLETS, useWallet } from '@/lib/wallet';
 
 export interface WalletConnectButtonProps {
   className?: string;

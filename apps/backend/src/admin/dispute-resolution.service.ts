@@ -19,10 +19,12 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Dispute, DisputeStatus } from './dispute.entity';
+
 import { AuditService } from '../audit/audit.service';
-import { CreateDisputeDto, ResolveDisputeDto, DisputeQueryDto } from './admin.dto';
 import { PaginatedResponseDto } from '../common/dto/api-response.dto';
+
+import { Dispute, DisputeStatus } from './dispute.entity';
+import { CreateDisputeDto, ResolveDisputeDto, DisputeQueryDto } from './admin.dto';
 
 /** Terminal statuses — a dispute in these states cannot be resolved again. */
 const TERMINAL_STATUSES: DisputeStatus[] = [DisputeStatus.RESOLVED, DisputeStatus.CLOSED];

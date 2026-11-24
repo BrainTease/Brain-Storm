@@ -1,7 +1,8 @@
 import { IsOptional, IsString, IsIn } from 'class-validator';
 import { Trim, Sanitize } from 'class-sanitizer';
-import { StripHtmlSanitizer } from '../../common/sanitizers/strip-html.sanitizer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
+
+import { StripHtmlSanitizer } from '../../common/sanitizers/strip-html.sanitizer';
 import { PaginationDto } from '../../common/dto/pagination.dto';
 
 export class CourseQueryDto extends PaginationDto {

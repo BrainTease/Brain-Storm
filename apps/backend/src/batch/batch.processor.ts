@@ -3,12 +3,14 @@ import { Job } from 'bull';
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { BatchJob } from './batch-job.entity';
+
 import { UsersService } from '../users/users.service';
 import { AccountService } from '../users/account.service';
 import { CoursesService } from '../courses/courses.service';
 import { CertificatesService } from '../certificates/certificates.service';
 import { MailService } from '../mail/mail.service';
+
+import { BatchJob } from './batch-job.entity';
 
 @Injectable()
 @Processor('batch')

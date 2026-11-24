@@ -1,10 +1,12 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Certificate } from './certificate.entity';
+
 import { Enrollment } from '../enrollments/enrollment.entity';
+import { CredentialsModule } from '../credentials/credentials.module';
+
+import { Certificate } from './certificate.entity';
 import { CertificatesService } from './certificates.service';
 import { CertificatePdfService } from './certificate-pdf.service';
-import { CredentialsModule } from '../credentials/credentials.module';
 
 /**
  * CertificatesModule

@@ -6,8 +6,10 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
-import { Survey } from './survey.entity';
+
 import { User } from '../users/user.entity';
+
+import { Survey } from './survey.entity';
 
 @Entity('survey_responses')
 export class SurveyResponse {

@@ -1,9 +1,11 @@
 import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
+
+import { Enrollment } from '../enrollments/enrollment.entity';
+
 import { PrerequisitesService } from './prerequisites.service';
 import { CoursePrerequisite } from './course-prerequisite.entity';
-import { Enrollment } from '../enrollments/enrollment.entity';
 import { Course } from './course.entity';
 
 describe('PrerequisitesService', () => {

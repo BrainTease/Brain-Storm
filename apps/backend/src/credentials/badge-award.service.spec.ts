@@ -12,11 +12,13 @@
  */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Test, TestingModule } from '@nestjs/testing';
-import { BadgeAwardService } from './badge-award.service';
-import { CredentialsService } from './credentials.service';
+
 import { StellarService } from '../stellar/stellar.service';
 import { UsersService } from '../users/users.service';
 import { PROGRESS_REPOSITORY_TOKEN } from '../repositories/repositories.module';
+
+import { BadgeAwardService } from './badge-award.service';
+import { CredentialsService } from './credentials.service';
 
 describe('BadgeAwardService (#818)', () => {
   let service: BadgeAwardService;

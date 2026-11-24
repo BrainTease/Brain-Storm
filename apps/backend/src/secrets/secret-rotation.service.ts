@@ -3,9 +3,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThan } from 'typeorm';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { ConfigService } from '@nestjs/config';
-import { SecretRotation, SecretType } from './secret-rotation.entity';
-import { ApiKey } from '../auth/api-key.entity';
 import * as crypto from 'crypto';
+
+import { ApiKey } from '../auth/api-key.entity';
+
+import { SecretRotation, SecretType } from './secret-rotation.entity';
 
 @Injectable()
 export class SecretRotationService {

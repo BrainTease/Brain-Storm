@@ -2,8 +2,10 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { MobileDevice } from './mobile-device.entity';
+
 import { fetchWithRetry, FetchRetryOptions } from '../common/http/fetch-with-retry';
+
+import { MobileDevice } from './mobile-device.entity';
 
 interface PushMessage {
   title: string;

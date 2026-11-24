@@ -14,8 +14,6 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { UsersService } from './users.service';
-import { AccountService } from './account.service';
 import {
   ApiBearerAuth,
   ApiTags,
@@ -24,9 +22,13 @@ import {
   ApiBody,
   ApiConsumes,
 } from '@nestjs/swagger';
+
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+
+import { UsersService } from './users.service';
+import { AccountService } from './account.service';
 
 @ApiTags('admin')
 @ApiBearerAuth()

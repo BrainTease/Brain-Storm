@@ -18,7 +18,13 @@
     "jsx": "preserve",
     "incremental": true,
     "plugins": [{ "name": "next" }],
-    "paths": { "@/*": ["./src/*"] }
+    "paths": {
+      "@/*": ["./src/*"],
+      "@brain-storm/types": ["../../packages/types/src"],
+      "@brain-storm/types/*": ["../../packages/types/src/*"],
+      "@brain-storm/sdk": ["../../packages/sdk/src"],
+      "@brain-storm/sdk/*": ["../../packages/sdk/src/*"]
+    }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
   "exclude": ["node_modules"]

@@ -2,13 +2,15 @@ import { Module } from '@nestjs/common';
 import { GraphQLModule } from '@nestjs/graphql';
 import { join } from 'path';
 import depthLimit from 'graphql-depth-limit';
+import { TypeOrmModule } from '@nestjs/typeorm';
+
 import { UsersModule } from '../users/users.module';
 import { CoursesModule } from '../courses/courses.module';
 import { ProgressModule } from '../progress/progress.module';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from '../users/user.entity';
 import { Progress } from '../progress/progress.entity';
 import { Course } from '../courses/course.entity';
+
 import { UserResolver } from './resolvers/user.resolver';
 import { CourseResolver } from './resolvers/course.resolver';
 import { ProgressResolver } from './resolvers/progress.resolver';

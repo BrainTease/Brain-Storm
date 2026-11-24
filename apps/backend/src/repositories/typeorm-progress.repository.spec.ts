@@ -1,5 +1,6 @@
-import { TypeOrmProgressRepository } from './typeorm-progress.repository';
 import { Progress } from '../progress/progress.entity';
+
+import { TypeOrmProgressRepository } from './typeorm-progress.repository';
 
 const mockTypeOrmRepo = () => ({
   findOne: jest.fn(),

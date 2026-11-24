@@ -1,9 +1,11 @@
 import { Controller, Post, Get, Patch, Delete, Body, Param, UseGuards } from '@nestjs/common';
-import { CouponsService } from './coupons.service';
-import { CreateCouponDto, ValidateCouponDto, BulkGenerateCouponDto } from './dto';
+
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+
+import { CouponsService } from './coupons.service';
+import { CreateCouponDto, ValidateCouponDto, BulkGenerateCouponDto } from './dto';
 
 @Controller('v1/coupons')
 export class CouponsController {

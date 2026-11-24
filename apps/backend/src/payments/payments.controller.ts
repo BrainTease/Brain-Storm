@@ -16,10 +16,12 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { IsString, IsEnum, IsOptional, IsUrl, IsUUID } from 'class-validator';
+
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { PaginationDto } from '../common/dto/pagination.dto';
+
 import { PaymentsService } from './payments.service';
 import { SubscriptionPlan } from './subscription.entity';
-import { PaginationDto } from '../common/dto/pagination.dto';
 
 class CreateCheckoutDto {
   @IsUUID() courseId: string;

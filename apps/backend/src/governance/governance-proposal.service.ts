@@ -1,5 +1,8 @@
 import { Injectable, Inject, NotFoundException, BadRequestException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+
+import { PaginatedResponseDto } from '../common/dto/api-response.dto';
+
 import {
   GovernanceProposalRepository,
   GOVERNANCE_PROPOSAL_REPOSITORY,
@@ -11,7 +14,6 @@ import {
   ProposalQueryDto,
   VoteDto,
 } from './dto/governance-proposal.dto';
-import { PaginatedResponseDto } from '../common/dto/api-response.dto';
 
 /**
  * GovernanceProposalService

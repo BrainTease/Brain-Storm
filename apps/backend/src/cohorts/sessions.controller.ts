@@ -1,10 +1,12 @@
 import { Controller, Post, Get, UseGuards, Param, Body, Query } from '@nestjs/common';
+
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
+import { PaginationDto } from '../common/dto/pagination.dto';
+
 import { SessionsService } from './sessions.service';
 import { CreateSessionDto } from './dto/session.dto';
 import { AttendanceStatus } from './session-attendance.entity';
-import { PaginationDto } from '../common/dto/pagination.dto';
 
 @Controller('v1/cohorts/:cohortId/sessions')
 @UseGuards(JwtAuthGuard)

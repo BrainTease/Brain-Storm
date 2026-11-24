@@ -1,10 +1,12 @@
 'use client';
 
 import React from 'react';
-import { useWallet } from '@/lib/wallet';
+
 import { WalletConnectButton } from './WalletConnectButton';
 import { AccountBadge } from './AccountBadge';
 import { NetworkSelector } from './NetworkSelector';
+
+import { useWallet } from '@/lib/wallet';
 
 export interface WalletButtonProps {
   className?: string;

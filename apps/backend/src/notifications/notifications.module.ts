@@ -2,6 +2,9 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+
+import { MailModule } from '../mail/mail.module';
+
 import { Notification } from './notification.entity';
 import { NotificationPreference } from './notification-preference.entity';
 import { ScheduledNotification } from './scheduled-notification.entity';
@@ -14,7 +17,6 @@ import { PushNotificationService } from './push-notification.service';
 import { EmailNotifierService } from './email-notifier.service';
 import { PushNotifierService } from './push-notifier.service';
 import { InAppNotifierService } from './inapp-notifier.service';
-import { MailModule } from '../mail/mail.module';
 
 @Module({
   imports: [

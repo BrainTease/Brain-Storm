@@ -1,6 +1,7 @@
+import { SkeletonBlock } from './SkeletonBlock';
+
 import type { CredentialRecord } from '@/lib/dashboard';
 import { formatDateShort } from '@/lib/date-utils';
-import { SkeletonBlock } from './SkeletonBlock';
 
 interface RecentCredentialListProps {
   credentials: CredentialRecord[];

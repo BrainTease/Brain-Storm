@@ -18,11 +18,13 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { RecommendationSignalsService, RecSignal } from './recommendation-signals.service';
-import { SignalType } from './recommendation-signal.entity';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+
+import { RecommendationSignalsService, RecSignal } from './recommendation-signals.service';
+import { SignalType } from './recommendation-signal.entity';
 
 @ApiTags('recommendations')
 @ApiBearerAuth()

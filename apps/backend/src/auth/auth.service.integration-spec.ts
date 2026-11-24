@@ -2,14 +2,16 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
-import { AuthService } from './auth.service';
-import { AuthRepository } from './auth.repository';
+
 import { UsersService } from '../users/users.service';
 import { MailService } from '../mail/mail.service';
 import { User } from '../users/user.entity';
+import { setupTestDatabase, teardownTestDatabase } from '../test/integration-test.setup';
+
+import { AuthService } from './auth.service';
+import { AuthRepository } from './auth.repository';
 import { PasswordResetToken } from './password-reset-token.entity';
 import { RefreshToken } from './refresh-token.entity';
-import { setupTestDatabase, teardownTestDatabase } from '../test/integration-test.setup';
 
 describe('AuthService (Integration)', () => {
   let service: AuthService;

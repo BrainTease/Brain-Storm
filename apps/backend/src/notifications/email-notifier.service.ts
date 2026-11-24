@@ -1,7 +1,9 @@
-import type { NotificationChannel } from './notification-channel.interface';
 import { Injectable, Logger } from '@nestjs/common';
-import { NotificationType } from './notification.entity';
+
 import { MailService } from '../mail/mail.service';
+
+import type { NotificationChannel } from './notification-channel.interface';
+import { NotificationType } from './notification.entity';
 
 export interface EmailNotificationContext {
   to: string;

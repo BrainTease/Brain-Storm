@@ -10,10 +10,8 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import * as request from 'supertest';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
-import { UsersController } from './users.controller';
-import { UsersService } from './users.service';
+
 import { StellarService } from '../stellar/stellar.service';
-import { User } from './user.entity';
 import {
   getTestDatabaseConfig,
   getTestDataSource,
@@ -29,6 +27,10 @@ import {
   cleanDatabase,
   expectErrorResponse,
 } from '../test/http-test-helpers';
+
+import { UsersController } from './users.controller';
+import { UsersService } from './users.service';
+import { User } from './user.entity';
 
 describe('UsersController (HTTP Integration)', () => {
   let app: INestApplication;

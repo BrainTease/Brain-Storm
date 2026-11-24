@@ -1,8 +1,10 @@
 import { Controller, Post, Get, Patch, UseGuards, Body, Param } from '@nestjs/common';
-import { RemindersService } from './reminders.service';
+
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+
+import { RemindersService } from './reminders.service';
 
 @Controller('v1/reminders')
 export class RemindersController {

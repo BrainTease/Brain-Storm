@@ -4,8 +4,10 @@ import { Repository } from 'typeorm';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
-import { CourseAnalytics } from './course-analytics.entity';
+
 import { Enrollment } from '../enrollments/enrollment.entity';
+
+import { CourseAnalytics } from './course-analytics.entity';
 import { AnalyticsPipeline } from './pipeline/analytics.pipeline';
 
 @Injectable()

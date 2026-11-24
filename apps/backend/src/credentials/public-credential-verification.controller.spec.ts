@@ -1,9 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { PublicCredentialVerificationController } from './public-credential-verification.controller';
+
 import { StellarService } from '../stellar/stellar.service';
 import { CREDENTIALS_REPOSITORY_TOKEN } from '../repositories';
+
+import { PublicCredentialVerificationController } from './public-credential-verification.controller';
 
 const mockCredential = {
   id: 'cred-uuid',

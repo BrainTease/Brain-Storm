@@ -10,11 +10,12 @@
  * Redis, or HTTP connections are required.
  */
 import { Test, TestingModule } from '@nestjs/testing';
-import { HealthController } from './health.controller';
 import { HealthCheckService, TypeOrmHealthIndicator, MemoryHealthIndicator, HttpHealthIndicator } from '@nestjs/terminus';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { ConfigService } from '@nestjs/config';
+
+import { HealthController } from './health.controller';
 
 // ── Shared mock builders ──────────────────────────────────────────────────────
 

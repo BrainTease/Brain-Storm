@@ -4,7 +4,11 @@
     "strict": true,
     "paths": {
       "@brain-storm/types": ["../types/src"],
-      "@brain-storm/mobile": ["../mobile/src"]
+      "@brain-storm/types/*": ["../types/src/*"],
+      "@brain-storm/sdk": ["../sdk/src"],
+      "@brain-storm/sdk/*": ["../sdk/src/*"],
+      "@brain-storm/mobile": ["../mobile/src"],
+      "@brain-storm/mobile/*": ["../mobile/src/*"]
     }
   }
 }

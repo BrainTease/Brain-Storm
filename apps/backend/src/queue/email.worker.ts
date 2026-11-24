@@ -1,8 +1,10 @@
 import { Processor, WorkerHost, OnWorkerEvent } from '@nestjs/bullmq';
 import { Logger, Inject } from '@nestjs/common';
 import { Job } from 'bullmq';
-import { QUEUE_EMAIL, JOB_SEND_EMAIL, JOB_CLEANUP_EXPIRED } from './queue.constants';
+
 import { EmailService } from '../email/email.service';
+
+import { QUEUE_EMAIL, JOB_SEND_EMAIL, JOB_CLEANUP_EXPIRED } from './queue.constants';
 
 export interface EmailJobData {
   to: string;
