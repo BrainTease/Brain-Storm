@@ -91,7 +91,7 @@ should_skip() {
 }
 
 if [ "${1:-}" = "--stdin" ]; then
-  files="$(cat)"
+  files="$(cat | grep -E '\.(ts|tsx)$' || true)"
 else
   files="$(git ls-files -- '*.ts' '*.tsx')"
 fi
