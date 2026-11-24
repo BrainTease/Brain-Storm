@@ -99,6 +99,20 @@ async function setupApiRoutes(page: Page): Promise<void> {
   await page.route('**/v1/auth/me', (route) =>
     route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(MOCK_USER) }),
   );
+  await page.route('**/stellar-challenge', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ challenge: 'mock-wallet-challenge', message: 'Link test wallet' }),
+    }),
+  );
+  await page.route('**/stellar-verify', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ verified: true, publicKey: TEST_WALLET.publicKey }),
+    }),
+  );
   await page.route('**/v1/users/**', (route) =>
     route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(MOCK_USER) }),
   );
@@ -144,6 +158,13 @@ async function setupApiRoutes(page: Page): Promise<void> {
   // Enrollment confirmation
   await page.route('**/v1/enrollments', (route) =>
     route.fulfill({ status: 201, contentType: 'application/json', body: JSON.stringify(MOCK_ENROLLMENT) }),
+  );
+  await page.route('**/courses/course-stellar-intro/enroll', (route) =>
+    route.fulfill({
+      status: 201,
+      contentType: 'application/json',
+      body: JSON.stringify(MOCK_ENROLLMENT),
+    }),
   );
 
   // Wallet connection endpoints (if the app calls the backend)
@@ -428,5 +449,25 @@ test.describe('Wallet-connect → browse → purchase journey (#1020)', () => {
     await expect(
       page.getByText(/bst|token balance|brain-storm token/i),
     ).toBeVisible({ timeout: 10_000 });
+  });
+
+  test('connects a mocked Stellar wallet and enrolls in a priced course offline', async ({ page }) => {
+    await page.goto('/profile');
+    await page.getByRole('button', { name: /connect wallet/i }).click();
+    await expect(page.getByText(TEST_WALLET.publicKey)).toBeVisible({ timeout: 8_000 });
+
+    await page.goto('/courses/course-stellar-intro');
+    await page.getByRole('button', { name: /enroll now/i }).click();
+    await expect(page.getByText('Price: $50.00')).toBeVisible();
+    await page.getByRole('checkbox').check();
+
+    const enrollmentRequest = page.waitForRequest(
+      (request) =>
+        request.method() === 'POST' &&
+        request.url().endsWith('/courses/course-stellar-intro/enroll')
+    );
+    await page.getByRole('button', { name: /confirm enrollment/i }).click();
+    await expect(page.getByText("You're enrolled!")).toBeVisible({ timeout: 8_000 });
+    expect(await enrollmentRequest).toBeTruthy();
   });
 });
