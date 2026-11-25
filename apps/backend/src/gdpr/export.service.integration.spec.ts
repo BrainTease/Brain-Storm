@@ -1,8 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { ExportService } from './export.service';
-import { User } from '../users/user.entity';
+
 import { AuditService } from '../audit/audit.service';
+import { User } from '../users/user.entity';
+
+import { ExportService } from './export.service';
 import { GdprPartialFailureError, GdprTotalFailureError } from './gdpr-errors';
 
 const mockUserRepo = () => ({

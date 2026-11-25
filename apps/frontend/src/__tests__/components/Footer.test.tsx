@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
 
 vi.mock('next/link', () => ({
   default: ({ href, children, ...props }: any) => (
@@ -9,7 +9,6 @@ vi.mock('next/link', () => ({
   ),
 }));
 
-import { vi } from 'vitest';
 import { Footer } from '@/components/layout/Footer';
 
 describe('Footer', () => {

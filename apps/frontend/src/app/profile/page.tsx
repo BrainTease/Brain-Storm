@@ -1,10 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import Image from 'next/image';
+import { useEffect, useState } from 'react';
+
+import { Button } from '@/components/ui/Button';
 import api from '@/lib/api';
 import { formatDateShort } from '@/lib/date-utils';
-import { Button } from '@/components/ui/Button';
+
 import WalletSection from './WalletSection';
 
 interface User {

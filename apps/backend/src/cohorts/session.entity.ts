@@ -9,8 +9,10 @@ import {
   JoinColumn,
   Index,
 } from 'typeorm';
-import { Cohort } from './cohort.entity';
+
 import { User } from '../users/user.entity';
+
+import { Cohort } from './cohort.entity';
 import { SessionAttendance } from './session-attendance.entity';
 
 export enum SessionStatus {

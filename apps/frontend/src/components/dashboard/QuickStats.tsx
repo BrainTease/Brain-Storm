@@ -1,4 +1,5 @@
 import type { DashboardStats } from '@/lib/dashboard';
+
 import { SkeletonBlock } from './SkeletonBlock';
 import { StatCard } from './StatCard';
 

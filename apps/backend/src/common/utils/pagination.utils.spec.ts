@@ -1,5 +1,6 @@
-import { toSkipTake } from './pagination.utils';
 import { MAX_PAGE_LIMIT } from '../dto/pagination.dto';
+
+import { toSkipTake } from './pagination.utils';
 
 describe('toSkipTake (#1476)', () => {
   it('uses page 1 and the default limit when nothing is given', () => {

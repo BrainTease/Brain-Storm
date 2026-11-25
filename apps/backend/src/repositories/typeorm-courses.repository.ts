@@ -1,10 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
+
+import { QueryOptimizer } from '../common/database/query-optimizer';
 import { Course } from '../courses/course.entity';
 import { CourseQueryDto } from '../courses/dto/course-query.dto';
+
 import { CoursesRepository } from './courses-repository.interface';
-import { QueryOptimizer } from '../common/database/query-optimizer';
 
 @Injectable()
 export class TypeOrmCoursesRepository implements CoursesRepository {

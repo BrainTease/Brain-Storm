@@ -1,9 +1,10 @@
-import { Role } from '../common/enums/role.enum';
 import { Body, Controller, Delete, Get, Param, Post, Request, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { EnrollmentsService } from './enrollments.service';
 
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { Role } from '../common/enums/role.enum';
+
+import { EnrollmentsService } from './enrollments.service';
 /**
  * Enrollments REST API
  *
@@ -18,6 +19,7 @@ import { EnrollmentsService } from './enrollments.service';
  *  - DELETE /v1/enrollments/courses/:id/enroll  (same as DELETE /:id)
  *  - GET    /v1/enrollments/users/:id/enrollments (same as GET /)
  */
+
 @ApiTags('enrollments')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)

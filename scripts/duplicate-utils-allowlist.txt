@@ -1,0 +1,14 @@
+# Duplicate exported utility names — allowlist for scripts/check-duplicate-utils.sh
+# Format: <name><TAB><comma-separated sorted file paths>. Regenerate with --update.
+apiClient	apps/frontend/src/lib/apiClient.ts,packages/mobile-app/src/api/client.ts
+config	apps/frontend/middleware.ts,apps/frontend/src/config/index.ts,apps/frontend/src/middleware.ts
+getErrorMessage	apps/backend/src/test/http-test-helpers.ts,apps/frontend/src/lib/error-utils.ts,apps/frontend/src/lib/wallet/adapters/walletconnect.ts
+getTestDataSource	apps/backend/src/test/http-integration-setup.ts,apps/backend/src/test/integration-test.setup.ts
+InvalidateCache	apps/backend/src/cache/cache.decorators.ts,apps/backend/src/common/database/query-cache.decorator.ts
+loginSchema	apps/backend/src/common/validation/schemas.ts,packages/types/src/validation.types.ts
+metadata	apps/frontend/src/app/[locale]/layout.tsx,apps/frontend/src/app/[locale]/notifications/page.tsx,apps/frontend/src/app/[locale]/settings/page.tsx,apps/frontend/src/app/layout.tsx
+OfflineBanner	apps/frontend/src/components/ui/OfflineBanner.tsx,packages/mobile/src/cache/useNetworkStatus.ts
+recordProgressSchema	apps/backend/src/common/validation/schemas.ts,packages/types/src/validation.types.ts
+registerSchema	apps/backend/src/common/validation/schemas.ts,packages/types/src/validation.types.ts
+SearchInput	apps/frontend/src/components/courses/SearchInput.tsx,apps/frontend/src/components/SearchBar.tsx
+useWallet	apps/frontend/src/hooks/useWallet.ts,apps/frontend/src/lib/wallet/WalletProvider.tsx,packages/mobile/src/wallet/useWallet.ts

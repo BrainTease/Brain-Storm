@@ -1,27 +1,16 @@
+import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { JwtModule } from '@nestjs/jwt';
 /**
  * HTTP Integration Tests for Auth Controller
  * 
  * Tests auth endpoints via HTTP layer using supertest with real test database.
  * Tests are deterministic and isolated with clean database state per test.
  */
-
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe } from '@nestjs/common';
-import * as request from 'supertest';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { JwtModule } from '@nestjs/jwt';
-import { AuthController } from './auth.controller';
-import { AuthService } from './auth.service';
-import { StellarAuthService } from './stellar-auth.service';
-import { UsersService } from '../users/users.service';
+import * as request from 'supertest';
+
 import { MailService } from '../mail/mail.service';
-import { User } from '../users/user.entity';
-import { RefreshToken } from './refresh-token.entity';
-import { PasswordResetToken } from './password-reset-token.entity';
-import {
-  getTestDatabaseConfig,
-  getTestDataSource,
-} from '../test/http-integration-setup';
 import {
   testUsers,
   invalidCredentials,
@@ -29,11 +18,23 @@ import {
   generateTestUser,
 } from '../test/http-fixtures';
 import {
+  getTestDatabaseConfig,
+  getTestDataSource,
+} from '../test/http-integration-setup';
+import {
   registerUser,
   loginUser,
   cleanDatabase,
   expectErrorResponse,
 } from '../test/http-test-helpers';
+import { User } from '../users/user.entity';
+import { UsersService } from '../users/users.service';
+
+import { AuthController } from './auth.controller';
+import { AuthService } from './auth.service';
+import { PasswordResetToken } from './password-reset-token.entity';
+import { RefreshToken } from './refresh-token.entity';
+import { StellarAuthService } from './stellar-auth.service';
 
 describe('AuthController (HTTP Integration)', () => {
   let app: INestApplication;

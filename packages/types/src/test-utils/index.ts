@@ -16,6 +16,7 @@
  */
 
 export * from './determinism';
+export * from './stellar';
 
 // ---------------------------------------------------------------------------
 // Minimal deterministic pseudo-random helpers

@@ -1,7 +1,6 @@
-import { Injectable, LoggerService, Scope } from '@nestjs/common';
-import { Logger } from 'winston';
+import { Injectable, LoggerService, Scope, Inject } from '@nestjs/common';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import { Inject } from '@nestjs/common';
+import { Logger } from 'winston';
 
 @Injectable({ scope: Scope.TRANSIENT })
 export class CustomLoggerService implements LoggerService {

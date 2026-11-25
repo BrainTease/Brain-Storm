@@ -1,3 +1,5 @@
+import { User } from '../user.entity';
+
 /**
  * Unit tests for UserResponseDto — issue #993
  *
@@ -5,9 +7,8 @@
  * entity is stripped before a response reaches the client.
  */
 import { UserResponseDto, toUserResponseDto, toUserResponseDtos } from './user-response.dto';
-import { User } from '../user.entity';
-
 /** Build a fully-populated User entity including all sensitive fields. */
+
 function buildUser(overrides: Partial<User> = {}): User {
   const user = new User();
   user.id = 'user-uuid-1';

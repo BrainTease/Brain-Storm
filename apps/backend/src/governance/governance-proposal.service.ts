@@ -1,18 +1,19 @@
 import { Injectable, Inject, NotFoundException, BadRequestException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import {
-  GovernanceProposalRepository,
-  GOVERNANCE_PROPOSAL_REPOSITORY,
-} from './governance-proposal.repository.interface';
-import { GovernanceProposal, ProposalStatus } from './governance-proposal.entity';
+
+import { PaginatedResponseDto } from '../common/dto/api-response.dto';
+
 import {
   CreateProposalDto,
   UpdateProposalDto,
   ProposalQueryDto,
   VoteDto,
 } from './dto/governance-proposal.dto';
-import { PaginatedResponseDto } from '../common/dto/api-response.dto';
-
+import { GovernanceProposal, ProposalStatus } from './governance-proposal.entity';
+import {
+  GovernanceProposalRepository,
+  GOVERNANCE_PROPOSAL_REPOSITORY,
+} from './governance-proposal.repository.interface';
 /**
  * GovernanceProposalService
  *
@@ -28,6 +29,7 @@ import { PaginatedResponseDto } from '../common/dto/api-response.dto';
  *    this service mirrors the tallied totals for API consumers)
  *  - Emitting domain events so other modules can react
  */
+
 @Injectable()
 export class GovernanceProposalService {
   constructor(

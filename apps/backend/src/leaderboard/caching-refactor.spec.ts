@@ -7,16 +7,17 @@
  * 3. Both services delegate caching to CacheService.getOrSet.
  * 4. CoursesService.invalidateCache uses CacheService.invalidatePrefix + del.
  */
-
 import * as fs from 'fs';
 import * as path from 'path';
+
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { LeaderboardService } from './leaderboard.service';
-import { User } from '../users/user.entity';
-import { StellarService } from '../stellar/stellar.service';
-import { CacheService } from '../cache/cache.service';
 
+import { CacheService } from '../cache/cache.service';
+import { StellarService } from '../stellar/stellar.service';
+import { User } from '../users/user.entity';
+
+import { LeaderboardService } from './leaderboard.service';
 // ── Mocks ─────────────────────────────────────────────────────────────────
 
 const mockCacheService = {

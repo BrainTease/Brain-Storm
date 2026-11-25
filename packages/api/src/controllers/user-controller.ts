@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { BaseController } from './BaseController';
+import { BaseController } from './base-controller';
 
 interface User {
   id: string;

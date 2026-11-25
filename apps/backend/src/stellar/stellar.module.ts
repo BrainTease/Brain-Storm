@@ -1,21 +1,23 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { StellarService } from './stellar.service';
-import { StellarController, CredentialsController } from './stellar.controller';
-import { NetworkMonitorService } from './network-monitor.service';
-import { StellarIndexerService } from './stellar-indexer.service';
-import { StellarTransactionLog } from './stellar-transaction-log.entity';
-import { SorobanRpcClientService } from './soroban-rpc-client.service';
-import { StellarClientFactory } from './stellar-client.factory';
-import { StellarSdkService } from './stellar-sdk.service';
-import { TransactionBuilderService } from './transaction-builder.service';
-import { ContractEventDispatcher } from './event-handlers/contract-event.dispatcher';
-import { AnalyticsEventHandler } from './event-handlers/analytics-event.handler';
-import { TokenEventHandler } from './event-handlers/token-event.handler';
+
+import { LoggerModule } from '../common/logger/logger.module';
 import { CredentialsModule } from '../credentials/credentials.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { UsersModule } from '../users/users.module';
-import { LoggerModule } from '../common/logger/logger.module';
+
+import { AnalyticsEventHandler } from './event-handlers/analytics-event.handler';
+import { ContractEventDispatcher } from './event-handlers/contract-event.dispatcher';
+import { TokenEventHandler } from './event-handlers/token-event.handler';
+import { NetworkMonitorService } from './network-monitor.service';
+import { SorobanRpcClientService } from './soroban-rpc-client.service';
+import { StellarClientFactory } from './stellar-client.factory';
+import { StellarIndexerService } from './stellar-indexer.service';
+import { StellarSdkService } from './stellar-sdk.service';
+import { StellarTransactionLog } from './stellar-transaction-log.entity';
+import { StellarController, CredentialsController } from './stellar.controller';
+import { StellarService } from './stellar.service';
+import { TransactionBuilderService } from './transaction-builder.service';
 
 @Module({
   imports: [

@@ -1,5 +1,6 @@
-import type { NotificationChannel } from './notification-channel.interface';
 import { Injectable, Logger } from '@nestjs/common';
+
+import type { NotificationChannel } from './notification-channel.interface';
 import { NotificationType } from './notification.entity';
 import { NotificationsGateway } from './notifications.gateway';
 

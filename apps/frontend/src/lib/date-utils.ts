@@ -3,6 +3,8 @@
  * Replaces ad-hoc toLocaleDateString calls across the application
  */
 
+import { toDate } from '../../../../packages/utils/src';
+
 const DATE_OPTIONS_SHORT = {
   year: 'numeric' as const,
   month: 'short' as const,
@@ -33,12 +35,8 @@ const MONTH_DAY_OPTIONS = {
   day: 'numeric' as const,
 };
 
-/**
- * Convert various date input formats to a Date object
- */
-export function toDate(d: Date | number | string): Date {
-  return d instanceof Date ? d : new Date(d);
-}
+// `toDate` now lives in @brain-storm/utils; re-exported for existing callers (#1543).
+export { toDate };
 
 /**
  * Format date in short format: "Jan 1, 2024"

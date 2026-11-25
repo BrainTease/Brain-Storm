@@ -1,14 +1,15 @@
+import { http, HttpResponse } from 'msw';
+import { setupServer } from 'msw/node';
 /**
  * Unit tests for adminApi.ts
  * 
  * Tests the admin API module covering platform stats, activity, users,
  * course approval, and health checks with comprehensive error handling.
  */
-
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest';
-import { http, HttpResponse } from 'msw';
-import { setupServer } from 'msw/node';
+
 import { adminApi } from '@/lib/adminApi';
+
 import {
   mockPlatformStats,
   mockActivityEvents,

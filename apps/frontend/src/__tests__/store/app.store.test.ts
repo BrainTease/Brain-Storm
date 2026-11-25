@@ -3,27 +3,14 @@
  *
  * ⚠️ DO NOT RUN — implementation only, per task instructions.
  */
-
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-
 // Mock jwt module to control expiry checks
+
 vi.mock('@/lib/jwt', () => ({
   isTokenExpired: vi.fn(() => false),
 }));
 
-import { useAppStore } from '@/store/app.store';
-import {
-  selectUser,
-  selectToken,
-  selectIsAuthenticated,
-  selectIsAdmin,
-  selectWalletAddress,
-  selectWalletBalance,
-  selectWalletBstBalance,
-  selectIsWalletConnected,
-  selectNetwork,
-  selectNetworkMismatch,
-} from '@/store/app.store';
+import { useAppStore, selectUser, selectToken, selectIsAuthenticated, selectIsAdmin, selectWalletAddress, selectWalletBalance, selectWalletBstBalance, selectIsWalletConnected, selectNetwork, selectNetworkMismatch } from '@/store/app.store';
 
 function getState() {
   return useAppStore.getState();

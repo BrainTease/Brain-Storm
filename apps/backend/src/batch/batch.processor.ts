@@ -1,14 +1,16 @@
 import { Processor, Process, OnQueueActive, OnQueueCompleted, OnQueueFailed } from '@nestjs/bull';
-import { Job } from 'bull';
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Job } from 'bull';
 import { Repository } from 'typeorm';
-import { BatchJob } from './batch-job.entity';
-import { UsersService } from '../users/users.service';
-import { AccountService } from '../users/account.service';
-import { CoursesService } from '../courses/courses.service';
+
 import { CertificatesService } from '../certificates/certificates.service';
+import { CoursesService } from '../courses/courses.service';
 import { MailService } from '../mail/mail.service';
+import { AccountService } from '../users/account.service';
+import { UsersService } from '../users/users.service';
+
+import { BatchJob } from './batch-job.entity';
 
 @Injectable()
 @Processor('batch')

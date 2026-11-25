@@ -1,12 +1,11 @@
+import type { Proposal, Vote } from '@/store/governanceStore';
+
 /**
  * Governance API — migrated to typed apiClient (#969)
  *
  * All public functions now return `ApiResult<T>` instead of throwing.
  * Callers check `.ok` before using `.data`.
  */
-
-import type { Proposal, Vote } from '@/store/governanceStore';
-
 import apiClient, { type ApiResult } from './apiClient';
 
 const GOVERNANCE_BASE = '/governance';

@@ -11,16 +11,17 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { RolesGuard } from '../auth/roles.guard';
-import { Roles } from '../auth/roles.decorator';
-import { AdminService } from './admin.service';
-import { CreateDisputeDto, ResolveDisputeDto, DisputeQueryDto } from './admin.dto';
-import { DisputeStatus } from './dispute.entity';
+
 import { AdminAuditInterceptor } from '../audit/admin-audit.interceptor';
 import { AuditLog } from '../audit/audit-log.decorator';
 import { AuditAction } from '../audit/audit-log.entity';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { Roles } from '../auth/roles.decorator';
+import { RolesGuard } from '../auth/roles.guard';
 
+import { CreateDisputeDto, ResolveDisputeDto, DisputeQueryDto } from './admin.dto';
+import { AdminService } from './admin.service';
+import { DisputeStatus } from './dispute.entity';
 /**
  * Dispute resource routes. Split out of the former AdminController (#973)
  * so dispute-resolution owns a focused route file separate from user
@@ -28,6 +29,7 @@ import { AuditAction } from '../audit/audit-log.entity';
  *
  * `AdminAuditInterceptor` auto-logs handlers carrying `@AuditLog(...)`.
  */
+
 @ApiTags('admin')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)

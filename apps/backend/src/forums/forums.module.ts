@@ -1,12 +1,14 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+
 import { Course } from '../courses/course.entity';
+import { ModerationModule } from '../moderation/moderation.module';
+import { SearchModule } from '../search/search.module';
+
 import { ForumsController } from './forums.controller';
 import { ForumsService } from './forums.service';
 import { Post } from './post.entity';
 import { Reply } from './reply.entity';
-import { ModerationModule } from '../moderation/moderation.module';
-import { SearchModule } from '../search/search.module';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Course, Post, Reply]), ModerationModule, SearchModule],

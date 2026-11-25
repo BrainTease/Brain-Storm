@@ -1,14 +1,16 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { User } from './user.entity';
+
 import {
   UsersRepository,
   USERS_REPOSITORY_TOKEN,
 } from '../repositories/users-repository.interface';
 
+import { User } from './user.entity';
 /**
  * Account and security actions on a user: ban, role change and soft delete. Profile reads and
  * edits stay in UsersService.
  */
+
 @Injectable()
 export class AccountService {
   constructor(

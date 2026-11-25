@@ -1,11 +1,12 @@
+import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { ConfigService } from '@nestjs/config';
-import { RedisLeaderboardService } from './redis-leaderboard.service';
-import { Progress } from '../progress/progress.entity';
+
 import { Enrollment } from '../enrollments/enrollment.entity';
+import { Progress } from '../progress/progress.entity';
 import { User } from '../users/user.entity';
 
+import { RedisLeaderboardService } from './redis-leaderboard.service';
 // ── Minimal Redis mock ────────────────────────────────────────────────────────
 
 const buildRedisMock = () => {

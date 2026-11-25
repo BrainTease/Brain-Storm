@@ -1,11 +1,12 @@
 import { Injectable, NestMiddleware } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
-import { LoggerFactory } from './logger-factory';
 import { v4 as uuidv4 } from 'uuid';
 
+import { LoggerFactory } from './logger-factory';
 /**
  * Middleware for standardized HTTP request/response logging
  */
+
 @Injectable()
 export class LoggingMiddleware implements NestMiddleware {
   private readonly logger = this.loggerFactory.createLogger('HTTP');

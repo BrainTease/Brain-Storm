@@ -1,11 +1,13 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { makeCounterProvider } from '@willsoto/nestjs-prometheus';
-import { CacheService, CACHE_HIT_COUNTER, CACHE_MISS_COUNTER } from './cache.service';
+
+import { CoursesModule } from '../courses/courses.module';
+
+import { CacheInvalidationService } from './cache-invalidation.service';
 import { CacheManagementController } from './cache-management.controller';
 import { CacheManagementService } from './cache-management.service';
-import { CacheInvalidationService } from './cache-invalidation.service';
-import { CoursesModule } from '../courses/courses.module';
+import { CacheService, CACHE_HIT_COUNTER, CACHE_MISS_COUNTER } from './cache.service';
 
 @Module({
   imports: [forwardRef(() => CoursesModule), EventEmitterModule.forRoot()],

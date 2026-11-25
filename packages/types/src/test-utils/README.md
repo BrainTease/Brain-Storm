@@ -13,6 +13,8 @@ This directory provides shared test factory helpers for the Brain-Storm monorepo
 | `CredentialFactory` | `TestCredential` | Create test credential/certificate objects with txHash |
 | `ProgressFactory` | `TestProgress` | Create test progress objects with completion percentage |
 | `PaymentFactory` | `TestPayment` | Create test payment objects with amount, provider, status |
+| `StellarBalanceFactory` | `StellarBalance` | Create Stellar account balance fixtures |
+| `OnChainCredentialFactory` | `OnChainCredential` | Create on-chain credential fixtures |
 
 ## Usage
 
@@ -45,6 +47,15 @@ const enrollment = EnrollmentFactory.create({ userId, courseId, progress: 75 });
 const progress = ProgressFactory.create({ userId, courseId, progressPct: 75 });
 const credential = CredentialFactory.create({ userId, courseId, status: 'pending' });
 const payment = PaymentFactory.create({ userId, courseId, amount: 4999 });
+```
+
+Stellar fixtures are also available for wallet and credential tests:
+
+```typescript
+import { OnChainCredentialFactory, StellarBalanceFactory } from '@brain-storm/types/test-utils';
+
+const balance = StellarBalanceFactory.create({ asset_type: 'credit_alphanum4', asset_code: 'BST' });
+const credential = OnChainCredentialFactory.create({ courseId: 'course-456' });
 ```
 
 ## Conventions

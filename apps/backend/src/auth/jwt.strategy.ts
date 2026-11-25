@@ -1,11 +1,13 @@
-import { Role } from '../common/enums/role.enum';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { PassportStrategy } from '@nestjs/passport';
-import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
-import { UsersService } from '../users/users.service';
-import { TokenBlacklistService } from './token-blacklist.service';
+import { PassportStrategy } from '@nestjs/passport';
 import { Request } from 'express';
+import { ExtractJwt, Strategy } from 'passport-jwt';
+
+import { Role } from '../common/enums/role.enum';
+import { UsersService } from '../users/users.service';
+
+import { TokenBlacklistService } from './token-blacklist.service';
 
 export interface JwtPayload {
   id: string;

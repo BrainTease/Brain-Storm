@@ -1,3 +1,4 @@
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 /**
  * Public Credential Verification API (Issue #632)
  *
@@ -12,11 +13,11 @@
  */
 import { Controller, Get, Header, Inject, NotFoundException, Param, Res } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
-import { StellarService } from '../stellar/stellar.service';
-import { CREDENTIALS_REPOSITORY_TOKEN, CredentialsRepository } from '../repositories';
 import type { Response } from 'express';
+
+import { CREDENTIALS_REPOSITORY_TOKEN, CredentialsRepository } from '../repositories';
+import { StellarService } from '../stellar/stellar.service';
 
 const CACHE_TTL = 60; // seconds – credential data changes rarely
 

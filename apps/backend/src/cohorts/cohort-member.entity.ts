@@ -6,8 +6,10 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
-import { Cohort } from './cohort.entity';
+
 import { User } from '../users/user.entity';
+
+import { Cohort } from './cohort.entity';
 
 @Entity('cohort_members')
 export class CohortMember {

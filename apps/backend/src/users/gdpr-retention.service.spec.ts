@@ -1,8 +1,9 @@
+import { NotFoundException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
+
 import { GdprRetentionService } from './gdpr-retention.service';
 import { User } from './user.entity';
-import { NotFoundException } from '@nestjs/common';
 
 const mockUser = (overrides = {}) => ({
   id: 'u1',

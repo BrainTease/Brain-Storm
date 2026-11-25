@@ -1,3 +1,5 @@
+import { http, HttpResponse } from 'msw';
+import { setupServer } from 'msw/node';
 /**
  * Unit tests for apiClient.ts
  * 
@@ -6,10 +8,8 @@
  * 
  * Uses MSW to mock HTTP responses for deterministic testing.
  */
-
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest';
-import { http, HttpResponse } from 'msw';
-import { setupServer } from 'msw/node';
+
 import {
   apiClient,
   ApiRoutes,
@@ -18,6 +18,7 @@ import {
   type ApiError,
   type ApiSuccess,
 } from '@/lib/apiClient';
+
 import {
   mockAuthResponse,
   mockLoginRequest,

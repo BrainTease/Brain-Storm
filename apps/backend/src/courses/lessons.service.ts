@@ -1,8 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Lesson } from './lesson.entity';
+
 import { SearchService } from '../search/search.service';
+
+import { Lesson } from './lesson.entity';
 
 @Injectable()
 export class LessonsService {

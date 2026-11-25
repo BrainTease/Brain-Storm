@@ -1,14 +1,15 @@
+import { http, HttpResponse } from 'msw';
+import { setupServer } from 'msw/node';
 /**
  * Unit tests for forumApi.ts
  * 
  * Tests the forum API module covering posts, replies, and moderation
  * with comprehensive error handling and ApiResult validation.
  */
-
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest';
-import { http, HttpResponse } from 'msw';
-import { setupServer } from 'msw/node';
+
 import { forumApi } from '@/lib/forumApi';
+
 import {
   mockForumPost,
   mockPinnedPost,

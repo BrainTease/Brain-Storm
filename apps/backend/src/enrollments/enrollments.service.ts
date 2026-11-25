@@ -1,10 +1,11 @@
 import { Injectable, ConflictException, NotFoundException, Inject } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { Enrollment } from './enrollment.entity';
-import { PrerequisitesService } from '../courses/prerequisites.service';
-import { ENROLLMENTS_REPOSITORY_TOKEN } from '../repositories/repositories.module';
-import { EnrollmentsRepository } from '../repositories/enrollments-repository.interface';
 
+import { PrerequisitesService } from '../courses/prerequisites.service';
+import { EnrollmentsRepository } from '../repositories/enrollments-repository.interface';
+import { ENROLLMENTS_REPOSITORY_TOKEN } from '../repositories/repositories.module';
+
+import { Enrollment } from './enrollment.entity';
 /**
  * EnrollmentsService
  *
@@ -12,6 +13,7 @@ import { EnrollmentsRepository } from '../repositories/enrollments-repository.in
  * No direct @InjectRepository(Enrollment) — the repository abstraction
  * is the single seam for enrollment query logic.
  */
+
 @Injectable()
 export class EnrollmentsService {
   constructor(

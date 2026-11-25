@@ -132,6 +132,34 @@ jobs:
       - name: Run Clippy
         run: cargo clippy --workspace --all-targets -- -D warnings
 
+  convention-checks:
+    name: Naming, imports, utils and commit conventions
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Resolve changed files
+        run: |
+          BASE="${{ github.event.pull_request.base.sha || github.event.before }}"
+          git diff --name-only --diff-filter=ACMR "$BASE" HEAD > changed-files.txt 2>/dev/null \
+            || git diff --name-only --diff-filter=ACMR HEAD~1 HEAD > changed-files.txt
+          cat changed-files.txt
+
+      - name: Run convention checks
+        run: |
+          ./scripts/check-commit-and-pr.sh
+          ./scripts/check-naming.sh --stdin < changed-files.txt
+          ./scripts/check-import-order.sh --stdin < changed-files.txt
+          ./scripts/check-duplicate-utils.sh
+
   code-coverage:
     name: Code Coverage Analysis
     runs-on: ubuntu-latest
@@ -319,7 +347,7 @@ jobs:
   quality-gates-summary:
     name: Quality Gates Summary
     runs-on: ubuntu-latest
-    needs: [eslint-frontend, eslint-backend, clippy-contracts, code-coverage, contracts-coverage, complexity-analysis]
+    needs: [eslint-frontend, eslint-backend, clippy-contracts, convention-checks, code-coverage, contracts-coverage, complexity-analysis]
     if: always()
 
     steps:
@@ -332,6 +360,7 @@ jobs:
           echo "| ESLint (Frontend) | ${{ needs.eslint-frontend.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| ESLint (Backend) | ${{ needs.eslint-backend.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Clippy (Contracts) | ${{ needs.clippy-contracts.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Conventions (Naming/Imports/Utils/Commits) | ${{ needs.convention-checks.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| JavaScript Workspace Coverage | ${{ needs.code-coverage.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Contract Coverage | ${{ needs.contracts-coverage.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Complexity Analysis | ${{ needs.complexity-analysis.result }} |" >> $GITHUB_STEP_SUMMARY
@@ -347,6 +376,7 @@ jobs:
             needs.eslint-frontend.result == 'failure' ||
             needs.eslint-backend.result == 'failure' ||
             needs.clippy-contracts.result == 'failure' ||
+            needs.convention-checks.result == 'failure' ||
             needs.code-coverage.result == 'failure' ||
             needs.contracts-coverage.result == 'failure'
           )
@@ -367,6 +397,7 @@ jobs:
             | ESLint (Frontend) | ${{ needs.eslint-frontend.result }} |
             | ESLint (Backend) | ${{ needs.eslint-backend.result }} |
             | Clippy (Contracts) | ${{ needs.clippy-contracts.result }} |
+            | Conventions (Naming/Imports/Utils/Commits) | ${{ needs.convention-checks.result }} |
             | JavaScript Workspace Coverage | ${{ needs.code-coverage.result }} |
             | Contract Coverage | ${{ needs.contracts-coverage.result }} |
             | Complexity Analysis | ${{ needs.complexity-analysis.result }} |

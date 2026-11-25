@@ -1,8 +1,9 @@
-import { IsOptional, IsString, IsIn } from 'class-validator';
-import { Trim, Sanitize } from 'class-sanitizer';
-import { StripHtmlSanitizer } from '../../common/sanitizers/strip-html.sanitizer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { Trim, Sanitize } from 'class-sanitizer';
+import { IsOptional, IsString, IsIn } from 'class-validator';
+
 import { PaginationDto } from '../../common/dto/pagination.dto';
+import { StripHtmlSanitizer } from '../../common/sanitizers/strip-html.sanitizer';
 
 export class CourseQueryDto extends PaginationDto {
   @ApiPropertyOptional({ description: 'Full-text search on title and description' })

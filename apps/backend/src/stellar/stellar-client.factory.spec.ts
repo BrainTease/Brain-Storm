@@ -1,7 +1,8 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
-import { StellarClientFactory } from './stellar-client.factory';
+import { Test, TestingModule } from '@nestjs/testing';
 import { Horizon, SorobanRpc } from '@stellar/stellar-sdk';
+
+import { StellarClientFactory } from './stellar-client.factory';
 
 describe('StellarClientFactory', () => {
   let factory: StellarClientFactory;

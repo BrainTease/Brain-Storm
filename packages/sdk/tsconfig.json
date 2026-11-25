@@ -12,7 +12,14 @@
     "noPropertyAccessFromIndexSignature": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "types": []
+    "types": [],
+    "baseUrl": ".",
+    "paths": {
+      "@brain-storm/types": ["../types/src"],
+      "@brain-storm/types/*": ["../types/src/*"],
+      "@brain-storm/sdk": ["./src"],
+      "@brain-storm/sdk/*": ["./src/*"]
+    }
   },
   "include": ["src"],
   "exclude": ["node_modules", "dist", "**/*.test.ts"]

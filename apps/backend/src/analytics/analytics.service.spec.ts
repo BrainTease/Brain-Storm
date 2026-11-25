@@ -9,11 +9,10 @@
  * All external I/O (TypeORM repos, cache) is replaced with jest mocks so the
  * tests are fully deterministic and run without a real database.
  */
+import { Repository } from 'typeorm';
 
 import { AnalyticsService } from './analytics.service';
 import { CourseAnalytics } from './course-analytics.entity';
-import { Repository } from 'typeorm';
-
 // ─── minimal mock builder ────────────────────────────────────────────────────
 
 function makeQb(rawOneResult: Record<string, string>) {

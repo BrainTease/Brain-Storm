@@ -9,8 +9,10 @@ import {
   JoinColumn,
   Index,
 } from 'typeorm';
-import { CourseModule } from './course-module.entity';
+
 import { User } from '../users/user.entity';
+
+import { CourseModule } from './course-module.entity';
 import { Review } from './review.entity';
 
 export enum CourseStatus {

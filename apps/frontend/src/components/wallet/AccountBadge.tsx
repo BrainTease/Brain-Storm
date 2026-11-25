@@ -1,8 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useWallet } from '@/lib/wallet';
+
 import { TokenBalance } from '@/components/ui/TokenBalance';
+import { useWallet } from '@/lib/wallet';
+
 import { WalletMenu } from './WalletMenu';
 
 export interface AccountBadgeProps {

@@ -1,10 +1,12 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { getRepositoryToken } from '@nestjs/typeorm';
 import { ConflictException, NotFoundException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { EnrollmentsService } from './enrollments.service';
-import { Enrollment } from './enrollment.entity';
+import { Test, TestingModule } from '@nestjs/testing';
+import { getRepositoryToken } from '@nestjs/typeorm';
+
 import { PrerequisitesService } from '../courses/prerequisites.service';
+
+import { Enrollment } from './enrollment.entity';
+import { EnrollmentsService } from './enrollments.service';
 
 describe('EnrollmentsService', () => {
   let service: EnrollmentsService;
