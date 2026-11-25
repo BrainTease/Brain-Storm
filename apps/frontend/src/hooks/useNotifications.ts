@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { io, Socket } from 'socket.io-client';
+import type { Socket } from 'socket.io-client';
+import { io } from 'socket.io-client';
 
+import { getConfig } from '@/config';
 import { useAuth } from '@/hooks/useAuth';
 
 export type NotificationType =
@@ -98,10 +100,10 @@ export function useNotifications() {
   useEffect(() => {
     if (!token) return;
 
-    const socket = io(
-      `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/notifications`,
-      { auth: { token }, transports: ['websocket'] }
-    );
+    const socket = io(`${getConfig().apiUrl}/notifications`, {
+      auth: { token },
+      transports: ['websocket'],
+    });
     socketRef.current = socket;
 
     // Load existing notifications on connect

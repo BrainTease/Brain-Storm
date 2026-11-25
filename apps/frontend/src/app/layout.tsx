@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import NetworkStatus from '@/components/ui/NetworkStatus';
 import { TourProvider } from '@/components/ui/TourProvider';
+import { getConfig } from '@/config';
 import { WalletProvider } from '@/lib/wallet';
 
 import './globals.css';
@@ -18,7 +19,7 @@ const WalletButton = dynamic(
   }
 );
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://brain-storm.app';
+const SITE_URL = getConfig().siteUrl;
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -67,7 +68,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="icon" href="/favicon.ico" />
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
         {/* Preconnect to API origin — reduces TTFB for first data fetch (INP) */}
-        <link rel="preconnect" href={process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'} />
+        <link rel="preconnect" href={getConfig().apiUrl} />
         {/* Preconnect to avatar CDN to unblock LCP image on profile/dashboard */}
         <link rel="preconnect" href="https://lh3.googleusercontent.com" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://www.gravatar.com" crossOrigin="anonymous" />

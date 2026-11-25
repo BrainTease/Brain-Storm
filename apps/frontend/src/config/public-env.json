@@ -1,0 +1,8 @@
+{
+  "NEXT_PUBLIC_API_URL": "http://localhost:3000",
+  "NEXT_PUBLIC_STELLAR_NETWORK": "testnet",
+  "NEXT_PUBLIC_SENTRY_DSN": "",
+  "NEXT_PUBLIC_GIT_COMMIT_SHA": "",
+  "NEXT_PUBLIC_SITE_URL": "https://brain-storm.app",
+  "NEXT_PUBLIC_BST_CONTRACT_ID": ""
+}

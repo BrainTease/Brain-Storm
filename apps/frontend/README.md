@@ -82,34 +82,25 @@ When you need a new value, add it to the theme first, then use it.
 
 ### 3. Centralized config, env access and feature flags
 
-All environment access and configuration lives in a single config module (`src/config`). Components must **not** read `process.env` directly.
-
-```ts
-// src/config/index.ts
-export const config = {
-  apiUrl: process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001',
-  network: process.env.NEXT_PUBLIC_STELLAR_NETWORK ?? 'testnet',
-  features: {
-    newWalletFlow: process.env.NEXT_PUBLIC_FEATURE_NEW_WALLET_FLOW === 'true',
-  },
-} as const;
-```
-
-Use it in components:
+All environment access and configuration lives in a single config module (`src/config`). Components must **not** read `process.env` directly. Values are validated with safe fallbacks and exposed as typed fields:
 
 ```tsx
-import { config } from '@/config';
+import { getConfig, getFeatureFlags } from '@/config';
 
-if (config.features.newWalletFlow) {
+const { apiUrl, stellarNetwork, siteUrl } = getConfig();
+
+if (getFeatureFlags().wallet) {
   // ...
 }
 ```
 
 **Rules**
 
-- Only the config module reads `process.env`. Everything else imports from `@/config`.
-- Feature flags are declared in `config.features` and default to a safe value when the env var is absent.
-- Add new env vars to the config module (and to `.env.example`) rather than reading them ad hoc.
+- Only `src/config/env.ts` reads `process.env`, using static `process.env.KEY` expressions so Next.js can inline them. Everything else calls `getConfig()` from `@/config`.
+- Add new public variables to `src/config/public-env.json` (the shared key list used by `next.config.js`), then expose them as a typed field in `src/config/index.ts` and document them in `.env.example`.
+- Feature flags come from `getFeatureFlags()` and default to a safe value when the env var is absent.
+- In tests, use `overrideConfig()` / `resetConfig()` instead of mutating the global environment.
+- `npm run check:env` and the ESLint `no-restricted-syntax` rule fail on any new direct access outside the allowlisted config, test and build-tool files.
 
 ### 4. Loading, empty and skeleton states
 

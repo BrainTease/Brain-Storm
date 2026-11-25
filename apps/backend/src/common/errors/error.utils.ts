@@ -24,6 +24,8 @@ import {
   ErrorCode,
 } from './app.error';
 
+import { env } from '../../config/env';
+
 /**
  * Error utilities for common error handling patterns
  */
@@ -31,10 +33,7 @@ export class ErrorUtils {
   /**
    * Create a validation error with field-specific details
    */
-  static validationError(
-    message: string,
-    fieldErrors?: Record<string, string[]>
-  ): ValidationError {
+  static validationError(message: string, fieldErrors?: Record<string, string[]>): ValidationError {
     const details = fieldErrors ? { fieldErrors } : undefined;
     return new ValidationError(message, details);
   }
@@ -166,7 +165,7 @@ export class ErrorUtils {
       response.requestId = requestId;
     }
 
-    if (includeStack && process.env.NODE_ENV !== 'production' && error.stack) {
+    if (includeStack && !env.isProduction && error.stack) {
       response.stack = error.stack.split('\n');
     }
 

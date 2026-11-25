@@ -5,7 +5,7 @@ import { responseInterceptor } from './middleware/response-interceptor';
 import userRoutes from './routes/user-routes';
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = getPort();
 
 // Middleware
 app.use(helmet());

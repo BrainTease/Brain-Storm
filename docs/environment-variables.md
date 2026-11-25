@@ -360,3 +360,32 @@ These are baked into the JavaScript bundle and sent to every browser. They must 
 ### Validation at startup
 
 The backend validates all variables via Joi on startup (`apps/backend/src/config/validation.schema.ts`). If a required variable is missing or has an invalid value, the process exits immediately with a descriptive error — preventing silent misconfiguration in production.
+
+### Type-safe access rules (#1551)
+
+Application code must not read environment variables directly:
+
+- **Frontend** — call `getConfig()` from `@/config`. The only reads happen in
+  `apps/frontend/src/config/env.ts`, which uses static `process.env.KEY`
+  expressions (Next.js only inlines static access). The allow-listed keys and
+  their defaults live in `apps/frontend/src/config/public-env.json`, which is
+  also used by `next.config.js` to inline the public variables.
+- **Backend** — inject `ConfigService` (validated by the Joi schema) or, for
+  bootstrap code that runs before Nest's DI container, import `env` from
+  `apps/backend/src/config/env.ts`. Secret-shaped variables must go through
+  `SecretsAccessor`.
+- **Packages** — read through their own `src/config` module.
+
+Enforcement is local and automatic:
+
+```bash
+npm run check:env           # full audit
+npm run check:env -- --staged  # staged files only (also runs in .husky/pre-commit)
+npm run lint                # no-restricted-syntax rules in all three ESLint configs
+```
+
+**Documented exceptions:** config modules, tests/fixtures/e2e (they vary env
+values per case), and build/CLI tooling (`*.config.js|ts`, `scripts/`), which
+runs before app configuration exists. Non-secret backend operational reads
+outside `src/config` remain permitted by the existing secret-only lint rule;
+new code should still go through `env` or `ConfigService`.

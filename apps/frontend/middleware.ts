@@ -1,13 +1,15 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
+
+import { getConfig } from '@/config';
 import { generateNonce, buildCSPHeader, CSP_CONFIG } from '@/lib/csp';
 
 export function middleware(request: NextRequest) {
   const nonce = generateNonce();
-  const env = process.env.NODE_ENV || 'development';
-  const config = env === 'production' ? CSP_CONFIG.production : CSP_CONFIG.development;
+  const cspConfig = getConfig().isProduction ? CSP_CONFIG.production : CSP_CONFIG.development;
 
   // Build CSP header with nonce
-  const cspHeader = buildCSPHeader(config, nonce);
+  const cspHeader = buildCSPHeader(cspConfig, nonce);
 
   // Clone response headers
   const requestHeaders = new Headers(request.headers);

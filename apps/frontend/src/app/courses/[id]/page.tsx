@@ -1,9 +1,12 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+
+import { getConfig } from '@/config';
+
 import { CourseDetailClient } from './CourseDetailClient';
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://brain-storm.app';
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+const SITE_URL = getConfig().siteUrl;
+const API_URL = getConfig().apiUrl;
 
 interface Course {
   id: string;

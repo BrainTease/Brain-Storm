@@ -3,6 +3,8 @@
 import { useEffect } from 'react';
 import type { Socket } from 'socket.io-client';
 
+import { getConfig } from '@/config';
+
 export interface ProgressUpdate {
   courseId: string;
   progressPct: number;
@@ -27,7 +29,7 @@ export function useProgressSocket(
     import('socket.io-client').then(({ io }) => {
       if (disposed) return;
 
-      socket = io(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000', {
+      socket = io(getConfig().apiUrl, {
         auth: { token },
         transports: ['websocket'],
       });

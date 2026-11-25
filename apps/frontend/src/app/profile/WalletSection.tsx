@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 
 import { Button } from '@/components/ui/Button';
 import { TokenBalance } from '@/components/ui/TokenBalance';
+import { getConfig } from '@/config';
 import { useFreighterDetection } from '@/hooks/useFreighterDetection';
 import api from '@/lib/api';
 
@@ -103,7 +104,7 @@ export default function WalletSection({ userId, stellarPublicKey, onLinked, onUn
           <Button variant="outline" onClick={unlinkWallet}>
             Unlink Wallet
           </Button>
-          {process.env.NEXT_PUBLIC_STELLAR_NETWORK === 'testnet' && (
+          {getConfig().stellarNetwork === 'testnet' && (
             <div className="space-y-1">
               <Button variant="outline" onClick={fundTestnet} disabled={funding}>
                 {funding ? 'Funding…' : 'Fund Testnet Account'}

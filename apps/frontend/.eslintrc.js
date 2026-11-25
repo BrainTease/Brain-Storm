@@ -91,12 +91,18 @@ module.exports = {
       },
     ],
     // File names must be kebab-case; suffixes like .d.ts, .spec.ts and .test.ts are allowed.
-    'filenames/match-regex': [
-      'error',
-      '^[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.(?:d|spec|test))?$',
-      true,
-    ],
+    'filenames/match-regex': ['error', '^[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.(?:d|spec|test))?$', true],
     complexity: ['error', { max: 15 }],
+    // Environment access must go through the typed config module (#1551).
+    // The selector matches static `process.env.X` reads in application code;
+    // config, test, and build-tool files are allowlisted in `overrides` below.
+    'no-restricted-syntax': [
+      'error',
+      {
+        selector: "MemberExpression[object.object.name='process'][object.property.name='env']",
+        message: 'Direct process.env access is not allowed. Use getConfig() from @/config instead.',
+      },
+    ],
     'max-lines-per-function': [
       'error',
       {
@@ -109,10 +115,22 @@ module.exports = {
   },
   overrides: [
     {
-      // Test files may log while diagnosing failures and often use loose typing for mocks.
-      files: ['src/__tests__/**/*.{ts,tsx}', '**/*.{spec,test}.{ts,tsx}'],
+      // The config module is the one place allowed to read the environment.
+      files: ['src/config/**/*.{ts,tsx}'],
+      rules: { 'no-restricted-syntax': 'off' },
+    },
+    {
+      // Test files may log while diagnosing failures, use loose typing for
+      // mocks, and set environment variables to exercise different branches.
+      files: [
+        'src/__tests__/**/*.{ts,tsx}',
+        'tests/**/*.{ts,tsx}',
+        'e2e/**/*.{ts,tsx}',
+        '**/*.{spec,test}.{ts,tsx}',
+      ],
       rules: {
         'no-console': 'off',
+        'no-restricted-syntax': 'off',
         '@typescript-eslint/explicit-module-boundary-types': 'off',
       },
     },
@@ -139,9 +157,13 @@ module.exports = {
       rules: { 'filenames/match-regex': 'off' },
     },
     {
-      // Config files are CommonJS and don't need explicit module boundary types.
+      // Build/test tooling runs before the app config exists and reads its own
+      // variables (CI, ANALYZE, PLAYWRIGHT_BASE_URL). Documented exceptions.
       files: ['*.config.{js,ts}', '.eslintrc.js'],
-      rules: { '@typescript-eslint/explicit-module-boundary-types': 'off' },
+      rules: {
+        '@typescript-eslint/explicit-module-boundary-types': 'off',
+        'no-restricted-syntax': 'off',
+      },
     },
   ],
 };
